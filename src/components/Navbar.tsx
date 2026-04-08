@@ -188,6 +188,13 @@ export default function Navbar() {
             {/* Desktop CTA */}
             <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
               <motion.a
+                href="/projects"
+                className="text-[13px] font-medium text-[#86868b] hover:text-white transition-colors duration-200 tracking-[-0.01em]"
+                whileHover={{ scale: 1.05 }}
+              >
+                App
+              </motion.a>
+              <motion.a
                 href="#contact"
                 className="text-[13px] font-medium text-[#86868b] hover:text-white transition-colors duration-200 tracking-[-0.01em]"
                 whileHover={{ scale: 1.05 }}
@@ -274,6 +281,15 @@ export default function Navbar() {
                     />
                   </motion.a>
                 ))}
+
+                <motion.a
+                  href="/projects"
+                  onClick={handleMobileNavClick}
+                  className="block text-[15px] text-[#86868b] hover:text-white py-3 border-b border-white/8 tracking-[-0.022em]"
+                  variants={itemVariants}
+                >
+                  App
+                </motion.a>
 
                 <motion.a
                   href="#contact"
