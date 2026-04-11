@@ -83,6 +83,127 @@ body {
   letter-spacing: -0.022em;
 }
 
+/* App default shell — lavender / pink mesh (restores purple glass look site-wide) */
+.theme-glass-site {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: #1d1d1f;
+  background-color: #ececee;
+  background-image:
+    radial-gradient(ellipse 120% 95% at 50% -28%, rgba(167, 139, 250, 0.42), transparent 58%),
+    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(244, 114, 182, 0.18), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.16), transparent 50%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(196, 181, 253, 0.12), transparent 45%),
+    linear-gradient(180deg, #f5f0ff 0%, #ececee 38%, #e8eef5 100%);
+}
+
+.glass-surface {
+  background: rgba(255, 255, 255, 0.58);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 8px 40px -12px rgba(99, 102, 241, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* Premium liquid glass — stronger blur, specular edge, violet bloom */
+.glass-liquid {
+  position: relative;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.78) 0%,
+    rgba(255, 255, 255, 0.42) 48%,
+    rgba(250, 245, 255, 0.65) 100%
+  );
+  backdrop-filter: blur(44px) saturate(200%);
+  -webkit-backdrop-filter: blur(44px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 4px 24px -6px rgba(99, 102, 241, 0.2),
+    0 16px 56px -16px rgba(167, 139, 250, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 0 0 1px rgba(167, 139, 250, 0.1);
+}
+
+.glass-liquid-interactive {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-liquid-interactive:hover {
+    transform: translateY(-3px) scale(1.008);
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow:
+      0 8px 32px -8px rgba(99, 102, 241, 0.28),
+      0 24px 64px -20px rgba(167, 139, 250, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.98),
+      inset 0 0 0 1px rgba(0, 113, 227, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-liquid-interactive {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .glass-liquid-interactive:hover {
+    transform: none;
+  }
+}
+
+/* Fixed header — thinner specular, stays readable while scrolling */
+.glass-liquid-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.82) 0%,
+    rgba(255, 255, 255, 0.58) 100%
+  );
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow:
+    0 8px 32px -12px rgba(99, 102, 241, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Soft floating orbs (workspace / hero depth) */
+.liquid-blob {
+  border-radius: 50%;
+  filter: blur(0.5px);
+  animation: liquid-blob-drift 22s ease-in-out infinite;
+}
+
+.liquid-blob-delayed {
+  animation-delay: -11s;
+}
+
+@keyframes liquid-blob-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.55;
+  }
+  33% {
+    transform: translate(12px, -18px) scale(1.06);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translate(-10px, 10px) scale(0.96);
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-blob,
+  .liquid-blob-delayed {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
 /* ── Apple-style section system ── */
 .section-dark {
   background: var(--bg-dark);
@@ -207,12 +328,31 @@ body {
   font-weight: 400;
   letter-spacing: -0.022em;
   border-radius: 980px;
-  transition: background 0.2s ease;
+  transition:
+    background 0.25s ease,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   white-space: nowrap;
+  box-shadow:
+    0 2px 8px -2px rgba(0, 113, 227, 0.35),
+    0 8px 24px -8px rgba(99, 102, 241, 0.25);
 }
 
 .btn-primary:hover {
   background: var(--blue-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 16px -4px rgba(0, 113, 227, 0.45),
+    0 12px 32px -10px rgba(99, 102, 241, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary {
+    transition: background 0.2s ease;
+  }
+  .btn-primary:hover {
+    transform: none;
+  }
 }
 
 .btn-secondary {
@@ -593,3 +733,327 @@ body {
 .radial-hero { background: transparent; }
 .radial-section { background: transparent; }
 .noise-overlay::before { display: none; }
+
+/* ── Workspace app (Cursor-style IDE shell + real glass: OS/desktop bleeds through) ── */
+.theme-workspace-app {
+  color: #d4d4d8;
+  /* Let the mesh show through — transparency + blur picks up wallpaper behind the window */
+  background: transparent;
+}
+
+.theme-workspace-app .liquid-blob {
+  opacity: 0.35;
+}
+
+.theme-workspace-app .glass-liquid {
+  background: linear-gradient(
+    155deg,
+    rgba(30, 30, 32, 0.55) 0%,
+    rgba(18, 18, 20, 0.38) 45%,
+    rgba(24, 24, 28, 0.5) 100%
+  );
+  backdrop-filter: blur(56px) saturate(165%);
+  -webkit-backdrop-filter: blur(56px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 8px 40px -12px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.theme-workspace-app .glass-liquid-interactive:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 12px 48px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.theme-workspace-app .glass-liquid-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(22, 22, 24, 0.72) 0%,
+    rgba(18, 18, 20, 0.55) 100%
+  );
+  backdrop-filter: blur(40px) saturate(160%);
+  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 8px 40px -16px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.theme-workspace-app .workspace-sidebar-shell {
+  background: linear-gradient(
+    180deg,
+    rgba(16, 16, 18, 0.72) 0%,
+    rgba(12, 12, 14, 0.58) 100%
+  );
+  backdrop-filter: blur(48px) saturate(150%);
+  -webkit-backdrop-filter: blur(48px) saturate(150%);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+.theme-workspace-app .workspace-mesh {
+  background-color: #0c0c0e;
+  background-image:
+    radial-gradient(ellipse 120% 95% at 50% -28%, rgba(52, 211, 153, 0.08), transparent 58%),
+    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(99, 102, 241, 0.1), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.08), transparent 50%),
+    linear-gradient(180deg, #121214 0%, #0c0c0e 38%, #0a0a0c 100%);
+}
+
+/* ── Workspace shell: marketing-adjacent lavender mesh + indigo accent (light default) ── */
+.theme-agent-shell {
+  color: #141416;
+  background: transparent;
+  --workspace-fg: #141416;
+  --workspace-muted-fg: #52525b;
+  --workspace-border: rgba(24, 24, 27, 0.09);
+  --workspace-surface: rgba(255, 255, 255, 0.78);
+  --workspace-canvas: #f3f0fa;
+  --workspace-mission-bg: rgba(255, 255, 255, 0.62);
+  --workspace-accent: #6366f1;
+  --workspace-accent-hover: #4f46e5;
+  --workspace-sidebar: rgba(252, 250, 255, 0.9);
+  --ios-label: #141416;
+  --ios-secondary: #52525b;
+  --ios-separator: rgba(24, 24, 27, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.88);
+  --apple-spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.theme-agent-shell .agent-canvas {
+  background-color: #f3f0fa;
+  background-image:
+    radial-gradient(ellipse 120% 95% at 50% -28%, rgba(167, 139, 250, 0.38), transparent 58%),
+    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(244, 114, 182, 0.16), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.14), transparent 50%),
+    linear-gradient(180deg, #faf5ff 0%, #f3f0fa 42%, #eef2ff 100%);
+  backdrop-filter: blur(12px) saturate(118%);
+  -webkit-backdrop-filter: blur(12px) saturate(118%);
+}
+
+.theme-agent-shell .agent-sidebar {
+  background: var(--workspace-sidebar);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-color: var(--workspace-border);
+  box-shadow: inset -1px 0 0 rgba(99, 102, 241, 0.06);
+}
+
+.theme-agent-shell .agent-header {
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid var(--workspace-border);
+}
+
+.theme-agent-shell .agent-composer {
+  background: var(--workspace-surface);
+  border: 1px solid var(--workspace-border);
+  box-shadow:
+    0 4px 24px -8px rgba(99, 102, 241, 0.12),
+    0 16px 48px -24px rgba(167, 139, 250, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .theme-agent-shell {
+    color: #ececf4;
+    --workspace-fg: #ececf4;
+    --workspace-muted-fg: #9ca3af;
+    --workspace-border: rgba(255, 255, 255, 0.1);
+    --workspace-surface: rgba(24, 24, 30, 0.88);
+    --workspace-canvas: #0f0f14;
+    --workspace-mission-bg: rgba(15, 15, 20, 0.82);
+    --workspace-accent: #a78bfa;
+    --workspace-accent-hover: #8b5cf6;
+    --workspace-sidebar: rgba(18, 18, 24, 0.92);
+    --ios-label: #ececf4;
+    --ios-secondary: #9ca3af;
+    --ios-separator: rgba(255, 255, 255, 0.1);
+    --ios-group-bg: rgba(28, 28, 34, 0.92);
+  }
+
+  .theme-agent-shell .agent-canvas {
+    background-color: #0f0f14;
+    background-image:
+      radial-gradient(ellipse 100% 80% at 50% -20%, rgba(99, 102, 241, 0.22), transparent 55%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, rgba(167, 139, 250, 0.12), transparent 50%),
+      linear-gradient(180deg, #14141c 0%, #0f0f14 48%, #0c0c10 100%);
+  }
+
+  .theme-agent-shell .agent-sidebar {
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .theme-agent-shell .agent-header {
+    background: rgba(15, 15, 20, 0.78);
+  }
+
+  .theme-agent-shell .agent-composer {
+    box-shadow: 0 12px 40px -20px rgba(0, 0, 0, 0.55);
+  }
+}
+
+/* Projects dashboard — WHOOP-inspired dark command surface */
+.dashboard-whoop {
+  isolation: isolate;
+}
+
+/* Dashboard — pro surface (Linear / Vercel–grade) */
+.dashboard-pro-hero {
+  position: relative;
+  isolation: isolate;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.72) 0%, rgba(252, 251, 255, 0.55) 45%, rgba(248, 250, 255, 0.78) 100%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+    0 1px 1px rgba(15, 23, 42, 0.03),
+    0 8px 28px -14px rgba(15, 23, 42, 0.08),
+    0 28px 56px -36px rgba(99, 102, 241, 0.12);
+}
+
+.dashboard-pro-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.12) 72%, transparent 100%);
+}
+
+.dashboard-pro-aurora {
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 70%;
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(99, 102, 241, 0.16), transparent 68%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dashboard-pro-hero {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(
+      165deg,
+      rgba(22, 22, 30, 0.75) 0%,
+      rgba(16, 16, 22, 0.72) 50%,
+      rgba(14, 14, 20, 0.82) 100%
+    );
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 1px 2px rgba(0, 0, 0, 0.25),
+      0 20px 48px -24px rgba(0, 0, 0, 0.45),
+      0 0 60px -30px rgba(139, 92, 246, 0.14);
+  }
+
+  .dashboard-pro-hero::before {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    opacity: 0.4;
+  }
+
+  .dashboard-pro-aurora {
+    background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139, 92, 246, 0.12), transparent 68%);
+  }
+}
+
+.dashboard-pro-metric {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .dashboard-pro-metric:hover {
+    background-color: rgba(255, 255, 255, 0.65);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  @media (hover: hover) and (pointer: fine) {
+    .dashboard-pro-metric:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+  }
+}
+
+.dashboard-pro-card {
+  border-radius: 1.125rem;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 16px 40px -28px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dashboard-pro-card {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(22, 22, 30, 0.75);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 12px 40px -24px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.dashboard-pro-skeleton {
+  border-radius: 1.75rem;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.04) 0%, rgba(99, 102, 241, 0.06) 100%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dashboard-pro-skeleton {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(139, 92, 246, 0.06) 100%);
+  }
+}
+
+/* Workspace density & focus — toggled from sidebar preferences */
+.theme-agent-shell.workspace-compact .workspace-page-inner {
+  padding-top: 1rem;
+  padding-bottom: 1.25rem;
+}
+@media (min-width: 640px) {
+  .theme-agent-shell.workspace-compact .workspace-page-inner {
+    padding-top: 1.25rem;
+    padding-bottom: 1.5rem;
+  }
+}
+.theme-agent-shell.workspace-focus .agent-sidebar {
+  display: none !important;
+}
+.theme-agent-shell.workspace-focus .workspace-right-rail,
+.theme-agent-shell.workspace-focus .workspace-right-rail-toggle {
+  display: none !important;
+}
+.theme-agent-shell.workspace-focus .agent-canvas {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Apple-style tap feedback (respect reduced motion) */
+.ios-press {
+  transition:
+    transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease;
+}
+.ios-press:active {
+  transform: scale(0.985);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ios-press:active {
+    transform: none;
+  }
+}

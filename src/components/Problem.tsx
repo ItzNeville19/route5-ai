@@ -2,6 +2,14 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import {
+  defaultTransition,
+  easeApple,
+  inViewOpts,
+  revealY,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/motion";
 
 // Simple SVG icons for pain points
 const IconLock = () => (
@@ -38,76 +46,50 @@ const IconFail = () => (
 const painPoints = [
   {
     icon: IconLock,
-    title: "Inaccessible Business Logic",
-    description:
-      "Critical capabilities locked in UI workflows, middleware, and stored procedures. No APIs. No callable interfaces.",
+    title: "Logic trapped in UIs",
+    description: "No clean API to the real workflow.",
   },
   {
     icon: IconStall,
-    title: "AI Agent Stalling",
-    description:
-      "Agents can reason and plan but cannot execute. Real business outcomes remain locked inside legacy systems.",
+    title: "Agents idle",
+    description: "Plans without execution path.",
   },
   {
     icon: IconCash,
-    title: "Stranded ROI",
-    description:
-      "Billions invested in AI infrastructure with no path to operational execution inside legacy environments.",
+    title: "ROI stranded",
+    description: "Spend on models, not operations.",
   },
   {
     icon: IconFail,
-    title: "Failed Rewrites",
-    description:
-      "Multi-year modernization projects averaging 3–5 years and tens of millions in cost, with high failure rates.",
+    title: "Rewrite risk",
+    description: "Years, budget, still no ship.",
   },
 ];
 
 export default function Problem() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.5 },
-    },
-  };
+  const inView = useInView(ref, inViewOpts);
 
   return (
     <section id="problem" ref={ref} className="section-dark py-28 lg:py-36">
       <div className="container-apple">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55 }}
+          {...revealY(inView, 22)}
           className="max-w-[800px] mb-20 lg:mb-24"
         >
-          <p className="label-text text-[#86868b] mb-6">The Problem</p>
-          <h2 className="section-headline text-white mb-8">
-            Enterprise AI stalls at the legacy wall.
+          <p className="label-text text-[#86868b] mb-6">Why</p>
+          <h2 className="section-headline text-white mb-6">
+            AI stops where legacy context is opaque.
           </h2>
-          <p className="body-large text-[#86868b] max-w-[700px]">
-            AI agents cannot replace or augment human operators unless they can execute the exact capabilities embedded in legacy applications. Legacy systems remain the last structural barrier to AI at scale.
+          <p className="text-[17px] text-[#86868b] max-w-[560px] leading-relaxed tracking-[-0.015em]">
+            If the work only lives in old systems and scattered threads, models can&apos;t execute — only narrate.
           </p>
         </motion.div>
 
         {/* Pain points grid — 2x2 layout */}
         <motion.div
-          variants={containerVariants}
+          variants={staggerContainer}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           className="grid md:grid-cols-2 gap-6 lg:gap-8 mb-16 lg:mb-20"
@@ -117,7 +99,7 @@ export default function Problem() {
             return (
               <motion.div
                 key={idx}
-                variants={cardVariants}
+                variants={staggerItem}
                 className="group glass-card p-8 lg:p-10 hover-lift cursor-default border border-white/10"
               >
                 {/* Icon */}
@@ -141,19 +123,19 @@ export default function Problem() {
 
         {/* Bottom statement with CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55, delay: 0.5 }}
+          initial={{ opacity: 1, y: 16 }}
+          animate={{ opacity: 1, y: inView ? 0 : 16 }}
+          transition={{ ...defaultTransition, delay: 0.45, ease: easeApple }}
           className="border-t border-white/10 pt-12 lg:pt-16 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8"
         >
-          <p className="text-[18px] lg:text-[20px] font-semibold text-white tracking-[-0.02em] max-w-[600px] leading-snug">
-            AI agents cannot replace or augment human operators unless they can execute the exact capabilities embedded in legacy applications.
+          <p className="text-[17px] font-semibold text-white tracking-[-0.02em] max-w-[420px] leading-snug">
+            Structure the narrative first. Automate second.
           </p>
           <a
             href="#solution"
-            className="btn-primary flex-shrink-0 group/btn"
+            className="btn-primary btn-shine flex-shrink-0 group/btn relative overflow-hidden"
           >
-            See the solution
+            The how
             <svg
               className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
               viewBox="0 0 24 24"

@@ -1,0 +1,31 @@
+Where to put API keys (secrets never go in Git — only here)
+===========================================================
+
+1. In Cursor: File → Open File… (or Cmd+O on Mac)
+2. Open this exact file (create it if missing):
+
+   /Users/nevilleengineer/route5.ai/.env.local
+
+   Same folder as package.json for this project.
+
+3. Paste each line as NAME=value (no quotes unless the value has spaces).
+   Save the file, then restart `npm run dev` so Next.js reloads env.
+
+What to paste from each dashboard
+---------------------------------
+
+Clerk (clerk.com → your app → API Keys)
+  NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+  CLERK_SECRET_KEY=
+
+Supabase (supabase.com → your project → Project Settings → API)
+  NEXT_PUBLIC_SUPABASE_URL=              ← Project URL
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=  ← anon public key (sb_publishable_…)
+  SUPABASE_SERVICE_ROLE_KEY=             ← service_role secret (long JWT, eyJ…)
+                                         Must NOT be the publishable key.
+
+OpenAI (platform.openai.com → API keys)
+  OPENAI_API_KEY=                        ← server only; optional if you use offline digest
+  OPENAI_MODEL=                          ← optional, e.g. gpt-4o-mini
+
+Copy from: .env.example (tracked template with names only, no secrets)

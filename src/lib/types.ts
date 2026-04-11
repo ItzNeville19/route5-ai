@@ -1,20 +1,22 @@
-import type { Timestamp } from "firebase/firestore";
 import type { ActionItemStored } from "@/lib/ai/schema";
 
 export type Project = {
   id: string;
   name: string;
-  ownerId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  /** Single emoji or short glyph shown in sidebar / dashboard */
+  iconEmoji?: string | null;
+  clerkUserId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Extraction = {
   id: string;
-  ownerId: string;
+  projectId: string;
+  clerkUserId: string;
   rawInput: string;
   summary: string;
   decisions: string[];
   actionItems: ActionItemStored[];
-  createdAt: Timestamp;
+  createdAt: string;
 };

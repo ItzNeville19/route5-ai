@@ -65,9 +65,9 @@ We do not collect or store the contents of your production databases, source cod
 - Data at rest is encrypted using AES-256.
 - Access to production systems is restricted to authorized personnel via multi-factor authentication.
 - We conduct periodic security assessments and penetration tests.
-- We maintain SOC 2 Type II compliance.
+- We apply controls appropriate to our current deployment stage and iterate as we scale.
 
-Despite these measures, no system is completely secure. We encourage you to use strong passwords and to notify us immediately at security@route5.ai if you suspect any unauthorized access.`,
+Despite these measures, no system is completely secure. We encourage you to use strong passwords and to notify us immediately at neville@rayze.xyz if you suspect any unauthorized access.`,
   },
   {
     title: "7. Your Rights",
@@ -80,7 +80,7 @@ Despite these measures, no system is completely secure. We encourage you to use 
 - **Objection**: Object to processing based on legitimate interests or for direct marketing.
 - **Restriction**: Request that we limit how we use your data pending a dispute.
 
-To exercise these rights, contact us at privacy@route5.ai. We will respond within 30 days.`,
+To exercise these rights, contact us at neville@rayze.xyz. We will respond within 30 days.`,
   },
   {
     title: "8. Cookies and Tracking",
@@ -102,48 +102,44 @@ The date at the top of this page indicates when this policy was last updated.`,
     title: "10. Contact Us",
     content: `If you have questions about this Privacy Policy or our data practices, please contact us:
 
-**Route5, Inc.**
-privacy@route5.ai
-
-For EU/EEA residents, Route5's EU Representative can be contacted at: dpo@route5.ai`,
+**Route5**
+neville@rayze.xyz`,
   },
 ];
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Nav */}
-      <nav className="border-b border-border">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="relative w-7 h-7 flex items-center justify-center">
-              <div className="absolute inset-0 bg-blue-500/20 rounded-md rotate-45" />
-              <span className="relative text-blue-400 font-bold text-sm font-mono">
-                R5
-              </span>
-            </div>
-            <span className="text-lg font-semibold">
-              Route<span className="text-blue-400">5</span>
-            </span>
+    <div className="theme-glass-site min-h-screen text-[#1d1d1f]">
+      <nav className="border-b border-black/[0.08] bg-white/45 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">
+          <Link
+            href="/"
+            className="text-[15px] font-semibold tracking-[-0.03em] text-[#1d1d1f]"
+          >
+            Route5
           </Link>
-          <span className="text-text-secondary text-sm">/</span>
-          <span className="text-sm text-text-secondary">Privacy Policy</span>
+          <span className="text-sm text-[#86868b]">/</span>
+          <span className="text-sm text-[#6e6e73]">Privacy Policy</span>
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-6 py-16 lg:py-24">
+      <div className="mx-auto max-w-3xl px-6 py-16 lg:max-w-4xl lg:py-24">
         <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4">Privacy Policy</h1>
-          <p className="text-text-secondary">
-            Effective date: March 18, 2026 · Last updated: March 18, 2026
+          <h1 className="mb-4 text-4xl font-bold tracking-[-0.03em] text-[#1d1d1f]">
+            Privacy Policy
+          </h1>
+          <p className="text-[#6e6e73]">
+            Effective date: March 18, 2026 · Last updated: April 8, 2026
           </p>
         </div>
 
-        <div className="prose prose-invert max-w-none space-y-10">
+        <div className="max-w-none space-y-10">
           {sections.map((section) => (
             <div key={section.title}>
-              <h2 className="text-xl font-semibold mb-4">{section.title}</h2>
-              <div className="text-text-secondary leading-relaxed space-y-3 whitespace-pre-line">
+              <h2 className="mb-4 text-xl font-semibold tracking-[-0.02em] text-[#1d1d1f]">
+                {section.title}
+              </h2>
+              <div className="space-y-3 whitespace-pre-line leading-relaxed text-[#6e6e73]">
                 {section.content.split("\n\n").map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
@@ -152,12 +148,12 @@ export default function PrivacyPage() {
           ))}
         </div>
 
-        <div className="mt-16 pt-8 border-t border-border">
+        <div className="mt-16 border-t border-black/[0.08] pt-8">
           <Link
             href="/"
-            className="text-sm text-accent hover:text-blue-300 transition-colors"
+            className="text-sm font-medium text-[#0071e3] transition hover:text-[#0077ed]"
           >
-            ← Back to Route5.ai
+            ← Back to Route5
           </Link>
         </div>
       </div>

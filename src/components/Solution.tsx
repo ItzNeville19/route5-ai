@@ -2,97 +2,78 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import { Plug, Radar, Sparkles, Package, ShieldCheck } from "lucide-react";
+import { FolderPlus, FileText, Sparkles, ListChecks, Share2 } from "lucide-react";
+import {
+  easeApple,
+  inViewOpts,
+  lineGrow,
+  revealY,
+  staggerContainer,
+  staggerItem,
+} from "@/lib/motion";
 
 const steps = [
   {
     num: "01",
-    title: "Connect",
-    description: "Point Route5 at your legacy codebase and test environment",
-    icon: Plug,
-    detail: "Java 6–21 · .NET Framework & Core · Spring · Hibernate · EJB · Oracle · SQL Server · PostgreSQL · MySQL · Sybase",
+    title: "Project",
+    description: "Name it. One trail.",
+    icon: FolderPlus,
+    detail: "Clerk + Supabase. Your tenant.",
   },
   {
     num: "02",
-    title: "Capture",
-    description: "Platform captures execution flows across source code, runtime signals, and user workflows",
-    icon: Radar,
-    detail: "Static code analysis + runtime execution signals + user workflow recording fused into a single high-fidelity execution model.",
+    title: "Paste",
+    description: "Notes, tickets, threads — 100k chars max.",
+    icon: FileText,
+    detail: "No connector required for v1.",
   },
   {
     num: "03",
-    title: "Analyze",
-    description: "AI analyzes traces, infers business logic, generates orchestrated capability wrapper",
+    title: "Extract",
+    description: "OpenAI → summary, decisions, actions.",
     icon: Sparkles,
-    detail: "Merges all execution paths into a single validated capability. Surfaces ambiguity for human review before proceeding.",
+    detail: "Low temp. Errors surface.",
   },
   {
     num: "04",
-    title: "Produce",
-    description: "System produces APIs, MCP tools, tests, guardrails, observability, and parity validation",
-    icon: Package,
-    detail: "Full test suite · Guardrails · Observability instrumentation · OpenAPI documentation · Architecture diagrams included.",
+    title: "Track",
+    description: "Check actions off together.",
+    icon: ListChecks,
+    detail: "Same record for the team.",
   },
   {
     num: "05",
-    title: "Validate & Deploy",
-    description: "Human-in-the-loop review, parity validation, safe deployment",
-    icon: ShieldCheck,
-    detail: "API responses · Database state · External calls · File outputs · Side effects — all compared. 95%+ equivalence required.",
+    title: "Iterate",
+    description: "Re-run when context shifts.",
+    icon: Share2,
+    detail: "APIs / MCP: roadmap.",
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6 },
-  },
-};
-
-const lineVariants = {
-  hidden: { scaleY: 0 },
-  visible: {
-    scaleY: 1,
-    transition: { duration: 1.2 },
-  },
-};
-
 export default function Solution() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, inViewOpts);
 
   return (
     <section id="solution" ref={ref} className="section-dark py-28 lg:py-36 relative overflow-hidden">
       <div className="container-apple">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55 }}
+          {...revealY(inView, 22)}
           className="max-w-[700px] mb-24"
         >
-          <p className="label-text text-[#6e6e73] mb-5">The Platform</p>
+          <p className="label-text text-[#6e6e73] mb-5">How</p>
           <h2 className="section-headline text-white">
-            From legacy workflows to AI-callable capabilities.
+            Five moves. Repeat weekly.
           </h2>
+          <p className="mt-5 text-[16px] text-[#86868b] max-w-[480px] tracking-[-0.01em]">
+            Text in → structure out → track.
+          </p>
         </motion.div>
 
         {/* Timeline Container */}
         <motion.div
-          variants={containerVariants}
+          variants={staggerContainer}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           className="relative"
@@ -100,7 +81,7 @@ export default function Solution() {
           {/* Animated vertical line */}
           <div className="hidden lg:block absolute left-[39px] top-12 bottom-0 w-px">
             <motion.div
-              variants={lineVariants}
+              variants={lineGrow}
               className="w-full h-full origin-top bg-gradient-to-b from-[#0071e3] via-[#0071e3]/50 to-transparent"
               style={{ transformOrigin: "top" }}
             />
@@ -108,12 +89,12 @@ export default function Solution() {
 
           {/* Steps */}
           <div className="space-y-8 lg:space-y-12">
-            {steps.map((step, index) => {
+            {steps.map((step) => {
               const Icon = step.icon;
               return (
                 <motion.div
                   key={step.num}
-                  variants={itemVariants}
+                  variants={staggerItem}
                   className="relative"
                 >
                   <div className="grid lg:grid-cols-[90px_1fr] gap-8 lg:gap-12">
@@ -156,16 +137,16 @@ export default function Solution() {
 
         {/* Footer callout */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55, delay: 0.8 }}
+          initial={{ opacity: 1, y: 18 }}
+          animate={{ opacity: 1, y: inView ? 0 : 18 }}
+          transition={{ duration: 0.55, delay: 0.65, ease: easeApple }}
           className="mt-16 lg:mt-24 p-8 lg:p-10 rounded-2xl border border-[#0071e3]/20 bg-gradient-to-r from-[#001d3d]/40 to-[#001d3d]/20 backdrop-blur-sm"
         >
-          <p className="text-lg lg:text-[19px] font-semibold text-white tracking-[-0.022em] mb-3">
-            The legacy system continues operating exactly as before.
+          <p className="text-[17px] font-semibold text-white tracking-[-0.02em] mb-2">
+            Zero prod access in this release.
           </p>
-          <p className="text-[15px] text-[#86868b] tracking-[-0.01em]">
-            Route5 creates a validated AI interaction layer on top — no production code changes, no deployment risk, no downtime.
+          <p className="text-[14px] text-[#86868b] tracking-[-0.01em]">
+            Paste-only today. Connectors = roadmap. No mystery.
           </p>
         </motion.div>
       </div>

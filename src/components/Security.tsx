@@ -2,165 +2,126 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
-const controls = [
+const liveControls = [
   {
     icon: (
       <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M9 12l2 2 4-4m7-4a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Behavioral Parity Validation",
+    title: "Authenticated access",
     description:
-      "Comprehensive output comparison ensures generated capabilities match legacy system behavior exactly before approval.",
+      "Clerk sign-in. API routes reject unauthenticated calls. Projects and extractions are tied to your user ID.",
   },
   {
     icon: (
       <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M19.4 15a1.65 1.65 0 00.33-1.82l-.756-1.514a1.65 1.65 0 00-1.597-.821c-.047 0-.098 0-.146.02-.505.087-.89.379-1.23.784-.28.361-.646.724-1.149.724-.504 0-.87-.363-1.15-.724-.34-.405-.725-.697-1.23-.784a1.666 1.666 0 00-1.597.821l-.755 1.514a1.65 1.65 0 00.33 1.82c.24.24.545.453.852.62.31.17.63.28.975.28s.665-.11.975-.28c.307-.167.612-.38.852-.62zM4.6 9a1.65 1.65 0 00-.33 1.82l.756 1.514a1.65 1.65 0 001.597.821c.047 0 .098 0 .146-.02.505-.087.89-.379 1.23-.784.28-.361.646-.724 1.149-.724.504 0 .87.363 1.15.724.34.405.725.697 1.23.784.05.02.099.02.146.02.617 0 1.185-.301 1.597-.821l.755-1.514A1.65 1.65 0 0019.4 9" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Role-Based Agent Authentication",
+    title: "Transport security",
     description:
-      "Bot identity maps to legacy system roles. Agents operate only within permitted business boundaries.",
+      "Browser traffic uses HTTPS. Secrets (Clerk, Supabase service role, OpenAI) stay on the server — never shipped to the client.",
   },
   {
     icon: (
       <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Throttling & Execution Guardrails",
+    title: "Tenant-scoped data",
     description:
-      "Configurable rate limits and execution boundaries prevent AI agents from overwhelming legacy infrastructure.",
+      "Postgres rows include your Clerk user ID. You only read and write rows you own. Configure Supabase in your own cloud account for full control.",
   },
   {
     icon: (
       <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M9 12h6m-6 4h6m2-15H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V3a2 2 0 00-2-2z" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Complete Audit Logging",
+    title: "Human review by design",
     description:
-      "Evidence → facts → AI proposals → human decisions → parity reports. Full lineage from legacy source to artifact.",
-  },
-  {
-    icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-    title: "PII & Data Protection",
-    description:
-      "Sensitive data masking and encryption at every layer. Automatic detection and protection during trace capture.",
-  },
-  {
-    icon: (
-      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-    title: "Transaction Integrity",
-    description:
-      "Boundary protection with automatic rollback capability. AI agents cannot bypass transactional guarantees.",
+      "Outputs are proposals — your team decides what ships. That posture carries through as we add automation.",
   },
 ];
 
-const certs = [
-  { name: "SOC 2 Type II",  desc: "Annual third-party audit" },
-  { name: "ISO 27001",      desc: "Information security management" },
-  { name: "GDPR",           desc: "EU data protection compliance" },
-  { name: "HIPAA",          desc: "Healthcare data standards" },
-  { name: "DORA",           desc: "Digital operational resilience" },
-  { name: "PCI DSS",        desc: "Payment card industry standards" },
+const roadmapControls = [
+  {
+    title: "Parity & guardrails",
+    description: "Automated comparison against live systems, rate limits, and policy checks before any agent acts.",
+  },
+  {
+    title: "On-prem & BYO LLM",
+    description: "Run extraction and storage entirely inside your perimeter with your approved models.",
+  },
+  {
+    title: "Enterprise compliance pack",
+    description: "Formal SOC 2 / ISO evidence, DPAs, and customer-managed keys — negotiated with serious deployments.",
+  },
 ];
 
 export default function Security() {
-  const ref    = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const ref = useRef(null);
+  const inView = useInView(ref, inViewOpts);
 
   return (
     <section id="security" ref={ref} className="section-dark py-28 lg:py-36">
       <div className="container-apple">
 
-        {/* Header row */}
         <div className="grid lg:grid-cols-[1fr_1fr] gap-16 items-start mb-20">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.55 }}
+            initial={{ opacity: 1, y: 22 }}
+            animate={{ opacity: 1, y: inView ? 0 : 22 }}
+            transition={defaultTransition}
           >
-            <p className="label-text text-[#6e6e73] mb-5">Enterprise Security</p>
+            <p className="label-text text-[#6e6e73] mb-5">Security &amp; trust</p>
             <h2 className="section-headline text-white">
-              Safety is a first-class design principle.
+              No theatrics — just controls we can explain.
             </h2>
+            <p className="mt-6 text-[16px] text-[#86868b] leading-relaxed max-w-[520px]">
+              We don&apos;t claim certifications we haven&apos;t earned. Below is what the deployed app actually does; the roadmap lists what enterprise programs typically need next.
+            </p>
           </motion.div>
 
-          {/* On-premise callout */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.55, delay: 0.15 }}
-            className="lg:pt-8"
+            initial={{ opacity: 1, y: 22 }}
+            animate={{ opacity: 1, y: inView ? 0 : 22 }}
+            transition={{ ...defaultTransition, delay: 0.12 }}
+            className="lg:pt-4"
           >
-            <div className="relative rounded-2xl border border-[#0071e3]/25 bg-gradient-to-br from-[#0071e3]/8 via-[#001d3d]/20 to-transparent backdrop-blur-sm p-8 mb-8 overflow-hidden group">
-              {/* Subtle animated border glow */}
-              <div className="absolute inset-0 rounded-2xl border border-[#0071e3]/10 group-hover:border-[#0071e3]/40 transition-colors duration-300" />
-
-              <div className="relative">
-                <p className="text-[17px] font-semibold text-white tracking-[-0.022em] mb-3 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-[#0071e3]" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
-                  </svg>
-                  All Components Run In-Premise
-                </p>
-                <p className="text-[14px] text-[#86868b] leading-relaxed tracking-[-0.01em]">
-                  No source code, execution traces, or business data ever leaves your environment. Bring your own LLM — Azure OpenAI, AWS Bedrock, or self-hosted.
-                </p>
-              </div>
-            </div>
-
-            {/* Cert badges */}
-            <div className="grid grid-cols-3 gap-3">
-              {certs.map((c, i) => (
-                <motion.div
-                  key={c.name}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.3, delay: 0.25 + (i * 0.05) }}
-                  whileHover={{ y: -2 }}
-                  className="rounded-xl bg-white/4 border border-white/8 hover:border-white/20 px-4 py-3.5 transition-colors duration-300 cursor-default"
-                >
-                  <p className="text-[13px] font-semibold text-white tracking-[-0.01em] mb-0.5">{c.name}</p>
-                  <p className="text-[11px] text-[#6e6e73] leading-snug">{c.desc}</p>
-                </motion.div>
-              ))}
+            <div className="relative rounded-2xl border border-[#0071e3]/25 bg-gradient-to-br from-[#0071e3]/8 via-[#001d3d]/20 to-transparent backdrop-blur-sm p-8 overflow-hidden">
+              <p className="text-[17px] font-semibold text-white tracking-[-0.022em] mb-3">
+                Third-party subprocessors (today)
+              </p>
+              <ul className="text-[14px] text-[#86868b] leading-relaxed space-y-2 list-disc pl-5">
+                <li>Clerk — authentication</li>
+                <li>Supabase — Postgres hosting (your project)</li>
+                <li>OpenAI — model inference for extraction</li>
+              </ul>
+              <p className="text-[12px] text-[#6e6e73] mt-4">
+                Review your agreements with each vendor; we can support custom deployments as engagements mature.
+              </p>
             </div>
           </motion.div>
         </div>
 
-        {/* Controls grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {controls.map((ctrl, i) => (
+        <p className="text-[12px] font-semibold uppercase tracking-widest text-emerald-400/90 mb-4">Live controls</p>
+        <div className="grid md:grid-cols-2 gap-5 mb-14">
+          {liveControls.map((ctrl, i) => (
             <motion.div
               key={ctrl.title}
-              initial={{ opacity: 0, y: 16 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.45, delay: 0.05 * i }}
+              initial={{ opacity: 1, y: 16 }}
+              animate={{ opacity: 1, y: inView ? 0 : 16 }}
+              transition={{ duration: 0.45, delay: 0.05 * i, ease: easeApple }}
               whileHover={{ y: -4 }}
               className="group relative bg-[#1d1d1f] rounded-[20px] p-8 border border-white/8 overflow-hidden transition-all duration-300 hover:border-white/16"
             >
-              {/* Subtle gradient on hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#0071e3]/3 via-transparent to-[#0071e3]/1 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-              {/* Icon container with shield aesthetic */}
               <div className="relative mb-6 inline-flex items-center justify-center w-11 h-11 rounded-xl bg-[#0071e3]/10 group-hover:bg-[#0071e3]/20 text-[#0071e3] transition-colors duration-300">
                 {ctrl.icon}
               </div>
-
-              {/* Content */}
               <div className="relative">
                 <h3 className="text-[17px] font-semibold text-white tracking-[-0.022em] mb-3 leading-snug">
                   {ctrl.title}
@@ -169,9 +130,26 @@ export default function Security() {
                   {ctrl.description}
                 </p>
               </div>
+            </motion.div>
+          ))}
+        </div>
 
-              {/* Border glow effect */}
-              <div className="absolute inset-0 rounded-[20px] border border-[#0071e3]/0 group-hover:border-[#0071e3]/15 transition-colors duration-300 pointer-events-none" />
+        <p className="text-[12px] font-semibold uppercase tracking-widest text-[#6e6e73] mb-4">Roadmap (enterprise hardening)</p>
+        <div className="grid md:grid-cols-3 gap-5">
+          {roadmapControls.map((ctrl, i) => (
+            <motion.div
+              key={ctrl.title}
+              initial={{ opacity: 1, y: 14 }}
+              animate={{ opacity: 1, y: inView ? 0 : 14 }}
+              transition={{ duration: 0.4, delay: 0.08 * i, ease: easeApple }}
+              className="rounded-2xl border border-dashed border-white/20 bg-white/[0.03] p-6"
+            >
+              <h3 className="text-[15px] font-semibold text-white tracking-[-0.02em] mb-2">
+                {ctrl.title}
+              </h3>
+              <p className="text-[13px] text-[#86868b] leading-relaxed">
+                {ctrl.description}
+              </p>
             </motion.div>
           ))}
         </div>

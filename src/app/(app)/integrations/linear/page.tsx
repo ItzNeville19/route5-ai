@@ -1,0 +1,269 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { ClipboardCopy, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import SendToProjectButton from "@/components/integrations/SendToProjectButton";
+import { sanitizeIntegrationClientError } from "@/lib/client-integration-errors";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+
+type Issue = {
+  id: string;
+  identifier: string;
+  title: string;
+  description: string | null;
+  url: string;
+  stateName: string | null;
+  teamKey: string | null;
+};
+
+export default function LinearIntegrationPage() {
+  const { pushToast } = useWorkspaceExperience();
+  const [loading, setLoading] = useState(true);
+  const [configured, setConfigured] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [refInput, setRefInput] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importErr, setImportErr] = useState<string | null>(null);
+  const [lastBody, setLastBody] = useState<string | null>(null);
+  const [transportBody, setTransportBody] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await fetch("/api/integrations/linear", { credentials: "same-origin" });
+      const data = (await res.json()) as {
+        configured?: boolean;
+        demoMode?: boolean;
+        issues?: Issue[];
+        message?: string;
+        error?: string;
+      };
+      setConfigured(Boolean(data.configured));
+      setDemoMode(Boolean(data.demoMode));
+      if (!res.ok) {
+        setIssues([]);
+        setMessage(data.error ?? "Could not load.");
+        return;
+      }
+      setIssues(
+        (data.issues ?? []).map((i) => ({
+          ...i,
+          stateName: (i as { stateName?: string | null }).stateName ?? null,
+          teamKey: (i as { teamKey?: string | null }).teamKey ?? null,
+        }))
+      );
+      if (data.error) setMessage(data.error);
+      else setMessage(data.message ?? null);
+    } catch {
+      setMessage("Could not reach the Linear integration endpoint.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function copyBody(body: string) {
+    setTransportBody(body);
+    try {
+      await navigator.clipboard.writeText(body);
+      setLastBody("Copied.");
+      window.setTimeout(() => setLastBody(null), 4000);
+    } catch {
+      setLastBody("Select and copy manually if clipboard is blocked.");
+    }
+  }
+
+  async function importRef() {
+    setImportErr(null);
+    setImporting(true);
+    try {
+      const res = await fetch("/api/integrations/linear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ ref: refInput }),
+      });
+      const data = (await res.json()) as {
+        bodyForExtraction?: string;
+        error?: string;
+        demoMode?: boolean;
+      };
+      if (!res.ok) {
+        setImportErr(sanitizeIntegrationClientError(data.error ?? "Import failed."));
+        return;
+      }
+      if (data.bodyForExtraction) {
+        await copyBody(data.bodyForExtraction);
+        if (data.demoMode) {
+          pushToast("Preview ready — send to a project below.", "success");
+        }
+      }
+    } catch {
+      setImportErr("Network error.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function copyIssueForExtraction(issue: Issue) {
+    const body = [
+      `Linear ${issue.identifier}`,
+      issue.url,
+      issue.teamKey ? `Team: ${issue.teamKey}` : "",
+      issue.stateName ? `State: ${issue.stateName}` : "",
+      "",
+      `## ${issue.title}`,
+      "",
+      (issue.description ?? "").trim(),
+    ]
+      .filter((l) => l !== "")
+      .join("\n");
+    await copyBody(body);
+  }
+
+  return (
+    <div className="mx-auto max-w-[900px] pb-24">
+      <Link
+        href="/integrations"
+        className="text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
+      >
+        ← Integrations
+      </Link>
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-[32px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
+            Linear
+          </h1>
+          {!loading ? (
+            <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
+              {configured
+                ? "Live — pull real issues into extractions."
+                : "Ready — explore samples, import any link, and send to a project. No setup required to get started."}
+            </p>
+          ) : (
+            <p className="mt-2 h-[1.25rem] text-[13px] text-transparent" aria-hidden>
+              .
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <SendToProjectButton body={transportBody} sourceLabel="Linear" />
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:bg-white/60 disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {message ? (
+        <div className="mt-6 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/85 px-4 py-3 text-[13px] text-[var(--workspace-muted-fg)]">
+          {sanitizeIntegrationClientError(message)}
+        </div>
+      ) : null}
+
+      {lastBody ? (
+        <p className="mt-6 text-[13px] font-medium text-[var(--workspace-accent)]">{lastBody}</p>
+      ) : null}
+
+      {demoMode && !loading ? (
+        <div className="mt-6 rounded-2xl border border-[var(--workspace-accent)]/25 bg-[var(--workspace-accent)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
+          <span className="font-semibold">Walkthrough</span> — You’re seeing curated sample issues. Fetch
+          &amp; copy works the same as live data; your team can link Linear later for automatic sync.
+        </div>
+      ) : null}
+
+      <section className="mt-10 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
+        <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Import by URL or id</h2>
+        <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">
+          Paste a Linear issue link, UUID, or <span className="font-mono">TEAM-123</span> reference.
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            value={refInput}
+            onChange={(e) => setRefInput(e.target.value)}
+            placeholder="https://linear.app/…/issue/ENG-42"
+            className="min-h-[48px] flex-1 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 text-[15px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/20"
+          />
+          <button
+            type="button"
+            disabled={importing || !refInput.trim()}
+            onClick={() => void importRef()}
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--workspace-accent)] px-6 text-[14px] font-semibold text-white transition hover:bg-[var(--workspace-accent-hover)] disabled:opacity-40"
+          >
+            {importing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
+            Fetch &amp; copy
+          </button>
+        </div>
+        {importErr ? (
+          <p className="mt-3 text-[13px] text-red-600 dark:text-red-400" role="alert">
+            {sanitizeIntegrationClientError(importErr)}
+          </p>
+        ) : null}
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Recent issues</h2>
+        {loading ? (
+          <div className="mt-8 flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[var(--workspace-muted-fg)]" aria-hidden />
+          </div>
+        ) : issues.length === 0 ? (
+          <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">Nothing to show yet.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-[var(--workspace-border)] overflow-hidden rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90">
+            {issues.map((issue) => (
+              <li key={issue.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono text-[12px] text-[var(--workspace-accent)]">{issue.identifier}</p>
+                  <p className="mt-0.5 text-[15px] font-medium text-[var(--workspace-fg)]">{issue.title}</p>
+                  <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">
+                    {[issue.teamKey, issue.stateName].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void copyIssueForExtraction(issue)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--workspace-accent)] px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--workspace-accent-hover)]"
+                  >
+                    <ClipboardCopy className="h-4 w-4" aria-hidden />
+                    Copy for extraction
+                  </button>
+                  <a
+                    href={issue.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--workspace-border)] px-3 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-white/50"
+                  >
+                    Linear
+                    <ExternalLink className="h-3.5 w-3.5 opacity-60" aria-hidden />
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
+        <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+          Project
+        </Link>
+        {" → "}
+        Run extraction.
+      </p>
+    </div>
+  );
+}

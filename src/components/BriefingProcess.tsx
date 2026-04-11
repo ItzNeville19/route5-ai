@@ -1,46 +1,48 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
 const steps = [
   {
     num: "01",
-    title: "Schedule a 30-min call",
-    description: "We review your environment, tech stack, and target capabilities",
+    title: "30-minute intro",
+    description: "We align on your stakeholders, data boundaries, and what “good” looks like for structured output.",
     duration: "30 min",
   },
   {
     num: "02",
-    title: "Live capability extraction",
-    description: "45-60 minute demo using your actual legacy system",
-    duration: "45–60 min",
+    title: "Live workspace walkthrough",
+    description: "You sign in, create a project, and run a real extraction — the same path available in production.",
+    duration: "30–45 min",
   },
   {
     num: "03",
-    title: "Receive deployment proposal",
-    description: "Full proposal within 48 hours including timeline, scope, and pricing",
+    title: "Written next step",
+    description: "You receive a short recap with scope options, roadmap fit, and a proposal timeline when it makes sense.",
     duration: "48 hr",
   },
 ];
 
 export default function BriefingProcess() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, inViewOpts);
 
   return (
     <section ref={ref} className="section-dark py-28 lg:py-36 border-t border-white/10">
       <div className="container-apple">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.55 }}
+          initial={{ opacity: 1, y: 22 }}
+          animate={{ opacity: 1, y: inView ? 0 : 22 }}
+          transition={defaultTransition}
           className="max-w-[640px] mb-20"
         >
-          <p className="label-text text-[#6e6e73] mb-5">Getting Started</p>
+          <p className="label-text text-[#6e6e73] mb-5">Next</p>
           <h2 className="section-headline text-white">
-            What happens next.
+            Three beats.
           </h2>
         </motion.div>
 
@@ -74,9 +76,9 @@ export default function BriefingProcess() {
           {steps.map((step, i) => (
             <motion.div
               key={step.num}
-              initial={{ opacity: 0, y: 24 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.55, delay: 0.15 * i }}
+              initial={{ opacity: 1, y: 24 }}
+              animate={{ opacity: 1, y: inView ? 0 : 24 }}
+              transition={{ duration: 0.55, delay: 0.12 * i, ease: easeApple }}
               className="relative bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl p-8 hover:border-white/20 transition-colors"
             >
               {/* Numbered circle */}
@@ -107,17 +109,17 @@ export default function BriefingProcess() {
 
         {/* Bottom CTA */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.5 }}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.25 }}
           className="mt-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8 pt-12 border-t border-white/10"
         >
           <p className="text-[17px] font-semibold text-white tracking-[-0.022em]">
             No commitment required. The briefing is free.
           </p>
-          <a href="#contact" className="btn-primary flex-shrink-0">
+          <Link href="/#contact" className="btn-primary btn-shine text-[15px] font-medium px-6 py-3 rounded-full relative overflow-hidden inline-flex">
             Schedule your briefing
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>

@@ -1,7 +1,40 @@
+import path from "path";
+import { fileURLToPath } from "url";
 import type { NextConfig } from "next";
 
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  /** Ship a Node server bundle for the Electron desktop app (`npm run electron:dist`). */
+  output: "standalone",
+  serverExternalPackages: ["better-sqlite3"],
+  /** Prefer this repo as Turbopack root when multiple lockfiles exist on the machine. */
+  turbopack: {
+    root: projectRoot,
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "img.clerk.com", pathname: "/**" },
+    ],
+  },
+  /** Dev: allow 127.0.0.1 so HMR / error overlay work when not using localhost hostname */
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
 };
 
 export default nextConfig;

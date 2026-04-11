@@ -1,5 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import MotionConfigProvider from "@/components/providers/MotionConfigProvider";
+import ClerkProviderWrapper from "@/components/providers/ClerkProviderWrapper";
+import { CommandPaletteProvider } from "@/components/CommandPalette";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Route5 | Capture Exponentially Higher ROI from Enterprise AI",
+  title: "Route5 | Structured intelligence from enterprise text",
   description:
-    "Route5 connects AI agents to legacy enterprise systems by automatically extracting executable business capabilities and exposing them as modern AI-consumable interfaces.",
+    "Paste notes and tickets into projects; get AI-generated summaries, decisions, and action items you can track. Honest roadmap for legacy automation.",
   keywords: [
     "enterprise AI",
     "legacy modernization",
@@ -23,6 +26,18 @@ export const metadata: Metadata = {
     "AI agents",
     "API generation",
     "business capabilities",
+  ],
+  appleWebApp: {
+    capable: true,
+    title: "Route5",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0c0c0e" },
+    { media: "(prefers-color-scheme: light)", color: "#ececee" },
   ],
 };
 
@@ -36,8 +51,12 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
-        {children}
+      <body className="theme-glass-site min-h-full flex flex-col antialiased">
+        <MotionConfigProvider>
+          <ClerkProviderWrapper>
+            <CommandPaletteProvider>{children}</CommandPaletteProvider>
+          </ClerkProviderWrapper>
+        </MotionConfigProvider>
       </body>
     </html>
   );

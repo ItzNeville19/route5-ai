@@ -19,6 +19,11 @@
 
 # production
 /build
+/dist-electron
+
+# local embedded DB (auto-created; not committed)
+/data/*.sqlite
+/data/*.sqlite-*
 
 # misc
 .DS_Store

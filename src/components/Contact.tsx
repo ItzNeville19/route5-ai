@@ -2,21 +2,23 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
+import { defaultTransition, inViewOpts } from "@/lib/motion";
+import { CONTACT_EMAIL, mailtoHref } from "@/lib/site";
 
 const proofPoints = [
-  "30-min initial call",
-  "Live demo on your system",
-  "Proposal in 48 hours",
-  "No commitment required",
+  "30-minute intro call",
+  "Live workspace walkthrough",
+  "Written next step within 48 hours when applicable",
+  "No commitment to continue",
 ];
 
 const teamSizes = ["1–10", "11–50", "51–200", "201–1,000", "1,000+"];
 
 const useCases = [
-  "Legacy API extraction",
-  "MCP tool generation",
-  "Workflow automation",
-  "Parity validation",
+  "Structured extraction from text",
+  "Roadmap: legacy connectors",
+  "Roadmap: generated APIs / MCP",
+  "Roadmap: parity validation",
   "Other",
 ];
 
@@ -28,10 +30,9 @@ const selectClass =
 
 export default function Contact() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, inViewOpts);
 
   const [submitted, setSubmitted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     name: "",
@@ -65,14 +66,27 @@ export default function Contact() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
 
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 900));
-    setLoading(false);
+    const subject = `Route5 inquiry — ${form.company}`;
+    const body = [
+      `Name: ${form.name}`,
+      `Email: ${form.email}`,
+      `Company: ${form.company}`,
+      form.role.trim() ? `Role: ${form.role}` : null,
+      form.teamSize ? `Team size: ${form.teamSize}` : null,
+      form.useCase ? `Use case: ${form.useCase}` : null,
+      "",
+      form.message.trim() || "(No additional message)",
+    ]
+      .filter((line) => line != null && line !== "")
+      .join("\n");
+
+    const url = mailtoHref(subject, body);
+    window.location.assign(url);
     setSubmitted(true);
   };
 
@@ -85,13 +99,13 @@ export default function Contact() {
         <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 lg:gap-20 items-start">
           {/* Left: Sidebar */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.55 }}
+            initial={{ opacity: 1, y: 24 }}
+            animate={{ opacity: 1, y: inView ? 0 : 24 }}
+            transition={defaultTransition}
             className="lg:sticky lg:top-28"
           >
-            <h2 className="section-headline text-white mb-8">
-              Start Your Briefing
+            <h2 className="section-headline text-white mb-6">
+              Book.
             </h2>
 
             {/* Proof points */}
@@ -119,22 +133,24 @@ export default function Contact() {
             {/* Contact info */}
             <div className="space-y-6 pt-8 border-t border-white/10">
               <div>
-                <p className="label-text text-[#6e6e73] mb-2">Email</p>
-                <a
-                  href="mailto:enterprise@route5.ai"
-                  className="text-[17px] text-[#0071e3] hover:text-[#0077ed] transition-colors tracking-[-0.022em] font-semibold"
-                >
-                  enterprise@route5.ai
-                </a>
-              </div>
-              <div>
-                <p className="label-text text-[#6e6e73] mb-2">Phone</p>
-                <a
-                  href="tel:+1888768835"
-                  className="text-[17px] text-[#0071e3] hover:text-[#0077ed] transition-colors tracking-[-0.022em] font-semibold"
-                >
-                  +1 (888) ROUTE-5
-                </a>
+                <p className="label-text text-[#6e6e73] mb-2">Direct</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <a
+                    href={mailtoHref("Route5 — conversation")}
+                    className="text-[17px] text-[#0071e3] hover:text-[#0077ed] transition-colors tracking-[-0.022em] font-semibold"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void navigator.clipboard.writeText(CONTACT_EMAIL)
+                    }
+                    className="rounded-lg border border-white/15 px-2.5 py-1 text-[11px] font-medium text-white/70 transition hover:border-white/25 hover:text-white"
+                  >
+                    Copy
+                  </button>
+                </div>
               </div>
               <div className="pt-6 border-t border-white/10 flex gap-4">
                 <a
@@ -156,9 +172,9 @@ export default function Contact() {
 
           {/* Right: Form */}
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.55, delay: 0.15 }}
+            initial={{ opacity: 1, y: 24 }}
+            animate={{ opacity: 1, y: inView ? 0 : 24 }}
+            transition={{ ...defaultTransition, delay: 0.12 }}
           >
             {submitted ? (
               <div className="rounded-2xl backdrop-blur-sm border border-white/10 bg-white/[0.03] p-14 text-center">
@@ -177,8 +193,9 @@ export default function Contact() {
                   Request Received
                 </h3>
                 <p className="text-[15px] text-[#a1a1a6] leading-relaxed max-w-sm mx-auto tracking-[-0.01em]">
-                  Our team will contact you within one business day to schedule your personalized
-                  briefing and assess your legacy environment.
+                  Your email app should open with this message addressed to {CONTACT_EMAIL}. If
+                  nothing opened, use the address above or the Copy button — some browsers block
+                  mailto links until you allow pop-ups for this site.
                 </p>
               </div>
             ) : (
@@ -313,10 +330,9 @@ export default function Contact() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 bg-[#0071e3] hover:bg-[#0077ed] disabled:opacity-60 text-white text-[17px] font-semibold rounded-xl transition-colors duration-200 tracking-[-0.022em]"
+                  className="btn-shine w-full py-3.5 bg-[#0071e3] hover:bg-[#0077ed] text-white text-[17px] font-semibold rounded-xl transition-colors duration-200 tracking-[-0.022em] relative overflow-hidden"
                 >
-                  {loading ? "Sending…" : "Request a Briefing"}
+                  Open email to send
                 </button>
 
                 <p className="text-[12px] text-[#6e6e73] text-center leading-relaxed">
