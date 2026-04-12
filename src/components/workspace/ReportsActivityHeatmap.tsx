@@ -61,7 +61,7 @@ export default function ReportsActivityHeatmap({ activity, loading, extractionCo
                       style={{
                         background:
                           cell === 0
-                            ? "rgba(24,24,27,0.5)"
+                            ? "color-mix(in srgb, var(--workspace-border) 55%, transparent)"
                             : `linear-gradient(145deg, rgba(139,92,246,${0.22 + intensity * 0.62}) 0%, rgba(91,33,182,${0.12 + intensity * 0.48}) 100%)`,
                         boxShadow:
                           cell > 0

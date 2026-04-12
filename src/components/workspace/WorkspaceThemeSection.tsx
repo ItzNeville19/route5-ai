@@ -207,7 +207,7 @@ export default function WorkspaceThemeSection() {
                       className="absolute inset-0 bg-[linear-gradient(110deg,#000000_0%,#0c1220_8%,#ecfdf5_18%,#f5f5f4_28%,#fff1f2_38%,#fffbeb_48%,#e0f2fe_58%,#e9d5ff_68%,#ffedd5_78%,#0f172a_88%,#020617_100%)]"
                       aria-hidden
                     />
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold uppercase tracking-wider text-zinc-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
                       Auto
                     </div>
                   </div>

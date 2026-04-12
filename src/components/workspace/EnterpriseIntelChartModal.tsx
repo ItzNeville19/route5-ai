@@ -102,6 +102,7 @@ export default function EnterpriseIntelChartModal({
                   extractionCount={extractionCount}
                   allowSvgExport={allowSvgExport}
                   showControls
+                  chrome="dark"
                 />
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}

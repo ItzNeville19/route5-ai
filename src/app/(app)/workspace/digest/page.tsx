@@ -79,7 +79,7 @@ export default function WorkspaceDailyDigestPage() {
           the app.
         </p>
         {!loadingSummary && wow ? (
-          <p className="text-[13px] font-medium text-emerald-300/95">{wow} · rolling 7-day extraction activity</p>
+          <p className="text-[13px] font-medium text-[var(--workspace-success-fg)]">{wow} · rolling 7-day extraction activity</p>
         ) : null}
       </header>
 
@@ -134,7 +134,7 @@ export default function WorkspaceDailyDigestPage() {
                     <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-[var(--workspace-muted-fg)]">
                       {r.summarySnippet}
                     </p>
-                    <p className="mt-1 text-[11px] text-white/70">
+                    <p className="mt-1 text-[11px] text-[var(--workspace-muted-fg)]">
                       {formatRelativeLong(r.createdAt, intlLocale)}
                       {r.openActionsCount > 0 ? (
                         <span className="text-amber-300/90">

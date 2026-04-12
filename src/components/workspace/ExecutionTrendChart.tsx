@@ -31,6 +31,11 @@ type Props = {
   onRangeChange?: (r: ChartTimeRange) => void;
   /** When range is set from outside, hide duplicate range UI in details/toolbar. */
   hideRangePicker?: boolean;
+  /**
+   * `glass` — workspace tokens on light frosted surfaces (Reports, Overview).
+   * `dark` — light-on-dark chrome for use inside a dark modal (tokens may not apply in portals).
+   */
+  chrome?: "glass" | "dark";
 };
 
 export default function ExecutionTrendChart({
@@ -44,8 +49,10 @@ export default function ExecutionTrendChart({
   defaultRange = "7d",
   onRangeChange,
   hideRangePicker = false,
+  chrome = "glass",
 }: Props) {
   const fillId = useId().replace(/:/g, "");
+  const darkChrome = chrome === "dark";
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const [rangeInternal, setRangeInternal] = useState<ChartTimeRange>(defaultRange);
@@ -168,15 +175,51 @@ export default function ExecutionTrendChart({
 
   const ariaRange = RANGE_LABEL[range];
 
+  const gridStroke = darkChrome ? "rgba(255,255,255,0.06)" : "rgba(15,23,42,0.09)";
+  const decLineStroke = darkChrome ? "rgba(255,255,255,0.42)" : "rgba(91,33,182,0.42)";
+  const cursorLineStroke = darkChrome ? "rgba(255,255,255,0.18)" : "rgba(91,33,182,0.25)";
+  const tooltipFill = darkChrome ? "rgba(24,24,27,0.94)" : "rgba(255,255,255,0.96)";
+  const tooltipStroke = darkChrome ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
+  const tooltipLabelFill = darkChrome ? "rgb(212,212,216)" : "rgb(82,82,91)";
+  const tooltipValueFill = darkChrome ? "rgb(196,181,253)" : "rgb(91,33,182)";
+
+  const shell = darkChrome
+    ? "border border-white/[0.08] bg-black/20"
+    : "border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/85";
+  const disclosure = darkChrome
+    ? "rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-medium text-zinc-400 transition hover:border-white/15 hover:bg-white/[0.05] hover:text-zinc-200"
+    : "rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-3 py-2 text-[11px] font-medium text-[var(--workspace-muted-fg)] transition hover:border-[var(--workspace-border)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]";
+  const innerPanel = darkChrome ? "rounded-xl border border-white/10 bg-black/30 p-2" : "rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 p-2";
+  const tabBar = darkChrome
+    ? "flex flex-wrap gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1"
+    : "flex flex-wrap gap-1 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 p-1";
+  const tabOn = darkChrome
+    ? "bg-violet-500/35 text-white shadow-sm"
+    : "bg-[var(--workspace-accent)]/18 text-[var(--workspace-accent)] shadow-sm";
+  const tabOff = darkChrome
+    ? "text-zinc-300 hover:bg-white/5 hover:text-zinc-200"
+    : "text-[var(--workspace-muted-fg)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]";
+  const iconBtn = darkChrome
+    ? "inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:bg-white/10"
+    : "inline-flex items-center gap-1 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-2.5 py-1 text-[11px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]";
+  const rangeHint = darkChrome ? "text-[10px] text-zinc-400" : "text-[10px] text-[var(--workspace-muted-fg)]";
+  const axisLabel = darkChrome
+    ? "mt-1 flex flex-wrap justify-between gap-x-0.5 gap-y-1 text-[8px] font-medium text-zinc-400"
+    : "mt-1 flex flex-wrap justify-between gap-x-0.5 gap-y-1 text-[8px] font-medium text-[var(--workspace-muted-fg)]";
+  const legendMuted = darkChrome ? "text-[10px] text-zinc-400" : "text-[10px] text-[var(--workspace-muted-fg)]";
+  const dashLegend = darkChrome ? "border-white/45" : "border-[var(--workspace-muted-fg)]/50";
+
   return (
     <div
       ref={wrapRef}
-      className={`relative w-full rounded-2xl border border-white/[0.08] bg-black/20 ${fs ? "flex min-h-0 flex-col p-6" : ""}`}
+      className={`relative w-full rounded-2xl ${shell} ${fs ? "flex min-h-0 flex-col p-6" : ""}`}
     >
       {showControls ? (
         controlsStyle === "details" ? (
           <details className="group mb-2">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-medium text-zinc-400 transition hover:border-white/15 hover:bg-white/[0.05] hover:text-zinc-200 [&::-webkit-details-marker]:hidden">
+            <summary
+              className={`flex cursor-pointer list-none items-center justify-between gap-2 ${disclosure} [&::-webkit-details-marker]:hidden`}
+            >
               <span>
                 {hideRangePicker
                   ? allowSvgExport
@@ -187,17 +230,13 @@ export default function ExecutionTrendChart({
                     : "Range & full screen"}
               </span>
               <ChevronDown
-                className="h-4 w-4 shrink-0 text-zinc-300 transition group-open:rotate-180"
+                className={`h-4 w-4 shrink-0 transition group-open:rotate-180 ${darkChrome ? "text-zinc-300" : "text-[var(--workspace-muted-fg)]"}`}
                 aria-hidden
               />
             </summary>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/30 p-2">
+            <div className={`mt-2 flex flex-wrap items-center justify-between gap-2 ${innerPanel}`}>
               {!hideRangePicker ? (
-                <div
-                  className="flex flex-wrap gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1"
-                  role="tablist"
-                  aria-label="Chart time range"
-                >
+                <div className={tabBar} role="tablist" aria-label="Chart time range">
                   {RANGE_ORDER.map((r) => {
                     const on = range === r;
                     return (
@@ -208,9 +247,7 @@ export default function ExecutionTrendChart({
                         aria-selected={on}
                         onClick={() => setRange(r)}
                         className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                          on
-                            ? "bg-violet-500/35 text-white shadow-sm"
-                            : "text-zinc-300 hover:bg-white/5 hover:text-zinc-200"
+                          on ? tabOn : tabOff
                         }`}
                       >
                         {RANGE_LABEL[r]}
@@ -219,15 +256,11 @@ export default function ExecutionTrendChart({
                   })}
                 </div>
               ) : (
-                <span className="text-[10px] text-zinc-400">Range is set above.</span>
+                <span className={rangeHint}>Range is set above.</span>
               )}
               <div className="flex items-center gap-1">
                 {allowSvgExport ? (
-                  <button
-                    type="button"
-                    onClick={exportSvg}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:bg-white/10"
-                  >
+                  <button type="button" onClick={exportSvg} className={iconBtn}>
                     <Download className="h-3.5 w-3.5" aria-hidden />
                     SVG
                   </button>
@@ -235,7 +268,7 @@ export default function ExecutionTrendChart({
                 <button
                   type="button"
                   onClick={() => void toggleFs()}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:bg-white/10"
+                  className={iconBtn}
                   title={fs ? "Exit full screen" : "Full screen"}
                 >
                   {fs ? (
@@ -251,11 +284,7 @@ export default function ExecutionTrendChart({
         ) : (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             {!hideRangePicker ? (
-              <div
-                className="flex flex-wrap gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1"
-                role="tablist"
-                aria-label="Chart time range"
-              >
+              <div className={tabBar} role="tablist" aria-label="Chart time range">
                 {RANGE_ORDER.map((r) => {
                   const on = range === r;
                   return (
@@ -266,9 +295,7 @@ export default function ExecutionTrendChart({
                       aria-selected={on}
                       onClick={() => setRange(r)}
                       className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
-                        on
-                          ? "bg-violet-500/35 text-white shadow-sm"
-                          : "text-zinc-300 hover:bg-white/5 hover:text-zinc-200"
+                        on ? tabOn : tabOff
                       }`}
                     >
                       {RANGE_LABEL[r]}
@@ -277,15 +304,11 @@ export default function ExecutionTrendChart({
                 })}
               </div>
             ) : (
-              <span className="text-[10px] text-zinc-400">Range is set above.</span>
+              <span className={rangeHint}>Range is set above.</span>
             )}
             <div className="flex items-center gap-1">
               {allowSvgExport ? (
-                <button
-                  type="button"
-                  onClick={exportSvg}
-                  className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:bg-white/10"
-                >
+                <button type="button" onClick={exportSvg} className={iconBtn}>
                   <Download className="h-3.5 w-3.5" aria-hidden />
                   SVG
                 </button>
@@ -293,7 +316,7 @@ export default function ExecutionTrendChart({
               <button
                 type="button"
                 onClick={() => void toggleFs()}
-                className="inline-flex items-center gap-1 rounded-full border border-white/12 bg-white/[0.05] px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition hover:bg-white/10"
+                className={iconBtn}
                 title={fs ? "Exit full screen" : "Full screen"}
               >
                 {fs ? (
@@ -330,7 +353,7 @@ export default function ExecutionTrendChart({
               x2={w - padR}
               y1={padT + t * (h - padT - padB)}
               y2={padT + t * (h - padT - padB)}
-              stroke="rgba(255,255,255,0.06)"
+              stroke={gridStroke}
               strokeWidth="1"
             />
           ))}
@@ -345,7 +368,7 @@ export default function ExecutionTrendChart({
           <motion.path
             d={decPath}
             fill="none"
-            stroke="rgba(255,255,255,0.42)"
+            stroke={decLineStroke}
             strokeWidth="2"
             strokeDasharray="6 4"
             initial={{ pathLength: 0 }}
@@ -382,7 +405,7 @@ export default function ExecutionTrendChart({
                 x2={xAt(hover)}
                 y1={padT}
                 y2={h - padB}
-                stroke="rgba(255,255,255,0.18)"
+                stroke={cursorLineStroke}
                 strokeDasharray="4 4"
               />
               <rect
@@ -391,13 +414,13 @@ export default function ExecutionTrendChart({
                 width={120}
                 height={44}
                 rx="8"
-                fill="rgba(24,24,27,0.94)"
-                stroke="rgba(255,255,255,0.1)"
+                fill={tooltipFill}
+                stroke={tooltipStroke}
               />
               <text
                 x={Math.min(w - 120, Math.max(14, xAt(hover) - 54))}
                 y={22}
-                fill="rgb(212,212,216)"
+                fill={tooltipLabelFill}
                 fontSize="10"
                 fontFamily="system-ui, sans-serif"
               >
@@ -406,7 +429,7 @@ export default function ExecutionTrendChart({
               <text
                 x={Math.min(w - 120, Math.max(14, xAt(hover) - 54))}
                 y={40}
-                fill="rgb(196,181,253)"
+                fill={tooltipValueFill}
                 fontSize="11"
                 fontWeight="600"
                 fontFamily="system-ui, sans-serif"
@@ -417,9 +440,7 @@ export default function ExecutionTrendChart({
           ) : null}
         </svg>
         <div
-          className={`mt-1 flex flex-wrap justify-between gap-x-0.5 gap-y-1 text-[8px] font-medium text-zinc-400 ${
-            n > 14 ? "text-[7px]" : ""
-          }`}
+          className={`${axisLabel} ${n > 14 ? "text-[7px]" : ""}`}
         >
           {labels.map((lb, i) => (
             <span key={`${lb}-${i}`} className="min-w-0 flex-1 text-center leading-tight">
@@ -435,10 +456,10 @@ export default function ExecutionTrendChart({
           Runs
         </span>
         <span className="inline-flex items-center gap-2">
-          <span className="h-px w-6 border-t-2 border-dashed border-white/45" />
+          <span className={`h-px w-6 border-t-2 border-dashed ${dashLegend}`} />
           Decisions
         </span>
-        <span className="text-[10px] text-zinc-400">UTC · {RANGE_LABEL[range]}</span>
+        <span className={legendMuted}>UTC · {RANGE_LABEL[range]}</span>
       </div>
     </div>
   );
