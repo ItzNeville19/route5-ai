@@ -71,7 +71,7 @@ export default function LoginPage() {
               ← Website
             </Link>
             <Link
-              href="/pitch"
+              href="/product"
               className="font-medium text-[#0071e3] hover:underline"
             >
               What we ship
@@ -162,7 +162,7 @@ export default function LoginPage() {
           </Link>
           {" · "}
           <Link
-            href="/pitch"
+            href="/product"
             className="font-medium text-[#0071e3] hover:underline"
             onClick={closeMobileNavFromLogin}
           >

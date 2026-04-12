@@ -41,6 +41,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.clerk.com", pathname: "/**" },
     ],
   },
+  async redirects() {
+    return [{ source: "/pitch", destination: "/product", permanent: true }];
+  },
   /** Dev: allow 127.0.0.1 so HMR / error overlay work when not using localhost hostname */
   allowedDevOrigins: ["127.0.0.1", "localhost"],
 };

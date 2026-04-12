@@ -17,7 +17,7 @@ export default function Navbar() {
   const { open: openCommandPalette } = useCommandPalette();
   const navLinks = useMemo(
     () => [
-      { href: "/pitch", label: t("marketing.nav.product") },
+      { href: "/product", label: t("marketing.nav.product") },
       { href: "/pricing", label: t("marketing.nav.pricing") },
       { href: "/download", label: t("marketing.nav.download") },
       { href: "/contact", label: t("marketing.nav.contact") },
@@ -86,7 +86,7 @@ export default function Navbar() {
     : "text-[13px] font-medium text-[#1d1d1f]/65 transition-colors duration-200 hover:text-[#1d1d1f]";
 
   function linkIsActive(href: string) {
-    if (href === "/pitch") return pathname === "/pitch";
+    if (href === "/product") return pathname === "/product";
     if (href === "/pricing") return pathname === "/pricing";
     if (href === "/download") return pathname === "/download";
     if (href === "/contact") return pathname === "/contact";
@@ -97,7 +97,7 @@ export default function Navbar() {
     if (linkIsActive(link.href)) return true;
     if (pathname !== "/") return false;
     if (
-      link.href === "/pitch" &&
+      link.href === "/product" &&
       (activeHomeSection === "product" || activeHomeSection === "showcase")
     )
       return true;

@@ -1,15 +1,16 @@
 import Link from "next/link";
 
 const platform: { href: string; label: string; title: string }[] = [
-  { href: "/pitch", label: "What we ship", title: "Product scope — live vs roadmap" },
+  { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
-  { href: "/#product", label: "Home — product summary", title: "Jump to product section on the home page" },
+  { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },
   { href: "/projects", label: "Workspace", title: "Signed-in app — projects and Desk" },
   { href: "/login", label: "Log in", title: "Sign in with Clerk" },
 ];
 
 const company: { href: string; label: string; title: string }[] = [
   { href: "/contact", label: "Contact", title: "Sales, support, and priorities" },
+  { href: "/download", label: "Download", title: "PWA and desktop install" },
   { href: "/trust", label: "Trust & compliance", title: "Security questionnaire, DPA, procurement" },
   { href: "/privacy", label: "Privacy Policy", title: "How we handle data — full policy" },
   { href: "/terms", label: "Terms of Service", title: "Terms of use" },

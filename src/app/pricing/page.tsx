@@ -3,12 +3,12 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { PRODUCT_LIVE, PRODUCT_ROADMAP } from "@/lib/product-truth";
+import PublicPlansGrid from "@/components/marketing/PublicPlansGrid";
 
 export const metadata: Metadata = {
   title: "Pricing — Route5",
   description:
-    "How Route5 is packaged: workspace access with clear limits. Enterprise options by conversation.",
+    "Plans and limits for Route5 — Free, Pro, Ultra, and Enterprise. Same packaging as in-app account settings.",
 };
 
 export default async function PricingPage() {
@@ -23,96 +23,33 @@ export default async function PricingPage() {
             Pricing
           </p>
           <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.03em] text-[#1d1d1f]">
-            Straightforward access
+            Plans that match how you work
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-[#6e6e73]">
-            Route5 is built for teams that need structured intelligence from text — not
-            a bloated suite. What you get today is exactly what we describe on{" "}
-            <Link href="/pitch" className="font-medium text-[#0071e3] hover:underline">
+            Same tiers you see in{" "}
+            <Link href="/account/plans" className="font-medium text-[#0071e3] hover:underline">
+              Account → Plans
+            </Link>{" "}
+            when signed in. Product scope and roadmap detail live on{" "}
+            <Link href="/product" className="font-medium text-[#0071e3] hover:underline">
               What we ship
             </Link>
-            ; roadmap items stay labeled separately.
+            .
           </p>
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-[920px] gap-6 md:grid-cols-2">
-          <div className="glass-liquid glass-liquid-interactive liquid-glass-shimmer route5-tilt-hover rounded-3xl p-8 text-left">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
-              Workspace
-            </p>
-            <p className="mt-2 text-[15px] font-semibold text-[#1d1d1f]">
-              Included with your account
-            </p>
-            <ul className="mt-5 space-y-3 text-[14px] leading-relaxed text-[#6e6e73]">
-              <li>{PRODUCT_LIVE.auth}</li>
-              <li>{PRODUCT_LIVE.projects}</li>
-              <li>{PRODUCT_LIVE.extract}</li>
-              <li>{PRODUCT_LIVE.linear}</li>
-              <li>{PRODUCT_LIVE.github}</li>
-              <li>{PRODUCT_LIVE.actions}</li>
-              <li>{PRODUCT_LIVE.limits}</li>
-              <li>{PRODUCT_LIVE.data}</li>
-            </ul>
-            <div className="mt-8">
-              {userId ? (
-                <Link
-                  href="/projects"
-                  className="btn-primary inline-flex rounded-full px-6 py-2.5 text-[14px] font-semibold"
-                >
-                  Open workspace
-                </Link>
-              ) : (
-                <Link
-                  href="/sign-up"
-                  className="btn-primary inline-flex rounded-full px-6 py-2.5 text-[14px] font-semibold"
-                >
-                  Create account
-                </Link>
-              )}
-            </div>
-          </div>
+        <PublicPlansGrid signedIn={Boolean(userId)} />
 
-          <div className="glass-liquid liquid-glass-shimmer route5-tilt-hover rounded-3xl p-8 text-left">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
-              Enterprise & volume
-            </p>
-            <p className="mt-2 text-[15px] font-semibold text-[#1d1d1f]">
-              By conversation
-            </p>
-            <p className="mt-3 text-[14px] leading-relaxed text-[#6e6e73]">
-              For procurement, security review, SSO beyond defaults, or deployment
-              expectations at scale — we align scope and timeline in writing after a short
-              intro.
-            </p>
-            <ul className="mt-5 space-y-2 text-[13px] text-[#6e6e73]">
-              {PRODUCT_ROADMAP.map((line) => (
-                <li key={line} className="flex gap-2">
-                  <span className="text-[#c4c4c9]">—</span>
-                  <span>Roadmap: {line}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/contact"
-                className="inline-flex rounded-full border border-black/[0.12] bg-white/70 px-6 py-2.5 text-[14px] font-semibold text-[#1d1d1f] shadow-sm transition hover:bg-white"
-              >
-                Contact sales
-              </Link>
-              <Link
-                href="/trust"
-                className="inline-flex rounded-full border border-black/[0.12] bg-transparent px-6 py-2.5 text-[14px] font-semibold text-[#1d1d1f] shadow-sm transition hover:bg-white/80"
-              >
-                Trust &amp; compliance
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <p className="mx-auto mt-12 max-w-lg text-center text-[13px] leading-relaxed text-[#86868b]">
-          No hidden per-seat surprises in the product UI — if billing changes as we add
-          commercial packaging, we&apos;ll publish it here and in-app before it applies
-          to you.
+        <p className="mx-auto mt-14 max-w-lg text-center text-[13px] leading-relaxed text-[#86868b]">
+          Billing changes are published here and in-app before they apply. Questions?{" "}
+          <Link href="/contact" className="font-medium text-[#0071e3] hover:underline">
+            Contact
+          </Link>{" "}
+          or see{" "}
+          <Link href="/trust" className="font-medium text-[#0071e3] hover:underline">
+            Trust &amp; compliance
+          </Link>
+          .
         </p>
       </div>
       <Footer />

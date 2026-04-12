@@ -41,7 +41,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="text-[#0071e3] hover:underline">
             Website
           </Link>
-          <Link href="/pitch" className="text-[#0071e3] hover:underline">
+          <Link href="/product" className="text-[#0071e3] hover:underline">
             What we ship
           </Link>
           <Link href="/contact" className="text-[#0071e3] hover:underline">

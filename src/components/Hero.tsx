@@ -230,7 +230,7 @@ export default function Hero({ commandTheme = false }: HeroProps) {
               {t("marketing.hero.plans")}
             </Link>
             <Link
-              href="/pitch"
+              href="/product"
               className={
                 commandTheme
                   ? "inline-flex items-center rounded-full px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-sky-400 transition hover:underline"

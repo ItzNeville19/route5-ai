@@ -46,7 +46,7 @@ export const WORKSPACE_SHORTCUTS: WorkspaceShortcut[] = [
   { id: "s21", label: "Support", href: "/support" },
   { id: "s22", label: "Contact", href: "/contact" },
   { id: "s23", label: "Pricing", href: "/pricing" },
-  { id: "s24", label: "Pitch", href: "/pitch" },
+  { id: "s24", label: "What we ship", href: "/product" },
   { id: "s25", label: "Marketing home", href: "/" },
   { id: "s26", label: "Store · Linear", href: "/marketplace/linear" },
   { id: "s27", label: "Store · GitHub", href: "/marketplace/github-issues" },

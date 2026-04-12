@@ -7,8 +7,10 @@ const isPublicRoute = createRouteMatcher([
   "/login(.*)",
   "/sign-up(.*)",
   "/contact(.*)",
-  "/pitch(.*)",
+  "/product(.*)",
   "/pricing(.*)",
+  "/download(.*)",
+  "/trust(.*)",
   /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
   "/projects(.*)",
 ]);

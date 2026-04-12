@@ -7,23 +7,23 @@ import { PRODUCT_LIVE, PRODUCT_ROADMAP } from "@/lib/product-truth";
 export const metadata: Metadata = {
   title: "What we ship — Route5",
   description:
-    "Full product rundown: what Route5 does today, roadmap, and how we work with enterprise teams.",
+    "What Route5 does today, roadmap, and how we work with teams — live vs planned, labeled clearly.",
 };
 
-export default function PitchPage() {
+export default function ProductPage() {
   return (
     <main className="theme-glass-site relative min-h-screen">
       <Navbar />
       <article className="mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45">
-          Route5 · partner briefing
+          Route5 · product
         </p>
         <h1 className="mt-4 text-[clamp(1.75rem,4.5vw,2.5rem)] font-semibold tracking-[-0.04em] text-[#1d1d1f]">
-          The 12-minute version we&apos;d give in the room
+          The short version we&apos;d give in the room
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-          Below is exactly what we ship today, what&apos;s on the roadmap, and how
-          we engage — no borrowed traction metrics, no fake logos.
+          What we ship today, what&apos;s on the roadmap, and how we engage — no borrowed
+          traction metrics, no fake logos.
         </p>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
@@ -32,7 +32,7 @@ export default function PitchPage() {
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
             Enterprise work still lives in unstructured text: Slack threads, Jira
-            comments, analyst notes, incident write-ups. Leaders need{' '}
+            comments, analyst notes, incident write-ups. Leaders need{" "}
             <strong className="font-semibold">decisions and actions</strong>, not
             another PDF nobody reads.
           </p>
@@ -48,8 +48,7 @@ export default function PitchPage() {
           </p>
           <ul className="mt-6 space-y-4 text-[15px] leading-relaxed text-[#1d1d1f]">
             <li className="glass-surface rounded-2xl px-5 py-4">
-              <span className="font-semibold">Authentication.</span>{" "}
-              {PRODUCT_LIVE.auth}
+              <span className="font-semibold">Authentication.</span> {PRODUCT_LIVE.auth}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
               <span className="font-semibold">Projects.</span> {PRODUCT_LIVE.projects}
@@ -67,8 +66,8 @@ export default function PitchPage() {
               <span className="font-semibold">Actions.</span> {PRODUCT_LIVE.actions}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
-              <span className="font-semibold">Limits &amp; data.</span>{" "}
-              {PRODUCT_LIVE.limits} {PRODUCT_LIVE.data}
+              <span className="font-semibold">Limits &amp; data.</span> {PRODUCT_LIVE.limits}{" "}
+              {PRODUCT_LIVE.data}
             </li>
           </ul>
         </section>
@@ -78,7 +77,7 @@ export default function PitchPage() {
             03 — Roadmap (explicitly not “vapor”)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-            These are directions we may pursue — they are{' '}
+            These are directions we may pursue — they are{" "}
             <strong className="font-medium text-[#1d1d1f]">not</strong> sold as
             shipped product until they appear in the app and in our docs.
           </p>
