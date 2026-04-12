@@ -43,6 +43,8 @@ type WorkspaceExperienceValue = {
   installMarketplaceApp: (appId: string) => void;
   isMarketplaceInstalled: (appId: string) => boolean;
   shellModifierClass: string;
+  /** Same condition as `workspace-palette-light` on the shell — frosted light UI vs dark command glass. */
+  workspacePaletteLight: boolean;
   pushToast: (message: string, tone?: ToastItem["tone"]) => void;
 };
 
@@ -218,13 +220,15 @@ export function WorkspaceExperienceProvider({
     [prefs, appearanceTick]
   );
 
+  const workspacePaletteLight = isLightWorkspacePalette(workspaceTheme.resolvedId);
+
   const shellModifierClass = useMemo(() => {
     const parts: string[] = [];
     if (prefs.compact) parts.push("workspace-compact");
     if (prefs.focusMode) parts.push("workspace-focus");
     if (prefs.sidebarHidden) parts.push("workspace-sidebar-hidden");
     parts.push(workspaceTheme.cssClass);
-    if (isLightWorkspacePalette(workspaceTheme.resolvedId)) {
+    if (workspacePaletteLight) {
       parts.push("workspace-palette-light");
     }
     if (prefs.appearanceGradients === false) parts.push("workspace-no-gradients");
@@ -239,7 +243,7 @@ export function WorkspaceExperienceProvider({
     prefs.appearanceGradients,
     prefs.surfaceMaterial,
     workspaceTheme.cssClass,
-    workspaceTheme.resolvedId,
+    workspacePaletteLight,
   ]);
 
   const value = useMemo(
@@ -253,6 +257,7 @@ export function WorkspaceExperienceProvider({
       installMarketplaceApp,
       isMarketplaceInstalled,
       shellModifierClass,
+      workspacePaletteLight,
       pushToast,
     }),
     [
@@ -265,6 +270,7 @@ export function WorkspaceExperienceProvider({
       installMarketplaceApp,
       isMarketplaceInstalled,
       shellModifierClass,
+      workspacePaletteLight,
       pushToast,
     ]
   );
