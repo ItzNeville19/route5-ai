@@ -16,6 +16,16 @@ export type RecentExtractionRow = {
   openActionsCount: number;
 };
 
+/** One incomplete action, for workspace-wide follow-through (Desk queue). */
+export type OpenActionRef = {
+  actionId: string;
+  text: string;
+  projectId: string;
+  projectName: string;
+  extractionId: string;
+  extractionCreatedAt: string;
+};
+
 export type {
   ActivitySeriesByRange,
   ChartTimeRange,

@@ -12,7 +12,11 @@ const metrics = [
 
 const comparison = [
   { category: "Input", adhoc: "Copy-paste between docs and chat", route5: "Paste once; persist to a project" },
-  { category: "Alignment", adhoc: "Everyone has a different story", route5: "Shared summary + decision list" },
+  {
+    category: "Alignment",
+    adhoc: "Different versions in different tools",
+    route5: "One saved summary + decision list per run (in your workspace)",
+  },
   { category: "Follow-through", adhoc: "Action items live in side channels", route5: "Check items off in one place" },
   { category: "Audit", adhoc: "Hard to reconstruct who agreed to what", route5: "Timestamped extractions per project" },
 ];

@@ -1,9 +1,12 @@
 /**
  * Plan definitions for marketing and in-app account pages.
  * Limits are enforced server-side (`entitlements`, `/api/extract`, `/api/projects`).
- * `BILLING_LIVE` gates Stripe checkout UI only — usage caps apply regardless.
+ *
+ * `NEXT_PUBLIC_BILLING_LIVE=1` — commercial packaging is “on” (Subscribe CTAs, etc.).
+ * Self-serve card checkout is a separate integration when you add Stripe; until then,
+ * paid tiers still route through Contact as implemented in `PublicPlansGrid` / Account.
  */
-export const BILLING_LIVE = false;
+export const BILLING_LIVE = process.env.NEXT_PUBLIC_BILLING_LIVE === "1";
 
 export type PlanTierId = "free" | "pro" | "ultra" | "enterprise";
 
@@ -30,9 +33,9 @@ export const PLAN_TIERS: PlanTier[] = [
     features: [
       "3 projects · 60 extractions / month (UTC) — see Settings for live usage",
       "Desk, Overview, Reports — core execution loop",
-      "Linear & GitHub paste/import flows as shipped (same as Pro)",
-      "Team insights (read-only snapshot) — upgrade for full connector treatment",
-      "Slack connector locked — upgrade to Pro to unlock",
+      "Linear & GitHub: paste/import as documented (tokens optional for live API)",
+      "Team insights: roll-up counts for your signed-in account — not multi-seat collaboration",
+      "Slack connector: Pro tier (see integration page for token requirements)",
     ],
     cta: "Included today",
   },
@@ -42,13 +45,13 @@ export const PLAN_TIERS: PlanTier[] = [
     price: "$29",
     valueNote:
       "Where daily execution work belongs: higher ceilings, Slack connector, full exports, and priority support.",
-    tagline: "The sweet spot for individuals and small teams shipping every week.",
+    tagline: "Higher limits for people who run extractions every week (not a shared org database).",
     features: [
       "30 projects · 4,000 extractions / month — room for real cadence",
-      "Slack connector + integration page (paste today; tokens optional)",
-      "Full Reports exports (JSON, print, SVG charts) and advanced analytics",
-      "Priority support and early connector betas",
-      "Team insights with full connector framing",
+      "Slack: integration page + API as documented (host tokens may be required)",
+      "Reports exports (JSON, print, SVG charts) and analytics from your saved runs",
+      "Priority support and early connector betas — subject to availability",
+      "Team insights: Pro packaging (exports + messaging) — data stays per signed-in user",
     ],
     cta: BILLING_LIVE ? "Subscribe" : "Get Pro",
     highlighted: true,
@@ -58,14 +61,14 @@ export const PLAN_TIERS: PlanTier[] = [
     name: "Ultra",
     price: "$79",
     valueNote:
-      "Team-scale limits with SSO roadmap messaging, org analytics, and white-glove rollout language.",
-    tagline: "For orgs coordinating execution across many projects.",
+      "Higher caps for heavy usage. SSO / deep org features may be roadmap — confirmed in sales.",
+    tagline: "Heavy usage and roadmap enterprise features — confirm scope before buying.",
     features: [
-      "120 projects · 25,000 extractions / month",
+      "120 projects · 25,000 extractions / month (UTC)",
       "Everything in Pro with substantially higher limits",
-      "SSO / SAML and org controls — we’ll align on roadmap",
-      "Org-wide analytics and rollups (prioritized for Ultra)",
-      "Dedicated success check-ins for larger rollouts",
+      "SSO / SAML and org controls — roadmap; timeline in your sales conversation",
+      "Org-wide analytics — prioritized for Ultra where we ship them (not guaranteed dates)",
+      "Success check-ins for larger rollouts — by mutual agreement",
     ],
     cta: "Talk to us",
   },
@@ -74,13 +77,13 @@ export const PLAN_TIERS: PlanTier[] = [
     name: "Enterprise",
     price: "Custom",
     valueNote:
-      "Unlimited caps in-app, procurement, security review, custom retention — how founder and Fortune-500 teams buy software.",
-    tagline: "Volume, compliance, and deployment expectations at scale.",
+      "Contracted high limits and paper — not unconstrained global scale; exact terms in your order or MSA.",
+    tagline: "Procurement, security review, and custom terms — by contract.",
     features: [
-      "Unlimited projects & extractions in product limits",
-      "Security questionnaire and DPA path",
-      "Custom retention, export, and VPC / BYO conversations",
-      "Invoice, NET terms, and dedicated rollout",
+      "Very high in-app limits — exact caps in your order / MSA (not infinite usage)",
+      "Security questionnaire and DPA path — subject to mutual agreement",
+      "Retention, export, VPC / BYO — negotiated; roadmap features identified in diligence",
+      "Invoice, NET terms, rollout — as stated in your contract",
     ],
     cta: "Contact",
   },

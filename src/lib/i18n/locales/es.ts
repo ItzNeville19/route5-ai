@@ -61,6 +61,14 @@ export const es: Record<string, string> = {
   "prefs.signedInSync":
     "Sesión iniciada — las preferencias se sincronizan entre dispositivos con tu cuenta.",
 
+  "overview.openActionsStrip.badge": "Ejecución",
+  "overview.openActionsStrip.title": "{count} acción(es) sin terminar en cola",
+  "overview.openActionsStrip.lead":
+    "Lo más antiguo aparece primero en el Escritorio — complétalo ahí o en el proyecto.",
+  "overview.openActionsStrip.cta": "Ir al Escritorio",
+  "overview.openActionsStrip.caughtUp":
+    "No hay acciones abiertas en la cola — listas al día. Captura el siguiente hilo en el Escritorio cuando quieras.",
+
   "desk.llmOffTitle": "Sin LLM en este despliegue.",
   "desk.llmOffLead":
     "Las ejecuciones usan un resumen heurístico rápido (marcado en cada ejecución como «Heurístico»), no análisis semántico completo. Añade",
@@ -105,7 +113,7 @@ export const es: Record<string, string> = {
   "desk.howStep3":
     "Ejecuta la extracción. Con IA obtienes campos estructurados; sin IA sigues teniendo un digest útil para listas (marcado como heurístico).",
   "desk.howStep4":
-    "Ve al proyecto: marca acciones, edita decisiones — los gráficos de Resumen usan esas finalizaciones.",
+    "Vacía acciones abiertas desde la cola de arriba o en el proyecto — los gráficos de Resumen usan esas finalizaciones.",
 
   "desk.filedUnder": "Guardar ejecuciones en",
   "desk.projectLabel": "Proyecto",
@@ -143,6 +151,15 @@ export const es: Record<string, string> = {
   "desk.noRunsProject": "Aún no hay ejecuciones para este proyecto.",
   "desk.openCount": "· {count} abiertas",
   "desk.fullHistory": "Historial completo de extracciones",
+
+  "desk.openQueueTitle": "Próximos pasos abiertos (workspace)",
+  "desk.openQueueLead":
+    "Las acciones sin terminar más antiguas primero — márcalas aquí sin salir del Escritorio, o abre el proyecto.",
+  "desk.openQueueEmpty": "No quedan acciones abiertas — al día con las listas.",
+  "desk.openQueueDone": "Marcado como hecho.",
+  "desk.openQueueError": "No se pudo actualizar — abre el proyecto e inténtalo de nuevo.",
+  "desk.openQueueMarkDone": "Marcar hecho",
+  "desk.openQueueOpenProject": "Abrir en proyecto",
 
   "desk.errorChooseProject": "Elige un proyecto; las ejecuciones siempre se guardan ahí.",
   "desk.errorAddMaterial": "Añade material en bruto: notas, registros o hilos pegados.",
@@ -192,13 +209,13 @@ export const es: Record<string, string> = {
   "modal.newProject.toastCopied": "Proyecto creado — enlace copiado.",
   "modal.newProject.toastCreated": "Proyecto creado.",
 
-  "marketing.hero.kicker": "Espacio de ejecución",
+  "marketing.hero.kicker": "Cierra la brecha de ejecución",
   "marketing.hero.headline": "Decisiones y acciones, no solo resúmenes.",
   "marketing.hero.subtitle":
-    "Route5 convierte el contexto capturado en proyectos ejecutables: extracciones estructuradas, listas de comprobación y actividad que puedes graficar y exportar — Linear y GitHub al conectarlos.",
+    "El trabajo del conocimiento sigue llegando como texto no estructurado: hilos, tickets, notas. Route5 es el espacio que convierte ese volumen en decisiones claras, acciones comprobables y gráficos de lo que realmente terminas — no un chat desechable.",
   "marketing.hero.mono": "route5 / espacio de trabajo · inteligencia de ejecución",
   "marketing.hero.cardBody":
-    "Disponible hoy: proyectos, extracciones estructuradas, listas de decisión y acción, métricas de finalización, rutas de importación Linear/GitHub — no un hilo de chat desechable.",
+    "Pensado para la brecha entre hablar y entregar: una superficie de captura, ejecuciones estructuradas, listas, métricas reales de finalización, Linear/GitHub cuando los conectes.",
   "marketing.hero.signedInTitle":
     "Sesión iniciada — Escritorio es tu espacio diario; Resumen agrupa resultados.",
   "marketing.hero.signedInBody":

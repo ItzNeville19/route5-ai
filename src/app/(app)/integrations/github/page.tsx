@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ClipboardCopy, ExternalLink, Inbox, Loader2, RefreshCw } from "lucide-react";
 import SendToProjectButton from "@/components/integrations/SendToProjectButton";
 import { sanitizeIntegrationClientError } from "@/lib/client-integration-errors";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+import { pushDeskWithDraft } from "@/lib/integration-desk-navigation";
 import { writeExtractionDraft } from "@/lib/workspace-bridge";
 
 type Issue = {
@@ -141,7 +142,9 @@ export default function GitHubIntegrationPage() {
   function openIssueInDesk(issue: Issue) {
     const body = issueBodyForDesk(issue);
     writeExtractionDraft(body, "GitHub");
-    router.push("/desk?draft=1");
+    startTransition(() => {
+      pushDeskWithDraft(router);
+    });
     pushToast("Opening Desk…", "success");
   }
 

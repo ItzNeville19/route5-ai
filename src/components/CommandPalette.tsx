@@ -85,6 +85,7 @@ export function CommandPaletteProvider({
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [recentRuns, setRecentRuns] = useState<PaletteRecentRun[]>([]);
+  const [openActionsCount, setOpenActionsCount] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const router = useRouter();
   const pathname = usePathname();
@@ -101,17 +102,24 @@ export function CommandPaletteProvider({
         displayName?: string | null;
         projects?: { id: string; name: string }[];
         recentRuns?: PaletteRecentRun[];
+        openActionsCount?: number;
         workspaceDbOk?: boolean;
       };
       setSignedIn(Boolean(data.signedIn));
       setDisplayName(data.displayName ?? null);
       setProjects(Array.isArray(data.projects) ? data.projects : []);
       setRecentRuns(Array.isArray(data.recentRuns) ? data.recentRuns : []);
+      setOpenActionsCount(
+        typeof data.openActionsCount === "number" && data.openActionsCount >= 0
+          ? data.openActionsCount
+          : 0
+      );
     } catch {
       setSignedIn(false);
       setDisplayName(null);
       setProjects([]);
       setRecentRuns([]);
+      setOpenActionsCount(0);
     }
   }, []);
 
@@ -135,8 +143,9 @@ export function CommandPaletteProvider({
         displayName,
         projects,
         recentRuns,
+        openActionsCount,
       }),
-    [signedIn, displayName, projects, recentRuns]
+    [signedIn, displayName, projects, recentRuns, openActionsCount]
   );
 
   const filtered = useMemo(() => {

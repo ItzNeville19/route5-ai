@@ -14,7 +14,7 @@ import {
 
 const before = [
   "Decisions buried in long threads and forwards",
-  "No single summary everyone agrees on",
+  "No single summary stakeholders can all point to",
   "Action items tracked in spreadsheets or memory",
   "Context lost when people rotate or vendors change",
 ];
@@ -41,7 +41,7 @@ export default function Architecture() {
         >
           <p className="label-text text-[#6e6e73] mb-5">Before / after</p>
           <h2 className="section-headline text-white">
-            One record. Everyone aligned.
+            One structured record per project.
           </h2>
           <p className="mt-5 text-[16px] text-[#86868b] max-w-[440px]">
             Structure now. Automate later.
@@ -142,7 +142,7 @@ export default function Architecture() {
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-4 h-4 text-[#0071e3] flex-shrink-0 mt-1" />
                   <p className="text-[13px] text-[#0071e3]/90 font-medium tracking-[-0.01em]">
-                    Everyone references the same extraction — fewer meetings, faster alignment.
+                    Stakeholders can reference the same saved extraction in Route5 — fewer conflicting narratives.
                   </p>
                 </div>
               </div>

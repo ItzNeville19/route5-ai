@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -29,6 +29,7 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import DeskCaptureToolbar from "@/components/desk/DeskCaptureToolbar";
+import DeskOpenActions from "@/components/desk/DeskOpenActions";
 import DeskShortcutsModal from "@/components/desk/DeskShortcutsModal";
 import { deskCaptureStorageKey } from "@/lib/desk-storage";
 import {
@@ -36,11 +37,23 @@ import {
   getExtractionPreset,
   PRESET_CATEGORY_ORDER,
 } from "@/lib/extraction-presets";
-import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
+import type { Extraction } from "@/lib/types";
+import type { OpenActionRef, WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
 import { formatRelativeLong } from "@/lib/relative-time";
-import { consumeExtractionDraft } from "@/lib/workspace-bridge";
+import {
+  clearExtractionDraft,
+  peekExtractionDraft,
+} from "@/lib/workspace-bridge";
 
 const MAX_CHARS = 100_000;
+
+function buildDeskPath(opts: { projectId?: string | null; preset?: string | null }): string {
+  const q = new URLSearchParams();
+  if (opts.projectId) q.set("projectId", opts.projectId);
+  if (opts.preset?.trim()) q.set("preset", opts.preset.trim());
+  const s = q.toString();
+  return s ? `/desk?${s}` : "/desk";
+}
 
 function openNewProjectModal() {
   window.dispatchEvent(new Event("route5:new-project-open"));
@@ -156,7 +169,7 @@ function IntegrationTiles({
 export default function DeskWorkspace() {
   const { t, intlLocale } = useI18n();
   const { prefs, pushToast } = useWorkspaceExperience();
-  const { projects, summary, loadingProjects, loadingSummary, refreshAll } =
+  const { projects, summary, loadingProjects, loadingSummary, refreshAll, refreshSummary } =
     useWorkspaceData();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -167,7 +180,12 @@ export default function DeskWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  /** Incremented when an integration draft lands in the capture field — triggers focus + highlight. */
+  const [deskImportPulse, setDeskImportPulse] = useState(0);
+  const [importGlow, setImportGlow] = useState(false);
+  const captureRef = useRef<HTMLTextAreaElement | null>(null);
   const draftSaveTimer = useRef<number | null>(null);
+  const projectDetailCache = useRef<Map<string, { extractions: Extraction[] }>>(new Map());
 
   const presetId = searchParams.get("preset") ?? "";
 
@@ -204,6 +222,7 @@ export default function DeskWorkspace() {
   }, [searchParams, projects]);
 
   useEffect(() => {
+    if (searchParams.get("draft") === "1") return;
     if (presetId) {
       const p = getExtractionPreset(presetId);
       if (p?.body) setText(p.body);
@@ -216,7 +235,7 @@ export default function DeskWorkspace() {
     } catch {
       setText("");
     }
-  }, [projectId, presetId]);
+  }, [projectId, presetId, searchParams]);
 
   useEffect(() => {
     if (!projectId) return;
@@ -234,23 +253,121 @@ export default function DeskWorkspace() {
     };
   }, [text, projectId]);
 
-  useEffect(() => {
+  /**
+   * Integration → Desk: session draft must apply after projects resolve, and localStorage
+   * for the target project must be updated before the effect above loads from disk — otherwise
+   * the capture field stays empty (race with async /projects + Strict Mode).
+   */
+  useLayoutEffect(() => {
     if (searchParams.get("draft") !== "1") return;
-    const d = consumeExtractionDraft();
-    if (d?.body) {
-      setText((prev) => {
-        const next = d.body.trim();
-        const base = prev.trim();
-        return base ? `${base}\n\n${next}` : next;
-      });
-      pushToast(t("desk.toastImportedFrom", { source: d.source }), "success");
-    } else {
-      pushToast(t("desk.toastNothingToImport"), "info");
+    if (loadingProjects) return;
+
+    const draft = peekExtractionDraft();
+    const urlPid = searchParams.get("projectId");
+    const targetPid =
+      urlPid && projects.some((p) => p.id === urlPid)
+        ? urlPid
+        : projects[0]?.id ?? "";
+
+    const mergeBody = (prev: string) => {
+      if (!draft?.body?.trim()) return prev;
+      const next = draft.body.trim();
+      const base = prev.trim();
+      return base ? `${base}\n\n${next}` : next;
+    };
+
+    if (!draft?.body?.trim()) {
+      clearExtractionDraft();
+      router.replace(
+        buildDeskPath({
+          projectId: urlPid ?? undefined,
+          preset: presetId || null,
+        }),
+        { scroll: false }
+      );
+      return;
     }
-    router.replace(presetId ? `/desk?preset=${encodeURIComponent(presetId)}` : "/desk", {
-      scroll: false,
-    });
-  }, [searchParams, router, presetId, pushToast, t]);
+
+    if (!targetPid) {
+      setText((prev) => mergeBody(prev));
+      clearExtractionDraft();
+      router.replace(buildDeskPath({ preset: presetId || null }), { scroll: false });
+      pushToast(t("desk.toastImportNeedProject", { source: draft.source }), "info");
+      return;
+    }
+
+    const merged = mergeBody("");
+    setProjectId(targetPid);
+    setText(merged);
+    try {
+      localStorage.setItem(deskCaptureStorageKey(targetPid), merged);
+    } catch {
+      /* ignore */
+    }
+    clearExtractionDraft();
+    router.replace(
+      buildDeskPath({ projectId: targetPid, preset: presetId || null }),
+      { scroll: false }
+    );
+    pushToast(t("desk.toastImportedFrom", { source: draft.source }), "success");
+  }, [searchParams, loadingProjects, projects, presetId, router, pushToast, t]);
+
+  useEffect(() => {
+    const clear = () => projectDetailCache.current.clear();
+    window.addEventListener("route5:project-updated", clear);
+    return () => window.removeEventListener("route5:project-updated", clear);
+  }, []);
+
+  const completeOpenAction = useCallback(
+    async (ref: OpenActionRef) => {
+      let cached = projectDetailCache.current.get(ref.projectId)?.extractions;
+      if (!cached) {
+        const res = await fetch(`/api/projects/${ref.projectId}`, { credentials: "same-origin" });
+        const data = (await res.json().catch(() => ({}))) as { extractions?: Extraction[] };
+        if (!res.ok || !data.extractions) {
+          pushToast(t("desk.openQueueError"), "error");
+          return;
+        }
+        cached = data.extractions;
+        projectDetailCache.current.set(ref.projectId, { extractions: cached });
+      }
+      const ex = cached.find((e) => e.id === ref.extractionId);
+      if (!ex) {
+        projectDetailCache.current.delete(ref.projectId);
+        pushToast(t("desk.openQueueError"), "error");
+        return;
+      }
+      const next = ex.actionItems.map((a) =>
+        a.id === ref.actionId ? { ...a, completed: true } : a
+      );
+      const patch = await fetch(
+        `/api/projects/${ref.projectId}/extractions/${ref.extractionId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ actionItems: next }),
+        }
+      );
+      if (!patch.ok) {
+        projectDetailCache.current.delete(ref.projectId);
+        pushToast(t("desk.openQueueError"), "error");
+        return;
+      }
+      const updated = (await patch.json().catch(() => ({}))) as {
+        actionItems?: Extraction["actionItems"];
+      };
+      if (updated.actionItems) {
+        const list = cached.map((e) =>
+          e.id === ref.extractionId ? { ...e, actionItems: updated.actionItems! } : e
+        );
+        projectDetailCache.current.set(ref.projectId, { extractions: list });
+      }
+      await refreshSummary();
+      pushToast(t("desk.openQueueDone"), "success");
+    },
+    [pushToast, refreshSummary, t]
+  );
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === projectId),
@@ -390,8 +507,16 @@ export default function DeskWorkspace() {
           </div>
         ) : null}
 
-        <header className="dashboard-home-card relative mb-6 rounded-[24px] px-4 py-5 sm:px-6 sm:py-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <header className="dashboard-home-card relative mb-6 overflow-hidden rounded-[24px] px-4 py-5 sm:px-6 sm:py-6">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.07]"
+            aria-hidden
+            style={{
+              background:
+                "radial-gradient(900px 240px at 12% -20%, rgba(139,92,246,0.5), transparent 55%), radial-gradient(700px 200px at 92% 0%, rgba(56,189,248,0.35), transparent 50%)",
+            }}
+          />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex min-w-0 items-start gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 text-[var(--workspace-accent)] shadow-inner">
                 <Inbox className="h-6 w-6" strokeWidth={1.75} aria-hidden />
@@ -416,7 +541,7 @@ export default function DeskWorkspace() {
               </div>
             </div>
             <nav
-              className="flex flex-wrap gap-2 lg:max-w-[min(100%,380px)] lg:justify-end"
+              className="no-scrollbar flex max-w-full gap-1.5 overflow-x-auto pb-0.5 sm:flex-wrap sm:justify-end lg:max-w-[min(100%,420px)]"
               aria-label={t("desk.badge")}
             >
               <Link
@@ -603,8 +728,17 @@ export default function DeskWorkspace() {
           </aside>
 
           <div className="space-y-5 lg:col-span-6">
+            {hasProjects && (loadingSummary || summary.extractionCount > 0) ? (
+              <DeskOpenActions
+                items={summary.openActions}
+                locale={intlLocale}
+                loadingSummary={loadingSummary}
+                onToggleComplete={completeOpenAction}
+                t={t}
+              />
+            ) : null}
             <section
-              className="dashboard-home-card rounded-[24px] p-5 sm:p-6"
+              className={`dashboard-home-card desk-capture-focus rounded-[24px] p-5 sm:p-6 ${importGlow ? "desk-capture-import-glow" : ""}`}
               aria-labelledby="capture-heading"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -702,6 +836,7 @@ export default function DeskWorkspace() {
                       {t("desk.workInput")}
                     </label>
                     <textarea
+                      ref={captureRef}
                       id="desk-capture"
                       value={text}
                       onChange={(e) => setText(e.target.value)}

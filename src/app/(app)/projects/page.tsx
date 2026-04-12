@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
+import DashboardOpenActionsStrip from "@/components/workspace/DashboardOpenActionsStrip";
 import DashboardPurposeCard from "@/components/workspace/DashboardPurposeCard";
 import DashboardRecentWork from "@/components/workspace/DashboardRecentWork";
 import DashboardMarketplaceTeaser from "@/components/workspace/DashboardMarketplaceTeaser";
@@ -112,6 +113,12 @@ export default function ProjectsPage() {
             activity={summary.activity}
             activitySeries={summary.activitySeries}
             execution={summary.execution}
+          />
+
+          <DashboardOpenActionsStrip
+            loading={loadingSummary}
+            extractionCount={summary.extractionCount}
+            openActionCount={summary.openActions.length}
           />
 
           <DashboardPurposeCard

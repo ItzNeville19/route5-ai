@@ -62,6 +62,14 @@ export const pt: Record<string, string> = {
   "prefs.signedInSync":
     "Conectado — as preferências do workspace sincronizam entre dispositivos pela sua conta.",
 
+  "overview.openActionsStrip.badge": "Execução",
+  "overview.openActionsStrip.title": "{count} ação(ões) pendente(s) na fila",
+  "overview.openActionsStrip.lead":
+    "Os mais antigos aparecem primeiro na Mesa — conclua lá ou no projeto.",
+  "overview.openActionsStrip.cta": "Ir à Mesa",
+  "overview.openActionsStrip.caughtUp":
+    "Nenhuma ação aberta na fila — listas em dia. Capture o próximo fio na Mesa quando quiser.",
+
   "desk.llmOffTitle": "Sem LLM neste deploy.",
   "desk.llmOffLead":
     "As execuções usam um resumo heurístico rápido (marcado em cada execução como «Heurístico»), não análise semântica completa. Adicione",
@@ -106,7 +114,7 @@ export const pt: Record<string, string> = {
   "desk.howStep3":
     "Execute a extração. Com IA você obtém campos estruturados; sem IA ainda há um digest útil para checklists (marcado como heurístico).",
   "desk.howStep4":
-    "Abra o projeto: marque ações, edite decisões — os gráficos da Visão geral usam essas conclusões.",
+    "Limpe ações abertas na fila acima ou no projeto — os gráficos da Visão geral usam essas conclusões.",
 
   "desk.filedUnder": "Salvar execuções em",
   "desk.projectLabel": "Projeto",
@@ -144,6 +152,15 @@ export const pt: Record<string, string> = {
   "desk.noRunsProject": "Ainda não há execuções para este projeto.",
   "desk.openCount": "· {count} abertas",
   "desk.fullHistory": "Histórico completo de extrações",
+
+  "desk.openQueueTitle": "Próximos passos abertos (workspace)",
+  "desk.openQueueLead":
+    "Ações não concluídas mais antigas primeiro — marque aqui sem sair da Mesa ou abra o projeto.",
+  "desk.openQueueEmpty": "Nenhuma ação aberta — em dia com as listas.",
+  "desk.openQueueDone": "Marcado como feito.",
+  "desk.openQueueError": "Não foi possível atualizar — abra o projeto e tente de novo.",
+  "desk.openQueueMarkDone": "Marcar como feito",
+  "desk.openQueueOpenProject": "Abrir no projeto",
 
   "desk.errorChooseProject": "Escolha um projeto — as execuções são sempre salvas nele.",
   "desk.errorAddMaterial": "Adicione material bruto — notas, logs ou threads colados.",
@@ -193,13 +210,13 @@ export const pt: Record<string, string> = {
   "modal.newProject.toastCopied": "Projeto criado — link copiado.",
   "modal.newProject.toastCreated": "Projeto criado.",
 
-  "marketing.hero.kicker": "Workspace de execução",
+  "marketing.hero.kicker": "Feche a lacuna de execução",
   "marketing.hero.headline": "Decisões e ações, não só resumos.",
   "marketing.hero.subtitle":
-    "O Route5 transforma contexto capturado em projetos executáveis: extrações estruturadas, checklists e atividade que você pode gráficos e exportar — Linear e GitHub quando conectados.",
+    "O trabalho do conhecimento ainda chega como texto desestruturado — threads, tickets, notas. O Route5 é o workspace que transforma esse volume em decisões claras, ações verificáveis e gráficos do que você realmente conclui — não um chat descartável.",
   "marketing.hero.mono": "route5 / workspace · inteligência de execução",
   "marketing.hero.cardBody":
-    "Disponível hoje: projetos, extrações estruturadas, checklists de decisão e ação, métricas de conclusão, importações Linear/GitHub — não um fio de chat descartável.",
+    "Feito para a lacuna entre falar e entregar: uma superfície de captura, execuções estruturadas, listas, métricas reais de conclusão, Linear/GitHub quando você conectar.",
   "marketing.hero.signedInTitle":
     "Você está conectado — a Mesa é seu workspace diário; a Visão geral consolida resultados.",
   "marketing.hero.signedInBody":

@@ -1,6 +1,6 @@
 import type { MarketplaceApp } from "@/lib/marketplace-catalog";
 
-/** App Store–style detail copy — full “about” for the launch screen. */
+/** Detail copy for each marketplace listing (About + highlights). */
 const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   "virtual-desk": {
     about:
@@ -17,7 +17,7 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
     highlights: [
       "Import by file, design, or community URL (or raw file key)",
       "Open on Desk or Send to project in one session",
-      "Health: GET /api/health includes figmaConfigured",
+      "Connection status appears in Settings when your host configures tokens",
     ],
   },
   composer: {
@@ -55,8 +55,8 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   marketplace: {
     about:
-      "Browse built-in surfaces, live stack status, and roadmap integrations. Each listing opens its own detail page with a primary action that navigates in-app when wired.",
-    highlights: ["Stack status from live health checks", "Roadmap items open vendor or contact flows"],
+      "Browse built-in surfaces, your stack, and upcoming connectors. Each listing opens a detail page with Add and Open so you can jump straight into the real workspace route.",
+    highlights: ["Built-in and stack items open in your workspace", "Coming-soon items link to vendors or contact"],
   },
   documentation: {
     about:
@@ -65,8 +65,8 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   onboarding: {
     about:
-      "A short guided path: verify your stack, optionally create a project, and land on the desk ready to extract. You can skip anytime.",
-    highlights: ["Health check against /api/health", "Creates a real project via API"],
+      "A short guided path: verify your stack, optionally create a project, and land on Desk ready to extract. You can skip anytime.",
+    highlights: ["Checks that your workspace is ready", "Creates a real project when you continue"],
   },
   settings: {
     about:
@@ -75,10 +75,10 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   "integrations-hub": {
     about:
-      "The integrations hub lists Desk, Linear, GitHub, Figma, and Google routes. For raw stack diagnostics, GET /api/health returns storage mode and connector flags (no secrets).",
+      "The integrations hub lists Desk, Linear, GitHub, Figma, and Google routes. Your workspace shows whether connectors are ready (API keys, tokens) without exposing secrets.",
     highlights: [
       "Every wired connector from one place",
-      "Status strip uses the same readiness flags as Overview (OpenAI, Linear, GitHub, Figma)",
+      "Status matches what you see on Overview and Desk",
     ],
   },
   "workspace-apps": {
@@ -150,17 +150,17 @@ export function getAppScreenCopy(app: MarketplaceApp): {
 
   if (app.kind === "roadmap") {
     return {
-      about: `${app.subtitle} Route5 doesn’t connect to this system yet—use Learn more for the vendor, or Request to tell us your priority. We ship connectors here first so your desk stays unified.`,
+      about: `${app.subtitle} This connector is not available in Route5 yet. Use Learn more to read about the vendor, or Request to tell us you need it.`,
       highlights: [
-        "Roadmap — not installed",
-        "Request prioritizes our integration queue",
-        "Learn more opens the vendor’s site",
+        "On our roadmap",
+        "Request helps us prioritize what to build next",
+        "Learn more opens the vendor’s site in a new tab",
       ],
     };
   }
 
   return {
     about: app.subtitle,
-    highlights: ["Included in Route5 workspace", "Tap Open to go there now"],
+    highlights: ["Included in your Route5 workspace", "Tap Open to go there"],
   };
 }

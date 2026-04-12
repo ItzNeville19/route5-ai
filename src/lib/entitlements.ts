@@ -14,7 +14,7 @@ export type TierLimits = {
   maxExtractionsPerMonth: number;
 };
 
-/** Numeric caps — enterprise = effectively unlimited for UI. */
+/** Numeric caps — enterprise uses a high ceiling in code; contracts may define actual limits. */
 export const TIER_LIMITS: Record<PlanTierId, TierLimits> = {
   /** Tight on purpose — paid tiers unlock real headroom and connector features. */
   free: { maxProjects: 3, maxExtractionsPerMonth: 60 },
@@ -173,9 +173,9 @@ export function tierTaglineForTier(tier: PlanTierId): string {
     case "pro":
       return "You’re on Pro — thanks for backing Route5. Slack connector, full exports, and priority support are included.";
     case "ultra":
-      return "You’re on Ultra — team-scale limits plus the full connector and analytics stack.";
+      return "You’re on Ultra — higher limits; roadmap items (e.g. SSO) are confirmed in sales, not implied here.";
     case "enterprise":
-      return "You’re on Enterprise — unlimited workspace caps with founder / rollout treatment.";
+      return "You’re on Enterprise — contract-level high caps; specifics are in your order or MSA.";
     default:
       return "";
   }

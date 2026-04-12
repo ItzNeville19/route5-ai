@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AdvertisingSafeHarbor from "@/components/marketing/AdvertisingSafeHarbor";
 import { BILLING_LIVE, PLAN_TIERS, type PlanTierId } from "@/lib/plans-catalog";
 
 function TierCta({
@@ -40,7 +41,8 @@ function TierCta({
   if (BILLING_LIVE) {
     return (
       <Link
-        href="/contact"
+        href={`/contact?subject=${encodeURIComponent(`Route5 ${tierId} — purchase`)}`}
+        title="Opens contact — complete purchase or invoice with our team (card checkout when integrated)"
         className="inline-flex w-full justify-center rounded-xl bg-[#0071e3] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0077ed]"
       >
         {cta}
@@ -65,7 +67,8 @@ type Props = {
 /** Public marketing pricing — same tiers and copy as in-app account plans (`PLAN_TIERS`). */
 export default function PublicPlansGrid({ signedIn }: Props) {
   return (
-    <div className="mx-auto mt-12 grid max-w-[1100px] gap-5 sm:grid-cols-2 lg:grid-cols-2">
+    <div className="mx-auto mt-12 max-w-[1100px]">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2">
       {PLAN_TIERS.map((tier) => (
         <div
           key={tier.id}
@@ -114,6 +117,8 @@ export default function PublicPlansGrid({ signedIn }: Props) {
           </div>
         </div>
       ))}
+      </div>
+      <AdvertisingSafeHarbor variant="plans-grid" className="mt-10" />
     </div>
   );
 }

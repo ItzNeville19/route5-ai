@@ -201,7 +201,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   },
 ];
 
-/** Live stack — links go to real consoles; status from /api/health. */
+/** Live stack — links go to real consoles; status reflects workspace readiness. */
 export const MARKETPLACE_STACK: MarketplaceApp[] = [
   {
     id: "clerk",
@@ -440,7 +440,7 @@ export const MARKETPLACE_INSTALLABLE: MarketplaceApp[] = [
   {
     id: "ibm-granite-speech",
     name: "IBM Granite Speech",
-    subtitle: "Enterprise-grade speech recognition from IBM Research. Multi-language, high accuracy.",
+    subtitle: "IBM Research speech models (vendor capabilities vary; configure in your deployment).",
     category: "ai-engines",
     kind: "installable",
     brandId: "granite",
@@ -482,7 +482,7 @@ export const MARKETPLACE_INSTALLABLE: MarketplaceApp[] = [
   {
     id: "ibm-granite-llm",
     name: "IBM Granite LLM",
-    subtitle: "Enterprise-grade language models from IBM. Code, chat, and document understanding.",
+    subtitle: "IBM Granite models for code, chat, and documents — subject to IBM terms and your configuration.",
     category: "ai-providers",
     kind: "installable",
     brandId: "ibm",

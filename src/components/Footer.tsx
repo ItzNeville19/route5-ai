@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ADVERTISING_DISCLOSURES } from "@/lib/advertising-disclosures";
 
 const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
@@ -122,7 +123,7 @@ export default function Footer({ tone = "light" }: FooterProps) {
             </p>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px]">
               <p className={`max-w-2xl text-[12px] leading-relaxed ${footMuted}`}>
-                AI outputs require human review before operational decisions.
+                {ADVERTISING_DISCLOSURES.aiHumanReview} {ADVERTISING_DISCLOSURES.plansShort}
               </p>
               <Link href="/contact" title="Contact form" className={footLink}>
                 Contact

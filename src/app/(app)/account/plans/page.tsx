@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AccountPlansClient from "@/components/account/AccountPlansClient";
+import AdvertisingSafeHarbor from "@/components/marketing/AdvertisingSafeHarbor";
 import { WorkspaceArticle } from "@/components/workspace/WorkspaceArticle";
 import { BILLING_LIVE } from "@/lib/plans-catalog";
 
@@ -24,6 +25,8 @@ export default function AccountPlansPage() {
         </p>
       ) : null}
 
+      <AdvertisingSafeHarbor variant="account" className="mb-6" />
+
       <AccountPlansClient />
 
       <p className="mt-8 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
@@ -34,7 +37,12 @@ export default function AccountPlansPage() {
         >
           route5.ai/pricing
         </Link>
-        . Clerk handles authentication; plans above describe Route5 packaging only.
+        . Clerk handles authentication; plan text describes Route5 packaging, not third-party services. For binding
+        terms see{" "}
+        <Link href="/terms" className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline">
+          Terms
+        </Link>
+        .
       </p>
     </WorkspaceArticle>
   );

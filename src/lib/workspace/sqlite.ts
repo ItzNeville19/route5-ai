@@ -330,6 +330,32 @@ export function countExtractionsSince(userId: string, sinceIso: string): number 
   return row?.c ?? 0;
 }
 
+/** Oldest extractions first — used to surface stale open actions before new capture. */
+export function listExtractionsForOpenActionQueue(
+  userId: string,
+  limit = 400
+): {
+  id: string;
+  project_id: string;
+  created_at: string;
+  action_items: string;
+}[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT id, project_id, created_at, action_items FROM extractions
+       WHERE clerk_user_id = ?
+       ORDER BY created_at ASC
+       LIMIT ?`
+    )
+    .all(userId, limit) as {
+    id: string;
+    project_id: string;
+    created_at: string;
+    action_items: string;
+  }[];
+}
+
 export function listExtractionsForExecutionMetrics(
   userId: string,
   limit = 8000

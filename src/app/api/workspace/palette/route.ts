@@ -16,6 +16,7 @@ export async function GET() {
       displayName: null as string | null,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
+      openActionsCount: 0,
       workspaceDbOk: true,
     });
   }
@@ -43,6 +44,7 @@ export async function GET() {
       displayName,
       projects: projects as WorkspacePaletteProject[],
       recentRuns,
+      openActionsCount: summary.openActions.length,
       workspaceDbOk: true,
     });
   } catch {
@@ -51,6 +53,7 @@ export async function GET() {
       displayName,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
+      openActionsCount: 0,
       workspaceDbOk: true,
     });
   }

@@ -1,6 +1,6 @@
 import type { ActionItemStored } from "@/lib/ai/schema";
 import type { Extraction, Project } from "@/lib/types";
-import type { RecentExtractionRow } from "@/lib/workspace-summary";
+import type { OpenActionRef, RecentExtractionRow } from "@/lib/workspace-summary";
 import {
   computeActivityStats,
   computeAllActivitySeries,
@@ -91,6 +91,45 @@ function parseActionItemsFromDbJson(text: string): ActionItemStored[] {
   } catch {
     return [];
   }
+}
+
+const OPEN_ACTION_QUEUE_MAX = 25;
+
+function actionItemsFromRow(action_items: unknown): ActionItemStored[] {
+  if (typeof action_items === "string") {
+    return parseActionItemsFromDbJson(action_items);
+  }
+  return parseActionItems(action_items);
+}
+
+/**
+ * Walk extractions from oldest to newest; emit incomplete actions until `maxItems`.
+ * Surfaces stale commitments so users clear backlog before adding new capture.
+ */
+function buildOpenActionQueue(
+  extractions: { id: string; project_id: string; created_at: string; action_items: unknown }[],
+  nameByProject: Map<string, string>,
+  maxItems: number
+): OpenActionRef[] {
+  const sorted = [...extractions].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  const out: OpenActionRef[] = [];
+  for (const r of sorted) {
+    const items = actionItemsFromRow(r.action_items).filter((a) => !a.completed);
+    for (const a of items) {
+      if (out.length >= maxItems) return out;
+      out.push({
+        actionId: a.id,
+        text: a.text,
+        projectId: r.project_id,
+        projectName: nameByProject.get(r.project_id) ?? "Project",
+        extractionId: r.id,
+        extractionCreatedAt: r.created_at,
+      });
+    }
+  }
+  return out;
 }
 
 function parseDecisions(raw: unknown): string[] {
@@ -451,6 +490,7 @@ export async function getWorkspaceSummaryForUser(
   projectCount: number;
   extractionCount: number;
   recent: RecentExtractionRow[];
+  openActions: OpenActionRef[];
   activity: WorkspaceActivityStats;
   activitySeries: ActivitySeriesByRange;
   execution: WorkspaceExecutionMetrics;
@@ -506,6 +546,26 @@ export async function getWorkspaceSummaryForUser(
       };
     });
 
+    const { data: queueRows, error: qErr } = await supabase
+      .from("extractions")
+      .select("id, project_id, created_at, action_items")
+      .eq("clerk_user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(400);
+    const openActions =
+      qErr || !queueRows
+        ? []
+        : buildOpenActionQueue(
+            queueRows as {
+              id: string;
+              project_id: string;
+              created_at: string;
+              action_items: unknown;
+            }[],
+            nameByProject,
+            OPEN_ACTION_QUEUE_MAX
+          );
+
     const { data: tsData, error: tsErr } = await supabase
       .from("extractions")
       .select("created_at, decisions")
@@ -547,6 +607,7 @@ export async function getWorkspaceSummaryForUser(
       projectCount: projectCount ?? 0,
       extractionCount: extractionCount ?? 0,
       recent,
+      openActions,
       activity,
       activitySeries,
       execution,
@@ -580,6 +641,17 @@ export async function getWorkspaceSummaryForUser(
 
   const projects = sqlite.listProjects(userId);
   const nameByProject = new Map(projects.map((p) => [p.id, p.name]));
+  const queueRows = sqlite.listExtractionsForOpenActionQueue(userId);
+  const openActions = buildOpenActionQueue(
+    queueRows.map((r) => ({
+      id: r.id,
+      project_id: r.project_id,
+      created_at: r.created_at,
+      action_items: r.action_items,
+    })),
+    nameByProject,
+    OPEN_ACTION_QUEUE_MAX
+  );
   const execRows = sqlite.listExtractionsForExecutionMetrics(userId);
   const execution = computeExecutionMetrics(
     buildExecutionInputsFromRows(execRows, nameByProject)
@@ -589,6 +661,7 @@ export async function getWorkspaceSummaryForUser(
     projectCount: s.projectCount,
     extractionCount: s.extractionCount,
     recent,
+    openActions,
     activity,
     activitySeries,
     execution,

@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PublicPlansGrid from "@/components/marketing/PublicPlansGrid";
+import { PRODUCT_VS_EPHEMERAL_CHAT } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
   title: "Pricing — Route5",
@@ -38,10 +39,39 @@ export default async function PricingPage() {
           </p>
         </div>
 
+        <div className="mx-auto mt-12 max-w-[720px] rounded-2xl border border-black/[0.08] bg-white/[0.45] px-5 py-5 shadow-sm backdrop-blur-md sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#86868b]">
+            Beyond a chat subscription
+          </p>
+          <p className="mt-2 text-[15px] leading-relaxed text-[#1d1d1f]">
+            {PRODUCT_VS_EPHEMERAL_CHAT.intro}
+          </p>
+          <ul className="mt-4 space-y-2.5 text-[14px] leading-relaxed text-[#6e6e73]">
+            {PRODUCT_VS_EPHEMERAL_CHAT.rows.map((row) => (
+              <li key={row.label} className="flex gap-2">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#0071e3]" aria-hidden />
+                <span>
+                  <strong className="font-semibold text-[#1d1d1f]">{row.label}.</strong>{" "}
+                  {row.route5}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-[13px] leading-relaxed text-[#86868b]">
+            <Link href="/product#chat-vs-workspace" className="font-medium text-[#0071e3] hover:underline">
+              Side-by-side on What we ship →
+            </Link>
+          </p>
+        </div>
+
         <PublicPlansGrid signedIn={Boolean(userId)} />
 
         <p className="mx-auto mt-14 max-w-lg text-center text-[13px] leading-relaxed text-[#86868b]">
-          Billing changes are published here and in-app before they apply. Questions?{" "}
+          Billing changes are published here and in-app before they apply. Nothing here overrides your{" "}
+          <Link href="/terms" className="font-medium text-[#0071e3] hover:underline">
+            Terms
+          </Link>
+          . Questions?{" "}
           <Link href="/contact" className="font-medium text-[#0071e3] hover:underline">
             Contact
           </Link>{" "}

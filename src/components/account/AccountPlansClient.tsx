@@ -54,7 +54,8 @@ function Cta({
   if (BILLING_LIVE) {
     return (
       <Link
-        href="/contact"
+        href={`/contact?subject=${encodeURIComponent(`Route5 ${tierId} — purchase`)}`}
+        title="Contact to complete purchase — card checkout when integrated"
         className="inline-flex w-full justify-center rounded-xl bg-[var(--workspace-accent)] py-2.5 text-[13px] font-semibold text-[var(--workspace-on-accent)] transition hover:opacity-95"
       >
         {cta}

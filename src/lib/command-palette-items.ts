@@ -58,8 +58,10 @@ export function buildPaletteItems(params: {
   displayName: string | null;
   projects: WorkspacePaletteProject[];
   recentRuns?: PaletteRecentRun[];
+  /** Workspace-wide incomplete actions (Desk queue); sharpens Desk description. */
+  openActionsCount?: number;
 }): PaletteItem[] {
-  const { signedIn, displayName, projects, recentRuns = [] } = params;
+  const { signedIn, displayName, projects, recentRuns = [], openActionsCount = 0 } = params;
 
   if (!signedIn) {
     return [
@@ -131,13 +133,30 @@ export function buildPaletteItems(params: {
     section: "activity",
   }));
 
+  const deskDescription =
+    openActionsCount > 0
+      ? `${openActionsCount} open action${openActionsCount === 1 ? "" : "s"} — clear the queue on Desk (oldest first)`
+      : "Primary workplace — capture, structured runs & open-action queue";
+
   const agent: PaletteItem[] = [
     {
       id: "desk",
       label: "Desk",
       href: "/desk",
-      description: "Primary workplace — capture & structured runs",
-      keywords: ["desk", "capture", "paste", "work", "create", "extract"],
+      description: deskDescription,
+      keywords: [
+        "desk",
+        "capture",
+        "paste",
+        "work",
+        "create",
+        "extract",
+        "actions",
+        "todo",
+        "checklist",
+        "queue",
+        "follow",
+      ],
       section: "agent",
     },
     {

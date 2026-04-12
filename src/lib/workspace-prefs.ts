@@ -40,7 +40,7 @@ export type WorkspacePrefsV1 = {
   focusMode?: boolean;
   pinnedProjectIds?: string[];
   marketplaceFavorites?: string[];
-  /** App Store “installed” ids — native/stack detail pages. */
+  /** Marketplace apps added to your workspace shortcuts (built-in and stack). */
   installedMarketplaceAppIds?: string[];
   /** AI / manual hero subtitle for the projects dashboard. */
   dashboardCompanyNote?: string;

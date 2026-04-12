@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Inbox, Loader2, PanelRight, Send } from "lucide-react";
+import { pushDeskWithDraft } from "@/lib/integration-desk-navigation";
 import { writeExtractionDraft } from "@/lib/workspace-bridge";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
@@ -57,11 +58,7 @@ export default function SendToProjectButton({
     }
     writeExtractionDraft(trimmed, sourceLabel);
     setOpen(false);
-    const q = new URLSearchParams();
-    q.set("draft", "1");
-    if (projectId) q.set("projectId", projectId);
-    if (deskPreset?.trim()) q.set("preset", deskPreset.trim());
-    router.push(`/desk?${q.toString()}`);
+    pushDeskWithDraft(router, { projectId, preset: deskPreset ?? null });
     pushToast("Opening Desk…", "success");
   }
 

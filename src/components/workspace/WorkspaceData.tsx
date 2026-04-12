@@ -16,6 +16,7 @@ import {
 } from "@/lib/workspace-activity-stats";
 import type {
   ActivitySeriesByRange,
+  OpenActionRef,
   RecentExtractionRow,
   WorkspaceActivityStats,
   WorkspaceConnectorReadiness,
@@ -33,6 +34,7 @@ type WorkspaceSummaryState = {
   projectCount: number;
   extractionCount: number;
   recent: RecentExtractionRow[];
+  openActions: OpenActionRef[];
   activity: WorkspaceActivityStats;
   activitySeries: ActivitySeriesByRange;
   execution: WorkspaceExecutionMetrics;
@@ -57,6 +59,7 @@ const EMPTY_SUMMARY: WorkspaceSummaryState = {
   projectCount: 0,
   extractionCount: 0,
   recent: [],
+  openActions: [],
   activity: computeActivityStats([]),
   activitySeries: emptyActivitySeries(),
   execution: emptyExecutionMetrics(),
@@ -142,6 +145,7 @@ export function WorkspaceDataProvider({
         projectCount?: number;
         extractionCount?: number;
         recent?: RecentExtractionRow[];
+        openActions?: OpenActionRef[];
         activity?: WorkspaceActivityStats;
         activitySeries?: ActivitySeriesByRange;
         execution?: WorkspaceExecutionMetrics;
@@ -164,6 +168,7 @@ export function WorkspaceDataProvider({
         projectCount: data.projectCount ?? 0,
         extractionCount: data.extractionCount ?? 0,
         recent: data.recent ?? [],
+        openActions: data.openActions ?? [],
         activity: data.activity ?? computeActivityStats([]),
         activitySeries: data.activitySeries ?? emptyActivitySeries(),
         execution: data.execution ?? emptyExecutionMetrics(),

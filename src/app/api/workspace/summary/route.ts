@@ -4,7 +4,7 @@ import { isOpenAIConfigured } from "@/lib/ai/openai-client";
 import { isFigmaConfigured } from "@/lib/figma-api";
 import { isGitHubConfigured } from "@/lib/github-api";
 import { isLinearConfigured } from "@/lib/linear-api";
-import type { RecentExtractionRow } from "@/lib/workspace-summary";
+import type { OpenActionRef, RecentExtractionRow } from "@/lib/workspace-summary";
 import {
   computeActivityStats,
   emptyActivitySeries,
@@ -24,12 +24,13 @@ export async function GET() {
   }
 
   try {
-    const { projectCount, extractionCount, recent, activity, activitySeries, execution } =
+    const { projectCount, extractionCount, recent, openActions, activity, activitySeries, execution } =
       await getWorkspaceSummaryForUser(userId);
     return NextResponse.json({
       projectCount,
       extractionCount,
       recent,
+      openActions,
       activity,
       activitySeries,
       execution,
@@ -45,6 +46,7 @@ export async function GET() {
       projectCount: 0,
       extractionCount: 0,
       recent: [] as RecentExtractionRow[],
+      openActions: [] as OpenActionRef[],
       activity: computeActivityStats([]),
       activitySeries: emptyActivitySeries(),
       execution: emptyExecutionMetrics(),

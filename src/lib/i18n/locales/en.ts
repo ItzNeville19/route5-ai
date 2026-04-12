@@ -60,6 +60,14 @@ export const en: Record<string, string> = {
   "prefs.appearanceIntro": "Themes, previews, and mesh options live in",
   "prefs.signedInSync": "Signed in — workspace preferences sync across devices via your account.",
 
+  "overview.openActionsStrip.badge": "Execution",
+  "overview.openActionsStrip.title": "{count} unfinished action(s) in queue",
+  "overview.openActionsStrip.lead":
+    "Oldest items surface first on Desk — complete them there or in the project.",
+  "overview.openActionsStrip.cta": "Go to Desk",
+  "overview.openActionsStrip.caughtUp":
+    "No open actions in your queue — checklists are clear. Capture the next thread on Desk when you're ready.",
+
   "desk.llmOffTitle": "No LLM on this deployment.",
   "desk.llmOffLead":
     "Runs use a fast heuristic digest (labeled on each run as \"Heuristic\") — not full semantic analysis. Add",
@@ -67,9 +75,9 @@ export const en: Record<string, string> = {
   "desk.llmOffRead": "Read what you're buying →",
 
   "desk.badge": "Desk",
-  "desk.heroTitle": "Turn notes into decisions and actions — not disposable chat",
+  "desk.heroTitle": "Capture desk — where text becomes execution",
   "desk.heroBody":
-    "Pick a project, paste raw text (or import from an integration), and run extraction. Results stay in that project: checklists, completion metrics on Overview, and exports — all from your data.",
+    "Pick a project, paste raw material (or send it here from Integrations), run extraction. Runs stay in that project; Overview and Reports use the same saved data — not a throwaway chat.",
   "desk.pipelineAria": "Desk workflow",
   "desk.pipelineOneLiner":
     "Choose project → paste text → run extraction → open the project to complete actions and see metrics.",
@@ -102,7 +110,8 @@ export const en: Record<string, string> = {
   "desk.howStep1": "Create or select a project — every extraction is stored under it.",
   "desk.howStep2": "Paste notes, tickets, or threads. Optional: pick a template to pre-fill the box.",
   "desk.howStep3": "Run extraction. AI produces structured fields; without AI you still get a checklist-friendly digest (marked as heuristic).",
-  "desk.howStep4": "Go to the project: check off actions, edit decisions — Overview charts use those completions.",
+  "desk.howStep4":
+    "Clear open actions from the queue above or in the project — Overview charts use those completions.",
 
   "desk.filedUnder": "Save runs to",
   "desk.projectLabel": "Project",
@@ -144,12 +153,23 @@ export const en: Record<string, string> = {
   "desk.openCount": "· {count} open",
   "desk.fullHistory": "Full extraction history",
 
+  "desk.openQueueTitle": "Open next steps (workspace)",
+  "desk.openQueueLead":
+    "Oldest unfinished actions first — check them off here without leaving Desk, or open the project.",
+  "desk.openQueueEmpty": "No open actions left — you're caught up on checklists.",
+  "desk.openQueueDone": "Marked done.",
+  "desk.openQueueError": "Couldn't update — open the project and try again.",
+  "desk.openQueueMarkDone": "Mark done",
+  "desk.openQueueOpenProject": "Open in project",
+
   "desk.errorChooseProject": "Choose a project — runs are always saved there.",
   "desk.errorAddMaterial": "Add raw material to process — notes, logs, or pasted threads.",
   "desk.errorExtractionFailed": "Couldn't run extraction.",
   "desk.errorNetwork": "Network error.",
   "desk.toastImportedFrom": "Imported from {source}.",
   "desk.toastNothingToImport": "Nothing to import — fetch from Integrations first.",
+  "desk.toastImportNeedProject":
+    "Imported from {source}. Create a project (or pick one in the rail) to run extraction.",
 
   "desk.preset.decision.label": "Decision",
   "desk.preset.decision.use": "Choose between options, record rationale.",
@@ -232,13 +252,13 @@ export const en: Record<string, string> = {
   "modal.newProject.toastCopied": "Project created — link copied.",
   "modal.newProject.toastCreated": "Project created.",
 
-  "marketing.hero.kicker": "Execution workspace",
+  "marketing.hero.kicker": "Close the execution gap",
   "marketing.hero.headline": "Decisions and actions, not just summaries.",
   "marketing.hero.subtitle":
-    "Route5 turns captured context into projects you can execute: structured extractions, checklists, and activity you can chart and export — Linear and GitHub when you connect them.",
+    "Knowledge work still arrives as unstructured text — threads, tickets, notes. Route5 is the workspace that turns that pile into clear decisions, checkable actions, and charts from what you actually finish — not a disposable chat.",
   "marketing.hero.mono": "route5 / workspace · execution intelligence",
   "marketing.hero.cardBody":
-    "Live today: projects, structured extractions, decision + action checklists, completion metrics, Linear/GitHub import paths — not a disposable chat thread.",
+    "Built for the gap between talk and delivery: one capture surface, structured runs, checklists, real completion metrics, Linear/GitHub when you wire them.",
   "marketing.hero.signedInTitle": "You're signed in — Desk is your daily workspace; Overview rolls up outcomes.",
   "marketing.hero.signedInBody":
     "Capture imports from connectors, run extractions, and switch projects without losing context.",
@@ -256,13 +276,38 @@ export const en: Record<string, string> = {
   "marketing.hero.plans": "Plans",
   "marketing.hero.whatWeShip": "What we ship",
 
+  "marketing.simple.kicker": "Plain English",
+  "marketing.simple.title": "What is Route5?",
+  "marketing.simple.lead":
+    "When words pile up and nothing ships, that is the problem Route5 is for. Imagine notes, a ticket, a long thread in one box — turned into clear decisions and to-dos you check off, with progress you can see in your own data. Simple to picture; serious when you use it.",
+  "marketing.simple.step1Title": "One inbox for your words",
+  "marketing.simple.step1Body":
+    "Drop text on Desk or inside a project — paste, import, or pull from Linear or GitHub when you have them set up.",
+  "marketing.simple.step2Title": "A neat list, not a vague blob",
+  "marketing.simple.step2Body":
+    "Each run can give you a summary plus decisions and action items. With AI enabled you get structured JSON; without it, a fast labeled digest — never sold as magic.",
+  "marketing.simple.step3Title": "Check off work, see real numbers",
+  "marketing.simple.step3Body":
+    "Overview and reports read the same timestamps as Desk — completion rates and trends from what you actually stored.",
+  "marketing.simple.vsChat.kicker": "The objection",
+  "marketing.simple.vsChat.colArea": "Area",
+  "marketing.simple.vsChat.colChat": "General chat",
+  "marketing.simple.vsChat.colRoute5": "Route5",
+  "marketing.simple.vsChat.linkProduct": "Full comparison on What we ship →",
+
+  "marketing.simple.trustNote":
+    "This is not a fake dashboard: charts and counts come from your workspace database. Connectors behave exactly as each integration page explains — tokens optional, samples labeled where we preview without a live API.",
+  "marketing.simple.linkProduct": "Full product scope",
+  "marketing.simple.linkBoundaries": "Live vs roadmap (honest list)",
+  "marketing.simple.anchor": "Plain-English story",
+
   "marketing.showcase.kicker": "Inside the workspace",
   "marketing.showcase.title": "Every surface, one execution loop",
   "marketing.showcase.subtitle":
-    "The same command canvas you get after sign-in — capture, extract, check off actions, and read real metrics. Tap a card to jump in (you’ll sign in when needed).",
+    "The same command canvas after sign-in — Desk for capture, Overview (projects) for the roll-up, Reports for trends. Tap a card to jump in; Clerk signs you in when needed.",
   "marketing.showcase.tileCta": "Open",
   "marketing.showcase.footnote":
-    "Scope is honest: connectors behave as documented on each screen. Nothing here is a mock — it’s the product, with Clerk at the door.",
+    "Every tile opens the real app. Integration screens say when a token is required; without it you may see labeled samples. Metrics are from your saved runs — not invented numbers.",
   "marketing.showcase.jump": "Explore every surface",
   "marketing.showcase.deskTitle": "Desk — capture & run",
   "marketing.showcase.deskBody":
@@ -278,13 +323,13 @@ export const en: Record<string, string> = {
     "Trends, heatmaps, and exports from real timestamps — aligned with Desk and Overview.",
   "marketing.showcase.integrationsTitle": "Integrations",
   "marketing.showcase.integrationsBody":
-    "Linear, GitHub, Figma, Google, Slack — import paths and walkthroughs as shipped; tokens optional where documented.",
+    "Linear & GitHub: paste and import paths ship today; live API lists when you add tokens. Figma & Google need host config where noted. Slack: Pro+ connector when your plan allows.",
   "marketing.showcase.marketplaceTitle": "Marketplace",
   "marketing.showcase.marketplaceBody":
     "Browse installable workspace tiles and connector experiences — opt-in from your org.",
   "marketing.showcase.teamTitle": "Team insights",
   "marketing.showcase.teamBody":
-    "Alignment views for how work moves across projects — tied to the same execution data.",
+    "Workspace roll-up counts for your account — export or screen-share with your team; deeper org features are on the roadmap.",
   "marketing.showcase.customizeTitle": "Customize Overview",
   "marketing.showcase.customizeBody":
     "Tune hero copy, shortcuts, and how your workspace greets you — plus locale and timezone prefs.",

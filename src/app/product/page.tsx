@@ -2,12 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { PRODUCT_LIVE, PRODUCT_ROADMAP } from "@/lib/product-truth";
+import AdvertisingSafeHarbor from "@/components/marketing/AdvertisingSafeHarbor";
+import {
+  PRODUCT_LIVE,
+  PRODUCT_PROBLEM,
+  PRODUCT_ROADMAP,
+  PRODUCT_VS_EPHEMERAL_CHAT,
+} from "@/lib/product-truth";
 
 export const metadata: Metadata = {
   title: "What we ship — Route5",
   description:
-    "What Route5 does today, roadmap, and how we work with teams — live vs planned, labeled clearly.",
+    "Live product scope, roadmap, and how Route5 differs from general-purpose chat — durable projects, actions, and metrics.",
 };
 
 export default function ProductPage() {
@@ -28,19 +34,52 @@ export default function ProductPage() {
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            01 — The hook
+            01 — The problem Route5 targets
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
-            Enterprise work still lives in unstructured text: Slack threads, Jira
-            comments, analyst notes, incident write-ups. Leaders need{" "}
-            <strong className="font-semibold">decisions and actions</strong>, not
-            another PDF nobody reads.
+            <strong className="font-semibold">{PRODUCT_PROBLEM.headline}.</strong>{" "}
+            {PRODUCT_PROBLEM.body}
           </p>
+          <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
+            {PRODUCT_PROBLEM.route5Does}
+          </p>
+        </section>
+
+        <section
+          id="chat-vs-workspace"
+          className="mt-12 scroll-mt-28 border-t border-black/[0.08] pt-12"
+        >
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
+            02 — {PRODUCT_VS_EPHEMERAL_CHAT.sectionTitle}
+          </h2>
+          <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
+            {PRODUCT_VS_EPHEMERAL_CHAT.intro}
+          </p>
+          <div className="mt-6 overflow-x-auto rounded-2xl border border-black/[0.08]">
+            <table className="w-full min-w-[520px] text-left text-[14px] leading-relaxed">
+              <thead>
+                <tr className="border-b border-black/[0.08] bg-black/[0.02] text-[11px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
+                  <th className="px-4 py-3 font-medium">Area</th>
+                  <th className="px-4 py-3 font-medium">General chat</th>
+                  <th className="px-4 py-3 font-medium">Route5</th>
+                </tr>
+              </thead>
+              <tbody className="text-[#1d1d1f]">
+                {PRODUCT_VS_EPHEMERAL_CHAT.rows.map((row) => (
+                  <tr key={row.label} className="border-b border-black/[0.06] last:border-0">
+                    <td className="px-4 py-4 font-semibold text-[#1d1d1f]">{row.label}</td>
+                    <td className="px-4 py-4 text-[#6e6e73]">{row.chat}</td>
+                    <td className="px-4 py-4 text-[#1d1d1f]">{row.route5}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            02 — What we built (live)
+            03 — What we built (live)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             Route5 is a signed-in workspace: projects, paste-in extraction, and
@@ -72,9 +111,9 @@ export default function ProductPage() {
           </ul>
         </section>
 
-        <section className="mt-12 border-t border-black/[0.08] pt-12">
+        <section id="roadmap" className="mt-12 scroll-mt-28 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            03 — Roadmap (explicitly not “vapor”)
+            04 — Roadmap (explicitly not “vapor”)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             These are directions we may pursue — they are{" "}
@@ -92,7 +131,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            04 — Why teams talk to us
+            05 — Why teams talk to us
           </h2>
           <ul className="mt-6 space-y-3 text-[15px] leading-relaxed text-[#1d1d1f]">
             <li>· Clarity: one workspace, one extraction flow, traceable history.</li>
@@ -103,7 +142,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            05 — Risks (we say them out loud)
+            06 — Risks (we say them out loud)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             Language models can hallucinate or miss context. Route5 outputs are
@@ -114,7 +153,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            06 — The ask
+            07 — The ask
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             If the fit is interesting: we&apos;ll walk your team through the
@@ -142,6 +181,10 @@ export default function ProductPage() {
               Workspace
             </Link>
           </div>
+        </section>
+
+        <section className="mt-12 border-t border-black/[0.08] pt-10">
+          <AdvertisingSafeHarbor variant="product" />
         </section>
       </article>
       <Footer />

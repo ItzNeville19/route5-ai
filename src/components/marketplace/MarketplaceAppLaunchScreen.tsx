@@ -34,7 +34,7 @@ type Health = {
 function kindLabel(kind: MarketplaceApp["kind"]): string {
   if (kind === "native") return "Built-in";
   if (kind === "stack") return "Your stack";
-  return "Roadmap";
+  return "Coming soon";
 }
 
 function categoryLabel(cat: MarketplaceApp["category"]): string {
@@ -148,7 +148,7 @@ function StickyLaunchCta({ app }: { app: MarketplaceApp }) {
     router.push(inAppHref);
   }
 
-  /** App Store–style GET → install animation → Open (idempotent once installed). */
+  /** Add → install preference → Open (same route, no separate download). */
   if (app.kind === "native" || app.kind === "stack") {
     if (installed) {
       return (
@@ -178,7 +178,7 @@ function StickyLaunchCta({ app }: { app: MarketplaceApp }) {
             Installing…
           </span>
         ) : (
-          "GET"
+          "Add"
         )}
       </button>
     );
@@ -199,9 +199,6 @@ export default function MarketplaceAppLaunchScreen({
   health: Health | null;
 }) {
   const copy = getAppScreenCopy(app);
-  const verMinor = app.id.length % 12;
-  const verPatch = (app.name.length * 7) % 25;
-  const buildLabel = `1.${verMinor}.${verPatch}`;
   const hueBase =
     app.id.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 360;
   const openHref = app.href ? launchHrefForApp(app) : null;
@@ -262,13 +259,12 @@ export default function MarketplaceAppLaunchScreen({
             {app.subtitle}
           </p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[13px] text-[var(--ios-secondary)]">
-            <span className="rounded-full bg-black/[0.05] px-2.5 py-1 font-medium">Listing v{buildLabel}</span>
+            <span className="rounded-full bg-black/[0.05] px-2.5 py-1 font-medium">
+              {categoryLabel(app.category)}
+            </span>
             <span className="rounded-full bg-black/[0.05] px-2.5 py-1 font-medium">
               {kindLabel(app.kind)}
-              {app.kind === "roadmap" ? " · Desk works today" : ""}
-            </span>
-            <span className="max-w-[280px] text-center text-[11px] leading-snug text-[var(--ios-secondary)] opacity-90">
-              Not an app-store rating — internal catalog only.
+              {app.kind === "roadmap" ? " · use Desk today" : ""}
             </span>
           </div>
         </div>
@@ -281,7 +277,7 @@ export default function MarketplaceAppLaunchScreen({
           aria-label="Preview"
         >
           <h2 className="mb-3 px-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--ios-secondary)]">
-            Visual mockup
+            Preview
           </h2>
           <div className="flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[0, 1, 2].map((i) => (
@@ -306,7 +302,7 @@ export default function MarketplaceAppLaunchScreen({
                     {i === 0 ? "In workspace" : i === 1 ? "Live flow" : "Aligned output"}
                   </p>
                   <p className="text-left text-[11px] text-white/75">
-                    Decorative gradient — not your data. GET/Open runs the real in-app route.
+                    Illustration only — your workspace data appears when you open the integration.
                   </p>
                 </div>
               </motion.div>
@@ -321,16 +317,14 @@ export default function MarketplaceAppLaunchScreen({
           className="mt-8"
         >
           <h2 className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--ios-secondary)]">
-            What&apos;s New
+            How to use
           </h2>
           <div className="px-4">
             <div className="rounded-2xl border border-black/[0.06] bg-black/[0.03] px-4 py-3 dark:bg-white/[0.04]">
-              <p className="text-[13px] font-semibold text-[var(--ios-label)]">Version {buildLabel}</p>
-              <p className="mt-1 text-[14px] leading-relaxed text-[var(--ios-secondary)]">
-                Listing metadata and routing stay in sync with the workspace catalog. Tap{" "}
-                <span className="font-semibold text-[var(--ios-label)]">GET</span> or{" "}
-                <span className="font-semibold text-[var(--ios-label)]">Open</span> to use the live path for{" "}
-                {app.name}.
+              <p className="text-[14px] leading-relaxed text-[var(--ios-secondary)]">
+                Tap <span className="font-semibold text-[var(--ios-label)]">Add</span> to save{" "}
+                {app.name} to your workspace, then <span className="font-semibold text-[var(--ios-label)]">Open</span>{" "}
+                to go there. You can remove shortcuts anytime from Library.
               </p>
             </div>
           </div>
@@ -345,11 +339,11 @@ export default function MarketplaceAppLaunchScreen({
           <h2 className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--ios-secondary)]">
             Information
           </h2>
-          <IOSInsetGroup footer="Same layout language as Apple’s App Store product page — Route5 workspace routing.">
+          <IOSInsetGroup footer="Details for this workspace listing.">
             <div className="flex min-h-[44px] items-center justify-between gap-3 px-4 py-2.5 text-[17px] text-[var(--ios-label)]">
               <span className="flex items-center gap-2 text-[var(--ios-secondary)]">
                 <Smartphone className="h-4 w-4 opacity-50" aria-hidden />
-                Seller
+                Offered by
               </span>
               <span className="text-right font-medium">Route5</span>
             </div>
@@ -368,26 +362,6 @@ export default function MarketplaceAppLaunchScreen({
               <span className="text-right font-medium">Web · Workspace</span>
             </div>
           </IOSInsetGroup>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.13, duration: 0.4, ease: appleEase }}
-          className="mt-8"
-        >
-          <h2 className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--ios-secondary)]">
-            Reviews
-          </h2>
-          <div className="px-4">
-            <div className="rounded-2xl border border-black/[0.06] bg-black/[0.03] p-4 dark:bg-white/[0.04]">
-              <p className="text-[14px] leading-relaxed text-[var(--ios-secondary)]">
-                Route5 does not collect third-party app reviews here. This page mirrors App Store layout for
-                familiarity only — verify behavior with{" "}
-                <span className="font-medium text-[var(--ios-label)]">GET / Open</span> and your own data.
-              </p>
-            </div>
-          </div>
         </motion.section>
 
         <motion.section
@@ -440,7 +414,7 @@ export default function MarketplaceAppLaunchScreen({
               <h2 className="mb-2 px-4 text-[13px] font-semibold uppercase tracking-wide text-[var(--ios-secondary)]">
                 Manage
               </h2>
-              <IOSInsetGroup footer="External vendor console.">
+              <IOSInsetGroup footer="Opens your provider account in a new tab.">
                 <a
                   href={app.manageUrl}
                   {...manageExternal}
@@ -508,11 +482,10 @@ export default function MarketplaceAppLaunchScreen({
         </motion.div>
       </motion.div>
 
-      {/* App Store–style sticky GET / Open bar */}
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[var(--workspace-canvas)] via-[var(--workspace-canvas)]/95 to-transparent pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8">
         <div className="pointer-events-auto mx-auto max-w-lg px-4">
           <p className="mb-2 text-center text-[11px] font-medium text-[var(--ios-secondary)]">
-            Web workspace — GET saves a preference and opens the real route (no separate installer)
+            Runs in your browser — no separate download.
           </p>
           <StickyLaunchCta app={app} />
         </div>

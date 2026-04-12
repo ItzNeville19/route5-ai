@@ -91,7 +91,7 @@ export default function Hero({ commandTheme = false }: HeroProps) {
             className={`font-semibold tracking-[-0.045em] ${title}`}
             style={{ fontSize: "clamp(2.25rem, 6.5vw, 3.5rem)" }}
           >
-            Decisions and actions, not just summaries.
+            {t("marketing.hero.headline")}
           </motion.h1>
 
           <motion.p
@@ -242,7 +242,19 @@ export default function Hero({ commandTheme = false }: HeroProps) {
           </motion.div>
 
           {commandTheme ? (
-            <motion.div variants={item} className="mt-7">
+            <motion.div
+              variants={item}
+              className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2"
+            >
+              <Link
+                href="#story"
+                className="text-[13px] font-medium text-sky-300/95 transition hover:text-white hover:underline"
+              >
+                {t("marketing.simple.anchor")} →
+              </Link>
+              <span className="hidden text-zinc-600 sm:inline" aria-hidden>
+                ·
+              </span>
               <Link
                 href="#showcase"
                 className="text-[13px] font-medium text-violet-300/90 transition hover:text-white hover:underline"

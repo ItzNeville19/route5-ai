@@ -62,6 +62,14 @@ export const ja: Record<string, string> = {
   "prefs.signedInSync":
     "ログイン中 — ワークスペース設定はアカウントでデバイス間に同期されます。",
 
+  "overview.openActionsStrip.badge": "実行",
+  "overview.openActionsStrip.title": "キューに未完了のアクションが {count} 件",
+  "overview.openActionsStrip.lead":
+    "古いものからデスクに表示されます — デスクまたはプロジェクトで完了してください。",
+  "overview.openActionsStrip.cta": "デスクへ",
+  "overview.openActionsStrip.caughtUp":
+    "キューに未完了はありません — チェックリストは空です。次のスレッドはデスクで取り込んでください。",
+
   "desk.llmOffTitle": "この環境では LLM がありません。",
   "desk.llmOffLead":
     "実行は高速なヒューリスティック要約を使います（各実行に「ヒューリスティック」と表示）。完全な意味解析ではありません。構造化 AI 抽出には",
@@ -106,7 +114,7 @@ export const ja: Record<string, string> = {
   "desk.howStep3":
     "抽出を実行。AI ありで構造化フィールド、なしでもチェックリスト向けの要約（ヒューリスティックと表示）が得られます。",
   "desk.howStep4":
-    "プロジェクトを開き、アクションにチェック、決定を編集 — 概要のチャートはその完了に基づきます。",
+    "上のキューまたはプロジェクトで未完了のアクションを片付けます — 概要のチャートはその完了に基づきます。",
 
   "desk.filedUnder": "実行の保存先",
   "desk.projectLabel": "プロジェクト",
@@ -144,6 +152,15 @@ export const ja: Record<string, string> = {
   "desk.noRunsProject": "このプロジェクトの実行はまだありません。",
   "desk.openCount": "· 未完了 {count}",
   "desk.fullHistory": "抽出の全履歴",
+
+  "desk.openQueueTitle": "未完了の次のステップ（ワークスペース）",
+  "desk.openQueueLead":
+    "古い未完了から順 — デスクを離れずにチェックするか、プロジェクトを開いてください。",
+  "desk.openQueueEmpty": "未完了のアクションはありません — チェックリストは追いついています。",
+  "desk.openQueueDone": "完了にしました。",
+  "desk.openQueueError": "更新できませんでした — プロジェクトを開いて再試行してください。",
+  "desk.openQueueMarkDone": "完了にする",
+  "desk.openQueueOpenProject": "プロジェクトで開く",
 
   "desk.errorChooseProject": "プロジェクトを選んでください — 実行は常にそこに保存されます。",
   "desk.errorAddMaterial": "処理する素材を追加してください — メモ、ログ、貼り付けたスレッドなど。",
@@ -193,13 +210,13 @@ export const ja: Record<string, string> = {
   "modal.newProject.toastCopied": "プロジェクトを作成しました — リンクをコピーしました。",
   "modal.newProject.toastCreated": "プロジェクトを作成しました。",
 
-  "marketing.hero.kicker": "実行ワークスペース",
+  "marketing.hero.kicker": "実行のギャップを埋める",
   "marketing.hero.headline": "要約だけでなく、意思決定とアクション。",
   "marketing.hero.subtitle":
-    "Route5 は取り込んだ文脈を実行可能なプロジェクトに変えます — 構造化された抽出、チェックリスト、グラフやエクスポートできる活動。Linear と GitHub は接続時に利用できます。",
+    "ナレッジワークは未整理テキストとして届くことがまだ多いです — スレッド、チケット、メモ。Route5 はその山を明確な意思決定、確認できるアクション、実際に完了したことに基づくチャートに変えるワークスペースです。捨てられるチャットではありません。",
   "marketing.hero.mono": "route5 / workspace · 実行インテリジェンス",
   "marketing.hero.cardBody":
-    "本日利用可能: プロジェクト、構造化抽出、意思決定・アクションのチェックリスト、完了指標、Linear/GitHub の取り込み — 捨てられるチャットではありません。",
+    "会話と成果の間のギャップ向け: 一つの取り込み面、構造化された実行、チェックリスト、実データの完了指標、接続時は Linear/GitHub。",
   "marketing.hero.signedInTitle":
     "ログイン済み — デスクが日々のワークスペース、概要に成果が集まります。",
   "marketing.hero.signedInBody":

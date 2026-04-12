@@ -144,12 +144,17 @@ export default function TeamInsightsContent() {
           <div>
             <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">How teams use this today</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-fg)] [opacity:0.9]">
-              Everyone signed into this workspace shares the same project list and extraction history (Clerk account).
-              For standups, open{" "}
+              Project and extraction counts are <span className="font-semibold">per signed-in account</span> (your
+              workspace data). Share exports or screens in meetings — real multi-seat org roles and shared tenants are
+              on the{" "}
+              <Link href="/docs/roadmap" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+                roadmap
+              </Link>
+              . For standups, open{" "}
               <Link href="/reports" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Reports
               </Link>{" "}
-              and export JSON — that file is the single source for “what happened this week” outside the app.
+              and export JSON for a portable weekly snapshot.
             </p>
           </div>
         </div>
@@ -183,7 +188,7 @@ export default function TeamInsightsContent() {
               <Link href="/integrations" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Integrations
               </Link>{" "}
-              — shared Linear/GitHub context once org keys are configured.
+              — Linear/GitHub when your deployment has API access configured (see each integration page).
             </span>
           </li>
         </ul>
@@ -225,7 +230,8 @@ export default function TeamInsightsContent() {
         <Link href="/docs/roadmap" className="font-medium text-[var(--workspace-accent)] hover:underline">
           roadmap
         </Link>
-        . Until then, Clerk organizations and shared accounts use the same workspace data model above.
+        . Today, each signed-in user has their own projects and runs; align in meetings with exports and the same UI
+        vocabulary above.
       </p>
     </>
   );

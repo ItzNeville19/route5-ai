@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
+import HomeSimpleExplain from "@/components/HomeSimpleExplain";
 import HomeProductShowcase from "@/components/HomeProductShowcase";
 import Footer from "@/components/Footer";
 
@@ -10,6 +11,7 @@ export default function Home() {
       <div className="agent-canvas min-h-dvh">
         <Navbar />
         <Hero commandTheme />
+        <HomeSimpleExplain />
         <HomeProductShowcase />
         <Footer tone="command" />
       </div>

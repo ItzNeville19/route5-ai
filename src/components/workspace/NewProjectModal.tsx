@@ -118,10 +118,13 @@ export default function NewProjectModal() {
         close();
         if (openDeskAfter) {
           router.push(
-            `/desk?projectId=${pid}${presetId ? `&preset=${encodeURIComponent(presetId)}` : ""}`
+            `/desk?projectId=${pid}${presetId ? `&preset=${encodeURIComponent(presetId)}` : ""}`,
+            { scroll: true }
           );
         } else {
-          router.push(`/projects/${pid}${presetId ? `?preset=${encodeURIComponent(presetId)}` : ""}`);
+          router.push(`/projects/${pid}${presetId ? `?preset=${encodeURIComponent(presetId)}` : ""}`, {
+            scroll: true,
+          });
         }
       }
     } catch {
