@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WorkspaceArticle } from "@/components/workspace/WorkspaceArticle";
-import { PRODUCT_HONEST } from "@/lib/product-truth";
+import { PRODUCT_HONEST, PRODUCT_VALUE_REALITY } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
   title: "Boundaries — Route5",
@@ -26,12 +26,20 @@ export default function DocsBoundariesPage() {
         </p>
       </section>
       <p className="text-[15px]">{PRODUCT_HONEST.why}</p>
+      <section className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-5 sm:p-6">
+        <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">
+          Pricing alignment
+        </h2>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          {PRODUCT_VALUE_REALITY.summary}
+        </p>
+      </section>
       <p>
         <Link
           href="/docs/product"
           className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"
         >
-          What we ship →
+          What we ship (including harsh detail) →
         </Link>
       </p>
     </WorkspaceArticle>

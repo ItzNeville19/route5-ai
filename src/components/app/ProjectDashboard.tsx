@@ -10,9 +10,11 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Search,
+  Trash2,
 } from "lucide-react";
 import type { Extraction, Project } from "@/lib/types";
 import InputPanel from "@/components/app/InputPanel";
+import DeleteProjectDialog from "@/components/app/DeleteProjectDialog";
 import ExtractionCard from "@/components/app/ExtractionCard";
 import WorkspacePreviewPane from "@/components/app/WorkspacePreviewPane";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -38,6 +40,7 @@ export default function ProjectDashboard({ projectId }: Props) {
   const [editName, setEditName] = useState("");
   const [editEmoji, setEditEmoji] = useState("");
   const [savingIdentity, setSavingIdentity] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const load = useCallback(async () => {
     setListErr(null);
@@ -122,9 +125,13 @@ export default function ProjectDashboard({ projectId }: Props) {
   useEffect(() => {
     const hash = typeof window !== "undefined" ? window.location.hash : "";
     if (!hash.startsWith("#ex-")) return;
-    const id = hash.slice(1);
+    const domId = hash.slice(1);
+    const extractionId = domId.startsWith("ex-") ? domId.slice(3) : domId;
+    if (extractions.some((e) => e.id === extractionId)) {
+      setSelectedExtractionId(extractionId);
+    }
     window.setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.getElementById(domId)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 100);
   }, [extractions, loading]);
 
@@ -246,7 +253,7 @@ export default function ProjectDashboard({ projectId }: Props) {
           href="/projects"
           className="mt-4 inline-block text-[14px] font-medium text-[var(--workspace-accent)] hover:underline"
         >
-          Back to projects
+          Back to overview
         </Link>
       </div>
     );
@@ -260,7 +267,7 @@ export default function ProjectDashboard({ projectId }: Props) {
             href="/projects"
             className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
           >
-            ← All projects
+            ← Overview
           </Link>
           <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
             <div className="min-w-0 max-w-xl">
@@ -292,7 +299,7 @@ export default function ProjectDashboard({ projectId }: Props) {
                   type="button"
                   disabled={savingIdentity}
                   onClick={() => void saveProjectIdentity()}
-                  className="mb-0.5 rounded-lg bg-[var(--workspace-accent)] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:opacity-95 disabled:opacity-50"
+                  className="mb-0.5 rounded-lg bg-[var(--workspace-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--workspace-on-accent)] shadow-sm transition hover:opacity-95 disabled:opacity-50"
                 >
                   {savingIdentity ? "Saving…" : "Save"}
                 </button>
@@ -345,9 +352,28 @@ export default function ProjectDashboard({ projectId }: Props) {
                 )}
                 Scratch
               </button>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/25 bg-[var(--workspace-surface)] px-3 py-2 text-[12px] font-medium text-red-300 shadow-sm transition hover:border-red-500/45 hover:bg-red-950/25"
+              >
+                <Trash2 className="h-3.5 w-3.5 opacity-90" aria-hidden />
+                Delete
+              </button>
             </div>
           </div>
         </div>
+
+        <DeleteProjectDialog
+          projectId={projectId}
+          projectName={project.name}
+          open={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={() => {
+            pushToast("Project deleted.", "success");
+            router.push("/projects");
+          }}
+        />
 
         {scratchOpen ? (
           <section className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 p-4 shadow-sm backdrop-blur-sm">

@@ -4,12 +4,17 @@ export type MarketplaceCategoryId =
   | "all"
   | "built-in"
   | "stack"
+  | "ai-engines"
+  | "ai-providers"
+  | "post-processors"
+  | "actions"
+  | "memory"
   | "productivity"
   | "collaboration"
   | "data"
   | "enterprise";
 
-export type MarketplaceKind = "native" | "stack" | "roadmap";
+export type MarketplaceKind = "native" | "stack" | "roadmap" | "installable";
 
 /** External consoles for stack integrations (real URLs). */
 export const INTEGRATION_MANAGE_URLS = {
@@ -39,6 +44,11 @@ export const MARKETPLACE_CATEGORIES: {
   label: string;
 }[] = [
   { id: "all", label: "All" },
+  { id: "ai-engines", label: "Transcription" },
+  { id: "ai-providers", label: "LLM Providers" },
+  { id: "post-processors", label: "Post-Processors" },
+  { id: "actions", label: "Actions" },
+  { id: "memory", label: "Memory" },
   { id: "built-in", label: "Built-in" },
   { id: "stack", label: "Your stack" },
   { id: "productivity", label: "Productivity" },
@@ -47,12 +57,21 @@ export const MARKETPLACE_CATEGORIES: {
   { id: "enterprise", label: "Enterprise" },
 ];
 
-/** Native Route5 — every href is a real route in this app. */
+/** Native Route5 — real integrations and core workspace routes only (no nav spam). */
 export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
+  {
+    id: "virtual-desk",
+    name: "Desk",
+    subtitle: "Capture text, run extractions — your main surface.",
+    category: "built-in",
+    kind: "native",
+    brandId: "workspaceHome",
+    href: "/desk",
+  },
   {
     id: "linear",
     name: "Linear",
-    subtitle: "Open and work — browse, import, send to extractions immediately.",
+    subtitle: "Browse issues, import into projects — configure your org for live lists.",
     category: "productivity",
     kind: "native",
     brandId: "linear",
@@ -62,21 +81,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "github-issues",
     name: "GitHub issues",
-    subtitle: "Browse samples, import by URL, copy into projects — full flow, first tap.",
+    subtitle: "Import by URL or browse samples — same flow as production.",
     category: "data",
     kind: "native",
     brandId: "github",
     href: "/integrations/github",
     manageUrl: "https://github.com/settings/tokens",
-  },
-  {
-    id: "virtual-desk",
-    name: "Desk",
-    subtitle: "Capture, extract, and jump to tools — your main surface.",
-    category: "built-in",
-    kind: "native",
-    brandId: "workspaceHome",
-    href: "/desk",
   },
   {
     id: "figma",
@@ -91,7 +101,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "google-workspace",
     name: "Google Workspace",
-    subtitle: "Docs, Calendar, and Gmail context — paste today; OAuth when wired.",
+    subtitle: "Docs and Calendar context — paste today; OAuth when wired.",
     category: "collaboration",
     kind: "native",
     brandId: "google",
@@ -99,21 +109,21 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
     learnMoreUrl: "https://workspace.google.com",
   },
   {
-    id: "composer",
-    name: "Composer",
-    subtitle: "Name projects and capture context.",
-    category: "built-in",
+    id: "integrations-hub",
+    name: "Integrations hub",
+    subtitle: "Linear, GitHub, and design flows — status and entry points.",
+    category: "stack",
     kind: "native",
-    brandId: "workspaceCompose",
-    href: "/projects#new-project",
+    brandId: "workspaceHub",
+    href: "/integrations",
   },
   {
     id: "intelligence",
-    name: "Runs",
-    subtitle: "Summaries, decisions, and checkable actions per extraction.",
+    name: "Overview",
+    subtitle: "Execution metrics, runs, and project health for your workspace.",
     category: "built-in",
     kind: "native",
-    brandId: "workspaceSparkle",
+    brandId: "route5",
     href: "/projects",
   },
   {
@@ -126,45 +136,45 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
     href: "/reports",
   },
   {
+    id: "workspace-apps",
+    name: "Library",
+    subtitle: "Installed apps and shortcuts from the workspace.",
+    category: "built-in",
+    kind: "native",
+    brandId: "obsidian",
+    href: "/workspace/apps",
+  },
+  {
+    id: "composer",
+    name: "New project",
+    subtitle: "Open the guided project builder.",
+    category: "built-in",
+    kind: "native",
+    brandId: "workspaceCompose",
+    href: "/projects#new-project",
+  },
+  {
     id: "palette",
     name: "Command palette",
     subtitle: "⌘K — jump anywhere in the workspace.",
     category: "productivity",
     kind: "native",
-    brandId: "workspaceHub",
+    brandId: "voice",
     href: "/projects?tool=palette",
-  },
-  {
-    id: "marketplace",
-    name: "Marketplace",
-    subtitle: "Every surface in Route5 — open anything and start.",
-    category: "built-in",
-    kind: "native",
-    brandId: "mcp",
-    href: "/marketplace",
   },
   {
     id: "documentation",
     name: "Documentation",
-    subtitle: "Product, roadmap, boundaries, and legal — each with its own page.",
+    subtitle: "Product, roadmap, boundaries, and legal.",
     category: "built-in",
     kind: "native",
     brandId: "generic",
     href: "/docs",
   },
   {
-    id: "onboarding",
-    name: "Setup",
-    subtitle: "Guided first-run.",
-    category: "built-in",
-    kind: "native",
-    brandId: "voice",
-    href: "/onboarding",
-  },
-  {
     id: "settings",
-    name: "Account",
-    subtitle: "Profile, security, sessions (Clerk).",
+    name: "Account & AI",
+    subtitle: "Profile, security, and workspace AI preferences.",
     category: "built-in",
     kind: "native",
     brandId: "clerk",
@@ -172,238 +182,22 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
     manageUrl: INTEGRATION_MANAGE_URLS.clerk,
   },
   {
-    id: "health",
-    name: "Connection status",
-    subtitle: "Storage, AI mode, and every integration — one tap to open.",
-    category: "stack",
-    kind: "native",
-    brandId: "supabase",
-    href: "/integrations",
-  },
-  {
-    id: "pricing",
-    name: "Plans",
-    subtitle: "Billing and limits (workspace view).",
-    category: "enterprise",
-    kind: "native",
-    brandId: "hubspot",
-    href: "/account/plans",
-  },
-  {
-    id: "contact",
+    id: "support",
     name: "Support",
-    subtitle: "Sales, integrations, and help — inside the workspace.",
+    subtitle: "Sales, integrations, and help.",
     category: "enterprise",
     kind: "native",
-    brandId: "salesforce",
+    brandId: "generic",
     href: "/support",
   },
   {
-    id: "pitch",
-    name: "What we ship",
-    subtitle: "Product scope — live vs planned.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "notion",
-    href: "/docs/product",
-  },
-  {
-    id: "privacy",
-    name: "Privacy",
-    subtitle: "How we handle data in the workspace.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "generic",
-    href: "/docs/privacy",
-  },
-  {
-    id: "terms",
-    name: "Terms",
-    subtitle: "Terms of use for the workspace.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "generic",
-    href: "/docs/terms",
-  },
-  {
-    id: "home-landing",
-    name: "Product home",
-    subtitle: "Marketing overview and sign-in entry.",
+    id: "marketplace",
+    name: "Marketplace",
+    subtitle: "Browse this catalog — integrations, stack, and providers.",
     category: "built-in",
-    kind: "native",
-    brandId: "route5",
-    href: "/",
-  },
-  {
-    id: "projects-board",
-    name: "Project board",
-    subtitle: "Create projects and open the one you need.",
-    category: "built-in",
-    kind: "native",
-    brandId: "workspaceCompose",
-    href: "/projects",
-  },
-  {
-    id: "integrations-hub",
-    name: "Integrations hub",
-    subtitle: "Linear, GitHub, Figma — connect without leaving Route5.",
-    category: "stack",
-    kind: "native",
-    brandId: "workspaceHub",
-    href: "/integrations",
-  },
-  {
-    id: "integrations-github",
-    name: "GitHub workspace",
-    subtitle: "Assigned issues and import by URL.",
-    category: "data",
-    kind: "native",
-    brandId: "github",
-    href: "/integrations/github",
-  },
-  {
-    id: "integrations-linear",
-    name: "Linear workspace",
-    subtitle: "List and pull issues into extractions.",
-    category: "productivity",
-    kind: "native",
-    brandId: "linear",
-    href: "/integrations/linear",
-  },
-  {
-    id: "docs-home",
-    name: "Docs home",
-    subtitle: "All documentation in one place.",
-    category: "built-in",
-    kind: "native",
-    brandId: "generic",
-    href: "/docs",
-  },
-  {
-    id: "docs-boundaries",
-    name: "Boundaries",
-    subtitle: "What we do and do not promise in this product.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "generic",
-    href: "/docs/boundaries",
-  },
-  {
-    id: "docs-roadmap-page",
-    name: "Roadmap doc",
-    subtitle: "Planned direction — read before requesting features.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "notion",
-    href: "/docs/roadmap",
-  },
-  {
-    id: "contact-direct",
-    name: "Contact",
-    subtitle: "Reach the team — integrations, sales, support.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "salesforce",
-    href: "/contact",
-  },
-  {
-    id: "pricing-public",
-    name: "Pricing",
-    subtitle: "Public pricing and packaging overview.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "hubspot",
-    href: "/pricing",
-  },
-  {
-    id: "pitch-deck",
-    name: "Pitch",
-    subtitle: "Short product story for stakeholders.",
-    category: "enterprise",
-    kind: "native",
-    brandId: "notion",
-    href: "/pitch",
-  },
-  {
-    id: "scratch-feature",
-    name: "Scratch pad",
-    subtitle: "Per-project notes before you run an extraction.",
-    category: "productivity",
-    kind: "native",
-    brandId: "workspaceSparkle",
-    href: "/projects",
-  },
-  {
-    id: "export-json",
-    name: "JSON export",
-    subtitle: "Export extractions from any project dashboard.",
-    category: "data",
     kind: "native",
     brandId: "mcp",
-    href: "/projects",
-  },
-  {
-    id: "filter-extractions",
-    name: "Search extractions",
-    subtitle: "Filter runs by summary, text, and decisions.",
-    category: "productivity",
-    kind: "native",
-    brandId: "workspaceSparkle",
-    href: "/projects",
-  },
-  {
-    id: "duplicate-run",
-    name: "Duplicate extraction",
-    subtitle: "Clone a run to iterate without losing history.",
-    category: "built-in",
-    kind: "native",
-    brandId: "workspaceSparkle",
-    href: "/projects",
-  },
-  {
-    id: "action-checklist",
-    name: "Action checklist",
-    subtitle: "Check off items per extraction — saved automatically.",
-    category: "productivity",
-    kind: "native",
-    brandId: "workspaceCompose",
-    href: "/projects",
-  },
-  {
-    id: "workspace-focus",
-    name: "Focus mode",
-    subtitle: "Hide side rails from the workspace sidebar.",
-    category: "built-in",
-    kind: "native",
-    brandId: "workspaceHome",
-    href: "/projects",
-  },
-  {
-    id: "right-panel",
-    name: "Activity & API panel",
-    subtitle: "Recent runs and API links — toggle from the header.",
-    category: "stack",
-    kind: "native",
-    brandId: "workspaceHub",
-    href: "/projects",
-  },
-  {
-    id: "pinned-projects",
-    name: "Pinned projects",
-    subtitle: "Keep key projects at the top of the sidebar.",
-    category: "built-in",
-    kind: "native",
-    brandId: "workspaceCompose",
-    href: "/projects",
-  },
-  {
-    id: "clerk-sessions",
-    name: "Sessions & security",
-    subtitle: "Clerk-powered sign-in and device sessions.",
-    category: "stack",
-    kind: "native",
-    brandId: "clerk",
-    href: "/settings",
+    href: "/marketplace",
   },
 ];
 
@@ -484,56 +278,6 @@ export const MARKETPLACE_ROADMAP: MarketplaceApp[] = [
     contactTopic: "Notion",
   },
   {
-    id: "confluence",
-    name: "Confluence",
-    subtitle: "Wiki & specs (planned).",
-    category: "productivity",
-    kind: "roadmap",
-    brandId: "confluence",
-    learnMoreUrl: "https://www.atlassian.com/software/confluence",
-    contactTopic: "Confluence",
-  },
-  {
-    id: "github",
-    name: "GitHub (automation)",
-    subtitle: "Webhooks, org policies, CI glue (roadmap — use GitHub issues for live import).",
-    category: "data",
-    kind: "roadmap",
-    brandId: "github",
-    learnMoreUrl: "https://github.com",
-    contactTopic: "GitHub",
-  },
-  {
-    id: "salesforce",
-    name: "Salesforce",
-    subtitle: "CRM context (planned).",
-    category: "enterprise",
-    kind: "roadmap",
-    brandId: "salesforce",
-    learnMoreUrl: "https://www.salesforce.com",
-    contactTopic: "Salesforce",
-  },
-  {
-    id: "hubspot",
-    name: "HubSpot",
-    subtitle: "Marketing & sales handoff (planned).",
-    category: "enterprise",
-    kind: "roadmap",
-    brandId: "hubspot",
-    learnMoreUrl: "https://www.hubspot.com",
-    contactTopic: "HubSpot",
-  },
-  {
-    id: "snowflake",
-    name: "Snowflake",
-    subtitle: "Warehouse-backed context (planned).",
-    category: "data",
-    kind: "roadmap",
-    brandId: "snowflake",
-    learnMoreUrl: "https://www.snowflake.com",
-    contactTopic: "Snowflake",
-  },
-  {
     id: "mcp",
     name: "MCP & APIs",
     subtitle: "Generated connectors (roadmap).",
@@ -553,33 +297,308 @@ export const MARKETPLACE_ROADMAP: MarketplaceApp[] = [
     learnMoreUrl: "https://clerk.com/docs/authentication/enterprise-sso",
     contactTopic: "Enterprise SSO",
   },
+];
+
+/** Installable AI engines, providers, post-processors, actions, and memory. */
+export const MARKETPLACE_INSTALLABLE: MarketplaceApp[] = [
+  // ── Transcription engines ──
   {
-    id: "onprem",
-    name: "On-premise",
-    subtitle: "Deployment for regulated teams (roadmap).",
-    category: "enterprise",
-    kind: "roadmap",
-    brandId: "onprem",
-    learnMoreUrl: "https://clerk.com",
-    contactTopic: "On-premise",
+    id: "whisperkit",
+    name: "WhisperKit",
+    subtitle: "Local speech-to-text. 7 model sizes, 99 languages, streaming. Runs fully on-device.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "whisper",
+    href: "/settings",
+    learnMoreUrl: "https://github.com/argmaxinc/WhisperKit",
   },
   {
-    id: "voice",
-    name: "Voice capture",
-    subtitle: "Dictation into composer (planned).",
-    category: "productivity",
-    kind: "roadmap",
-    brandId: "voice",
+    id: "whisperkit-large-v3",
+    name: "WhisperKit Large v3",
+    subtitle: "Highest accuracy model — 1.5 GB. Best for long-form and noisy audio.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "whisper",
+    href: "/settings",
+  },
+  {
+    id: "whisperkit-small",
+    name: "WhisperKit Small",
+    subtitle: "Fast 244 MB model for quick notes and low-latency dictation.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "whisper",
+    href: "/settings",
+  },
+  {
+    id: "apple-speech",
+    name: "Apple Speech",
+    subtitle: "On-device recognition using Apple's Speech framework. macOS 26+, streaming, free.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "apple",
+    href: "/settings",
     learnMoreUrl: "https://developer.apple.com/documentation/speech",
-    contactTopic: "Voice capture",
+  },
+  {
+    id: "nvidia-parakeet",
+    name: "NVIDIA Parakeet",
+    subtitle: "State-of-the-art ASR from NVIDIA NeMo. Runs locally on Apple Silicon via CoreML.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "parakeet",
+    href: "/settings",
+    learnMoreUrl: "https://docs.nvidia.com/nemo-framework/user-guide/latest/nemotoolkit/asr/intro.html",
+  },
+  {
+    id: "groq-asr",
+    name: "Groq",
+    subtitle: "Cloud transcription and LLM via Groq API. Blazing inference, requires free API key.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "groq",
+    href: "/settings",
+    learnMoreUrl: "https://console.groq.com",
+    manageUrl: "https://console.groq.com/keys",
+  },
+  {
+    id: "qwen3-asr-3b-4bit",
+    name: "Qwen3 ASR 3.0B 4-bit",
+    subtitle: "Local MLX on Apple Silicon. 30 languages, ~2 GB RAM. No API key required.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "qwen",
+    href: "/settings",
+    learnMoreUrl: "https://huggingface.co/Qwen",
+  },
+  {
+    id: "qwen3-asr-3b-8bit",
+    name: "Qwen3 ASR 3.0B 8-bit",
+    subtitle: "Higher precision, ~4 GB RAM. Better accuracy for complex audio.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "qwen",
+    href: "/settings",
+  },
+  {
+    id: "qwen3-asr-1.7b-4bit",
+    name: "Qwen3 ASR 1.7B 4-bit",
+    subtitle: "Lightweight model — ~1 GB RAM. Fast and efficient for short notes.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "qwen",
+    href: "/settings",
+  },
+  {
+    id: "qwen3-asr-1.7b-8bit",
+    name: "Qwen3 ASR 1.7B 8-bit",
+    subtitle: "1.7B at 8-bit precision — ~2 GB RAM. Good balance of speed and accuracy.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "qwen",
+    href: "/settings",
+  },
+  {
+    id: "openai-whisper",
+    name: "OpenAI Whisper",
+    subtitle: "Cloud transcription and LLM via OpenAI API. Whisper and GPT models, requires API key.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "openai",
+    href: "/settings",
+    manageUrl: "https://platform.openai.com/api-keys",
+  },
+  {
+    id: "openai-compatible",
+    name: "OpenAI Compatible",
+    subtitle: "Connect to any OpenAI-compatible API server. Works with Ollama, LM Studio, vLLM, and more.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "openai",
+    href: "/settings",
+  },
+  {
+    id: "voxtral-mlx",
+    name: "Voxtral MLX",
+    subtitle: "Local speech-to-text powered by Voxtral MLX on Apple Silicon. Fast and accurate.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "voxtral",
+    href: "/settings",
+    learnMoreUrl: "https://mistral.ai",
+  },
+  {
+    id: "cloudflare-asr",
+    name: "Cloudflare ASR",
+    subtitle: "Edge transcription via Cloudflare Workers AI. Low-latency, no cold starts.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "cloudflare",
+    href: "/settings",
+    learnMoreUrl: "https://developers.cloudflare.com/workers-ai/models/automatic-speech-recognition/",
+  },
+  {
+    id: "ibm-granite-speech",
+    name: "IBM Granite Speech",
+    subtitle: "Enterprise-grade speech recognition from IBM Research. Multi-language, high accuracy.",
+    category: "ai-engines",
+    kind: "installable",
+    brandId: "granite",
+    href: "/settings",
+    learnMoreUrl: "https://www.ibm.com/granite",
+  },
+
+  // ── LLM Providers ──
+  {
+    id: "openai-llm",
+    name: "OpenAI GPT",
+    subtitle: "GPT-4o, GPT-4, GPT-3.5 Turbo. Best for grammar correction and style matching. API key required.",
+    category: "ai-providers",
+    kind: "installable",
+    brandId: "openai",
+    href: "/settings",
+    manageUrl: "https://platform.openai.com/api-keys",
+  },
+  {
+    id: "groq-llm",
+    name: "Groq LLM",
+    subtitle: "Groq-hosted Llama, Mixtral, and Gemma. Free tier available with API key.",
+    category: "ai-providers",
+    kind: "installable",
+    brandId: "groq",
+    href: "/settings",
+    manageUrl: "https://console.groq.com/keys",
+  },
+  {
+    id: "cloudflare-ai",
+    name: "Cloudflare Workers AI",
+    subtitle: "Run Llama, Mistral, and more at the edge. No cold starts, pay-per-token.",
+    category: "ai-providers",
+    kind: "installable",
+    brandId: "cloudflare",
+    href: "/settings",
+    learnMoreUrl: "https://developers.cloudflare.com/workers-ai/",
+  },
+  {
+    id: "ibm-granite-llm",
+    name: "IBM Granite LLM",
+    subtitle: "Enterprise-grade language models from IBM. Code, chat, and document understanding.",
+    category: "ai-providers",
+    kind: "installable",
+    brandId: "ibm",
+    href: "/settings",
+    learnMoreUrl: "https://www.ibm.com/granite",
+  },
+  {
+    id: "huggingface-hub",
+    name: "Hugging Face Hub",
+    subtitle: "Access thousands of models. Optional token for increased rate limits and private models.",
+    category: "ai-providers",
+    kind: "installable",
+    brandId: "huggingface",
+    href: "/settings",
+    manageUrl: "https://huggingface.co/settings/tokens",
+  },
+
+  // ── Post-Processors ──
+  {
+    id: "webhook-notifications",
+    name: "Webhook Notifications",
+    subtitle: "Send transcribed or processed text to any webhook URL via HTTP POST.",
+    category: "post-processors",
+    kind: "installable",
+    brandId: "generic",
+    href: "/settings",
+  },
+  {
+    id: "script-runner",
+    name: "Script Runner",
+    subtitle: "Post-process transcribed text through custom shell scripts. Pass text via stdin, get results via stdout.",
+    category: "post-processors",
+    kind: "installable",
+    brandId: "onprem",
+    href: "/settings",
+  },
+
+  // ── Actions ──
+  {
+    id: "linear-action",
+    name: "Linear Action",
+    subtitle: "Create Linear issues from transcribed or processed text. Requires a Linear API key.",
+    category: "actions",
+    kind: "installable",
+    brandId: "linear",
+    href: "/integrations/linear",
+    manageUrl: "https://linear.app/settings/account",
+  },
+  {
+    id: "obsidian-export",
+    name: "Obsidian",
+    subtitle: "Save transcriptions to your Obsidian vault as Markdown notes. Daily notes, front matter, auto-export.",
+    category: "actions",
+    kind: "installable",
+    brandId: "obsidian",
+    href: "/settings",
+    learnMoreUrl: "https://obsidian.md",
+  },
+
+  // ── Memory ──
+  {
+    id: "openai-vector-memory",
+    name: "OpenAI Vector Memory",
+    subtitle: "Store and search memories using the OpenAI Vector Store API with semantic embeddings.",
+    category: "memory",
+    kind: "installable",
+    brandId: "openai",
+    href: "/settings",
+    manageUrl: "https://platform.openai.com",
   },
 ];
 
 export const ALL_MARKETPLACE_APPS: MarketplaceApp[] = [
   ...MARKETPLACE_NATIVE,
   ...MARKETPLACE_STACK,
+  ...MARKETPLACE_INSTALLABLE,
   ...MARKETPLACE_ROADMAP,
 ];
+
+/** Ordered picks for Overview footer — one tile per `brandId` so icons never duplicate in the strip. */
+const OVERVIEW_SHOWCASE_IDS = [
+  "virtual-desk",
+  "linear",
+  "github-issues",
+  "figma",
+  "google-workspace",
+  "slack",
+  "notion",
+  "clerk",
+  "supabase",
+  "openai",
+  "groq-llm",
+  "cloudflare-ai",
+  "huggingface-hub",
+  "jira",
+  "teams",
+  "intelligence",
+  "marketplace",
+] as const;
+
+export function marketplaceOverviewShowcaseApps(): MarketplaceApp[] {
+  const byId = new Map(ALL_MARKETPLACE_APPS.map((a) => [a.id, a]));
+  const picks: MarketplaceApp[] = [];
+  for (const id of OVERVIEW_SHOWCASE_IDS) {
+    const a = byId.get(id);
+    if (a) picks.push(a);
+  }
+  const seen = new Set<BrandIconId>();
+  const out: MarketplaceApp[] = [];
+  for (const a of picks) {
+    if (seen.has(a.brandId)) continue;
+    seen.add(a.brandId);
+    out.push(a);
+  }
+  return out.slice(0, 14);
+}
 
 function orderByIds(apps: MarketplaceApp[], ids: string[]): MarketplaceApp[] {
   const m = new Map(apps.map((a) => [a.id, a]));
@@ -596,40 +615,29 @@ function orderByIds(apps: MarketplaceApp[], ids: string[]): MarketplaceApp[] {
 
 const NATIVE_BROWSE_ORDER = [
   "virtual-desk",
-  "github-issues",
   "linear",
+  "github-issues",
   "figma",
   "google-workspace",
-  "documentation",
-  "palette",
+  "integrations-hub",
   "intelligence",
   "workspace-reports",
+  "workspace-apps",
   "composer",
-  "marketplace",
-  "onboarding",
+  "palette",
+  "documentation",
   "settings",
-  "health",
-  "pricing",
-  "contact",
-  "pitch",
-  "privacy",
-  "terms",
+  "support",
+  "marketplace",
 ];
 
 const ROADMAP_BROWSE_ORDER = [
-  "voice",
-  "github",
   "slack",
+  "teams",
   "notion",
   "jira",
-  "teams",
   "mcp",
-  "salesforce",
-  "hubspot",
-  "snowflake",
-  "confluence",
   "sso",
-  "onprem",
 ];
 
 /** Marketplace home — non-default order so tiles are not “all Route5 in a row”. */
@@ -645,6 +653,33 @@ export function marketplaceRoadmapBrowseOrdered(): MarketplaceApp[] {
   return orderByIds(MARKETPLACE_ROADMAP, ROADMAP_BROWSE_ORDER);
 }
 
+export function marketplaceInstallableBrowseOrdered(): MarketplaceApp[] {
+  return [...MARKETPLACE_INSTALLABLE];
+}
+
+export function installableBySection(): {
+  label: string;
+  categoryId: MarketplaceCategoryId;
+  count: number;
+  apps: MarketplaceApp[];
+}[] {
+  const sections: { label: string; categoryId: MarketplaceCategoryId }[] = [
+    { label: "Transcription Engines", categoryId: "ai-engines" },
+    { label: "LLM Providers", categoryId: "ai-providers" },
+    { label: "Post-Processors", categoryId: "post-processors" },
+    { label: "Actions", categoryId: "actions" },
+    { label: "Memory", categoryId: "memory" },
+  ];
+  return sections
+    .map((s) => {
+      const apps = MARKETPLACE_INSTALLABLE.filter(
+        (a) => a.category === s.categoryId
+      );
+      return { ...s, count: apps.length, apps };
+    })
+    .filter((s) => s.apps.length > 0);
+}
+
 export function filterMarketplaceApps(
   apps: MarketplaceApp[],
   category: MarketplaceCategoryId,
@@ -654,9 +689,14 @@ export function filterMarketplaceApps(
   return apps.filter((app) => {
     if (category !== "all" && app.category !== category) return false;
     if (!q) return true;
+    const catLabel =
+      MARKETPLACE_CATEGORIES.find((c) => c.id === app.category)?.label ?? "";
     return (
       app.name.toLowerCase().includes(q) ||
-      app.subtitle.toLowerCase().includes(q)
+      app.subtitle.toLowerCase().includes(q) ||
+      app.id.toLowerCase().includes(q) ||
+      app.brandId.toLowerCase().includes(q) ||
+      catLabel.toLowerCase().includes(q)
     );
   });
 }

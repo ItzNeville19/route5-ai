@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { nanoid } from "nanoid";
+import { z } from "zod";
 import {
   clampRawInput,
   parseExtractionJson,
@@ -16,12 +17,30 @@ import {
   getOpenAIModel,
   isOpenAIConfigured,
 } from "@/lib/ai/openai-client";
+import { getLimitsForTier, resolveTierForUser } from "@/lib/entitlements";
 import {
+  countExtractionsThisUtcMonthForUser,
   insertExtractionRow,
   verifyProjectOwned,
 } from "@/lib/workspace/store";
+import { resolveExtractionRoute } from "@/lib/ai-provider-presets";
+import {
+  cleanText,
+  enforceRateLimits,
+  extractionProviderSchema,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
+
+const extractBodySchema = z
+  .object({
+    projectId: z.string().transform(cleanText).pipe(z.string().uuid()),
+    rawInput: z.string().transform(cleanText).pipe(z.string().min(1).max(100_000)),
+    extractionProviderId: extractionProviderSchema.optional(),
+  })
+  .strict();
 
 export async function POST(req: Request) {
   const { userId } = await auth();
@@ -29,35 +48,59 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { projectId?: string; rawInput?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "extract:post", userId, {
+      userLimit: 12,
+      ipLimit: 24,
+      userWindowMs: 60_000,
+      ipWindowMs: 60_000,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const projectId = body.projectId?.trim();
-  const rawInputRaw = typeof body.rawInput === "string" ? body.rawInput : "";
-  if (!projectId || !rawInputRaw.trim()) {
-    return NextResponse.json(
-      { error: "projectId and non-empty rawInput are required" },
-      { status: 400 }
-    );
-  }
+  const parsedBody = await parseJsonBody(req, extractBodySchema);
+  if (!parsedBody.ok) return parsedBody.response;
 
   try {
+    const { projectId, rawInput: rawInputRaw, extractionProviderId } = parsedBody.data;
     const owned = await verifyProjectOwned(userId, projectId);
     if (!owned) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    let email: string | undefined;
+    try {
+      const client = await clerkClient();
+      const user = await client.users.getUser(userId);
+      email =
+        user.primaryEmailAddress?.emailAddress ??
+        user.emailAddresses[0]?.emailAddress ??
+        undefined;
+    } catch {
+      email = undefined;
+    }
+    const tier = resolveTierForUser(userId, email);
+    const { maxExtractionsPerMonth } = getLimitsForTier(tier);
+    const monthCount = await countExtractionsThisUtcMonthForUser(userId);
+    if (monthCount >= maxExtractionsPerMonth) {
+      return NextResponse.json(
+        {
+          error: `Monthly extraction limit reached (${maxExtractionsPerMonth}) for your plan. Upgrade under Account → Plans or contact sales.`,
+          code: "LIMIT_EXTRACTIONS_MONTH",
+        },
+        { status: 403 }
+      );
+    }
+
     const rawInput = clampRawInput(rawInputRaw);
-    const useOpenAI = isOpenAIConfigured();
+    const openaiConfigured = isOpenAIConfigured();
+    const route = resolveExtractionRoute(extractionProviderId, openaiConfigured);
 
     let parsed: ExtractionModelResult;
     let extractionMode: "ai" | "offline" = "offline";
 
-    if (useOpenAI) {
+    if (route === "openai") {
       extractionMode = "ai";
       const model = getOpenAIModel();
       let content: string;

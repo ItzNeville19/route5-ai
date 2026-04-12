@@ -111,11 +111,11 @@ export function IconLinear({ className, ...p }: P) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
       <rect width="64" height="64" rx="14" fill="#5E6AD2" />
+      {/* Angular “L” mark — distinct from Route5 workspace tile */}
       <path
-        stroke="white"
-        strokeWidth="4"
-        fill="none"
-        d="M20 40 L32 22 L44 40"
+        fill="white"
+        opacity="0.95"
+        d="M22 44V22h8v14.5L40 22h8L34 36.2 46 44H36l-8.5-9L30 44h-8z"
       />
     </svg>
   );
@@ -314,6 +314,119 @@ export function IconGenericDoc({ className, ...p }: P) {
   );
 }
 
+/* ── AI / engine icons ── */
+
+function IconApple({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#000" />
+      <path fill="white" d="M42 44c-1 2-2 4-4 5-2 1-3 1-5 0s-3-2-5-2-4 1-5 2c-2 1-3 1-5 0-5-5-9-14-4-21 2-3 5-5 8-5 2 0 4 1 5 2s3 2 5 1c3-1 5-2 8-1-4-1-6 3-6 3s3 2 3 6c0 5-4 8-5 10zM35 16c0 3-3 7-7 6 0-3 3-7 7-6z" />
+    </svg>
+  );
+}
+
+function IconNvidia({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#76B900" />
+      <path fill="white" d="M20 28c4-6 10-8 16-6v4c-5-2-10 0-13 5-3 4-2 9 2 12 4 3 9 2 12-1v4c-6 4-14 3-18-3-4-5-4-11 1-15z" />
+    </svg>
+  );
+}
+
+function IconGroq({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#F55036" />
+      <text x="32" y="42" textAnchor="middle" fill="white" fontSize="24" fontWeight="700" fontFamily="system-ui">G</text>
+    </svg>
+  );
+}
+
+function IconIBM({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#0530AD" />
+      <text x="32" y="42" textAnchor="middle" fill="white" fontSize="22" fontWeight="800" fontFamily="system-ui">IBM</text>
+    </svg>
+  );
+}
+
+function IconCloudflare({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#F48120" />
+      <path fill="white" d="M44 40c1-3 0-5-3-6l-18-1c0 0-1-1 0-1l19 1c3 0 5-2 6-5l1-3c0-1 0-1 0-1-2-6-7-10-14-10-9 0-16 7-17 15-2-1-4 0-5 2-2 2-2 5-1 7h31c1 0 1 0 1-1z" />
+    </svg>
+  );
+}
+
+function IconHuggingFace({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#FFD21E" />
+      <circle cx="24" cy="30" r="3" fill="#1a1a1a" />
+      <circle cx="40" cy="30" r="3" fill="#1a1a1a" />
+      <path fill="none" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" d="M24 40c4 4 12 4 16 0" />
+    </svg>
+  );
+}
+
+function IconObsidian({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#7C3AED" />
+      <path fill="white" opacity="0.92" d="M32 14l14 12-6 24-16-4-6-18 14-14zm0 6l-8 10 4 14 12-2 4-16-12-6z" />
+    </svg>
+  );
+}
+
+function IconWhisper({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#10A37F" />
+      <path stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" d="M22 32h4M28 24v16M34 28v8M40 22v20M46 30v4" />
+    </svg>
+  );
+}
+
+function IconQwen({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#6366F1" />
+      <text x="32" y="42" textAnchor="middle" fill="white" fontSize="20" fontWeight="700" fontFamily="system-ui">Qw</text>
+    </svg>
+  );
+}
+
+function IconVoxtral({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#FF7000" />
+      <path stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" d="M20 40l6-20 6 14 6-10 6 16" />
+    </svg>
+  );
+}
+
+function IconGranite({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#1F70C1" />
+      <path fill="white" opacity="0.92" d="M20 44l12-28 12 28H20zm12-18l-6 14h12l-6-14z" />
+    </svg>
+  );
+}
+
+function IconParakeet({ className, ...p }: P) {
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden {...p}>
+      <rect width="64" height="64" rx="14" fill="#76B900" />
+      <path fill="white" d="M28 20c-6 2-10 8-8 14 1 4 4 7 8 8l2-6c-3-1-5-4-4-7s4-5 7-4l4-1c0 0-3-6-9-4z" />
+      <circle cx="38" cy="28" r="2" fill="white" />
+    </svg>
+  );
+}
+
 export type BrandIconId =
   | "route5"
   | "clerk"
@@ -339,7 +452,19 @@ export type BrandIconId =
   | "workspaceHome"
   | "workspaceCompose"
   | "workspaceSparkle"
-  | "workspaceHub";
+  | "workspaceHub"
+  | "apple"
+  | "nvidia"
+  | "groq"
+  | "ibm"
+  | "cloudflare"
+  | "huggingface"
+  | "obsidian"
+  | "whisper"
+  | "qwen"
+  | "voxtral"
+  | "granite"
+  | "parakeet";
 
 const MAP: Record<BrandIconId, (p: P) => ReactNode> = {
   route5: IconRoute5,
@@ -367,6 +492,18 @@ const MAP: Record<BrandIconId, (p: P) => ReactNode> = {
   workspaceCompose: IconWorkspaceCompose,
   workspaceSparkle: IconWorkspaceSparkle,
   workspaceHub: IconWorkspaceHub,
+  apple: IconApple,
+  nvidia: IconNvidia,
+  groq: IconGroq,
+  ibm: IconIBM,
+  cloudflare: IconCloudflare,
+  huggingface: IconHuggingFace,
+  obsidian: IconObsidian,
+  whisper: IconWhisper,
+  qwen: IconQwen,
+  voxtral: IconVoxtral,
+  granite: IconGranite,
+  parakeet: IconParakeet,
 };
 
 export function MarketplaceBrandSvg({ id, className }: { id: BrandIconId; className?: string }) {

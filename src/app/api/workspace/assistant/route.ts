@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import {
   createOpenAIClient,
   getOpenAIModel,
@@ -11,8 +12,40 @@ import {
   listProjectsForUser,
 } from "@/lib/workspace/store";
 import { MERIDIAN_FULL } from "@/lib/assistant-brand";
+import {
+  cleanText,
+  enforceRateLimits,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
+
+const relayTurnSchema = z
+  .object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().transform(cleanText).pipe(z.string().min(1).max(12000)),
+  })
+  .strict();
+
+/** Full transcript so Relay remembers the thread (ChatGPT-style). */
+const assistantBodySchema = z
+  .object({
+    conversation: z.array(relayTurnSchema).min(1).max(40),
+    memory: z.string().transform(cleanText).pipe(z.string().max(4000)).optional(),
+    firstName: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
+  })
+  .strict();
+
+function normalizeRelayTurns(
+  turns: z.infer<typeof relayTurnSchema>[]
+): z.infer<typeof relayTurnSchema>[] {
+  const out = [...turns];
+  while (out.length > 0 && out[0]!.role === "assistant") {
+    out.shift();
+  }
+  return out.slice(-24);
+}
 
 function heuristicReply(
   message: string,
@@ -54,19 +87,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { message?: string; memory?: string; firstName?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "assistant:post", userId, {
+      userLimit: 20,
+      ipLimit: 40,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const message = typeof body.message === "string" ? body.message.slice(0, 8000) : "";
-  const memory = typeof body.memory === "string" ? body.memory.slice(0, 4000) : "";
-  const firstName =
-    typeof body.firstName === "string" && body.firstName.trim()
-      ? body.firstName.trim()
-      : "there";
+  const parsedBody = await parseJsonBody(req, assistantBodySchema);
+  if (!parsedBody.ok) return parsedBody.response;
+
+  const normalized = normalizeRelayTurns(parsedBody.data.conversation);
+  if (normalized.length === 0) {
+    return NextResponse.json(
+      { error: "Conversation must include at least one user message." },
+      { status: 400 }
+    );
+  }
+  const lastUser = [...normalized].reverse().find((t) => t.role === "user");
+  const message = lastUser?.content ?? "";
+  const memory = parsedBody.data.memory ?? "";
+  const firstName = parsedBody.data.firstName || "there";
 
   try {
     const summary = await getWorkspaceSummaryForUser(userId);
@@ -84,21 +127,23 @@ export async function POST(req: Request) {
       try {
         const openai = createOpenAIClient();
         const model = getOpenAIModel();
-        const system = `You are ${MERIDIAN_FULL}, the in-app workspace helper. Be concise, friendly, iMessage-short. You know:
+        const system = `You are ${MERIDIAN_FULL}, the in-app workspace helper. Stay in character across turns: read the full thread and answer the latest user message in context. Be concise, friendly, iMessage-short. You know:
 - User’s first name: ${firstName}
 - Projects: ${summary.projectCount}, extractions: ${summary.extractionCount}
 - Recent project names: ${recentProjectNames.join(", ") || "none"}
 - User notes (memory): ${memory || "none"}
-Only give accurate product advice: projects hold extractions; paste text and run extraction; integrations for Linear/GitHub; Desk for capture. No claiming features that don’t exist.`;
+Only give accurate product advice: projects hold extractions; paste text and run extraction; integrations for Linear/GitHub; Desk for capture. You can suggest navigation: link users to /projects, /desk, /integrations, /workspace/apps, /settings, /docs/product. No claiming features that don’t exist.`;
+
+        const chatMessages = normalized.map((t) => ({
+          role: t.role as "user" | "assistant",
+          content: t.content,
+        }));
 
         const completion = await openai.chat.completions.create({
           model,
-          temperature: 0.4,
-          max_tokens: 500,
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: message || "What should I do next?" },
-          ],
+          temperature: 0.35,
+          max_tokens: 700,
+          messages: [{ role: "system", content: system }, ...chatMessages],
         });
         const reply = completion.choices[0]?.message?.content?.trim();
         if (reply) {

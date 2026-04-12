@@ -4,20 +4,20 @@ import type { MarketplaceApp } from "@/lib/marketplace-catalog";
 const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   "virtual-desk": {
     about:
-      "Your desk: a single capture surface for paste-in extractions, templates, and shortcuts to Linear, GitHub, Figma, and the marketplace. Less hunting — more shipping.",
+      "Your desk: the primary workplace where integrations send context, templates shape runs, and every extraction shares one pipeline with Overview and project history — not a side panel.",
     highlights: [
-      "Chat-style capture tied to any project",
-      "Templates for meeting, incident, design review, and more",
-      "Recent extractions and one-tap jumps to integrations",
+      "Same runs as Overview metrics and reports",
+      "Connectors (Linear, GitHub, Figma, Google) route here first",
+      "Multitask: switch projects without leaving the capture flow",
     ],
   },
   figma: {
     about:
-      "Use Figma the way teams actually work: copy comments and frame context, paste on your desk, and run a structured design extraction — no connector required to get value.",
+      "With FIGMA_ACCESS_TOKEN on the server, Integrations → Figma pulls TEXT layers and file comments from any link you can read, then sends the bundle to Desk or a project extraction — no copy-paste scavenger hunt. Without the token, Desk still accepts manual paste like any capture surface.",
     highlights: [
-      "Design preset + file links in one flow",
-      "Opens alongside the rest of your Route5 projects",
-      "Optional: open Figma in the browser while you capture",
+      "Import by file, design, or community URL (or raw file key)",
+      "Open on Desk or Send to project in one session",
+      "Health: GET /api/health includes figmaConfigured",
     ],
   },
   composer: {
@@ -27,25 +27,25 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   intelligence: {
     about:
-      "Each extraction run produces a summary, decisions, and checkable actions—structured output on top of pasted text, saved per project.",
-    highlights: ["Export any run as Markdown", "Mark actions complete when done"],
+      "Overview shows execution metrics from your database: action completion, stale open items, activity charts, and per-project health — plus recent runs and onboarding.",
+    highlights: ["Real completion rate and velocity", "Runs and decisions stay per project"],
   },
   linear: {
     about:
-      "Pulls live issue context from Linear into Route5 so you can run structured extractions on real work. No fake sync toggles—your deployment connects the service once; teams just use it.",
+      "Pulls live issue context from Linear into Route5. Open in Desk sends text straight into extraction — the same pipeline as paste capture; optional API key unlocks your team’s issues.",
     highlights: [
       "Recent issues and import by URL or TEAM-123",
-      "One tap → copy → paste into project extraction",
-      "Same session as the rest of the workspace",
+      "Open in Desk — no clipboard scavenger hunt",
+      "Runs sync with Overview and project history",
     ],
   },
   "github-issues": {
     about:
-      "Lists issues assigned to your connected GitHub identity and imports any issue by URL or owner/repo#number into the extraction composer—formatted for Route5 runs.",
+      "Lists issues assigned to your GitHub identity and imports by URL or owner/repo#number. Each issue can open in Desk for extraction — shared with Overview metrics.",
     highlights: [
       "Assigned issues across repos you use",
-      "Import by issue URL or owner/repo#number",
-      "Flows into the same projects and history as everything else",
+      "Per-issue Open in Desk",
+      "Same projects and history as every other connector",
     ],
   },
   palette: {
@@ -73,13 +73,18 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
       "Account, security, and sessions are managed by Clerk. Plans and limits are also available in-app under Account → Plans.",
     highlights: ["Profile and devices", "Sessions you can revoke"],
   },
-  health: {
+  "integrations-hub": {
     about:
-      "Opens the integrations hub — Desk, Linear, GitHub, Figma, and Google routes live there. For raw stack diagnostics, GET /api/health returns storage mode and connector flags (no secrets).",
+      "The integrations hub lists Desk, Linear, GitHub, Figma, and Google routes. For raw stack diagnostics, GET /api/health returns storage mode and connector flags (no secrets).",
     highlights: [
       "Every wired connector from one place",
-      "Same story as the Connections card in the sidebar",
+      "Status strip uses the same readiness flags as Overview (OpenAI, Linear, GitHub, Figma)",
     ],
+  },
+  "workspace-apps": {
+    about:
+      "Library is a simple launcher for the same routes as the sidebar — useful when you want a grid instead of navigation.",
+    highlights: ["Grouped by Work, Reports, Connections, Workspace", "Every link is a real route"],
   },
   "google-workspace": {
     about:

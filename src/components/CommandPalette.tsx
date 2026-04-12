@@ -116,12 +116,16 @@ export function CommandPaletteProvider({
   }, []);
 
   useEffect(() => {
-    void loadPalette();
-  }, [loadPalette]);
-
-  useEffect(() => {
     if (!open) return;
     void loadPalette();
+  }, [open, loadPalette]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      if (open) void loadPalette();
+    };
+    window.addEventListener("route5:project-updated", onRefresh);
+    return () => window.removeEventListener("route5:project-updated", onRefresh);
   }, [open, loadPalette]);
 
   const directory = useMemo(
@@ -370,6 +374,14 @@ export function CommandPaletteProvider({
                   Signed in as {displayName}
                 </p>
               ) : null}
+              <p
+                className={`mt-2 text-[11px] ${agentShell ? "text-neutral-500" : "text-[#86868b]"}`}
+                aria-live="polite"
+              >
+                {query.trim()
+                  ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · real routes & workspace actions`
+                  : `${flatForNav.length} destinations · type to filter`}
+              </p>
             </div>
             <ul
               ref={listRef}
@@ -404,6 +416,11 @@ export function CommandPaletteProvider({
                               type="button"
                               role="option"
                               aria-selected={active}
+                              title={
+                                item.description
+                                  ? `${item.label} — ${item.description}`
+                                  : item.label
+                              }
                               onClick={() => onPick(item.href)}
                               onMouseEnter={() => setSelectedIndex(idx)}
                               className={`flex w-full flex-col gap-0.5 rounded-lg px-3 py-2.5 text-left transition sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${

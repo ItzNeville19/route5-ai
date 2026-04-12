@@ -59,5 +59,5 @@ export const WORKSPACE_SHORTCUTS: WorkspaceShortcut[] = [
   { id: "s34", label: "Store · Account", href: "/marketplace/settings" },
   { id: "s35", label: "Store · Docs pack", href: "/marketplace/documentation" },
   { id: "s36", label: "Palette deep link", href: "/projects?tool=palette" },
-  { id: "s37", label: "Connection status", href: "/marketplace/health" },
+  { id: "s37", label: "Connection status", href: "/integrations" },
 ];

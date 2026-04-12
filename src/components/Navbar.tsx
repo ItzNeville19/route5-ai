@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,45 +8,22 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, Search, X } from "lucide-react";
 import { Show, UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
 
-const navLinks = [
-  { href: "/pitch", label: "Product" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/contact", label: "Contact" },
-];
-
-function Route5Logo() {
-  return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 28 28"
-      fill="none"
-      className="flex-shrink-0"
-    >
-      <path
-        d="M14 2 L22 6 L22 14 C22 19 14 25 14 25 C14 25 6 19 6 14 L6 6 Z"
-        fill="#0071e3"
-      />
-      <text
-        x="14"
-        y="18"
-        fontSize="14"
-        fontWeight="700"
-        textAnchor="middle"
-        fill="white"
-        fontFamily="system-ui, -apple-system, sans-serif"
-      >
-        5
-      </text>
-    </svg>
-  );
-}
-
 export default function Navbar() {
+  const { t } = useI18n();
   const pathname = usePathname();
   const { open: openCommandPalette } = useCommandPalette();
+  const navLinks = useMemo(
+    () => [
+      { href: "/pitch", label: t("marketing.nav.product") },
+      { href: "/pricing", label: t("marketing.nav.pricing") },
+      { href: "/download", label: t("marketing.nav.download") },
+      { href: "/contact", label: t("marketing.nav.contact") },
+    ],
+    [t]
+  );
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeHomeSection, setActiveHomeSection] = useState<string | null>(
@@ -78,7 +55,7 @@ export default function Navbar() {
     if (pathname !== "/") return;
 
     const observers = new Map<string, IntersectionObserver>();
-    const ids = ["product", "contact"];
+    const ids = ["showcase", "product", "contact"];
 
     ids.forEach((id) => {
       const element = document.getElementById(id);
@@ -101,13 +78,17 @@ export default function Navbar() {
   }, [pathname]);
 
   const clerkConfigured = hasClerkPublishableKey();
+  /** Marketing home uses the same dark command shell as the workspace. */
+  const isCommandHome = pathname === "/";
 
-  const navLinkClass =
-    "text-[13px] font-medium text-[#1d1d1f]/65 transition-colors duration-200 hover:text-[#1d1d1f]";
+  const navLinkClass = isCommandHome
+    ? "text-[13px] font-medium text-zinc-300 transition-colors duration-200 hover:text-white"
+    : "text-[13px] font-medium text-[#1d1d1f]/65 transition-colors duration-200 hover:text-[#1d1d1f]";
 
   function linkIsActive(href: string) {
     if (href === "/pitch") return pathname === "/pitch";
     if (href === "/pricing") return pathname === "/pricing";
+    if (href === "/download") return pathname === "/download";
     if (href === "/contact") return pathname === "/contact";
     return false;
   }
@@ -115,11 +96,26 @@ export default function Navbar() {
   function linkIsHighlighted(link: (typeof navLinks)[0]) {
     if (linkIsActive(link.href)) return true;
     if (pathname !== "/") return false;
-    if (link.href === "/pitch" && activeHomeSection === "product") return true;
+    if (
+      link.href === "/pitch" &&
+      (activeHomeSection === "product" || activeHomeSection === "showcase")
+    )
+      return true;
     if (link.href === "/contact" && activeHomeSection === "contact")
       return true;
     return false;
   }
+
+  const mobileLink =
+    "block px-4 py-3 text-[15px] transition " +
+    (isCommandHome
+      ? "font-medium text-zinc-200 hover:bg-white/10"
+      : "font-medium text-[#1d1d1f] hover:bg-[#0071e3]/10");
+  const mobileCta =
+    "block px-4 py-3 text-[15px] font-semibold transition " +
+    (isCommandHome
+      ? "text-sky-400 hover:bg-white/10"
+      : "text-[#0071e3] hover:bg-[#0071e3]/10");
 
   const mobileMenu = (
     <AnimatePresence>
@@ -136,24 +132,28 @@ export default function Navbar() {
           <button
             type="button"
             className="absolute inset-0 bg-[#0c0c14]/55 backdrop-blur-[10px]"
-            aria-label="Close menu"
+            aria-label={t("marketing.nav.closeMenu")}
             onClick={() => setMobileOpen(false)}
           />
           <motion.div
             role="navigation"
-            aria-label="Mobile"
+            aria-label={t("marketing.nav.mobileNav")}
             initial={{ opacity: 0, y: -14, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ type: "spring", damping: 26, stiffness: 340 }}
-            className="glass-liquid absolute right-3 top-[56px] w-[min(calc(100vw-1.5rem),300px)] overflow-hidden rounded-2xl py-2"
+            className={
+              isCommandHome
+                ? "absolute right-3 top-[56px] w-[min(calc(100vw-1.5rem),300px)] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 py-2 shadow-2xl backdrop-blur-xl"
+                : "glass-liquid absolute right-3 top-[56px] w-[min(calc(100vw-1.5rem),300px)] overflow-hidden rounded-2xl py-2"
+            }
             onClick={(e) => e.stopPropagation()}
           >
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="block px-4 py-3 text-[15px] font-medium text-[#1d1d1f] transition hover:bg-[#0071e3]/10"
+                className={mobileLink}
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
@@ -164,44 +164,44 @@ export default function Navbar() {
                 <Show when="signed-out">
                   <Link
                     href="/login"
-                    className="block px-4 py-3 text-[15px] text-[#1d1d1f] transition hover:bg-[#0071e3]/10"
+                    className={mobileLink}
                     onClick={() => setMobileOpen(false)}
                   >
-                    Log in
+                    {t("marketing.hero.logIn")}
                   </Link>
                 </Show>
                 <Show when="signed-in">
                   <Link
                     href="/settings"
-                    className="block px-4 py-3 text-[15px] text-[#1d1d1f] transition hover:bg-[#0071e3]/10"
+                    className={mobileLink}
                     onClick={() => setMobileOpen(false)}
                   >
-                    Settings
+                    {t("marketing.nav.settings")}
                   </Link>
                 </Show>
               </>
             ) : (
               <Link
                 href="/login"
-                className="block px-4 py-3 text-[15px] text-[#1d1d1f] transition hover:bg-[#0071e3]/10"
+                className={mobileLink}
                 onClick={() => setMobileOpen(false)}
               >
-                Log in
+                {t("marketing.hero.logIn")}
               </Link>
             )}
             <Link
-              href="/projects"
-              className="block px-4 py-3 text-[15px] text-[#1d1d1f] transition hover:bg-[#0071e3]/10"
+              href="/desk"
+              className={mobileLink}
               onClick={() => setMobileOpen(false)}
             >
-              Workspace
+              {t("marketing.nav.workspace")}
             </Link>
             <Link
               href="/contact"
-              className="block px-4 py-3 text-[15px] font-semibold text-[#0071e3] transition hover:bg-[#0071e3]/10"
+              className={mobileCta}
               onClick={() => setMobileOpen(false)}
             >
-              Get in touch
+              {t("marketing.nav.getInTouch")}
             </Link>
           </motion.div>
         </motion.div>
@@ -213,19 +213,29 @@ export default function Navbar() {
     <header className="fixed left-0 right-0 top-0 z-[1000]">
       <motion.nav
         className={`relative z-[20] border-b transition-[background,box-shadow,border-color] duration-500 ease-out ${
-          scrolled
-            ? "border-white/50 glass-liquid-nav shadow-[0_12px_40px_-16px_rgba(99,102,241,0.18)]"
-            : "border-transparent bg-white/40 backdrop-blur-2xl"
+          isCommandHome
+            ? scrolled
+              ? "agent-header-liquid border-white/12 shadow-[0_12px_48px_-20px_rgba(0,0,0,0.55)]"
+              : "border-transparent bg-zinc-950/40 backdrop-blur-2xl"
+            : scrolled
+              ? "border-white/50 glass-liquid-nav shadow-[0_12px_40px_-16px_rgba(99,102,241,0.18)]"
+              : "border-transparent bg-white/40 backdrop-blur-2xl"
         }`}
       >
         <div className="relative mx-auto flex max-w-[1280px] items-center justify-between px-5 sm:px-8 lg:h-14 lg:px-12">
           <Link
             href="/"
-            className="relative z-[30] flex flex-shrink-0 items-center gap-2.5 py-3 touch-manipulation lg:py-0"
+            title="Route5 home"
+            className="relative z-[30] flex flex-shrink-0 items-center py-3 touch-manipulation lg:py-0"
           >
-            <Route5Logo />
-            <span className="text-[15px] font-semibold tracking-[-0.03em] text-[#1d1d1f]">
-              Route5
+            <span
+              className={
+                isCommandHome
+                  ? "site-brand-wordmark text-white"
+                  : "site-brand-wordmark text-[#1d1d1f]"
+              }
+            >
+              Route 5
             </span>
           </Link>
 
@@ -239,7 +249,11 @@ export default function Navbar() {
                 {link.label}
                 {linkIsHighlighted(link) && (
                   <span
-                    className="absolute -bottom-1 left-0 right-0 h-px bg-[#0071e3]"
+                    className={
+                      isCommandHome
+                        ? "absolute -bottom-1 left-0 right-0 h-px bg-sky-400"
+                        : "absolute -bottom-1 left-0 right-0 h-px bg-[#0071e3]"
+                    }
                     aria-hidden
                   />
                 )}
@@ -251,8 +265,13 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => openCommandPalette()}
-              className="p-2 text-[#1d1d1f]/70 transition hover:bg-black/[0.06] hover:text-[#1d1d1f] rounded-lg"
-              aria-label="Search (⌘K)"
+              title={t("marketing.nav.searchTitle")}
+              className={
+                isCommandHome
+                  ? "rounded-lg p-2 text-zinc-400 transition hover:bg-white/10 hover:text-white"
+                  : "rounded-lg p-2 text-[#1d1d1f]/70 transition hover:bg-black/[0.06] hover:text-[#1d1d1f]"
+              }
+              aria-label={t("marketing.nav.searchAria")}
             >
               <Search className="h-[20px] w-[20px]" strokeWidth={2} aria-hidden />
             </button>
@@ -261,9 +280,13 @@ export default function Navbar() {
                 <Show when="signed-out">
                   <Link
                     href="/login"
-                    className="px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+                    className={
+                      isCommandHome
+                        ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
+                        : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+                    }
                   >
-                    Log in
+                    {t("marketing.hero.logIn")}
                   </Link>
                 </Show>
                 <Show when="signed-in">
@@ -283,22 +306,32 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/login"
-                className="px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+                className={
+                  isCommandHome
+                    ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
+                    : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+                }
               >
-                Log in
+                {t("marketing.hero.logIn")}
               </Link>
             )}
             <Link
-              href="/projects"
-              className="px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+              href="/desk"
+              title="Signed-in workspace — Desk, projects, Overview"
+              className={
+                isCommandHome
+                  ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
+                  : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
+              }
             >
-              Workspace
+              {t("marketing.nav.workspace")}
             </Link>
             <Link
               href="/contact"
+              title="Contact sales or support"
               className="ml-1 rounded-full bg-[#0071e3] px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
             >
-              Get in touch
+              {t("marketing.nav.getInTouch")}
             </Link>
           </div>
 
@@ -309,16 +342,25 @@ export default function Navbar() {
                 setMobileOpen(false);
                 openCommandPalette();
               }}
-              className="p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] rounded-lg active:scale-[0.97]"
-              aria-label="Search (⌘K)"
+              title={t("marketing.nav.searchTitle")}
+              className={
+                isCommandHome
+                  ? "rounded-lg p-2.5 text-zinc-400 transition hover:bg-white/10 hover:text-white active:scale-[0.97]"
+                  : "rounded-lg p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] active:scale-[0.97]"
+              }
+              aria-label={t("marketing.nav.searchAria")}
             >
               <Search className="h-[22px] w-[22px]" strokeWidth={2} aria-hidden />
             </button>
             <button
               type="button"
               onClick={() => setMobileOpen((o) => !o)}
-              className="p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] rounded-lg active:scale-[0.97]"
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              className={
+                isCommandHome
+                  ? "rounded-lg p-2.5 text-zinc-400 transition hover:bg-white/10 hover:text-white active:scale-[0.97]"
+                  : "rounded-lg p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] active:scale-[0.97]"
+              }
+              aria-label={mobileOpen ? t("marketing.nav.closeMenu") : t("marketing.nav.openMenu")}
               aria-expanded={mobileOpen}
             >
               {mobileOpen ? (

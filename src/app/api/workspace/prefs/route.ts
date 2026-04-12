@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { z } from "zod";
 import type { WorkspacePrefsV1 } from "@/lib/workspace-prefs";
+import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
+import { isUiLocaleCode } from "@/lib/i18n/ui-locales";
+import { WORKSPACE_THEME_IDS } from "@/lib/workspace-themes";
 import { publicWorkspaceError } from "@/lib/public-api-message";
+import {
+  cleanText,
+  enforceRateLimits,
+  parseJsonBody,
+  shortcutSchema,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
 
@@ -11,11 +22,53 @@ function isPlainPrefs(x: unknown): x is WorkspacePrefsV1 {
   return x !== null && typeof x === "object" && !Array.isArray(x);
 }
 
-export async function GET() {
+const prefsPatchSchema = z
+  .object({
+    compact: z.boolean().optional(),
+    focusMode: z.boolean().optional(),
+    pinnedProjectIds: z.array(z.string().transform(cleanText).pipe(z.string().max(120))).max(100).optional(),
+    marketplaceFavorites: z.array(z.string().transform(cleanText).pipe(z.string().max(120))).max(200).optional(),
+    installedMarketplaceAppIds: z.array(z.string().transform(cleanText).pipe(z.string().max(120))).max(200).optional(),
+    dashboardCompanyNote: z.string().transform(cleanText).pipe(z.string().max(2000)).optional(),
+    dashboardAiShortcuts: z.array(shortcutSchema).max(6).optional(),
+    workspaceTimezone: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
+    workspaceRegionKey: z.string().transform(cleanText).pipe(z.string().max(64)).optional(),
+    appearanceGradients: z.boolean().optional(),
+    appearanceTheme: z
+      .string()
+      .refine(
+        (s): s is (typeof WORKSPACE_THEME_IDS)[number] =>
+          (WORKSPACE_THEME_IDS as readonly string[]).includes(s)
+      )
+      .optional(),
+    appearanceSchedule: z.enum(["auto", "day", "night"]).optional(),
+    commandCenterMode: z.enum(["auto", "on", "off"]).optional(),
+    sidebarHidden: z.boolean().optional(),
+    extractionProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
+    llmProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
+    uiLocale: z
+      .string()
+      .refine((s): s is UiLocaleCode => isUiLocaleCode(s))
+      .optional(),
+    surfaceMaterial: z.enum(["liquid", "standard", "flat"]).optional(),
+  })
+  .strict();
+
+const prefsBodySchema = z.object({ prefs: prefsPatchSchema }).strict();
+
+export async function GET(req: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "prefs:get", userId, {
+      userLimit: 90,
+      ipLimit: 180,
+    })
+  );
+  if (rateLimited) return rateLimited;
   try {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
@@ -36,17 +89,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { prefs?: Partial<WorkspacePrefsV1> };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "prefs:post", userId, {
+      userLimit: 30,
+      ipLimit: 60,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const patch = body.prefs;
-  if (!patch || typeof patch !== "object") {
-    return NextResponse.json({ error: "prefs required" }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, prefsBodySchema);
+  if (!parsed.ok) return parsed.response;
+  const patch = parsed.data.prefs;
 
   try {
     const client = await clerkClient();

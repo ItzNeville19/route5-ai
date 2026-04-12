@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import PrivacyHashScroll from "@/components/privacy/PrivacyHashScroll";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — Route5",
@@ -110,6 +111,7 @@ neville@rayze.xyz`,
 export default function PrivacyPage() {
   return (
     <div className="theme-glass-site min-h-screen text-[#1d1d1f]">
+      <PrivacyHashScroll />
       <nav className="border-b border-black/[0.08] bg-white/45 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">
           <Link
@@ -135,7 +137,10 @@ export default function PrivacyPage() {
 
         <div className="max-w-none space-y-10">
           {sections.map((section) => (
-            <div key={section.title}>
+            <div
+              key={section.title}
+              id={section.title.startsWith("6.") ? "security" : undefined}
+            >
               <h2 className="mb-4 text-xl font-semibold tracking-[-0.02em] text-[#1d1d1f]">
                 {section.title}
               </h2>

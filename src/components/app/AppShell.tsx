@@ -91,7 +91,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <SignIn
                 routing="hash"
                 signUpUrl="/sign-up"
-                fallbackRedirectUrl="/projects"
+                fallbackRedirectUrl="/desk"
                 signUpFallbackRedirectUrl="/onboarding"
                 appearance={clerkSignInAppearance}
               />
@@ -119,12 +119,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 function GateSpinner() {
   return (
     <div
-      className="theme-agent-shell flex min-h-dvh flex-col items-center justify-center"
+      className="theme-agent-shell theme-route5-command flex min-h-dvh flex-col items-center justify-center bg-[var(--workspace-canvas)]"
       aria-busy="true"
       aria-label="Loading workspace"
     >
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-neutral-900 border-t-transparent" />
-      <p className="mt-5 text-[13px] text-neutral-500">Preparing your workspace…</p>
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--workspace-muted-fg)] border-t-[var(--workspace-accent)]" />
+      <p className="mt-5 text-[13px] text-[var(--workspace-muted-fg)]">Preparing your workspace…</p>
     </div>
   );
 }
@@ -146,7 +146,7 @@ function SignedInAppShell({
         typeof window !== "undefined" &&
         new URLSearchParams(window.location.search).get("replay") === "1";
       if (isOnboardingComplete(userId) && !replay) {
-        router.replace("/projects");
+        router.replace("/desk");
         setGate("redirecting");
         return;
       }

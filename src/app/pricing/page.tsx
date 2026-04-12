@@ -8,7 +8,7 @@ import { PRODUCT_LIVE, PRODUCT_ROADMAP } from "@/lib/product-truth";
 export const metadata: Metadata = {
   title: "Pricing — Route5",
   description:
-    "How Route5 is offered today: workspace access with honest limits. Enterprise options by conversation.",
+    "How Route5 is packaged: workspace access with clear limits. Enterprise options by conversation.",
 };
 
 export default async function PricingPage() {
@@ -36,7 +36,7 @@ export default async function PricingPage() {
         </div>
 
         <div className="mx-auto mt-14 grid max-w-[920px] gap-6 md:grid-cols-2">
-          <div className="glass-liquid glass-liquid-interactive rounded-3xl p-8 text-left">
+          <div className="glass-liquid glass-liquid-interactive liquid-glass-shimmer route5-tilt-hover rounded-3xl p-8 text-left">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
               Workspace
             </p>
@@ -72,7 +72,7 @@ export default async function PricingPage() {
             </div>
           </div>
 
-          <div className="glass-liquid rounded-3xl p-8 text-left">
+          <div className="glass-liquid liquid-glass-shimmer route5-tilt-hover rounded-3xl p-8 text-left">
             <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
               Enterprise & volume
             </p>
@@ -81,8 +81,8 @@ export default async function PricingPage() {
             </p>
             <p className="mt-3 text-[14px] leading-relaxed text-[#6e6e73]">
               For procurement, security review, SSO beyond defaults, or deployment
-              expectations beyond the current product surface — we scope honestly after a
-              short intro.
+              expectations at scale — we align scope and timeline in writing after a short
+              intro.
             </p>
             <ul className="mt-5 space-y-2 text-[13px] text-[#6e6e73]">
               {PRODUCT_ROADMAP.map((line) => (
@@ -92,12 +92,18 @@ export default async function PricingPage() {
                 </li>
               ))}
             </ul>
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/contact"
                 className="inline-flex rounded-full border border-black/[0.12] bg-white/70 px-6 py-2.5 text-[14px] font-semibold text-[#1d1d1f] shadow-sm transition hover:bg-white"
               >
                 Contact sales
+              </Link>
+              <Link
+                href="/trust"
+                className="inline-flex rounded-full border border-black/[0.12] bg-transparent px-6 py-2.5 text-[14px] font-semibold text-[#1d1d1f] shadow-sm transition hover:bg-white/80"
+              >
+                Trust &amp; compliance
               </Link>
             </div>
           </div>

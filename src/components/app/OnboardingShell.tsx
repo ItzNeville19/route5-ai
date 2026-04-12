@@ -10,7 +10,7 @@ export default function OnboardingShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="theme-agent-shell relative min-h-dvh text-[var(--workspace-fg)]">
+    <div className="theme-agent-shell theme-route5-command relative min-h-dvh text-[var(--workspace-fg)]">
       <div
         className="pointer-events-none fixed inset-0 z-0 bg-[var(--workspace-canvas)]"
         aria-hidden

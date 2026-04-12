@@ -97,7 +97,7 @@ export default function OnboardingPage() {
   function finish() {
     if (!userId) return;
     markOnboardingComplete(userId);
-    router.push("/projects");
+    router.push("/desk");
   }
 
   function skip() {

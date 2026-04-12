@@ -6,13 +6,13 @@ export type WorkspaceAppTile = {
   href: string;
   label: string;
   description: string;
-  group: "Work" | "Connections" | "Workspace";
+  group: "Work" | "Reports" | "Connections" | "Workspace";
 };
 
 export const WORKSPACE_APP_TILES: WorkspaceAppTile[] = [
   { group: "Work", href: "/desk", label: "Desk", description: "Capture and run extractions" },
   { group: "Work", href: "/projects", label: "Projects", description: "Overview and list" },
-  { group: "Work", href: "/reports", label: "Reports", description: "Counts and recent runs" },
+  { group: "Reports", href: "/reports", label: "Reports", description: "Counts and recent runs" },
   { group: "Connections", href: "/integrations", label: "Integrations hub", description: "All connection routes" },
   { group: "Connections", href: "/integrations/linear", label: "Linear", description: "Issues and imports" },
   { group: "Connections", href: "/integrations/github", label: "GitHub", description: "Issues by URL" },

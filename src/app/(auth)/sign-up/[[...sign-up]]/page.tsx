@@ -20,7 +20,7 @@ export default function SignUpPage() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? "/projects" : "/onboarding";
+    const next = isOnboardingComplete(userId) ? "/desk" : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -77,7 +77,7 @@ export default function SignUpPage() {
             routing="hash"
             signInUrl="/login"
             fallbackRedirectUrl="/onboarding"
-            signInFallbackRedirectUrl="/projects"
+            signInFallbackRedirectUrl="/desk"
             appearance={{
               elements: {
                 rootBox: "w-full mx-auto max-w-[420px]",

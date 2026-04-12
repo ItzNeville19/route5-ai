@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ClipboardCopy, ExternalLink, Loader2, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ClipboardCopy, ExternalLink, Inbox, Loader2, RefreshCw } from "lucide-react";
 import SendToProjectButton from "@/components/integrations/SendToProjectButton";
 import { sanitizeIntegrationClientError } from "@/lib/client-integration-errors";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+import { writeExtractionDraft } from "@/lib/workspace-bridge";
 
 type Issue = {
   id: string;
@@ -18,10 +20,11 @@ type Issue = {
 };
 
 export default function LinearIntegrationPage() {
+  const router = useRouter();
   const { pushToast } = useWorkspaceExperience();
   const [loading, setLoading] = useState(true);
   const [configured, setConfigured] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [refInput, setRefInput] = useState("");
@@ -35,15 +38,15 @@ export default function LinearIntegrationPage() {
     setMessage(null);
     try {
       const res = await fetch("/api/integrations/linear", { credentials: "same-origin" });
-      const data = (await res.json()) as {
+      const data = (await res.json().catch(() => ({}))) as {
         configured?: boolean;
-        demoMode?: boolean;
+        previewMode?: boolean;
         issues?: Issue[];
         message?: string;
         error?: string;
       };
       setConfigured(Boolean(data.configured));
-      setDemoMode(Boolean(data.demoMode));
+      setPreviewMode(Boolean(data.previewMode));
       if (!res.ok) {
         setIssues([]);
         setMessage(data.error ?? "Could not load.");
@@ -90,10 +93,10 @@ export default function LinearIntegrationPage() {
         credentials: "same-origin",
         body: JSON.stringify({ ref: refInput }),
       });
-      const data = (await res.json()) as {
+      const data = (await res.json().catch(() => ({}))) as {
         bodyForExtraction?: string;
         error?: string;
-        demoMode?: boolean;
+        previewMode?: boolean;
       };
       if (!res.ok) {
         setImportErr(sanitizeIntegrationClientError(data.error ?? "Import failed."));
@@ -101,7 +104,7 @@ export default function LinearIntegrationPage() {
       }
       if (data.bodyForExtraction) {
         await copyBody(data.bodyForExtraction);
-        if (data.demoMode) {
+        if (data.previewMode) {
           pushToast("Preview ready — send to a project below.", "success");
         }
       }
@@ -128,6 +131,27 @@ export default function LinearIntegrationPage() {
     await copyBody(body);
   }
 
+  function issueBodyForDesk(issue: Issue): string {
+    return [
+      `Linear ${issue.identifier}`,
+      issue.url,
+      issue.teamKey ? `Team: ${issue.teamKey}` : "",
+      issue.stateName ? `State: ${issue.stateName}` : "",
+      "",
+      `## ${issue.title}`,
+      "",
+      (issue.description ?? "").trim(),
+    ]
+      .filter((l) => l !== "")
+      .join("\n");
+  }
+
+  function openIssueInDesk(issue: Issue) {
+    writeExtractionDraft(issueBodyForDesk(issue), "Linear");
+    router.push("/desk?draft=1");
+    pushToast("Opening Desk…", "success");
+  }
+
   return (
     <div className="mx-auto max-w-[900px] pb-24">
       <Link
@@ -144,8 +168,8 @@ export default function LinearIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — pull real issues into extractions."
-                : "Ready — explore samples, import any link, and send to a project. No setup required to get started."}
+                ? "Live — issues land here; send to Desk for extraction (same runs as Overview)."
+                : "Ready — samples and URL import work now; add an API key for your workspace. Desk is the capture surface."}
             </p>
           ) : (
             <p className="mt-2 h-[1.25rem] text-[13px] text-transparent" aria-hidden>
@@ -159,7 +183,7 @@ export default function LinearIntegrationPage() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:bg-white/60 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:bg-[var(--workspace-hover-elevate)] disabled:opacity-50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} aria-hidden />
             Refresh
@@ -177,17 +201,19 @@ export default function LinearIntegrationPage() {
         <p className="mt-6 text-[13px] font-medium text-[var(--workspace-accent)]">{lastBody}</p>
       ) : null}
 
-      {demoMode && !loading ? (
+      {previewMode && !loading ? (
         <div className="mt-6 rounded-2xl border border-[var(--workspace-accent)]/25 bg-[var(--workspace-accent)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
-          <span className="font-semibold">Walkthrough</span> — You’re seeing curated sample issues. Fetch
-          &amp; copy works the same as live data; your team can link Linear later for automatic sync.
+          <span className="font-semibold">Preview mode</span> — Sample issues only (Linear API key not set on this
+          server). Fetch and copy behaves like production; configure Linear in your deployment environment to load
+          your team&apos;s real issues here.
         </div>
       ) : null}
 
       <section className="mt-10 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
         <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Import by URL or id</h2>
         <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">
-          Paste a Linear issue link, UUID, or <span className="font-mono">TEAM-123</span> reference.
+          Paste a Linear issue link, UUID, or <span className="font-mono">TEAM-123</span>. Then{" "}
+          <span className="font-medium text-[var(--workspace-fg)]">Open in Desk</span> to run extraction.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input
@@ -200,14 +226,14 @@ export default function LinearIntegrationPage() {
             type="button"
             disabled={importing || !refInput.trim()}
             onClick={() => void importRef()}
-            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--workspace-accent)] px-6 text-[14px] font-semibold text-white transition hover:bg-[var(--workspace-accent-hover)] disabled:opacity-40"
+            className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--workspace-accent)] px-6 text-[14px] font-semibold text-[var(--workspace-on-accent)] transition hover:bg-[var(--workspace-accent-hover)] disabled:opacity-40"
           >
             {importing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-            Fetch &amp; copy
+            Fetch for Desk
           </button>
         </div>
         {importErr ? (
-          <p className="mt-3 text-[13px] text-red-600 dark:text-red-400" role="alert">
+          <p className="mt-3 text-[13px] text-[var(--workspace-danger-fg)]" role="alert">
             {sanitizeIntegrationClientError(importErr)}
           </p>
         ) : null}
@@ -235,17 +261,25 @@ export default function LinearIntegrationPage() {
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <button
                     type="button"
+                    onClick={() => openIssueInDesk(issue)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--workspace-fg)] px-3 py-2 text-[13px] font-semibold text-[var(--workspace-canvas)] transition hover:opacity-95"
+                  >
+                    <Inbox className="h-4 w-4" aria-hidden />
+                    Open in Desk
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => void copyIssueForExtraction(issue)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--workspace-accent)] px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--workspace-accent-hover)]"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-hover-elevate)]"
                   >
                     <ClipboardCopy className="h-4 w-4" aria-hidden />
-                    Copy for extraction
+                    Copy text
                   </button>
                   <a
                     href={issue.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--workspace-border)] px-3 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-white/50"
+                    className="inline-flex items-center gap-1 rounded-lg border border-[var(--workspace-border)] px-3 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-hover-elevate)]"
                   >
                     Linear
                     <ExternalLink className="h-3.5 w-3.5 opacity-60" aria-hidden />
@@ -258,11 +292,11 @@ export default function LinearIntegrationPage() {
       </section>
 
       <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
+        Runs sync with{" "}
         <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
-          Project
-        </Link>
-        {" → "}
-        Run extraction.
+          Overview
+        </Link>{" "}
+        — Desk is your daily workspace; projects stay the system of record.
       </p>
     </div>
   );

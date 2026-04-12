@@ -1,27 +1,52 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import {
   isLinearConfigured,
   linearFetchIssueForImport,
   linearListRecentIssues,
 } from "@/lib/linear-api";
-import { DEMO_LINEAR_ISSUES, demoLinearImport } from "@/lib/integration-demo-data";
+import { PREVIEW_LINEAR_ISSUES, previewLinearImport } from "@/lib/integration-preview-data";
 import { publicWorkspaceError } from "@/lib/public-api-message";
+import {
+  cleanText,
+  enforceRateLimits,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
 
+const linearImportSchema = z
+  .object({
+    ref: z
+      .string()
+      .transform(cleanText)
+      .pipe(z.string().min(1, "Missing ref (URL or TEAM-123).").max(500)),
+  })
+  .strict();
+
 /** List recent issues or connectivity when GET; import one issue body when POST. */
-export async function GET() {
+export async function GET(req: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "linear:get", userId, {
+      userLimit: 60,
+      ipLimit: 120,
+    })
+  );
+  if (rateLimited) return rateLimited;
+
   if (!isLinearConfigured()) {
     return NextResponse.json({
       configured: false,
-      demoMode: true,
-      issues: DEMO_LINEAR_ISSUES,
+      previewMode: true,
+      issues: PREVIEW_LINEAR_ISSUES,
     });
   }
 
@@ -51,22 +76,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { ref?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "linear:post", userId, {
+      userLimit: 30,
+      ipLimit: 60,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const ref = typeof body.ref === "string" ? body.ref : "";
-  if (!ref.trim()) {
-    return NextResponse.json({ error: "Missing ref (URL or TEAM-123)." }, { status: 400 });
-  }
+  const parsed = await parseJsonBody(req, linearImportSchema);
+  if (!parsed.ok) return parsed.response;
+  const ref = parsed.data.ref;
 
   if (!isLinearConfigured()) {
-    const { issue, bodyForExtraction } = demoLinearImport(ref);
+    const { issue, bodyForExtraction } = previewLinearImport(ref);
     return NextResponse.json({
-      demoMode: true,
+      previewMode: true,
       issue,
       bodyForExtraction,
     });

@@ -1,122 +1,278 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  ChevronRight,
   Clock,
-  Figma,
   Github,
+  Inbox,
   Keyboard,
   LayoutGrid,
+  ListTodo,
   Loader2,
-  MessageSquare,
   Plug2,
   Send,
+  Settings,
   Sparkles,
+  BarChart3,
+  Shield,
+  Tag,
+  Zap,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import { EXTRACTION_PRESETS, getExtractionPreset } from "@/lib/extraction-presets";
-import type { Project } from "@/lib/types";
-import type { RecentExtractionRow } from "@/lib/workspace-summary";
+import { useCommandPalette } from "@/components/CommandPalette";
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import DeskCaptureToolbar from "@/components/desk/DeskCaptureToolbar";
+import DeskShortcutsModal from "@/components/desk/DeskShortcutsModal";
+import { deskCaptureStorageKey } from "@/lib/desk-storage";
+import {
+  EXTRACTION_PRESETS,
+  getExtractionPreset,
+  PRESET_CATEGORY_ORDER,
+} from "@/lib/extraction-presets";
+import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
+import { formatRelativeLong } from "@/lib/relative-time";
+import { consumeExtractionDraft } from "@/lib/workspace-bridge";
 
 const MAX_CHARS = 100_000;
 
-function formatRelative(iso: string): string {
-  const t = new Date(iso).getTime();
-  const diff = Date.now() - t;
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "Just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+function openNewProjectModal() {
+  window.dispatchEvent(new Event("route5:new-project-open"));
+}
+
+function DeskStatusTile({
+  icon,
+  title,
+  ok,
+  okBadge,
+  badBadge,
+  body,
+  href,
+  cta,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  ok: boolean;
+  okBadge: string;
+  badBadge: string;
+  body: string;
+  href: string;
+  cta: string;
+}) {
+  return (
+    <div className="flex flex-col rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/70 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 text-[var(--workspace-accent)]">
+            {icon}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-[var(--workspace-fg)]">{title}</p>
+            <p
+              className={`mt-0.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                ok
+                  ? "bg-emerald-500/12 text-[var(--workspace-success-fg)]"
+                  : "bg-amber-500/10 text-[var(--workspace-muted-fg)]"
+              }`}
+            >
+              {ok ? okBadge : badBadge}
+            </p>
+          </div>
+        </div>
+        <Link
+          href={href}
+          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-semibold text-[var(--workspace-accent)] hover:underline"
+        >
+          {cta}
+        </Link>
+      </div>
+      <p className="mt-3 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">{body}</p>
+    </div>
+  );
+}
+
+function IntegrationTiles({
+  readiness,
+  t,
+}: {
+  readiness: WorkspaceConnectorReadiness | null;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const items: {
+    id: string;
+    title: string;
+    href: string;
+    ok: boolean;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      id: "linear",
+      title: "Linear",
+      href: "/integrations/linear",
+      ok: !!readiness?.linear,
+      icon: <ListTodo className="h-4 w-4" aria-hidden />,
+    },
+    {
+      id: "github",
+      title: "GitHub",
+      href: "/integrations/github",
+      ok: !!readiness?.github,
+      icon: <Github className="h-4 w-4" aria-hidden />,
+    },
+    {
+      id: "figma",
+      title: "Figma",
+      href: "/integrations/figma",
+      ok: !!readiness?.figma,
+      icon: <LayoutGrid className="h-4 w-4" aria-hidden />,
+    },
+  ];
+
+  return (
+    <>
+      {items.map((it) => (
+        <DeskStatusTile
+          key={it.id}
+          icon={it.icon}
+          title={it.title}
+          ok={it.ok}
+          okBadge={t("desk.ready")}
+          badBadge={t("desk.off")}
+          body={it.ok ? t("desk.statusIntegOn") : t("desk.statusIntegOff")}
+          href={it.href}
+          cta={it.ok ? t("desk.statusCtaOpen") : t("desk.statusCtaSetup")}
+        />
+      ))}
+    </>
+  );
 }
 
 export default function DeskWorkspace() {
+  const { t, intlLocale } = useI18n();
+  const { prefs, pushToast } = useWorkspaceExperience();
+  const { projects, summary, loadingProjects, loadingSummary, refreshAll } =
+    useWorkspaceData();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loadingProjects, setLoadingProjects] = useState(true);
+  const { open: openCommandPalette } = useCommandPalette();
   const [projectId, setProjectId] = useState<string>("");
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [summaryLoading, setSummaryLoading] = useState(true);
-  const [recent, setRecent] = useState<RecentExtractionRow[]>([]);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const draftSaveTimer = useRef<number | null>(null);
 
   const presetId = searchParams.get("preset") ?? "";
 
-  const loadProjects = useCallback(async () => {
-    setLoadingProjects(true);
-    try {
-      const res = await fetch("/api/projects", { credentials: "same-origin" });
-      const data = (await res.json().catch(() => ({}))) as { projects?: Project[] };
-      const list = res.ok ? (data.projects ?? []) : [];
-      setProjects(list);
-      setProjectId((prev) => {
-        if (prev && list.some((p) => p.id === prev)) return prev;
-        return list[0]?.id ?? "";
-      });
-    } catch {
-      setProjects([]);
-    } finally {
-      setLoadingProjects(false);
-    }
-  }, []);
+  const groupedPresets = useMemo(
+    () =>
+      PRESET_CATEGORY_ORDER.map((category) => ({
+        category,
+        presets: EXTRACTION_PRESETS.filter((p) => p.category === category),
+      })),
+    []
+  );
 
-  const loadSummary = useCallback(async () => {
-    setSummaryLoading(true);
-    try {
-      const res = await fetch("/api/workspace/summary", { credentials: "same-origin" });
-      const data = (await res.json().catch(() => ({}))) as {
-        recent?: RecentExtractionRow[];
-      };
-      if (res.ok) setRecent(data.recent ?? []);
-      else setRecent([]);
-    } catch {
-      setRecent([]);
-    } finally {
-      setSummaryLoading(false);
-    }
-  }, []);
+  const wordCount = useMemo(() => {
+    const raw = text.trim();
+    if (!raw) return 0;
+    return raw.split(/\s+/).filter(Boolean).length;
+  }, [text]);
 
-  useEffect(() => {
-    void loadProjects();
-    void loadSummary();
-  }, [loadProjects, loadSummary]);
+  const readMinutes = useMemo(
+    () => (wordCount === 0 ? 0 : Math.max(1, Math.round(wordCount / 200))),
+    [wordCount]
+  );
 
   useEffect(() => {
     const pid = searchParams.get("projectId");
     if (pid && projects.some((p) => p.id === pid)) {
       setProjectId(pid);
+      return;
     }
+    setProjectId((prev) => {
+      if (prev && projects.some((p) => p.id === prev)) return prev;
+      return projects[0]?.id ?? "";
+    });
   }, [searchParams, projects]);
 
   useEffect(() => {
-    if (!presetId) return;
-    const p = getExtractionPreset(presetId);
-    if (p?.body) {
-      setText(p.body);
+    if (presetId) {
+      const p = getExtractionPreset(presetId);
+      if (p?.body) setText(p.body);
+      return;
     }
-  }, [presetId]);
+    if (!projectId) return;
+    try {
+      const s = localStorage.getItem(deskCaptureStorageKey(projectId));
+      setText(s ?? "");
+    } catch {
+      setText("");
+    }
+  }, [projectId, presetId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    if (draftSaveTimer.current !== null) window.clearTimeout(draftSaveTimer.current);
+    draftSaveTimer.current = window.setTimeout(() => {
+      try {
+        if (text.trim()) localStorage.setItem(deskCaptureStorageKey(projectId), text);
+        else localStorage.removeItem(deskCaptureStorageKey(projectId));
+      } catch {
+        /* ignore */
+      }
+    }, 450);
+    return () => {
+      if (draftSaveTimer.current !== null) window.clearTimeout(draftSaveTimer.current);
+    };
+  }, [text, projectId]);
+
+  useEffect(() => {
+    if (searchParams.get("draft") !== "1") return;
+    const d = consumeExtractionDraft();
+    if (d?.body) {
+      setText((prev) => {
+        const next = d.body.trim();
+        const base = prev.trim();
+        return base ? `${base}\n\n${next}` : next;
+      });
+      pushToast(t("desk.toastImportedFrom", { source: d.source }), "success");
+    } else {
+      pushToast(t("desk.toastNothingToImport"), "info");
+    }
+    router.replace(presetId ? `/desk?preset=${encodeURIComponent(presetId)}` : "/desk", {
+      scroll: false,
+    });
+  }, [searchParams, router, presetId, pushToast, t]);
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === projectId),
     [projects, projectId]
   );
 
+  const runsForProject = useMemo(
+    () => summary.recent.filter((r) => r.projectId === projectId),
+    [summary.recent, projectId]
+  );
+
+  const latestForProject = runsForProject[0];
+
   async function handleExtract(e: React.FormEvent) {
     e.preventDefault();
     const rawInput = text.trim();
     if (!projectId) {
-      setError("Pick or create a project first.");
+      setError(t("desk.errorChooseProject"));
       return;
     }
     if (!rawInput) {
-      setError("Add something to capture — paste, notes, or a link.");
+      setError(t("desk.errorAddMaterial"));
       return;
     }
     setError(null);
@@ -127,259 +283,560 @@ export default function DeskWorkspace() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ projectId, rawInput: rawInput.slice(0, MAX_CHARS) }),
+        body: JSON.stringify({
+          projectId,
+          rawInput: rawInput.slice(0, MAX_CHARS),
+          extractionProviderId: prefs.extractionProviderId ?? "auto",
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Couldn’t run extraction.");
+        setError(data.error ?? t("desk.errorExtractionFailed"));
         return;
       }
       setText("");
+      try {
+        localStorage.removeItem(deskCaptureStorageKey(projectId));
+      } catch {
+        /* ignore */
+      }
       setSuccess(true);
       window.setTimeout(() => setSuccess(false), 5000);
-      void loadSummary();
+      void refreshAll();
     } catch {
-      setError("Network error.");
+      setError(t("desk.errorNetwork"));
     } finally {
       setLoading(false);
     }
   }
 
+  const readiness = summary.readiness;
+  const aiOff = readiness && !readiness.openai;
+  const hasProjects = projects.length > 0;
+
+  async function handlePasteFromClipboard() {
+    try {
+      const clip = await navigator.clipboard.readText();
+      if (!clip.trim()) {
+        pushToast(t("desk.toastPasteFailed"), "info");
+        return;
+      }
+      setText((prev) => {
+        const base = prev.trim();
+        return base ? `${base}\n\n${clip}` : clip;
+      });
+      pushToast(t("desk.toastPasted"), "success");
+    } catch {
+      pushToast(t("desk.toastPasteFailed"), "error");
+    }
+  }
+
+  async function handleCopyAll() {
+    const raw = text.trim();
+    if (!raw) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      pushToast(t("desk.toastCopied"), "success");
+    } catch {
+      pushToast(t("desk.toastPasteFailed"), "error");
+    }
+  }
+
+  function handleClearCapture() {
+    setText("");
+    try {
+      if (projectId) localStorage.removeItem(deskCaptureStorageKey(projectId));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function handleExportTxt() {
+    const raw = text.trim();
+    if (!raw) return;
+    const slug = (selectedProject?.name ?? "capture")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 48);
+    const stamp = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `desk-${slug || "capture"}-${stamp}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    pushToast(t("desk.toastExport"), "success");
+  }
+
   return (
     <div className="pb-24">
-      <div className="mx-auto max-w-[1100px]">
-        <motion.div
-          className="dashboard-pro-hero relative overflow-hidden"
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="dashboard-pro-aurora" aria-hidden />
-          <div className="relative z-[2] px-6 pb-8 pt-9 sm:px-9 sm:pt-10">
-            <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--workspace-muted-fg)]">
-              <Sparkles className="h-3.5 w-3.5 text-[var(--workspace-accent)]" aria-hidden />
-              Your desk
-            </p>
-            <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.5rem)] font-semibold tracking-[-0.04em] text-[var(--workspace-fg)]">
-              Capture → extract → ship
-            </h1>
-            <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              One place to paste context, run structured extractions, and jump to Linear, GitHub, or
-              design review — without hunting through the rest of the app.
-            </p>
+      <div className="mx-auto max-w-[min(100%,1440px)] px-1 sm:px-0">
+        {aiOff ? (
+          <div
+            className="mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/[0.07] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)] sm:px-5"
+            role="status"
+          >
+            <span className="font-semibold">{t("desk.llmOffTitle")}</span> {t("desk.llmOffLead")}{" "}
+            <code className="rounded bg-black/30 px-1.5 py-0.5 text-[12px]">OPENAI_API_KEY</code>{" "}
+            {t("desk.llmOffTail")}{" "}
+            <Link
+              href="/docs/product"
+              className="font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline"
+            >
+              {t("desk.llmOffRead")}
+            </Link>
+          </div>
+        ) : null}
 
-            <div className="mt-6 flex flex-wrap gap-2">
+        <header className="dashboard-home-card relative mb-6 rounded-[24px] px-4 py-5 sm:px-6 sm:py-6">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 text-[var(--workspace-accent)] shadow-inner">
+                <Inbox className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
+                  {t("desk.badge")}
+                </p>
+                <h1 className="mt-1 text-[clamp(1.2rem,2.6vw,1.65rem)] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
+                  {t("desk.heroTitle")}
+                </h1>
+                <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                  {t("desk.heroBody")}
+                </p>
+                <p
+                  className="mt-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]/90"
+                  aria-label={t("desk.pipelineAria")}
+                >
+                  <span className="font-medium text-[var(--workspace-accent)]">→</span>{" "}
+                  {t("desk.pipelineOneLiner")}
+                </p>
+              </div>
+            </div>
+            <nav
+              className="flex flex-wrap gap-2 lg:max-w-[min(100%,380px)] lg:justify-end"
+              aria-label={t("desk.badge")}
+            >
               <Link
-                href="/integrations/linear"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:border-[var(--workspace-accent)]/35"
+                href="/projects"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
+              >
+                {t("desk.navOverview")}
+                <ChevronRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+              </Link>
+              <Link
+                href="/integrations"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
                 <Plug2 className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                Linear
+                {t("sidebar.integrations")}
               </Link>
               <Link
-                href="/integrations/github"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:border-[var(--workspace-accent)]/35"
+                href="/settings"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
-                <Github className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                GitHub
+                <Settings className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                {t("desk.navSettings")}
               </Link>
               <Link
-                href="/integrations/figma"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:border-[var(--workspace-accent)]/35"
+                href="/docs/product"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
-                <Figma className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                Figma
+                <BookOpen className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                {t("desk.navDocs")}
               </Link>
               <Link
                 href="/marketplace"
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:border-[var(--workspace-accent)]/35"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
                 <LayoutGrid className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                Marketplace
+                {t("desk.navMarketplace")}
               </Link>
               <button
                 type="button"
-                onClick={() => router.push("/projects?tool=palette")}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm"
+                onClick={() => openCommandPalette()}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
                 <Keyboard className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                ⌘K
+                {t("desk.cmdK")}
               </button>
-            </div>
+            </nav>
           </div>
-        </motion.div>
+        </header>
 
-        <section className="dashboard-pro-card mt-8 p-6 sm:p-8" aria-labelledby="capture-heading">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <section className="mb-6" aria-labelledby="desk-status-heading">
+          <h2 id="desk-status-heading" className="sr-only">
+            {t("desk.statusHeading")}
+          </h2>
+          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
+            {t("desk.statusHeading")}
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <DeskStatusTile
+              icon={<Sparkles className="h-4 w-4" aria-hidden />}
+              title={t("desk.statusAiTitle")}
+              ok={!!readiness?.openai}
+              okBadge={t("desk.statusBadgeOk")}
+              badBadge={t("desk.statusBadgeNeeds")}
+              body={readiness?.openai ? t("desk.statusAiOn") : t("desk.statusAiOff")}
+              href="/settings"
+              cta={readiness?.openai ? t("desk.statusCtaOpen") : t("desk.statusCtaSetup")}
+            />
+            <IntegrationTiles readiness={readiness} t={t} />
+          </div>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-12 lg:items-start">
+          <aside className="dashboard-home-card space-y-5 rounded-[24px] p-4 sm:p-5 lg:col-span-3">
             <div>
-              <h2
-                id="capture-heading"
-                className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]"
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--workspace-muted-fg)]">
+                {t("desk.filedUnder")}
+              </p>
+              <label className="sr-only" htmlFor="desk-project-rail">
+                {t("desk.projectLabel")}
+              </label>
+              <select
+                id="desk-project-rail"
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                disabled={loadingProjects || !hasProjects}
+                className="mt-2 min-h-[44px] w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 text-[14px] text-[var(--workspace-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
               >
-                Capture &amp; create
-              </h2>
-              <p className="mt-1 text-[17px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]">
-                Chat-style input — runs a full extraction on the project you pick
+                {!hasProjects ? (
+                  <option value="">{t("desk.createProjectFirst")}</option>
+                ) : (
+                  projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.iconEmoji?.trim() ? `${p.iconEmoji.trim()} ${p.name}` : p.name}
+                    </option>
+                  ))
+                )}
+              </select>
+              {selectedProject ? (
+                <Link
+                  href={`/projects/${selectedProject.id}`}
+                  className="mt-2 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+                >
+                  {t("desk.projectWorkspace")}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={openNewProjectModal}
+                  className="mt-2 text-left text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+                >
+                  {t("desk.emptyNoProjectCta")}
+                </button>
+              )}
+            </div>
+
+            <div className="border-t border-[var(--workspace-border)] pt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
+                {t("desk.howHeading")}
+              </p>
+              <ol className="mt-3 list-decimal space-y-2.5 pl-4 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)] marker:text-[var(--workspace-accent)]">
+                <li className="pl-1 text-[var(--workspace-fg)]">{t("desk.howStep1")}</li>
+                <li className="pl-1">{t("desk.howStep2")}</li>
+                <li className="pl-1">{t("desk.howStep3")}</li>
+                <li className="pl-1">{t("desk.howStep4")}</li>
+              </ol>
+            </div>
+
+            <div className="border-t border-[var(--workspace-border)] pt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
+                {t("desk.resourcesHeading")}
+              </p>
+              <p className="mt-2 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                {t("desk.resourcesLead")}
+              </p>
+              <ul className="mt-3 space-y-2">
+                <li>
+                  <Link
+                    href="/account/plans"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <Zap className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.resourcePlans")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <Tag className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.resourcePricing")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/reports"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.resourceReports")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/contact"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <Send className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.resourceContact")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/trust"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <Shield className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.resourceTrust")}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          </aside>
+
+          <div className="space-y-5 lg:col-span-6">
+            <section
+              className="dashboard-home-card rounded-[24px] p-5 sm:p-6"
+              aria-labelledby="capture-heading"
+            >
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2
+                    id="capture-heading"
+                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]"
+                  >
+                    {t("desk.inbox")}
+                  </h2>
+                  <p className="mt-1 text-[17px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]">
+                    {t("desk.captureTagline")}
+                  </p>
+                  <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                    {t("desk.captureHelper")}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={openNewProjectModal}
+                    className="shrink-0 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-accent)] transition hover:bg-[var(--workspace-accent)]/10"
+                  >
+                    {t("desk.newProjectCta")}
+                  </button>
+                  <Link
+                    href="/projects"
+                    className="shrink-0 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
+                  >
+                    {t("desk.navOverview")}
+                  </Link>
+                </div>
+              </div>
+
+              {!hasProjects ? (
+                <div className="mt-8 rounded-2xl border border-dashed border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 px-5 py-10 text-center">
+                  <p className="text-[16px] font-semibold text-[var(--workspace-fg)]">{t("desk.emptyNoProjectTitle")}</p>
+                  <p className="mx-auto mt-2 max-w-md text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                    {t("desk.emptyNoProjectBody")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openNewProjectModal}
+                    className="mt-6 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-[var(--workspace-fg)] px-6 text-[14px] font-semibold text-[var(--workspace-canvas)] shadow-md transition hover:opacity-95"
+                  >
+                    {t("desk.emptyNoProjectCta")}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mt-5 space-y-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
+                      {t("desk.shapeTemplates")}
+                    </p>
+                    {groupedPresets.map(({ category, presets }) => (
+                      <div key={category}>
+                        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
+                          {t(`desk.presetCategory.${category}`)}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {presets.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                router.replace(`/desk?preset=${encodeURIComponent(p.id)}`, { scroll: false });
+                                setText(p.body);
+                              }}
+                              className={`rounded-xl border px-3 py-2 text-left text-[12px] font-medium transition ${
+                                presetId === p.id
+                                  ? "border-[var(--workspace-accent)] bg-[var(--workspace-accent)]/10 text-[var(--workspace-fg)] shadow-sm"
+                                  : "border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 text-[var(--workspace-muted-fg)] hover:border-[var(--workspace-accent)]/30 hover:text-[var(--workspace-fg)]"
+                              }`}
+                              title={t(`desk.preset.${p.id}.use`)}
+                            >
+                              {t(`desk.preset.${p.id}.label`)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <form
+                    onSubmit={handleExtract}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        void handleExtract(e as unknown as React.FormEvent<HTMLFormElement>);
+                      }
+                    }}
+                    className="mt-6"
+                  >
+                    <label htmlFor="desk-capture" className="sr-only">
+                      {t("desk.workInput")}
+                    </label>
+                    <textarea
+                      id="desk-capture"
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder={t("desk.capturePlaceholder")}
+                      rows={14}
+                      maxLength={MAX_CHARS}
+                      disabled={!projectId}
+                      className="min-h-[280px] w-full resize-y rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-4 text-[15px] leading-relaxed text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/45 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/18 disabled:opacity-50"
+                    />
+                    <DeskCaptureToolbar
+                      disabled={!projectId}
+                      wordCount={wordCount}
+                      readMinutes={readMinutes}
+                      onPaste={handlePasteFromClipboard}
+                      onCopy={handleCopyAll}
+                      onClear={handleClearCapture}
+                      onExport={handleExportTxt}
+                      onShortcuts={() => setShortcutsOpen(true)}
+                      t={t}
+                    />
+                    <p className="mt-2 text-[11px] text-[var(--workspace-muted-fg)]">{t("desk.draftHint")}</p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-[11px] tabular-nums text-[var(--workspace-muted-fg)]">
+                        {t("desk.charCount", {
+                          current: text.length.toLocaleString(intlLocale),
+                          max: MAX_CHARS.toLocaleString(intlLocale),
+                        })}
+                      </p>
+                      <button
+                        type="submit"
+                        disabled={loading || !projectId || !text.trim()}
+                        className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--workspace-fg)] px-6 text-[14px] font-semibold text-[var(--workspace-canvas)] shadow-md transition hover:opacity-95 disabled:opacity-40"
+                      >
+                        {loading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : (
+                          <Send className="h-4 w-4" aria-hidden />
+                        )}
+                        {t("desk.runExtraction")}
+                      </button>
+                    </div>
+                    {error ? (
+                      <p className="mt-3 text-[13px] text-[var(--workspace-danger-fg)]" role="alert">
+                        {error}
+                      </p>
+                    ) : null}
+                    {success && selectedProject ? (
+                      <p className="mt-4 flex flex-wrap items-center gap-2 text-[13px] font-medium text-[var(--workspace-success-fg)]">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden />
+                        <span>
+                          {t("desk.savedTo", { name: selectedProject.name })}{" "}
+                          <Link
+                            href={`/projects/${projectId}#extractions-section`}
+                            className="font-semibold underline underline-offset-2 hover:text-[var(--workspace-success-link-hover)]"
+                          >
+                            {t("desk.reviewRun")}
+                          </Link>
+                        </span>
+                      </p>
+                    ) : null}
+                  </form>
+                </>
+              )}
+            </section>
+          </div>
+
+          <aside className="dashboard-home-card space-y-3 rounded-[24px] p-4 sm:p-5 lg:col-span-3">
+            <div className="flex items-center gap-2 text-[var(--workspace-fg)]">
+              <ListTodo className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--workspace-muted-fg)]">
+                {t("desk.outcomesTitle")}
               </p>
             </div>
-            <Link
-              href="/projects#new-project"
-              className="shrink-0 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
-            >
-              + New project
-            </Link>
-          </div>
-
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="sr-only" htmlFor="desk-project">
-              Project
-            </label>
-            <select
-              id="desk-project"
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              disabled={loadingProjects || projects.length === 0}
-              className="min-h-[48px] w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 text-[15px] text-[var(--workspace-fg)] sm:max-w-sm"
-            >
-              {projects.length === 0 ? (
-                <option value="">— Create a project first —</option>
+            {!hasProjects ? (
+              <p className="text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                {t("desk.emptyNoProjectBody")}
+              </p>
+            ) : latestForProject ? (
+              <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2.5 text-[12px]">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+                  {t("desk.latestRun")}
+                </p>
+                <p className="mt-1 font-medium text-[var(--workspace-fg)]">
+                  {latestForProject.openActionsCount > 0
+                    ? t("desk.openActionsOnRun", {
+                        count: latestForProject.openActionsCount,
+                      })
+                    : t("desk.noOpenActionsOnRun")}
+                </p>
+                <p className="mt-1 line-clamp-2 text-[var(--workspace-muted-fg)]">{latestForProject.summarySnippet}</p>
+              </div>
+            ) : (
+              <p className="text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">{t("desk.outcomesHint")}</p>
+            )}
+            {hasProjects ? (
+              loadingSummary ? (
+                <p className="text-[13px] text-[var(--workspace-muted-fg)]">{t("desk.loading")}</p>
+              ) : runsForProject.length === 0 ? (
+                <p className="text-[13px] text-[var(--workspace-muted-fg)]">{t("desk.noRunsProject")}</p>
               ) : (
-                projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))
-              )}
-            </select>
-            {selectedProject ? (
+                <ul className="max-h-[min(52vh,420px)] space-y-0 overflow-y-auto rounded-xl border border-[var(--workspace-border)] divide-y divide-[var(--workspace-border)]">
+                  {runsForProject.slice(0, 12).map((r) => (
+                    <li key={r.id}>
+                      <Link
+                        href={`/projects/${r.projectId}#extractions-section`}
+                        className="block px-3 py-3 transition hover:bg-[var(--workspace-canvas)]/55"
+                      >
+                        <p className="line-clamp-2 text-[13px] text-[var(--workspace-fg)]">{r.summarySnippet}</p>
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-[var(--workspace-muted-fg)]">
+                          <Clock className="h-3 w-3" aria-hidden />
+                          {formatRelativeLong(r.createdAt, intlLocale)}
+                          {r.openActionsCount > 0
+                            ? ` ${t("desk.openCount", { count: r.openActionsCount })}`
+                            : ""}
+                        </p>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : null}
+            {hasProjects ? (
               <Link
-                href={`/projects/${selectedProject.id}`}
-                className="inline-flex items-center gap-1 text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
+                href={projectId ? `/projects/${projectId}#extractions-section` : "/projects"}
+                className="inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
               >
-                Open project
+                {t("desk.fullHistory")}
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
             ) : null}
-          </div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {EXTRACTION_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  router.replace(`/desk?preset=${encodeURIComponent(p.id)}`, { scroll: false });
-                  setText(p.body);
-                }}
-                className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition ${
-                  presetId === p.id
-                    ? "border-[var(--workspace-accent)] bg-[var(--workspace-accent)]/10 text-[var(--workspace-fg)]"
-                    : "border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 text-[var(--workspace-muted-fg)] hover:border-[var(--workspace-accent)]/25"
-                }`}
-                title={p.use}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <form onSubmit={handleExtract} className="mt-5">
-            <label htmlFor="desk-capture" className="sr-only">
-              Capture text
-            </label>
-            <textarea
-              id="desk-capture"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Paste threads, specs, comments, Figma feedback, incident notes…"
-              rows={10}
-              maxLength={MAX_CHARS}
-              className="min-h-[220px] w-full resize-y rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-4 text-[15px] leading-relaxed text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/45 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/18"
-            />
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-[11px] text-[var(--workspace-muted-fg)]">
-                {text.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} chars
-              </p>
-              <button
-                type="submit"
-                disabled={loading || !projectId || !text.trim()}
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-[var(--workspace-fg)] px-5 text-[14px] font-semibold text-[var(--workspace-canvas)] shadow-md transition hover:opacity-95 disabled:opacity-40"
-              >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="h-4 w-4" aria-hidden />
-                )}
-                Run extraction
-              </button>
-            </div>
-            {error ? (
-              <p className="mt-3 text-[13px] text-red-600 dark:text-red-400" role="alert">
-                {error}
-              </p>
-            ) : null}
-            {success && selectedProject ? (
-              <p className="mt-3 text-[13px] font-medium text-emerald-600 dark:text-emerald-400">
-                Saved to {selectedProject.name}.{" "}
-                <Link
-                  href={`/projects/${projectId}#extractions-section`}
-                  className="font-semibold underline underline-offset-2"
-                >
-                  View extraction
-                </Link>
-              </p>
-            ) : null}
-          </form>
-        </section>
-
-        <section className="mt-10" aria-labelledby="recent-desk-heading">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2
-              id="recent-desk-heading"
-              className="text-[17px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]"
-            >
-              Recent extractions
-            </h2>
-            <Link href="/projects" className="text-[13px] font-semibold text-[var(--workspace-accent)]">
-              All projects
-            </Link>
-          </div>
-          {summaryLoading ? (
-            <p className="text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
-          ) : recent.length === 0 ? (
-            <div className="dashboard-pro-card px-6 py-10 text-center">
-              <MessageSquare className="mx-auto h-6 w-6 text-[var(--workspace-muted-fg)]" aria-hidden />
-              <p className="mt-3 text-[14px] text-[var(--workspace-muted-fg)]">
-                No runs yet — capture something above.
-              </p>
-            </div>
-          ) : (
-            <ul className="dashboard-pro-card divide-y divide-[var(--workspace-border)] overflow-hidden p-0">
-              {recent.slice(0, 6).map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={`/projects/${r.projectId}#extractions-section`}
-                    className="flex gap-4 px-6 py-4 transition hover:bg-[var(--workspace-canvas)]/60"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
-                        {r.projectName}
-                      </p>
-                      <p className="mt-1 line-clamp-2 text-[14px] text-[var(--workspace-fg)]">
-                        {r.summarySnippet}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1 text-[11px] text-[var(--workspace-muted-fg)]">
-                      <Clock className="h-3.5 w-3.5" aria-hidden />
-                      {formatRelative(r.createdAt)}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          </aside>
+        </div>
       </div>
+
+      <DeskShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} t={t} />
     </div>
   );
 }

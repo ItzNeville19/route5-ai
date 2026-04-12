@@ -10,11 +10,22 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import {
+  clearWorkspaceTzPendingSync,
   loadWorkspacePrefs,
+  mergeRemoteWorkspacePrefs,
+  mergeWorkspacePrefsPatch,
   saveWorkspacePrefs,
+  WORKSPACE_TZ_PENDING_SYNC_KEY,
   type WorkspacePrefsV1,
 } from "@/lib/workspace-prefs";
+import {
+  isLightWorkspacePalette,
+  resolveWorkspaceTheme,
+} from "@/lib/workspace-themes";
+import { resolveWorkspaceSurfaceMaterial } from "@/lib/workspace-surface-material";
+import { MARKETPLACE_INSTALL_TO_EXTRACTION } from "@/lib/ai-provider-presets";
 
 type ToastItem = {
   id: string;
@@ -47,26 +58,6 @@ export function useWorkspaceExperience(): WorkspaceExperienceValue {
   return v;
 }
 
-function mergePrefs(
-  prev: WorkspacePrefsV1,
-  patch: Partial<WorkspacePrefsV1>
-): WorkspacePrefsV1 {
-  const next = { ...prev, ...patch };
-  if (patch.pinnedProjectIds !== undefined) {
-    next.pinnedProjectIds = [...patch.pinnedProjectIds];
-  }
-  if (patch.marketplaceFavorites !== undefined) {
-    next.marketplaceFavorites = [...patch.marketplaceFavorites];
-  }
-  if (patch.installedMarketplaceAppIds !== undefined) {
-    next.installedMarketplaceAppIds = [...patch.installedMarketplaceAppIds];
-  }
-  if (patch.dashboardAiShortcuts !== undefined) {
-    next.dashboardAiShortcuts = [...patch.dashboardAiShortcuts];
-  }
-  return next;
-}
-
 export function WorkspaceExperienceProvider({
   children,
 }: {
@@ -75,6 +66,7 @@ export function WorkspaceExperienceProvider({
   const [prefs, setPrefsState] = useState<WorkspacePrefsV1>(() => loadWorkspacePrefs());
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [remoteReady, setRemoteReady] = useState(false);
+  const appearanceTick = useAlignedMinuteTick();
 
   useEffect(() => {
     let cancelled = false;
@@ -82,7 +74,12 @@ export function WorkspaceExperienceProvider({
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { prefs?: WorkspacePrefsV1 } | null) => {
         if (cancelled || !data?.prefs || typeof data.prefs !== "object") return;
-        setPrefsState((prev) => mergePrefs(prev, data.prefs as WorkspacePrefsV1));
+        const remote = { ...(data.prefs as WorkspacePrefsV1) };
+        delete remote.sidebarHidden;
+        setPrefsState((prev) => {
+          const { merged } = mergeRemoteWorkspacePrefs(prev, remote);
+          return merged;
+        });
       })
       .finally(() => {
         if (!cancelled) setRemoteReady(true);
@@ -94,6 +91,9 @@ export function WorkspaceExperienceProvider({
 
   useEffect(() => {
     saveWorkspacePrefs(prefs);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("route5:workspace-prefs-changed"));
+    }
   }, [prefs]);
 
   useEffect(() => {
@@ -104,13 +104,56 @@ export function WorkspaceExperienceProvider({
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({ prefs }),
+      }).then((r) => {
+        if (r.ok) clearWorkspaceTzPendingSync();
       });
     }, 900);
     return () => window.clearTimeout(t);
   }, [prefs, remoteReady]);
 
+  const flushWorkspaceTzToServer = useCallback((snapshot: WorkspacePrefsV1) => {
+    void fetch("/api/workspace/prefs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        prefs: {
+          workspaceTimezone: snapshot.workspaceTimezone,
+          workspaceRegionKey: snapshot.workspaceRegionKey,
+        },
+      }),
+    }).then((r) => {
+      if (r.ok) clearWorkspaceTzPendingSync();
+    });
+  }, []);
+
+  /** TZ/region POST as soon as the account is ready — avoids refresh before the 900ms debounce. */
+  useEffect(() => {
+    if (!remoteReady) return;
+    let pending = false;
+    try {
+      pending = localStorage.getItem(WORKSPACE_TZ_PENDING_SYNC_KEY) === "1";
+    } catch {
+      return;
+    }
+    if (!pending) return;
+    flushWorkspaceTzToServer(prefs);
+  }, [remoteReady, prefs, flushWorkspaceTzToServer]);
+
   const setPrefs = useCallback((patch: Partial<WorkspacePrefsV1>) => {
-    setPrefsState((prev) => mergePrefs(prev, patch));
+    setPrefsState((prev) => {
+      const next = mergeWorkspacePrefsPatch(prev, patch);
+      const tzTouch =
+        patch.workspaceTimezone !== undefined || patch.workspaceRegionKey !== undefined;
+      if (tzTouch && typeof window !== "undefined") {
+        try {
+          localStorage.setItem(WORKSPACE_TZ_PENDING_SYNC_KEY, "1");
+        } catch {
+          /* ignore */
+        }
+      }
+      return next;
+    });
   }, []);
 
   const togglePinProject = useCallback((projectId: string) => {
@@ -145,7 +188,11 @@ export function WorkspaceExperienceProvider({
     setPrefsState((prev) => {
       const cur = new Set(prev.installedMarketplaceAppIds ?? []);
       cur.add(appId);
-      return { ...prev, installedMarketplaceAppIds: [...cur] };
+      const extractionSync = MARKETPLACE_INSTALL_TO_EXTRACTION[appId];
+      return mergeWorkspacePrefsPatch(prev, {
+        installedMarketplaceAppIds: [...cur],
+        ...(extractionSync ? { extractionProviderId: extractionSync } : {}),
+      });
     });
   }, []);
 
@@ -166,13 +213,34 @@ export function WorkspaceExperienceProvider({
     setToasts((t) => t.filter((x) => x.id !== id));
   }, []);
 
+  const workspaceTheme = useMemo(
+    () => resolveWorkspaceTheme(prefs, appearanceTick),
+    [prefs, appearanceTick]
+  );
+
   const shellModifierClass = useMemo(() => {
     const parts: string[] = [];
     if (prefs.compact) parts.push("workspace-compact");
     if (prefs.focusMode) parts.push("workspace-focus");
-    if (prefs.sidebarCollapsed) parts.push("workspace-sidebar-collapsed");
+    if (prefs.sidebarHidden) parts.push("workspace-sidebar-hidden");
+    parts.push(workspaceTheme.cssClass);
+    if (isLightWorkspacePalette(workspaceTheme.resolvedId)) {
+      parts.push("workspace-palette-light");
+    }
+    if (prefs.appearanceGradients === false) parts.push("workspace-no-gradients");
+    parts.push(
+      `workspace-surface-${resolveWorkspaceSurfaceMaterial(prefs.surfaceMaterial)}`
+    );
     return parts.join(" ");
-  }, [prefs.compact, prefs.focusMode, prefs.sidebarCollapsed]);
+  }, [
+    prefs.compact,
+    prefs.focusMode,
+    prefs.sidebarHidden,
+    prefs.appearanceGradients,
+    prefs.surfaceMaterial,
+    workspaceTheme.cssClass,
+    workspaceTheme.resolvedId,
+  ]);
 
   const value = useMemo(
     () => ({

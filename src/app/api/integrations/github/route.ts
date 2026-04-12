@@ -1,26 +1,51 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import {
   githubFetchIssueForImport,
   githubListAssignedIssues,
   isGitHubConfigured,
 } from "@/lib/github-api";
-import { DEMO_GITHUB_ISSUES, demoGitHubImport } from "@/lib/integration-demo-data";
+import { PREVIEW_GITHUB_ISSUES, previewGitHubImport } from "@/lib/integration-preview-data";
 import { publicWorkspaceError } from "@/lib/public-api-message";
+import {
+  cleanText,
+  enforceRateLimits,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+const githubImportSchema = z
+  .object({
+    ref: z
+      .string()
+      .transform(cleanText)
+      .pipe(z.string().min(1, "Missing ref (issue URL or owner/repo#123).").max(500)),
+  })
+  .strict();
+
+export async function GET(req: Request) {
   const { userId } = await auth();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "github:get", userId, {
+      userLimit: 60,
+      ipLimit: 120,
+    })
+  );
+  if (rateLimited) return rateLimited;
+
   if (!isGitHubConfigured()) {
     return NextResponse.json({
       configured: false,
-      demoMode: true,
-      issues: DEMO_GITHUB_ISSUES,
+      previewMode: true,
+      issues: PREVIEW_GITHUB_ISSUES,
     });
   }
 
@@ -50,25 +75,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { ref?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "github:post", userId, {
+      userLimit: 30,
+      ipLimit: 60,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const ref = typeof body.ref === "string" ? body.ref : "";
-  if (!ref.trim()) {
-    return NextResponse.json(
-      { error: "Missing ref (issue URL or owner/repo#123)." },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseJsonBody(req, githubImportSchema);
+  if (!parsed.ok) return parsed.response;
+  const ref = parsed.data.ref;
 
   if (!isGitHubConfigured()) {
-    const { issue, bodyForExtraction } = demoGitHubImport(ref);
+    const { issue, bodyForExtraction } = previewGitHubImport(ref);
     return NextResponse.json({
-      demoMode: true,
+      previewMode: true,
       issue,
       bodyForExtraction,
     });

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useCommandPalette } from "@/components/CommandPalette";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { EXTRACTION_PRESETS, type ExtractionPreset } from "@/lib/extraction-presets";
 import { inputDraftKey } from "@/lib/workspace-prefs";
 
@@ -24,6 +25,7 @@ export default function InputPanel({
   onPrefillConsumed,
 }: Props) {
   const { open: openPalette } = useCommandPalette();
+  const exp = useWorkspaceExperience();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,11 @@ export default function InputPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ projectId, rawInput }),
+        body: JSON.stringify({
+          projectId,
+          rawInput,
+          extractionProviderId: exp.prefs.extractionProviderId ?? "auto",
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -120,7 +126,7 @@ export default function InputPanel({
   }
 
   return (
-    <section className="glass-liquid rounded-2xl border border-white/50 shadow-sm">
+    <section className="dashboard-home-card rounded-2xl shadow-sm">
       <form onSubmit={handleSubmit} className="p-4 sm:p-5">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] font-medium uppercase tracking-wide text-[var(--workspace-muted-fg)]">
@@ -188,7 +194,7 @@ export default function InputPanel({
 
         {success && !error && (
           <div
-            className="mt-4 flex gap-2 rounded-lg border border-indigo-200/80 bg-indigo-50/90 px-3 py-2.5 text-[13px] text-indigo-950"
+            className="mt-4 flex gap-2 rounded-lg border border-[var(--workspace-info-border)] bg-[var(--workspace-info-surface)] px-3 py-2.5 text-[13px] text-[var(--workspace-fg)]"
             role="status"
           >
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--workspace-accent)]" />
@@ -204,7 +210,7 @@ export default function InputPanel({
           <button
             type="submit"
             disabled={loading || overLimit}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--workspace-accent)] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[var(--workspace-accent-hover)] disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--workspace-accent)] px-5 py-2.5 text-[14px] font-medium text-[var(--workspace-on-accent)] transition hover:bg-[var(--workspace-accent-hover)] disabled:opacity-50"
           >
             {loading ? (
               <>

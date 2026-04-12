@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import MotionConfigProvider from "@/components/providers/MotionConfigProvider";
 import ClerkProviderWrapper from "@/components/providers/ClerkProviderWrapper";
 import { CommandPaletteProvider } from "@/components/CommandPalette";
+import { PublicI18nProvider } from "@/components/i18n/I18nProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -54,7 +55,9 @@ export default function RootLayout({
       <body className="theme-glass-site min-h-full flex flex-col antialiased">
         <MotionConfigProvider>
           <ClerkProviderWrapper>
-            <CommandPaletteProvider>{children}</CommandPaletteProvider>
+            <CommandPaletteProvider>
+              <PublicI18nProvider>{children}</PublicI18nProvider>
+            </CommandPaletteProvider>
           </ClerkProviderWrapper>
         </MotionConfigProvider>
       </body>

@@ -47,6 +47,17 @@
   --surface-light: #2d2d2f;
   --border:        rgba(255, 255, 255, 0.1);
   --text-secondary: #86868b;
+
+  /*
+   * Liquid Glass design tokens (CSS-only; Apple’s native Liquid Glass has no browser API).
+   * Use .liquid-glass / .liquid-glass-dark / .workspace-liquid-glass — same material family.
+   */
+  --liquid-blur: 44px;
+  --liquid-saturate: 200%;
+  --liquid-blur-workspace: 52px;
+  --liquid-saturate-workspace: 215%;
+  --liquid-edge: rgba(255, 255, 255, 0.72);
+  --liquid-bloom: rgba(99, 102, 241, 0.2);
 }
 
 @theme inline {
@@ -107,8 +118,9 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
-/* Premium liquid glass — stronger blur, specular edge, violet bloom */
-.glass-liquid {
+/* Premium liquid glass — light canvas (marketing). Alias: .liquid-glass */
+.glass-liquid,
+.liquid-glass {
   position: relative;
   background: linear-gradient(
     145deg,
@@ -116,17 +128,18 @@ body {
     rgba(255, 255, 255, 0.42) 48%,
     rgba(250, 245, 255, 0.65) 100%
   );
-  backdrop-filter: blur(44px) saturate(200%);
-  -webkit-backdrop-filter: blur(44px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+  -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(var(--liquid-saturate));
+  border: 1px solid var(--liquid-edge);
   box-shadow:
-    0 4px 24px -6px rgba(99, 102, 241, 0.2),
+    0 4px 24px -6px var(--liquid-bloom),
     0 16px 56px -16px rgba(167, 139, 250, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.92),
     inset 0 0 0 1px rgba(167, 139, 250, 0.1);
 }
 
-.glass-liquid-interactive {
+.glass-liquid-interactive,
+.liquid-glass-interactive {
   transition:
     transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
@@ -134,8 +147,9 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .glass-liquid-interactive:hover {
-    transform: translateY(-3px) scale(1.008);
+  .glass-liquid-interactive:hover,
+  .liquid-glass-interactive:hover {
+    transform: translateY(-4px) scale(1.01);
     border-color: rgba(255, 255, 255, 0.95);
     box-shadow:
       0 8px 32px -8px rgba(99, 102, 241, 0.28),
@@ -146,11 +160,212 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .glass-liquid-interactive {
+  .glass-liquid-interactive,
+  .liquid-glass-interactive {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .glass-liquid-interactive:hover {
+  .glass-liquid-interactive:hover,
+  .liquid-glass-interactive:hover {
     transform: none;
+  }
+}
+
+/* Dark sections (e.g. Features) — same material language, tuned for black canvas */
+.liquid-glass-dark {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.09) 0%,
+    rgba(255, 255, 255, 0.03) 45%,
+    rgba(167, 139, 250, 0.06) 100%
+  );
+  backdrop-filter: blur(40px) saturate(210%);
+  -webkit-backdrop-filter: blur(40px) saturate(210%);
+  border-width: 1px;
+  border-style: solid;
+  border-color: rgba(167, 139, 250, 0.22);
+  box-shadow:
+    0 4px 28px -10px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+}
+
+.liquid-glass-dark-interactive {
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .liquid-glass-dark-interactive:hover {
+    transform: translateY(-5px) scale(1.012);
+    border-color: rgba(196, 181, 253, 0.45);
+    box-shadow:
+      0 12px 40px -16px rgba(139, 92, 246, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      0 1px 0 rgba(255, 255, 255, 0.14) inset;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-dark-interactive:hover {
+    transform: none;
+  }
+}
+
+/* Specular sweep — subtle “living glass” highlight */
+.liquid-glass-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.liquid-glass-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.07) 42%,
+    transparent 62%
+  );
+  transform: translateX(-30%) rotate(8deg);
+  animation: liquid-glass-sweep 9s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: soft-light;
+}
+
+@keyframes liquid-glass-sweep {
+  0%,
+  100% {
+    transform: translateX(-35%) rotate(8deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateX(45%) rotate(8deg);
+    opacity: 0.65;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-shimmer::after {
+    animation: none;
+    opacity: 0.25;
+  }
+}
+
+/*
+ * Liquid Glass (web) — Apple’s native Liquid Glass has no browser API. Use these
+ * layers everywhere: .liquid-glass / .liquid-glass-interactive (light), .liquid-glass-dark
+ * (dark sections), .workspace-liquid-glass (signed-in shell), optional .liquid-glass-shimmer
+ * for a slow specular sweep. Tokens: --liquid-blur, --liquid-blur-workspace, etc.
+ */
+.theme-route5-command .workspace-liquid-glass {
+  position: relative;
+  isolation: isolate;
+  /* Slightly more uniform base so body copy doesn’t cross dark→light bands */
+  background: linear-gradient(
+    155deg,
+    rgba(26, 26, 32, 0.92) 0%,
+    rgba(18, 18, 26, 0.9) 48%,
+    rgba(22, 20, 34, 0.88) 100%
+  );
+  backdrop-filter: blur(var(--liquid-blur-workspace)) saturate(var(--liquid-saturate-workspace));
+  -webkit-backdrop-filter: blur(var(--liquid-blur-workspace)) saturate(var(--liquid-saturate-workspace));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 40px -16px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset,
+    0 -1px 0 rgba(139, 92, 246, 0.06) inset;
+}
+
+.theme-route5-command .workspace-liquid-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  /* Normal blend: soft-light + backdrop was washing body text unevenly */
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.07) 0%,
+    transparent 48%,
+    rgba(167, 139, 250, 0.05) 100%
+  );
+  opacity: 0.55;
+  mix-blend-mode: normal;
+}
+
+/* Dark workspace themes: never inherit OS light mode — text always tracks tokens. */
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .workspace-liquid-glass {
+  color: var(--workspace-fg);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid:not(.workspace-palette-light) .workspace-liquid-glass {
+  background: linear-gradient(
+    155deg,
+    rgba(24, 24, 32, 0.92) 0%,
+    rgba(18, 18, 24, 0.9) 48%,
+    rgba(20, 18, 30, 0.9) 100%
+  );
+  color: var(--workspace-fg);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid:not(.workspace-palette-light) .workspace-liquid-glass::before {
+  opacity: 0.32;
+}
+
+/*
+ * Light workspace palette: never use the dark “command” glass fill — it fights warm canvases
+ * and makes --workspace-muted-fg illegible. Track surfaces + a calm specular only.
+ */
+.theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-liquid-glass {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--workspace-surface) 96%, white) 0%,
+    color-mix(in srgb, var(--workspace-surface) 88%, var(--workspace-canvas)) 52%,
+    color-mix(in srgb, var(--workspace-canvas) 75%, white) 100%
+  );
+  border: 1px solid var(--workspace-border);
+  box-shadow:
+    0 12px 44px -24px rgba(15, 23, 42, 0.14),
+    0 0 0 1px rgba(255, 255, 255, 0.65) inset,
+    0 1px 0 rgba(255, 255, 255, 0.85) inset;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-liquid-glass::before {
+  mix-blend-mode: normal;
+  opacity: 0.42;
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    transparent 55%,
+    color-mix(in srgb, var(--workspace-accent) 12%, transparent) 100%
+  );
+}
+
+.theme-route5-command .workspace-liquid-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .theme-route5-command .workspace-liquid-glass {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(23, 23, 23, 0.92);
+  }
+  .theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-liquid-glass {
+    background: var(--workspace-surface);
+    border: 1px solid var(--workspace-border);
+    box-shadow: 0 8px 28px -18px rgba(15, 23, 42, 0.12);
+  }
+  .theme-route5-command .workspace-liquid-glass::before {
+    display: none;
   }
 }
 
@@ -802,23 +1017,37 @@ body {
     linear-gradient(180deg, #121214 0%, #0c0c0e 38%, #0a0a0c 100%);
 }
 
-/* ── Workspace shell: marketing-adjacent lavender mesh + indigo accent (light default) ── */
+/* ── Workspace shell: lavender mesh canvas (readable + on-brand) ── */
 .theme-agent-shell {
-  color: #141416;
+  color: #1d1d1f;
   background: transparent;
-  --workspace-fg: #141416;
+  --workspace-fg: #1d1d1f;
+  /* Darker secondary — readable on lavender / light glass without washing out */
   --workspace-muted-fg: #52525b;
-  --workspace-border: rgba(24, 24, 27, 0.09);
-  --workspace-surface: rgba(255, 255, 255, 0.78);
+  --workspace-border: rgba(0, 0, 0, 0.08);
+  --workspace-surface: rgba(255, 255, 255, 0.82);
   --workspace-canvas: #f3f0fa;
-  --workspace-mission-bg: rgba(255, 255, 255, 0.62);
-  --workspace-accent: #6366f1;
-  --workspace-accent-hover: #4f46e5;
-  --workspace-sidebar: rgba(252, 250, 255, 0.9);
-  --ios-label: #141416;
+  --workspace-mission-bg: rgba(255, 255, 255, 0.72);
+  --workspace-nav-hover: rgba(0, 0, 0, 0.04);
+  --workspace-nav-active: rgba(0, 0, 0, 0.07);
+  --workspace-nav-chip: rgba(0, 0, 0, 0.04);
+  --workspace-accent: #5b21b6;
+  --workspace-accent-hover: #6d28d9;
+  --workspace-sidebar: rgba(252, 250, 255, 0.92);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-success-link-hover: #14532d;
+  --workspace-success-surface: rgba(22, 163, 74, 0.1);
+  --workspace-success-border: rgba(22, 163, 74, 0.22);
+  --workspace-info-surface: rgba(91, 33, 182, 0.08);
+  --workspace-info-border: rgba(91, 33, 182, 0.22);
+  --workspace-hover-elevate: rgba(255, 255, 255, 0.72);
+  --workspace-ring-subtle: rgba(0, 0, 0, 0.06);
+  --ios-label: #1d1d1f;
   --ios-secondary: #52525b;
-  --ios-separator: rgba(24, 24, 27, 0.1);
-  --ios-group-bg: rgba(255, 255, 255, 0.88);
+  --ios-separator: rgba(0, 0, 0, 0.09);
+  --ios-group-bg: rgba(255, 255, 255, 0.9);
   --apple-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -826,25 +1055,23 @@ body {
   background-color: #f3f0fa;
   background-image:
     radial-gradient(ellipse 120% 95% at 50% -28%, rgba(167, 139, 250, 0.38), transparent 58%),
-    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(244, 114, 182, 0.16), transparent 52%),
-    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.14), transparent 50%),
+    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(244, 114, 182, 0.14), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.12), transparent 50%),
     linear-gradient(180deg, #faf5ff 0%, #f3f0fa 42%, #eef2ff 100%);
-  backdrop-filter: blur(12px) saturate(118%);
-  -webkit-backdrop-filter: blur(12px) saturate(118%);
 }
 
 .theme-agent-shell .agent-sidebar {
   background: var(--workspace-sidebar);
-  backdrop-filter: blur(22px) saturate(160%);
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
   border-color: var(--workspace-border);
-  box-shadow: inset -1px 0 0 rgba(99, 102, 241, 0.06);
+  box-shadow: inset -1px 0 0 rgba(99, 102, 241, 0.08);
 }
 
 .theme-agent-shell .agent-header {
-  background: rgba(255, 255, 255, 0.76);
-  backdrop-filter: blur(18px) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
   border-bottom: 1px solid var(--workspace-border);
 }
 
@@ -852,29 +1079,43 @@ body {
   background: var(--workspace-surface);
   border: 1px solid var(--workspace-border);
   box-shadow:
-    0 4px 24px -8px rgba(99, 102, 241, 0.12),
-    0 16px 48px -24px rgba(167, 139, 250, 0.15);
+    0 4px 24px -8px rgba(99, 102, 241, 0.14),
+    0 16px 48px -24px rgba(167, 139, 250, 0.12);
 }
 
+/* Signed-in Route5 workspace sets its own palette via `.workspace-theme-*`; do not flip OS dark. */
 @media (prefers-color-scheme: dark) {
-  .theme-agent-shell {
-    color: #ececf4;
-    --workspace-fg: #ececf4;
-    --workspace-muted-fg: #9ca3af;
+  .theme-agent-shell:not(.theme-route5-command) {
+    color: #f5f5f7;
+    --workspace-fg: #f5f5f7;
+    --workspace-muted-fg: #c4c4cc;
     --workspace-border: rgba(255, 255, 255, 0.1);
-    --workspace-surface: rgba(24, 24, 30, 0.88);
+    --workspace-surface: rgba(44, 44, 46, 0.86);
     --workspace-canvas: #0f0f14;
     --workspace-mission-bg: rgba(15, 15, 20, 0.82);
+    --workspace-nav-hover: rgba(255, 255, 255, 0.06);
+    --workspace-nav-active: rgba(255, 255, 255, 0.1);
+    --workspace-nav-chip: rgba(255, 255, 255, 0.06);
     --workspace-accent: #a78bfa;
     --workspace-accent-hover: #8b5cf6;
     --workspace-sidebar: rgba(18, 18, 24, 0.92);
-    --ios-label: #ececf4;
-    --ios-secondary: #9ca3af;
-    --ios-separator: rgba(255, 255, 255, 0.1);
-    --ios-group-bg: rgba(28, 28, 34, 0.92);
+    --workspace-on-accent: #ffffff;
+    --workspace-danger-fg: #fca5a5;
+    --workspace-success-fg: #86efac;
+    --workspace-success-link-hover: #bbf7d0;
+    --workspace-success-surface: rgba(34, 197, 94, 0.12);
+    --workspace-success-border: rgba(34, 197, 94, 0.28);
+    --workspace-info-surface: rgba(167, 139, 250, 0.12);
+    --workspace-info-border: rgba(167, 139, 250, 0.28);
+    --workspace-hover-elevate: rgba(255, 255, 255, 0.1);
+    --workspace-ring-subtle: rgba(255, 255, 255, 0.1);
+    --ios-label: #f5f5f7;
+    --ios-secondary: #c4c4cc;
+    --ios-separator: rgba(255, 255, 255, 0.12);
+    --ios-group-bg: rgba(44, 44, 46, 0.92);
   }
 
-  .theme-agent-shell .agent-canvas {
+  .theme-agent-shell:not(.theme-route5-command) .agent-canvas {
     background-color: #0f0f14;
     background-image:
       radial-gradient(ellipse 100% 80% at 50% -20%, rgba(99, 102, 241, 0.22), transparent 55%),
@@ -882,17 +1123,881 @@ body {
       linear-gradient(180deg, #14141c 0%, #0f0f14 48%, #0c0c10 100%);
   }
 
-  .theme-agent-shell .agent-sidebar {
+  .theme-agent-shell:not(.theme-route5-command) .agent-sidebar {
     box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.04);
   }
 
-  .theme-agent-shell .agent-header {
+  .theme-agent-shell:not(.theme-route5-command) .agent-header {
     background: rgba(15, 15, 20, 0.78);
   }
 
-  .theme-agent-shell .agent-composer {
+  .theme-agent-shell:not(.theme-route5-command) .agent-composer {
     box-shadow: 0 12px 40px -20px rgba(0, 0, 0, 0.55);
   }
+}
+
+/* ── Route5 workspace (signed-in): Loud-style command + OpsPulse-style glass ──
+   Applied on top of `.theme-agent-shell`; does not rely on OS dark mode. */
+.theme-route5-command.theme-agent-shell {
+  color-scheme: dark;
+  color: #f5f5f7;
+  --workspace-fg: #f5f5f7;
+  /* Brighter than Apple secondary gray — keeps body copy readable on mesh + glass */
+  --workspace-muted-fg: #c4c4cc;
+  --workspace-border: rgba(255, 255, 255, 0.1);
+  --workspace-surface: rgba(23, 23, 23, 0.85);
+  --workspace-canvas: #0a0a0a;
+  --workspace-mission-bg: rgba(16, 16, 22, 0.82);
+  --workspace-nav-hover: rgba(255, 255, 255, 0.06);
+  --workspace-nav-active: rgba(255, 255, 255, 0.1);
+  --workspace-nav-chip: rgba(255, 255, 255, 0.06);
+  /* Loud reference: saturated violet + lime highlights */
+  --workspace-accent: #8b5cf6;
+  --workspace-accent-hover: #a78bfa;
+  --workspace-lime: #d9f99d;
+  --workspace-lime-muted: rgba(217, 249, 157, 0.55);
+  --workspace-sidebar: rgba(10, 10, 14, 0.82);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #fca5a5;
+  --workspace-success-fg: #86efac;
+  --workspace-success-link-hover: #bbf7d0;
+  --workspace-success-surface: rgba(34, 197, 94, 0.12);
+  --workspace-success-border: rgba(34, 197, 94, 0.28);
+  --workspace-info-surface: rgba(167, 139, 250, 0.14);
+  --workspace-info-border: rgba(167, 139, 250, 0.32);
+  --workspace-hover-elevate: rgba(255, 255, 255, 0.1);
+  --workspace-ring-subtle: rgba(255, 255, 255, 0.12);
+  --ios-label: #f5f5f7;
+  --ios-secondary: #c4c4cc;
+  --ios-separator: rgba(255, 255, 255, 0.1);
+  --ios-group-bg: rgba(28, 28, 36, 0.75);
+  transition: color 1.05s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.theme-route5-command.theme-agent-shell .agent-canvas {
+  background-color: #000000;
+  transition: background-color 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+  /* Lime/yellow top-left → violet top-right & bottom (Loud-style mesh) */
+  background-image:
+    radial-gradient(ellipse 120% 90% at 0% 0%, rgba(217, 249, 157, 0.45), transparent 52%),
+    radial-gradient(ellipse 100% 85% at 100% 0%, rgba(139, 92, 246, 0.42), transparent 54%),
+    radial-gradient(ellipse 90% 70% at 100% 100%, rgba(124, 58, 237, 0.28), transparent 55%),
+    radial-gradient(ellipse 80% 55% at 0% 100%, rgba(217, 249, 157, 0.08), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(91, 33, 182, 0.2), transparent 50%),
+    linear-gradient(180deg, #050508 0%, #0a0a0f 38%, #000000 100%);
+}
+
+/* Classic — signature lime + violet mesh (same as base route5 canvas). */
+.theme-route5-command.theme-agent-shell.workspace-theme-classic {
+  color-scheme: dark;
+  /* Explicit tokens so muted/border never blend into the mesh like body text */
+  color: #f5f5f7;
+  --workspace-fg: #f5f5f7;
+  --workspace-muted-fg: #d4d4dc;
+  --workspace-border: rgba(255, 255, 255, 0.12);
+  --workspace-surface: rgba(23, 23, 23, 0.88);
+  --workspace-canvas: #0a0a0a;
+  --workspace-mission-bg: rgba(16, 16, 22, 0.82);
+  --workspace-nav-hover: rgba(255, 255, 255, 0.07);
+  --workspace-nav-active: rgba(255, 255, 255, 0.11);
+  --workspace-nav-chip: rgba(255, 255, 255, 0.07);
+  --workspace-accent: #a78bfa;
+  --workspace-accent-hover: #c4b5fd;
+  --workspace-sidebar: rgba(10, 10, 14, 0.82);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #d9f99d;
+  --workspace-lime-muted: rgba(217, 249, 157, 0.55);
+  --workspace-info-surface: rgba(167, 139, 250, 0.14);
+  --workspace-info-border: rgba(167, 139, 250, 0.32);
+  --ios-label: #f5f5f7;
+  --ios-secondary: #d4d4dc;
+  --ios-separator: rgba(255, 255, 255, 0.12);
+  --ios-group-bg: rgba(28, 28, 36, 0.75);
+}
+
+/* Night — calm dark; simpler canvas than classic mesh. */
+.theme-route5-command.theme-agent-shell.workspace-theme-night {
+  color-scheme: dark;
+  color: #f4f4f5;
+  --workspace-fg: #f4f4f5;
+  --workspace-muted-fg: #b4b4be;
+  --workspace-border: rgba(255, 255, 255, 0.12);
+  --workspace-surface: rgba(39, 39, 42, 0.94);
+  --workspace-canvas: #09090b;
+  --workspace-mission-bg: rgba(24, 24, 27, 0.88);
+  --workspace-nav-hover: rgba(255, 255, 255, 0.06);
+  --workspace-nav-active: rgba(255, 255, 255, 0.1);
+  --workspace-nav-chip: rgba(255, 255, 255, 0.06);
+  --workspace-accent: #a78bfa;
+  --workspace-accent-hover: #c4b5fd;
+  --workspace-sidebar: rgba(24, 24, 27, 0.94);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #d9f99d;
+  --workspace-lime-muted: rgba(217, 249, 157, 0.55);
+  --workspace-info-surface: rgba(167, 139, 250, 0.14);
+  --workspace-info-border: rgba(167, 139, 250, 0.3);
+  --ios-label: #f4f4f5;
+  --ios-secondary: #b4b4be;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-night .agent-canvas {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(ellipse 100% 80% at 50% -25%, rgba(99, 102, 241, 0.18), transparent 55%),
+    linear-gradient(180deg, #0f0f12 0%, #09090b 55%, #050506 100%);
+}
+
+/* Dark — neutral charcoal, flat (no colored haze). */
+.theme-route5-command.theme-agent-shell.workspace-theme-dark {
+  color-scheme: dark;
+  color: #fafafa;
+  --workspace-fg: #fafafa;
+  --workspace-muted-fg: #c6c6c6;
+  --workspace-border: rgba(255, 255, 255, 0.1);
+  --workspace-surface: rgba(23, 23, 23, 0.96);
+  --workspace-canvas: #0a0a0a;
+  --workspace-mission-bg: rgba(18, 18, 18, 0.9);
+  --workspace-accent: #a78bfa;
+  --workspace-accent-hover: #c4b5fd;
+  --workspace-sidebar: rgba(12, 12, 12, 0.95);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(167, 139, 250, 0.12);
+  --workspace-info-border: rgba(167, 139, 250, 0.28);
+  --ios-label: #fafafa;
+  --ios-secondary: #c6c6c6;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-dark .agent-canvas {
+  background-color: #0a0a0a;
+  background-image: none;
+}
+
+/* Evening — twilight slate. */
+.theme-route5-command.theme-agent-shell.workspace-theme-evening {
+  color-scheme: dark;
+  color: #f1f5f9;
+  --workspace-fg: #f1f5f9;
+  --workspace-muted-fg: #a8bacf;
+  --workspace-border: rgba(148, 163, 184, 0.22);
+  --workspace-surface: rgba(30, 41, 59, 0.92);
+  --workspace-canvas: #0f172a;
+  --workspace-mission-bg: rgba(15, 23, 42, 0.88);
+  --workspace-accent: #818cf8;
+  --workspace-accent-hover: #a5b4fc;
+  --workspace-sidebar: rgba(15, 23, 42, 0.94);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(129, 140, 248, 0.14);
+  --workspace-info-border: rgba(129, 140, 248, 0.32);
+  --ios-label: #f1f5f9;
+  --ios-secondary: #a8bacf;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-evening .agent-canvas {
+  background-color: #0f172a;
+  background-image: linear-gradient(180deg, #1e293b 0%, #0f172a 48%, #0c1222 100%);
+}
+
+/* Daytime — light chrome + Route5 violet accents (legacy `.workspace-theme-day` aliases here). */
+.theme-route5-command.theme-agent-shell.workspace-theme-daytime,
+.theme-route5-command.theme-agent-shell.workspace-theme-day {
+  color-scheme: light;
+  color: #0f172a;
+  --workspace-fg: #0f172a;
+  --workspace-muted-fg: #475569;
+  --workspace-border: rgba(15, 23, 42, 0.12);
+  --workspace-surface: #ffffff;
+  --workspace-canvas: #f8fafc;
+  --workspace-mission-bg: rgba(255, 255, 255, 0.82);
+  --workspace-nav-hover: rgba(15, 23, 42, 0.06);
+  --workspace-nav-active: rgba(15, 23, 42, 0.09);
+  --workspace-nav-chip: rgba(15, 23, 42, 0.05);
+  /* Align with Route5 violet (classic mesh) for accents on light chrome. */
+  --workspace-accent: #7c3aed;
+  --workspace-accent-hover: #6d28d9;
+  --workspace-sidebar: #ffffff;
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #15803d;
+  --workspace-lime-muted: rgba(21, 128, 61, 0.65);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(124, 58, 237, 0.1);
+  --workspace-info-border: rgba(124, 58, 237, 0.22);
+  --ios-label: #0f172a;
+  --ios-secondary: #475569;
+  --ios-separator: rgba(15, 23, 42, 0.08);
+  --ios-group-bg: rgba(255, 255, 255, 0.95);
+}
+
+/* Daytime — same lavender / violet mesh family as `.theme-glass-site` (loading / marketing shell). */
+.theme-route5-command.theme-agent-shell.workspace-theme-daytime .agent-canvas,
+.theme-route5-command.theme-agent-shell.workspace-theme-day .agent-canvas {
+  background-color: #ececee;
+  background-image:
+    radial-gradient(ellipse 120% 95% at 50% -28%, rgba(167, 139, 250, 0.38), transparent 58%),
+    radial-gradient(ellipse 85% 60% at 100% 12%, rgba(244, 114, 182, 0.16), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 88%, rgba(167, 139, 250, 0.14), transparent 50%),
+    radial-gradient(ellipse 90% 40% at 50% 100%, rgba(196, 181, 253, 0.1), transparent 45%),
+    linear-gradient(180deg, #f5f0ff 0%, #ececee 38%, #e8eef5 100%);
+}
+
+/* Morning — warm paper. */
+.theme-route5-command.theme-agent-shell.workspace-theme-morning {
+  color-scheme: light;
+  color: #1c1917;
+  --workspace-fg: #1c1917;
+  --workspace-muted-fg: #57534e;
+  --workspace-border: rgba(28, 25, 23, 0.12);
+  --workspace-surface: #fffaf5;
+  --workspace-canvas: #fff7ed;
+  --workspace-mission-bg: rgba(255, 250, 245, 0.9);
+  --workspace-accent: #c2410c;
+  --workspace-accent-hover: #ea580c;
+  --workspace-sidebar: rgba(255, 250, 245, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(194, 65, 12, 0.1);
+  --workspace-info-border: rgba(194, 65, 12, 0.22);
+  --ios-label: #1c1917;
+  --ios-secondary: #57534e;
+  --ios-separator: rgba(28, 25, 23, 0.1);
+  --ios-group-bg: rgba(255, 250, 245, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-morning .agent-canvas {
+  background-color: #fff7ed;
+  background-image:
+    radial-gradient(ellipse 100% 80% at 80% -10%, rgba(251, 146, 60, 0.12), transparent 50%),
+    linear-gradient(180deg, #fffaf5 0%, #fff7ed 45%, #ffedd5 100%);
+}
+
+/* Sunrise — blush sky, cool horizon, soft gold (dawn). */
+.theme-route5-command.theme-agent-shell.workspace-theme-sunrise {
+  color-scheme: light;
+  color: #1e293b;
+  --workspace-fg: #1e293b;
+  --workspace-muted-fg: #475569;
+  --workspace-border: rgba(15, 23, 42, 0.11);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fff5f5;
+  --workspace-mission-bg: rgba(255, 253, 251, 0.92);
+  --workspace-nav-hover: rgba(225, 29, 72, 0.06);
+  --workspace-nav-active: rgba(225, 29, 72, 0.1);
+  --workspace-nav-chip: rgba(15, 23, 42, 0.05);
+  --workspace-accent: #e11d48;
+  --workspace-accent-hover: #be123c;
+  --workspace-sidebar: rgba(255, 252, 251, 0.97);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(225, 29, 72, 0.1);
+  --workspace-info-border: rgba(225, 29, 72, 0.24);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --ios-label: #1e293b;
+  --ios-secondary: #475569;
+  --ios-separator: rgba(15, 23, 42, 0.08);
+  --ios-group-bg: rgba(255, 255, 255, 0.95);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sunrise .agent-canvas {
+  background-color: #fff1f2;
+  background-image:
+    radial-gradient(ellipse 120% 95% at 12% 0%, rgba(251, 113, 133, 0.28), transparent 55%),
+    radial-gradient(ellipse 90% 75% at 88% 8%, rgba(125, 211, 252, 0.22), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 50% 100%, rgba(253, 230, 138, 0.35), transparent 58%),
+    linear-gradient(188deg, #fffbeb 0%, #fff1f2 38%, #ffe4e6 100%);
+}
+
+/* Sunset — golden hour, amber & coral with a violet rim (still light / readable). */
+.theme-route5-command.theme-agent-shell.workspace-theme-sunset {
+  color-scheme: light;
+  color: #292524;
+  --workspace-fg: #292524;
+  --workspace-muted-fg: #57534e;
+  --workspace-border: rgba(41, 37, 36, 0.12);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fff7ed;
+  --workspace-mission-bg: rgba(255, 250, 240, 0.92);
+  --workspace-nav-hover: rgba(234, 88, 12, 0.07);
+  --workspace-nav-active: rgba(234, 88, 12, 0.11);
+  --workspace-nav-chip: rgba(41, 37, 36, 0.05);
+  --workspace-accent: #ea580c;
+  --workspace-accent-hover: #c2410c;
+  --workspace-sidebar: rgba(255, 250, 245, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(234, 88, 12, 0.11);
+  --workspace-info-border: rgba(234, 88, 12, 0.26);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --ios-label: #292524;
+  --ios-secondary: #57534e;
+  --ios-separator: rgba(41, 37, 36, 0.1);
+  --ios-group-bg: rgba(255, 250, 245, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sunset .agent-canvas {
+  background-color: #ffedd5;
+  background-image:
+    radial-gradient(ellipse 110% 90% at 50% -15%, rgba(251, 191, 36, 0.35), transparent 52%),
+    radial-gradient(ellipse 75% 55% at 0% 85%, rgba(192, 132, 252, 0.2), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 70%, rgba(249, 115, 22, 0.18), transparent 52%),
+    linear-gradient(195deg, #fff7ed 0%, #ffedd5 40%, #fed7aa 100%);
+}
+
+/* Studio — warm stone paper + ink (auto mid-morning). */
+.theme-route5-command.theme-agent-shell.workspace-theme-studio {
+  color-scheme: light;
+  color: #0c0a09;
+  --workspace-fg: #0c0a09;
+  --workspace-muted-fg: #57534e;
+  --workspace-border: rgba(12, 10, 9, 0.12);
+  --workspace-surface: #fafaf9;
+  --workspace-canvas: #f5f5f4;
+  --workspace-mission-bg: rgba(250, 250, 249, 0.92);
+  --workspace-nav-hover: rgba(12, 10, 9, 0.06);
+  --workspace-nav-active: rgba(12, 10, 9, 0.09);
+  --workspace-nav-chip: rgba(12, 10, 9, 0.05);
+  --workspace-accent: #6d28d9;
+  --workspace-accent-hover: #5b21b6;
+  --workspace-sidebar: #fafaf9;
+  --workspace-on-accent: #fafaf9;
+  --workspace-lime: #15803d;
+  --workspace-lime-muted: rgba(21, 128, 61, 0.65);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(109, 40, 217, 0.1);
+  --workspace-info-border: rgba(109, 40, 217, 0.22);
+  --ios-label: #0c0a09;
+  --ios-secondary: #57534e;
+  --ios-separator: rgba(12, 10, 9, 0.08);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-studio .agent-canvas {
+  background-color: #f5f5f4;
+  background-image:
+    radial-gradient(ellipse 100% 85% at 50% -20%, rgba(120, 113, 108, 0.12), transparent 55%),
+    linear-gradient(185deg, #fafaf9 0%, #f5f5f4 45%, #e7e5e4 100%);
+}
+
+/* Forest — sage tint, deep emerald type (auto lunch). */
+.theme-route5-command.theme-agent-shell.workspace-theme-forest {
+  color-scheme: light;
+  color: #052e16;
+  --workspace-fg: #052e16;
+  --workspace-muted-fg: #166534;
+  --workspace-border: rgba(5, 46, 22, 0.12);
+  --workspace-surface: #ffffff;
+  --workspace-canvas: #f0fdf4;
+  --workspace-mission-bg: rgba(240, 253, 244, 0.94);
+  --workspace-nav-hover: rgba(21, 128, 61, 0.08);
+  --workspace-nav-active: rgba(21, 128, 61, 0.12);
+  --workspace-nav-chip: rgba(5, 46, 22, 0.05);
+  --workspace-accent: #15803d;
+  --workspace-accent-hover: #166534;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #14532d;
+  --workspace-lime-muted: rgba(20, 83, 45, 0.7);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #14532d;
+  --workspace-info-surface: rgba(21, 128, 61, 0.1);
+  --workspace-info-border: rgba(21, 128, 61, 0.24);
+  --ios-label: #052e16;
+  --ios-secondary: #166534;
+  --ios-separator: rgba(5, 46, 22, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-forest .agent-canvas {
+  background-color: #ecfdf5;
+  background-image:
+    radial-gradient(ellipse 110% 90% at 12% 0%, rgba(52, 211, 153, 0.22), transparent 54%),
+    radial-gradient(ellipse 85% 70% at 100% 100%, rgba(16, 185, 129, 0.12), transparent 52%),
+    linear-gradient(188deg, #f0fdf4 0%, #ecfdf5 42%, #d1fae5 100%);
+}
+
+/* Ocean — sky-tinted white, navy ink (auto afternoon). */
+.theme-route5-command.theme-agent-shell.workspace-theme-ocean {
+  color-scheme: light;
+  color: #0c4a6e;
+  --workspace-fg: #0c4a6e;
+  --workspace-muted-fg: #0369a1;
+  --workspace-border: rgba(12, 74, 110, 0.12);
+  --workspace-surface: #ffffff;
+  --workspace-canvas: #f0f9ff;
+  --workspace-mission-bg: rgba(240, 249, 255, 0.94);
+  --workspace-nav-hover: rgba(3, 105, 161, 0.08);
+  --workspace-nav-active: rgba(3, 105, 161, 0.12);
+  --workspace-nav-chip: rgba(12, 74, 110, 0.05);
+  --workspace-accent: #0284c7;
+  --workspace-accent-hover: #0369a1;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #0f766e;
+  --workspace-lime-muted: rgba(15, 118, 110, 0.72);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #0f766e;
+  --workspace-info-surface: rgba(2, 132, 199, 0.11);
+  --workspace-info-border: rgba(2, 132, 199, 0.26);
+  --ios-label: #0c4a6e;
+  --ios-secondary: #0369a1;
+  --ios-separator: rgba(12, 74, 110, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-ocean .agent-canvas {
+  background-color: #e0f2fe;
+  background-image:
+    radial-gradient(ellipse 100% 88% at 50% -18%, rgba(56, 189, 248, 0.28), transparent 56%),
+    radial-gradient(ellipse 80% 60% at 0% 100%, rgba(14, 165, 233, 0.14), transparent 54%),
+    linear-gradient(185deg, #f0f9ff 0%, #e0f2fe 40%, #bae6fd 100%);
+}
+
+/* Light — neutral chrome. */
+.theme-route5-command.theme-agent-shell.workspace-theme-light {
+  color-scheme: light;
+  color: #18181b;
+  --workspace-fg: #18181b;
+  --workspace-muted-fg: #52525b;
+  --workspace-border: rgba(24, 24, 27, 0.1);
+  --workspace-surface: #ffffff;
+  --workspace-canvas: #fafafa;
+  --workspace-mission-bg: rgba(255, 255, 255, 0.82);
+  --workspace-accent: #6366f1;
+  --workspace-accent-hover: #4f46e5;
+  --workspace-sidebar: rgba(255, 255, 255, 0.97);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(99, 102, 241, 0.1);
+  --workspace-info-border: rgba(99, 102, 241, 0.22);
+  --ios-label: #18181b;
+  --ios-secondary: #52525b;
+  --ios-separator: rgba(24, 24, 27, 0.08);
+  --ios-group-bg: rgba(255, 255, 255, 0.94);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-light .agent-canvas {
+  background-color: #fafafa;
+  background-image: linear-gradient(180deg, #ffffff 0%, #fafafa 50%, #f4f4f5 100%);
+}
+
+/* Pink — rose & fuchsia mesh (light; plum-gray secondary, never same as canvas). */
+.theme-route5-command.theme-agent-shell.workspace-theme-pink {
+  color-scheme: light;
+  color: #1a0f24;
+  --workspace-fg: #1a0f24;
+  --workspace-muted-fg: #5b4760;
+  --workspace-border: rgba(88, 28, 72, 0.12);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fdf2f8;
+  --workspace-mission-bg: rgba(255, 252, 254, 0.92);
+  --workspace-nav-hover: rgba(190, 24, 93, 0.07);
+  --workspace-nav-active: rgba(190, 24, 93, 0.11);
+  --workspace-nav-chip: rgba(28, 20, 36, 0.05);
+  --workspace-accent: #db2777;
+  --workspace-accent-hover: #be185d;
+  --workspace-sidebar: rgba(255, 252, 254, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #15803d;
+  --workspace-lime-muted: rgba(21, 128, 61, 0.65);
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(219, 39, 119, 0.1);
+  --workspace-info-border: rgba(219, 39, 119, 0.22);
+  --ios-label: #1a0f24;
+  --ios-secondary: #5b4760;
+  --ios-separator: rgba(88, 28, 72, 0.1);
+  --ios-group-bg: rgba(255, 252, 254, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-pink .agent-canvas {
+  background-color: #fce7f3;
+  background-image:
+    radial-gradient(ellipse 110% 90% at 18% 0%, rgba(244, 114, 182, 0.38), transparent 55%),
+    radial-gradient(ellipse 95% 72% at 100% 12%, rgba(217, 70, 239, 0.22), transparent 52%),
+    radial-gradient(ellipse 78% 58% at 0% 100%, rgba(251, 113, 133, 0.22), transparent 54%),
+    linear-gradient(188deg, #fff1f2 0%, #fce7f3 42%, #fbcfe8 100%);
+}
+
+/* Cosmic — aurora teal & violet nebula (dark; bright muted, never mid-gray on ink). */
+.theme-route5-command.theme-agent-shell.workspace-theme-cosmic {
+  color-scheme: dark;
+  color: #f4f4f8;
+  --workspace-fg: #f4f4f8;
+  --workspace-muted-fg: #c8c8d8;
+  --workspace-border: rgba(129, 140, 248, 0.2);
+  --workspace-surface: rgba(15, 23, 42, 0.88);
+  --workspace-canvas: #030712;
+  --workspace-mission-bg: rgba(15, 23, 42, 0.88);
+  --workspace-nav-hover: rgba(255, 255, 255, 0.07);
+  --workspace-nav-active: rgba(255, 255, 255, 0.11);
+  --workspace-nav-chip: rgba(255, 255, 255, 0.07);
+  --workspace-accent: #22d3ee;
+  --workspace-accent-hover: #67e8f9;
+  --workspace-sidebar: rgba(8, 12, 24, 0.92);
+  --workspace-on-accent: #0a0a0f;
+  --workspace-lime: #a7f3d0;
+  --workspace-lime-muted: rgba(167, 243, 208, 0.55);
+  --workspace-danger-fg: #fca5a5;
+  --workspace-success-fg: #86efac;
+  --workspace-success-link-hover: #bbf7d0;
+  --workspace-success-surface: rgba(34, 197, 94, 0.12);
+  --workspace-success-border: rgba(34, 197, 94, 0.28);
+  --workspace-info-surface: rgba(34, 211, 238, 0.14);
+  --workspace-info-border: rgba(34, 211, 238, 0.32);
+  --workspace-hover-elevate: rgba(255, 255, 255, 0.1);
+  --workspace-ring-subtle: rgba(255, 255, 255, 0.12);
+  --ios-label: #f4f4f8;
+  --ios-secondary: #c8c8d8;
+  --ios-separator: rgba(255, 255, 255, 0.12);
+  --ios-group-bg: rgba(20, 28, 48, 0.82);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-cosmic .agent-canvas {
+  background-color: #030712;
+  background-image:
+    radial-gradient(ellipse 100% 82% at 50% -22%, rgba(99, 102, 241, 0.38), transparent 58%),
+    radial-gradient(ellipse 82% 58% at 0% 78%, rgba(34, 211, 238, 0.16), transparent 55%),
+    radial-gradient(ellipse 72% 52% at 100% 58%, rgba(167, 139, 250, 0.22), transparent 52%),
+    linear-gradient(180deg, #0c1222 0%, #030712 46%, #020617 100%);
+}
+
+/* OLED — true black canvas, elevated borders (maximum contrast vs mid-gray-on-black). */
+.theme-route5-command.theme-agent-shell.workspace-theme-oled {
+  color-scheme: dark;
+  color: #fafafa;
+  --workspace-fg: #fafafa;
+  --workspace-muted-fg: #d4d4d8;
+  --workspace-border: rgba(255, 255, 255, 0.16);
+  --workspace-surface: rgba(10, 10, 10, 0.96);
+  --workspace-canvas: #000000;
+  --workspace-mission-bg: rgba(0, 0, 0, 0.94);
+  --workspace-nav-hover: rgba(255, 255, 255, 0.09);
+  --workspace-nav-active: rgba(255, 255, 255, 0.14);
+  --workspace-nav-chip: rgba(255, 255, 255, 0.09);
+  --workspace-accent: #a78bfa;
+  --workspace-accent-hover: #c4b5fd;
+  --workspace-sidebar: rgba(0, 0, 0, 0.96);
+  --workspace-on-accent: #ffffff;
+  --workspace-lime: #d9f99d;
+  --workspace-lime-muted: rgba(217, 249, 157, 0.55);
+  --workspace-danger-fg: #fca5a5;
+  --workspace-success-fg: #86efac;
+  --workspace-success-link-hover: #bbf7d0;
+  --workspace-success-surface: rgba(34, 197, 94, 0.12);
+  --workspace-success-border: rgba(34, 197, 94, 0.28);
+  --workspace-info-surface: rgba(167, 139, 250, 0.14);
+  --workspace-info-border: rgba(167, 139, 250, 0.32);
+  --workspace-hover-elevate: rgba(255, 255, 255, 0.12);
+  --workspace-ring-subtle: rgba(255, 255, 255, 0.14);
+  --ios-label: #fafafa;
+  --ios-secondary: #d4d4d8;
+  --ios-separator: rgba(255, 255, 255, 0.14);
+  --ios-group-bg: rgba(16, 16, 16, 0.92);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-oled .agent-canvas {
+  background-color: #000000;
+  background-image: linear-gradient(180deg, #0a0a0a 0%, #000000 40%, #000000 100%);
+}
+
+/* Flat canvas — no animated mesh (accessibility / eye strain). */
+.theme-route5-command.theme-agent-shell.workspace-no-gradients .agent-canvas {
+  background-image: none !important;
+  background-color: var(--workspace-canvas) !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-daytime.workspace-no-gradients .agent-canvas,
+.theme-route5-command.theme-agent-shell.workspace-theme-day.workspace-no-gradients .agent-canvas {
+  background-color: #ececee !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-morning.workspace-no-gradients .agent-canvas {
+  background-color: #fff7ed !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sunrise.workspace-no-gradients .agent-canvas {
+  background-color: #fff1f2 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sunset.workspace-no-gradients .agent-canvas {
+  background-color: #ffedd5 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-light.workspace-no-gradients .agent-canvas {
+  background-color: #fafafa !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-pink.workspace-no-gradients .agent-canvas {
+  background-color: #fdf2f8 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-studio.workspace-no-gradients .agent-canvas {
+  background-color: #f5f5f4 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-forest.workspace-no-gradients .agent-canvas {
+  background-color: #ecfdf5 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-ocean.workspace-no-gradients .agent-canvas {
+  background-color: #e0f2fe !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-cosmic.workspace-no-gradients .agent-canvas {
+  background-color: #030712 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-oled.workspace-no-gradients .agent-canvas {
+  background-color: #000000 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-route5-command.theme-agent-shell,
+  .theme-route5-command.theme-agent-shell .agent-canvas,
+  .theme-route5-command.theme-agent-shell .agent-sidebar,
+  .theme-route5-command.theme-agent-shell .agent-header,
+  .theme-route5-command.theme-agent-shell .agent-composer {
+    transition: none !important;
+  }
+}
+
+/* Team / pro cards: never OS light-mode white on command UI */
+.theme-route5-command .dashboard-pro-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 30, 0.88);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 40px -24px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-pro-card {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 16px 40px -28px rgba(15, 23, 42, 0.08);
+}
+
+/*
+ * Marketing home (command canvas): base `.glass-liquid` is a light frosted gradient.
+ * Semi-transparent dark children blended with it → muddy contrast. Force dark glass
+ * + light default text anywhere `.glass-liquid` sits on the command agent canvas.
+ * Light workspace palette overrides below.
+ */
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .agent-canvas .glass-liquid {
+  background: linear-gradient(
+    155deg,
+    rgba(22, 22, 28, 0.88) 0%,
+    rgba(12, 12, 16, 0.9) 45%,
+    rgba(18, 18, 26, 0.92) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f4f4f5;
+  box-shadow:
+    0 12px 48px -16px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 64px -28px rgba(139, 92, 246, 0.2);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .agent-canvas .glass-liquid {
+  background: linear-gradient(
+    155deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.72) 50%,
+    rgba(250, 245, 255, 0.88) 100%
+  );
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: #1d1d1f;
+  box-shadow:
+    0 12px 48px -16px rgba(91, 33, 182, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.04) inset,
+    0 0 48px -24px rgba(167, 139, 250, 0.2);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .agent-canvas .glass-liquid-interactive:hover {
+  border-color: rgba(15, 23, 42, 0.14);
+  box-shadow:
+    0 16px 56px -18px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(0, 0, 0, 0.06) inset,
+    0 0 72px -24px rgba(99, 102, 241, 0.18);
+}
+
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .agent-canvas .glass-liquid-interactive:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 16px 56px -18px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    0 0 72px -24px rgba(167, 139, 250, 0.28);
+}
+
+.theme-route5-command.theme-agent-shell .agent-sidebar {
+  transition:
+    background 1s cubic-bezier(0.33, 1, 0.68, 1),
+    border-color 0.9s ease,
+    box-shadow 1.1s ease;
+  background: linear-gradient(
+    180deg,
+    rgba(16, 16, 22, 0.94) 0%,
+    rgba(8, 8, 12, 0.9) 100%
+  );
+  backdrop-filter: blur(44px) saturate(200%);
+  -webkit-backdrop-filter: blur(44px) saturate(200%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.05),
+    0 0 80px -32px rgba(139, 92, 246, 0.12);
+}
+
+.theme-route5-command.theme-agent-shell .agent-header {
+  transition:
+    background 1s cubic-bezier(0.33, 1, 0.68, 1),
+    border-color 0.9s ease,
+    box-shadow 1.1s ease;
+  background: rgba(6, 6, 10, 0.55);
+  backdrop-filter: blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 12px 40px -28px rgba(139, 92, 246, 0.15);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .agent-sidebar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(252, 250, 255, 0.92) 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    inset -1px 0 0 rgba(0, 0, 0, 0.05),
+    0 0 60px -28px rgba(91, 33, 182, 0.08);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .agent-header {
+  background: rgba(255, 255, 255, 0.78);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95) inset,
+    0 12px 36px -24px rgba(91, 33, 182, 0.1);
+}
+
+/* Dashboard surfaces: light workspace must stay light even when OS prefers dark. */
+.theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-pro-hero {
+  border-color: rgba(15, 23, 42, 0.1);
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(248, 250, 252, 0.9) 45%,
+    rgba(241, 245, 249, 0.92) 100%
+  );
+  color: var(--workspace-fg);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.55) inset,
+    0 1px 1px rgba(15, 23, 42, 0.04),
+    0 8px 28px -14px rgba(15, 23, 42, 0.08),
+    0 28px 56px -36px rgba(99, 102, 241, 0.1);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-pro-hero::before {
+  background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  opacity: 0.45;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-pro-aurora {
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(99, 102, 241, 0.12), transparent 68%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-home-card {
+  border-color: rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.92) inset,
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 24px 48px -36px rgba(15, 23, 42, 0.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .theme-route5-command.theme-agent-shell.workspace-palette-light .dashboard-pro-metric:hover {
+    background-color: rgba(255, 255, 255, 0.82);
+  }
+}
+
+/* App shell — wordmark matches nav pills (no heavy “logo font” weight) */
+.theme-route5-command .workspace-brand-wordmark {
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-size: 0.9375rem; /* 15px — aligns with primary UI scale */
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Marketing site — same wordmark treatment */
+.site-brand-wordmark {
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* Subtle 3D depth — overview hero + interactive tiles */
+.theme-route5-command .workspace-depth-root {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.theme-route5-command .workspace-depth-slab {
+  transform: translateZ(0);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease;
+}
+
+.theme-route5-command .workspace-depth-slab:hover {
+  transform: translateY(-2px) translateZ(6px);
+  box-shadow:
+    0 18px 44px -28px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(139, 92, 246, 0.12);
+}
+
+/* Liquid glass header bar (Loud-style strip) */
+.theme-route5-command .agent-header-liquid {
+  background: linear-gradient(
+    180deg,
+    rgba(18, 18, 24, 0.72) 0%,
+    rgba(8, 8, 12, 0.55) 100%
+  );
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.07) inset,
+    0 20px 50px -30px rgba(139, 92, 246, 0.22),
+    0 0 60px -40px rgba(217, 249, 157, 0.06);
+}
+
+.theme-route5-command.theme-agent-shell .agent-composer {
+  transition:
+    background 1s cubic-bezier(0.33, 1, 0.68, 1),
+    border-color 0.9s ease,
+    box-shadow 1.1s ease;
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 30, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 16px 48px -28px rgba(0, 0, 0, 0.55),
+    0 0 80px -40px rgba(139, 92, 246, 0.14);
+}
+
+.theme-route5-command .dashboard-home-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(18, 18, 24, 0.55);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 24px 64px -36px rgba(0, 0, 0, 0.55),
+    0 0 80px -48px rgba(139, 92, 246, 0.14);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
 }
 
 /* Projects dashboard — WHOOP-inspired dark command surface */
@@ -939,30 +2044,33 @@ body {
   z-index: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dashboard-pro-hero {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: linear-gradient(
-      165deg,
-      rgba(22, 22, 30, 0.75) 0%,
-      rgba(16, 16, 22, 0.72) 50%,
-      rgba(14, 14, 20, 0.82) 100%
-    );
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-      0 1px 2px rgba(0, 0, 0, 0.25),
-      0 20px 48px -24px rgba(0, 0, 0, 0.45),
-      0 0 60px -30px rgba(139, 92, 246, 0.14);
-  }
+/*
+ * Dark workspace themes (not “light palette”): hero/cards must match tokens — NOT OS `prefers-color-scheme`.
+ * Otherwise OS light + violet mesh = white glass + light --workspace-fg (unreadable).
+ */
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-hero {
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--workspace-fg);
+  background: linear-gradient(
+    165deg,
+    rgba(22, 22, 30, 0.82) 0%,
+    rgba(16, 16, 22, 0.8) 50%,
+    rgba(14, 14, 20, 0.88) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 2px rgba(0, 0, 0, 0.25),
+    0 20px 48px -24px rgba(0, 0, 0, 0.45),
+    0 0 60px -30px rgba(139, 92, 246, 0.14);
+}
 
-  .dashboard-pro-hero::before {
-    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-    opacity: 0.4;
-  }
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-hero::before {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  opacity: 0.4;
+}
 
-  .dashboard-pro-aurora {
-    background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139, 92, 246, 0.12), transparent 68%);
-  }
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-aurora {
+  background: radial-gradient(ellipse 90% 70% at 50% 0%, rgba(139, 92, 246, 0.12), transparent 68%);
 }
 
 .dashboard-pro-metric {
@@ -978,11 +2086,9 @@ body {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  @media (hover: hover) and (pointer: fine) {
-    .dashboard-pro-metric:hover {
-      background-color: rgba(255, 255, 255, 0.04);
-    }
+@media (hover: hover) and (pointer: fine) {
+  .theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-metric:hover {
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }
 
@@ -998,14 +2104,13 @@ body {
   -webkit-backdrop-filter: blur(12px) saturate(160%);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dashboard-pro-card {
-    border-color: rgba(255, 255, 255, 0.08);
-    background: rgba(22, 22, 30, 0.75);
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.04) inset,
-      0 12px 40px -24px rgba(0, 0, 0, 0.5);
-  }
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-card {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(22, 22, 30, 0.82);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 12px 40px -24px rgba(0, 0, 0, 0.5);
 }
 
 .dashboard-pro-skeleton {
@@ -1014,10 +2119,205 @@ body {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04) inset;
 }
 
-@media (prefers-color-scheme: dark) {
-  .dashboard-pro-skeleton {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(139, 92, 246, 0.06) 100%);
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-pro-skeleton {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(139, 92, 246, 0.06) 100%);
+}
+
+.dashboard-home-card {
+  border: 1px solid var(--workspace-border);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.88) inset,
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 24px 48px -36px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .dashboard-home-card {
+  background: rgba(14, 14, 20, 0.9);
+  color: var(--workspace-fg);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 18px 48px -28px rgba(0, 0, 0, 0.52);
+}
+
+/* Surface material — liquid (max glass) | standard (default) | flat (no backdrop blur) */
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid {
+  --liquid-blur-workspace: 58px;
+  --liquid-saturate-workspace: 225%;
+  --liquid-blur: 50px;
+  --liquid-saturate: 210%;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-sidebar {
+  backdrop-filter: blur(52px) saturate(210%);
+  -webkit-backdrop-filter: blur(52px) saturate(210%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-header {
+  backdrop-filter: blur(40px) saturate(210%);
+  -webkit-backdrop-filter: blur(40px) saturate(210%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-header-liquid {
+  backdrop-filter: blur(48px) saturate(215%);
+  -webkit-backdrop-filter: blur(48px) saturate(215%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-composer {
+  backdrop-filter: blur(28px) saturate(175%);
+  -webkit-backdrop-filter: blur(28px) saturate(175%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .dashboard-pro-card {
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .dashboard-home-card {
+  backdrop-filter: blur(34px) saturate(190%);
+  -webkit-backdrop-filter: blur(34px) saturate(190%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid .dashboard-pro-hero {
+  backdrop-filter: blur(28px) saturate(175%);
+  -webkit-backdrop-filter: blur(28px) saturate(175%);
+}
+
+/* Liquid + dark mesh: extra opacity so type never competes with the canvas. */
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid:not(.workspace-palette-light) .dashboard-home-card {
+  background: rgba(10, 10, 14, 0.94);
+  color: var(--workspace-fg);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid:not(.workspace-palette-light) .dashboard-pro-card {
+  background: rgba(14, 14, 20, 0.92);
+  color: var(--workspace-fg);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-liquid:not(.workspace-palette-light) .dashboard-pro-hero {
+  background: linear-gradient(
+    165deg,
+    rgba(28, 28, 36, 0.92) 0%,
+    rgba(18, 18, 26, 0.9) 50%,
+    rgba(14, 14, 20, 0.94) 100%
+  );
+  color: var(--workspace-fg);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat {
+  --liquid-blur-workspace: 0px;
+  --liquid-saturate-workspace: 100%;
+  --liquid-blur: 0px;
+  --liquid-saturate: 100%;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-sidebar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--workspace-sidebar);
+  box-shadow: inset -1px 0 0 var(--workspace-border);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-header {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--workspace-mission-bg);
+  box-shadow: 0 1px 0 var(--workspace-border) inset;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat.workspace-palette-light .agent-header {
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08) inset;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-header-liquid {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--workspace-mission-bg);
+  box-shadow: 0 1px 0 var(--workspace-border) inset;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .workspace-liquid-glass {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--workspace-surface);
+  box-shadow:
+    0 8px 40px -16px rgba(0, 0, 0, 0.45),
+    0 0 0 1px var(--workspace-border) inset;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .workspace-liquid-glass::before {
+  display: none;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-composer {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--workspace-surface);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .dashboard-pro-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--workspace-surface);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .dashboard-home-card {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--workspace-surface);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat:not(.workspace-palette-light) .dashboard-pro-hero {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: linear-gradient(
+    165deg,
+    rgba(28, 28, 36, 0.98) 0%,
+    rgba(22, 22, 30, 0.98) 50%,
+    rgba(20, 20, 28, 0.98) 100%
+  );
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat.workspace-palette-light .dashboard-pro-hero {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(248, 250, 252, 0.96) 45%,
+    rgba(241, 245, 249, 0.98) 100%
+  );
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-canvas .glass-liquid,
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .agent-canvas .glass-liquid-interactive {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-surface-flat .liquid-glass-shimmer::after {
+  animation: none;
+  opacity: 0;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-sidebar,
+  .theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-header,
+  .theme-route5-command.theme-agent-shell.workspace-surface-liquid .agent-header-liquid {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
+}
+
+/* Settings / timezone copy: blend muted toward fg so grey panels stay readable */
+.theme-agent-shell .workspace-pref-secondary {
+  color: color-mix(in srgb, var(--workspace-fg) 70%, var(--workspace-muted-fg) 30%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-pref-secondary {
+  color: color-mix(in srgb, var(--workspace-fg) 58%, var(--workspace-muted-fg) 42%);
 }
 
 /* Workspace density & focus — toggled from sidebar preferences */
@@ -1034,11 +2334,15 @@ body {
 .theme-agent-shell.workspace-focus .agent-sidebar {
   display: none !important;
 }
-.theme-agent-shell.workspace-focus .workspace-right-rail,
-.theme-agent-shell.workspace-focus .workspace-right-rail-toggle {
+.theme-agent-shell.workspace-focus .agent-canvas {
+  width: 100%;
+  max-width: 100%;
+}
+
+.theme-agent-shell.workspace-sidebar-hidden .agent-sidebar {
   display: none !important;
 }
-.theme-agent-shell.workspace-focus .agent-canvas {
+.theme-agent-shell.workspace-sidebar-hidden .agent-canvas {
   width: 100%;
   max-width: 100%;
 }
@@ -1057,3 +2361,111 @@ body {
     transform: none;
   }
 }
+
+/* Subtle 3D depth — cards lift on hover (respect reduced motion) */
+.route5-perspective-shell {
+  perspective: 1200px;
+}
+.route5-tilt-hover {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.route5-tilt-hover:hover {
+  transform: rotateX(3.5deg) rotateY(-4deg) translateY(-2px) translateZ(6px);
+  box-shadow:
+    0 20px 50px -24px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(167, 139, 250, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .route5-tilt-hover:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Framer-friendly: parent supplies perspective, child uses this for hover */
+.liquid-glass-tilt-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .liquid-glass-tilt-3d:hover {
+    transform: rotateX(2deg) rotateY(-2.5deg) translateZ(8px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-tilt-3d:hover {
+    transform: none;
+  }
+}
+
+/* Settings: Route5 AccountDangerZone owns deletion; hide Clerk’s duplicate danger section if it still renders */
+.route5-settings-clerk-profile .cl-profileSection__danger,
+.route5-settings-clerk-profile [class*="profileSection__danger"] {
+  display: none !important;
+}
+
+/*
+ * Clerk UserProfile: global ClerkProvider uses light marketing variables; embedded profile must
+ * follow workspace theme. appearance.variables on the component fixes most cases; these backstop
+ * inherited text on scroll regions if Clerk injects low-contrast defaults.
+ */
+.route5-settings-clerk-profile--dark {
+  color: var(--workspace-fg);
+  color-scheme: dark;
+}
+
+.route5-settings-clerk-profile--dark .cl-navbar,
+.route5-settings-clerk-profile--dark .cl-pageScrollBox,
+.route5-settings-clerk-profile--dark .cl-scrollBox {
+  color: var(--workspace-fg);
+}
+
+.route5-settings-clerk-profile--light {
+  color: var(--workspace-fg);
+  color-scheme: light;
+}
+
+.route5-settings-clerk-profile--light .cl-navbar,
+.route5-settings-clerk-profile--light .cl-pageScrollBox,
+.route5-settings-clerk-profile--light .cl-scrollBox {
+  color: var(--workspace-fg);
+}
+
+/* Map workspace tokens onto Clerk’s CSS variables so internal styles (navbar, headers) stay legible. */
+.route5-settings-clerk-profile--dark .cl-rootBox {
+  --clerk-color-foreground: var(--workspace-fg);
+  --clerk-color-muted-foreground: var(--workspace-muted-fg);
+  --clerk-color-background: var(--workspace-canvas);
+  --clerk-color-border: var(--workspace-border);
+}
+
+.route5-settings-clerk-profile--light .cl-rootBox {
+  --clerk-color-foreground: var(--workspace-fg);
+  --clerk-color-muted-foreground: var(--workspace-muted-fg);
+  --clerk-color-background: var(--workspace-canvas);
+  --clerk-color-border: var(--workspace-border);
+}
+
+.route5-settings-clerk-profile--dark .cl-navbar svg,
+.route5-settings-clerk-profile--light .cl-navbar svg {
+  color: var(--workspace-muted-fg);
+  opacity: 1;
+}
+
+.route5-settings-clerk-profile--dark .cl-navbar [class*="navbarButton"][data-active="true"],
+.route5-settings-clerk-profile--dark .cl-navbar [class*="navbarButton"][aria-current="page"],
+.route5-settings-clerk-profile--light .cl-navbar [class*="navbarButton"][data-active="true"],
+.route5-settings-clerk-profile--light .cl-navbar [class*="navbarButton"][aria-current="page"] {
+  color: var(--workspace-accent) !important;
+}
+
+.route5-settings-clerk-profile--dark .cl-navbar [class*="navbarButton"][data-active="true"] svg,
+.route5-settings-clerk-profile--dark .cl-navbar [class*="navbarButton"][aria-current="page"] svg,
+.route5-settings-clerk-profile--light .cl-navbar [class*="navbarButton"][data-active="true"] svg,
+.route5-settings-clerk-profile--light .cl-navbar [class*="navbarButton"][aria-current="page"] svg {
+  color: var(--workspace-accent) !important;
+}
+

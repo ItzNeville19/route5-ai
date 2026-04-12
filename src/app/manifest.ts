@@ -2,11 +2,12 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Route5 Workspace",
+    name: "Route5 — Execution intelligence",
     short_name: "Route5",
     description:
-      "Structured intelligence from enterprise text — projects, extractions, and workspace.",
-    start_url: "/projects",
+      "Projects, structured extractions, decisions and actions — workspace intelligence from your data.",
+    id: "/",
+    start_url: "/desk",
     scope: "/",
     display: "standalone",
     orientation: "any",
@@ -20,6 +21,24 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
+      {
+        src: "/icon",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
+    ],
+    shortcuts: [
+      { name: "Overview", short_name: "Home", url: "/projects", description: "Workspace overview" },
+      { name: "Desk", short_name: "Desk", url: "/desk", description: "Capture & extract" },
+      { name: "Reports", short_name: "Reports", url: "/reports", description: "Execution snapshot" },
+      { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & workspace" },
     ],
   };
 }

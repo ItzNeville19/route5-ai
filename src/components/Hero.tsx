@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { Show } from "@clerk/nextjs";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -26,15 +27,49 @@ const item = {
 
 const cardSpring = { type: "spring" as const, stiffness: 280, damping: 26 };
 
-export default function Hero() {
+type HeroProps = {
+  /** Match signed-in workspace/dashboard dark command canvas (marketing home). */
+  commandTheme?: boolean;
+};
+
+export default function Hero({ commandTheme = false }: HeroProps) {
+  const { t } = useI18n();
+  const reduceMotion = useReducedMotion();
+  const kicker = commandTheme
+    ? "text-zinc-400 [text-shadow:0_1px_18px_rgba(139,92,246,0.35)]"
+    : "text-[#1d1d1f]/45";
+  const title = commandTheme
+    ? "text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.45),0_0_48px_rgba(139,92,246,0.18)]"
+    : "text-[#1d1d1f]";
+  const bodyMuted = commandTheme ? "text-zinc-300" : "text-[#1d1d1f]/58";
+  const mono = commandTheme
+    ? "font-medium tracking-wide text-emerald-200/95"
+    : "text-[#86868b]";
+  const small = commandTheme ? "text-zinc-300" : "text-[#6e6e73]";
+  const emphasis = commandTheme ? "text-white" : "text-[#1d1d1f]";
+  const cardInner = commandTheme
+    ? "workspace-liquid-glass liquid-glass-shimmer rounded-[1.28rem] px-6 py-5"
+    : "rounded-[1.28rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.55)_0%,rgba(250,245,255,0.5)_100%)] px-5 py-4 shadow-[0_1px_0_rgba(255,255,255,0.65)_inset] backdrop-blur-md";
+  const secondaryBtn = commandTheme
+    ? "inline-flex rounded-full border border-white/22 bg-white/[0.08] px-5 py-2.5 text-[13px] font-medium text-zinc-50 shadow-sm transition hover:border-white/30 hover:bg-white/[0.14]"
+    : "inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white";
+
   return (
-    <section className="relative flex min-h-[min(92dvh,840px)] flex-col justify-center overflow-hidden pt-20">
+    <section className="relative flex min-h-[min(82dvh,760px)] flex-col justify-center overflow-hidden pt-20">
       <div
-        className="liquid-blob pointer-events-none absolute -left-24 top-1/4 h-[min(420px,55vw)] w-[min(420px,55vw)] rounded-full bg-gradient-to-br from-[#c4b5fd]/35 via-[#a78bfa]/25 to-transparent"
+        className={
+          commandTheme
+            ? "liquid-blob pointer-events-none absolute -left-24 top-1/4 h-[min(420px,55vw)] w-[min(420px,55vw)] rounded-full bg-gradient-to-br from-indigo-500/20 via-violet-500/12 to-transparent"
+            : "liquid-blob pointer-events-none absolute -left-24 top-1/4 h-[min(420px,55vw)] w-[min(420px,55vw)] rounded-full bg-gradient-to-br from-[#c4b5fd]/35 via-[#a78bfa]/25 to-transparent"
+        }
         aria-hidden
       />
       <div
-        className="liquid-blob liquid-blob-delayed pointer-events-none absolute -right-20 bottom-[18%] h-[min(360px,48vw)] w-[min(360px,48vw)] rounded-full bg-gradient-to-tl from-[#f9a8d4]/22 via-[#a78bfa]/18 to-transparent"
+        className={
+          commandTheme
+            ? "liquid-blob liquid-blob-delayed pointer-events-none absolute -right-20 bottom-[18%] h-[min(360px,48vw)] w-[min(360px,48vw)] rounded-full bg-gradient-to-tl from-fuchsia-500/15 via-violet-500/10 to-transparent"
+            : "liquid-blob liquid-blob-delayed pointer-events-none absolute -right-20 bottom-[18%] h-[min(360px,48vw)] w-[min(360px,48vw)] rounded-full bg-gradient-to-tl from-[#f9a8d4]/22 via-[#a78bfa]/18 to-transparent"
+        }
         aria-hidden
       />
       <div className="container-apple relative z-10 pb-16 pt-28 md:pb-24 md:pt-32">
@@ -46,122 +81,122 @@ export default function Hero() {
         >
           <motion.p
             variants={item}
-            className="mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45"
+            className={`mb-5 text-[11px] font-semibold uppercase tracking-[0.2em] ${kicker}`}
           >
-            Enterprise intelligence
+            {t("marketing.hero.kicker")}
           </motion.p>
 
           <motion.h1
             variants={item}
-            className="font-semibold tracking-[-0.045em] text-[#1d1d1f]"
+            className={`font-semibold tracking-[-0.045em] ${title}`}
             style={{ fontSize: "clamp(2.25rem, 6.5vw, 3.5rem)" }}
           >
-            Noise in. Intelligence out.
+            Decisions and actions, not just summaries.
           </motion.h1>
 
           <motion.p
             variants={item}
-            className="mx-auto mt-5 max-w-lg text-[clamp(16px,1.8vw,18px)] leading-relaxed text-[#1d1d1f]/58"
+            className={`mx-auto mt-5 max-w-lg text-[clamp(16px,1.8vw,18px)] leading-relaxed ${bodyMuted}`}
           >
-            AI-first: paste notes or tickets — a frontier model structures summary,
-            decisions, and action items your team can track. Built for leaders who need
-            signal, not noise.
+            {t("marketing.hero.subtitle")}
           </motion.p>
 
           {/* Command-style primary surface (workspace IDE family) */}
           <motion.div
             variants={item}
-            className="mx-auto mt-10 max-w-xl"
-            whileHover={{ y: -2 }}
+            className="route5-perspective-shell mx-auto mt-10 max-w-xl"
+            whileHover={
+              reduceMotion ? undefined : { y: -6, rotateX: 2.5, rotateY: -2.5 }
+            }
             transition={cardSpring}
           >
-            <div className="glass-liquid glass-liquid-interactive rounded-[1.35rem] p-[1px] text-left">
-              <div className="rounded-[1.28rem] bg-white/45 px-5 py-4 backdrop-blur-md">
-                <p className="font-mono text-[11px] text-[#86868b]">
-                  route5 / workspace
+                <div className="glass-liquid glass-liquid-interactive liquid-glass-shimmer rounded-[1.35rem] p-[1px] text-left">
+              <div className={cardInner}>
+                <p className={`font-mono text-[12px] sm:text-[13px] ${mono}`}>
+                  {t("marketing.hero.mono")}
+                </p>
+                <p className={`mt-2 text-[13px] leading-relaxed sm:text-[14px] ${small}`}>
+                  {t("marketing.hero.cardBody")}
                 </p>
                 {hasClerkPublishableKey() ? (
                   <>
                     <Show when="signed-in">
-                      <p className="mt-2 text-[15px] font-medium text-[#1d1d1f]">
-                        You&apos;re signed in — your workspace and projects are ready.
+                      <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>
+                        {t("marketing.hero.signedInTitle")}
                       </p>
-                      <p className="mt-1 text-[13px] leading-snug text-[#6e6e73]">
-                        Continue where you left off or open a new project from the
-                        dashboard.
+                      <p className={`mt-1 text-[13px] leading-snug ${small}`}>
+                        {t("marketing.hero.signedInBody")}
                       </p>
                       <div className="mt-5 flex flex-wrap gap-2">
                         <Link
-                          href="/projects"
+                          href="/desk"
                           className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
                         >
-                          Dashboard
+                          {t("marketing.hero.openDesk")}
+                        </Link>
+                        <Link
+                          href="/integrations"
+                          className={secondaryBtn}
+                        >
+                          {t("sidebar.integrations")}
                         </Link>
                         <Link
                           href="/marketplace"
-                          className="inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white"
+                          className={secondaryBtn}
                         >
-                          Integrations
-                        </Link>
-                        <Link
-                          href="/settings"
-                          className="inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white"
-                        >
-                          Settings
+                          {t("marketing.hero.marketplace")}
                         </Link>
                       </div>
                     </Show>
                     <Show when="signed-out">
-                      <p className="mt-2 text-[15px] font-medium text-[#1d1d1f]">
-                        One flow: sign in → project → paste → extract.
+                      <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>
+                        {t("marketing.hero.signedOutTitle")}
                       </p>
-                      <p className="mt-1 text-[13px] leading-snug text-[#6e6e73]">
-                        Same structured outputs every run — honest about what ships
-                        today.
+                      <p className={`mt-1 text-[13px] leading-snug ${small}`}>
+                        {t("marketing.hero.signedOutBody")}
                       </p>
                       <div className="mt-5 flex flex-wrap gap-2">
                         <Link
                           href="/sign-up"
                           className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
                         >
-                          Create account
+                          {t("marketing.hero.createAccount")}
                         </Link>
                         <Link
                           href="/login"
-                          className="inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white"
+                          className={secondaryBtn}
                         >
-                          Log in
+                          {t("marketing.hero.logIn")}
                         </Link>
                         <Link
                           href="/projects"
-                          className="inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white"
+                          className={secondaryBtn}
                         >
-                          Dashboard
+                          {t("marketing.hero.dashboard")}
                         </Link>
                       </div>
                     </Show>
                   </>
                 ) : (
                   <>
-                    <p className="mt-2 text-[15px] font-medium text-[#1d1d1f]">
-                      One flow: sign in → project → paste → extract.
+                    <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>
+                      {t("marketing.hero.noClerkTitle")}
                     </p>
-                    <p className="mt-1 text-[13px] leading-snug text-[#6e6e73]">
-                      Same structured outputs every run — honest about what ships
-                      today.
+                    <p className={`mt-1 text-[13px] leading-snug ${small}`}>
+                      {t("marketing.hero.noClerkBody")}
                     </p>
                     <div className="mt-5 flex flex-wrap gap-2">
                       <Link
                         href="/login"
                         className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
                       >
-                        Log in
+                        {t("marketing.hero.logIn")}
                       </Link>
                       <Link
                         href="/contact"
-                        className="inline-flex rounded-full border border-black/[0.1] bg-white/80 px-5 py-2.5 text-[13px] font-medium text-[#1d1d1f] transition hover:bg-white"
+                        className={secondaryBtn}
                       >
-                        Contact
+                        {t("marketing.hero.contact")}
                       </Link>
                     </div>
                   </>
@@ -176,17 +211,46 @@ export default function Hero() {
           >
             <Link
               href="/contact"
-              className="inline-flex items-center rounded-full border border-black/[0.1] bg-white/70 px-7 py-3 text-[14px] font-semibold tracking-[-0.02em] text-[#1d1d1f] shadow-sm backdrop-blur-md transition hover:bg-white"
+              className={
+                commandTheme
+                  ? "inline-flex items-center rounded-full border border-white/15 bg-white/5 px-7 py-3 text-[14px] font-semibold tracking-[-0.02em] text-zinc-100 shadow-sm backdrop-blur-md transition hover:bg-white/10"
+                  : "inline-flex items-center rounded-full border border-black/[0.1] bg-white/70 px-7 py-3 text-[14px] font-semibold tracking-[-0.02em] text-[#1d1d1f] shadow-sm backdrop-blur-md transition hover:bg-white"
+              }
             >
-              Get in touch
+              {t("marketing.hero.getInTouch")}
+            </Link>
+            <Link
+              href="/pricing"
+              className={
+                commandTheme
+                  ? "inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-zinc-200 shadow-sm backdrop-blur-md transition hover:bg-white/10"
+                  : "inline-flex items-center rounded-full border border-black/[0.08] bg-white/55 px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-[#1d1d1f] shadow-sm backdrop-blur-md transition hover:bg-white/90"
+              }
+            >
+              {t("marketing.hero.plans")}
             </Link>
             <Link
               href="/pitch"
-              className="inline-flex items-center rounded-full px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-[#0071e3] transition hover:underline"
+              className={
+                commandTheme
+                  ? "inline-flex items-center rounded-full px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-sky-400 transition hover:underline"
+                  : "inline-flex items-center rounded-full px-5 py-3 text-[14px] font-medium tracking-[-0.02em] text-[#0071e3] transition hover:underline"
+              }
             >
-              What we ship
+              {t("marketing.hero.whatWeShip")}
             </Link>
           </motion.div>
+
+          {commandTheme ? (
+            <motion.div variants={item} className="mt-7">
+              <Link
+                href="#showcase"
+                className="text-[13px] font-medium text-violet-300/90 transition hover:text-white hover:underline"
+              >
+                {t("marketing.showcase.jump")} →
+              </Link>
+            </motion.div>
+          ) : null}
         </motion.div>
       </div>
     </section>

@@ -83,6 +83,9 @@ export const springSoft = { type: "spring" as const, stiffness: 380, damping: 32
 
 export const springGentle = { type: "spring" as const, stiffness: 260, damping: 28 };
 
+/** 3D-ish cards — liquid glass panels */
+export const springLiquid = { type: "spring" as const, stiffness: 300, damping: 22 };
+
 /** Command palette / overlays */
 export const paletteOverlay: Variants = {
   hidden: { opacity: 0 },

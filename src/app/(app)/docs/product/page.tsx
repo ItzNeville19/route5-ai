@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WorkspaceArticle } from "@/components/workspace/WorkspaceArticle";
-import { PRODUCT_LIVE, PRODUCT_ROADMAP } from "@/lib/product-truth";
+import { PRODUCT_LIVE, PRODUCT_ROADMAP, PRODUCT_VALUE_REALITY } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
   title: "What we ship — Route5",
@@ -17,6 +17,27 @@ export default function DocsProductPage() {
       title="What we ship"
       intro="Below is what the signed-in workspace does today. Roadmap items are listed separately — they are not installed connectors."
     >
+      <section className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-5 sm:p-6">
+        <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">
+          {PRODUCT_VALUE_REALITY.headline}
+        </h2>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          {PRODUCT_VALUE_REALITY.summary}
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          <span className="font-medium text-[var(--workspace-fg)]">Without AI keys:</span>{" "}
+          {PRODUCT_VALUE_REALITY.withoutAi}
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          <span className="font-medium text-[var(--workspace-fg)]">With AI keys:</span>{" "}
+          {PRODUCT_VALUE_REALITY.withAi}
+        </p>
+        <p className="mt-3 text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          <span className="font-medium text-[var(--workspace-fg)]">Integrations:</span>{" "}
+          {PRODUCT_VALUE_REALITY.integrationsHonesty}
+        </p>
+      </section>
+
       <section>
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">
           Live in the product

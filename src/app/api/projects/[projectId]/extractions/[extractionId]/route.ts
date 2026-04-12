@@ -1,35 +1,33 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import type { ActionItemStored } from "@/lib/ai/schema";
 import { updateExtractionActions } from "@/lib/workspace/store";
+import {
+  cleanText,
+  enforceRateLimits,
+  isWorkspaceResourceId,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
 
-function parseBodyActionItems(raw: unknown): ActionItemStored[] | null {
-  if (!Array.isArray(raw)) return null;
-  const out: ActionItemStored[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") return null;
-    const o = item as Record<string, unknown>;
-    const id = typeof o.id === "string" ? o.id : "";
-    const text = typeof o.text === "string" ? o.text : "";
-    if (!id || !text) return null;
-    const owner =
-      o.owner === null || o.owner === undefined
-        ? null
-        : typeof o.owner === "string"
-          ? o.owner
-          : null;
-    out.push({
-      id,
-      text,
-      owner,
-      completed: Boolean(o.completed),
-    });
-  }
-  return out;
-}
+const actionItemSchema = z
+  .object({
+    id: z.string().transform(cleanText).pipe(z.string().min(1).max(120)),
+    text: z.string().transform(cleanText).pipe(z.string().min(1).max(500)),
+    owner: z.union([z.string().transform(cleanText).pipe(z.string().max(120)), z.null()]).optional(),
+    completed: z.boolean(),
+  })
+  .strict();
+
+const extractionPatchSchema = z
+  .object({
+    actionItems: z.array(actionItemSchema).max(200),
+  })
+  .strict();
 
 export async function PATCH(
   req: Request,
@@ -42,22 +40,27 @@ export async function PATCH(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "extraction:patch", userId, {
+      userLimit: 30,
+      ipLimit: 60,
+    })
+  );
+  if (rateLimited) return rateLimited;
+
   const { projectId, extractionId } = await ctx.params;
-
-  let body: { actionItems?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  if (!isWorkspaceResourceId(projectId) || !isWorkspaceResourceId(extractionId)) {
+    return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
-
-  const actionItems = parseBodyActionItems(body.actionItems);
-  if (!actionItems) {
-    return NextResponse.json(
-      { error: "actionItems must be a valid array" },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseJsonBody(req, extractionPatchSchema);
+  if (!parsed.ok) return parsed.response;
+  const actionItems: ActionItemStored[] = parsed.data.actionItems.map((item) => ({
+    id: item.id,
+    text: item.text,
+    owner: item.owner ?? null,
+    completed: item.completed,
+  }));
 
   try {
     await updateExtractionActions({

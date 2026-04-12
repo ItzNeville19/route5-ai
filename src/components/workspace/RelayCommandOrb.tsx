@@ -55,7 +55,7 @@ export default function RelayCommandOrb() {
           <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full border-2 border-[#09090b] bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.6)]" />
         </span>
         <span className="hidden min-w-0 text-left sm:block">
-          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500">
+          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
             Command
             <ChevronDown className={`h-3 w-3 transition ${open ? "rotate-180" : ""}`} />
           </span>
@@ -108,7 +108,7 @@ export default function RelayCommandOrb() {
           >
             <Search className="h-4 w-4 text-zinc-400" />
             Search workspace
-            <kbd className="ml-auto rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
+            <kbd className="ml-auto rounded border border-white/10 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300">
               ⌘K
             </kbd>
           </button>
@@ -118,7 +118,7 @@ export default function RelayCommandOrb() {
             className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-zinc-200 transition hover:bg-white/[0.06]"
             onClick={() => setOpen(false)}
           >
-            <Plug2 className="h-4 w-4 text-zinc-500" />
+            <Plug2 className="h-4 w-4 text-zinc-300" />
             Integrations hub
           </Link>
           <Link

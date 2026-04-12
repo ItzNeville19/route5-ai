@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, Copy, CopyPlus, Loader2 } from "lucide-react";
 import { extractionToMarkdown } from "@/lib/extraction-markdown";
+import { isHeuristicExtractionSummary } from "@/lib/extraction-mode";
 import type { Extraction } from "@/lib/types";
 
 type Props = {
@@ -59,6 +60,7 @@ export default function ExtractionCard({
   }
 
   const created = new Date(extraction.createdAt);
+  const heuristicRun = isHeuristicExtractionSummary(extraction.summary);
 
   async function toggleItem(itemId: string, completed: boolean) {
     setErr(null);
@@ -124,6 +126,21 @@ export default function ExtractionCard({
           <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--workspace-muted-fg)]">
             Extraction
           </span>
+          {heuristicRun ? (
+            <span
+              className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200"
+              title="No LLM on this deployment — pattern-based digest. Configure OPENAI_API_KEY for AI structuring."
+            >
+              Heuristic
+            </span>
+          ) : (
+            <span
+              className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200"
+              title="Structured extraction returned by the configured model"
+            >
+              AI
+            </span>
+          )}
           <time
             dateTime={created.toISOString()}
             className="text-[12px] text-[var(--workspace-muted-fg)]"
@@ -139,6 +156,7 @@ export default function ExtractionCard({
             <button
               type="button"
               disabled={duping}
+              title="Create a new extraction with the same content and structure in this project"
               onClick={(e) => {
                 e.stopPropagation();
                 void duplicateRun();
@@ -247,7 +265,7 @@ export default function ExtractionCard({
       </div>
 
       {err && (
-        <p className="mt-3 text-[13px] text-red-600" role="alert">
+        <p className="mt-3 text-[13px] text-[var(--workspace-danger-fg)]" role="alert">
           {err}
         </p>
       )}

@@ -11,8 +11,13 @@ export type RelayThread = {
   messages: RelayMsg[];
 };
 
+/** Legacy single-user key — migrated per signed-in user. */
 const STORE_KEY = "route5:relayThreadStore.v2";
 const LEGACY_KEY = "route5:relayThread.v1";
+
+function userRelayKey(userId: string): string {
+  return `route5:relayThreadStore.v2:user:${userId}`;
+}
 
 export type RelayThreadStore = {
   activeId: string;
@@ -23,49 +28,94 @@ function newId(): string {
   return `th-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function loadRelayThreadStore(): RelayThreadStore {
+function parseRelayStoreRaw(raw: string | null): RelayThreadStore | null {
+  if (!raw) return null;
+  try {
+    const o = JSON.parse(raw) as Partial<RelayThreadStore>;
+    const activeId = typeof o.activeId === "string" ? o.activeId : "default";
+    const threads =
+      o.threads && typeof o.threads === "object"
+        ? (o.threads as Record<string, RelayThread>)
+        : {};
+    return { activeId, threads };
+  } catch {
+    return null;
+  }
+}
+
+function migrateLegacyV1Messages(): RelayThreadStore | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (!legacy) return null;
+    const parsed = JSON.parse(legacy) as unknown;
+    const messages = Array.isArray(parsed)
+      ? (parsed as RelayMsg[]).filter(
+          (m) =>
+            m &&
+            typeof m === "object" &&
+            typeof m.id === "string" &&
+            (m.role === "user" || m.role === "assistant") &&
+            typeof m.text === "string"
+        )
+      : [];
+    const thread: RelayThread = {
+      id: "default",
+      title: threadTitleFromMessages(messages),
+      updatedAt: Date.now(),
+      messages,
+    };
+    return { activeId: "default", threads: { default: thread } };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Load Relay threads. Pass `userId` when signed in so history survives logout/login
+ * and stays isolated per Clerk account on a shared browser.
+ */
+export function loadRelayThreadStore(userId?: string | null): RelayThreadStore {
   if (typeof window === "undefined") {
     return { activeId: "default", threads: {} };
   }
+  const uid = userId?.trim();
   try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const o = JSON.parse(raw) as Partial<RelayThreadStore>;
-      const activeId = typeof o.activeId === "string" ? o.activeId : "default";
-      const threads =
-        o.threads && typeof o.threads === "object"
-          ? (o.threads as Record<string, RelayThread>)
-          : {};
-      return { activeId, threads };
+    if (uid) {
+      const key = userRelayKey(uid);
+      let raw = localStorage.getItem(key);
+      if (!raw) {
+        const shared = localStorage.getItem(STORE_KEY);
+        if (shared) {
+          localStorage.setItem(key, shared);
+          raw = shared;
+        }
+      }
+      const fromUser = parseRelayStoreRaw(raw);
+      if (fromUser) return fromUser;
+      const fromLegacy = migrateLegacyV1Messages();
+      if (fromLegacy) {
+        try {
+          localStorage.setItem(key, JSON.stringify(fromLegacy));
+        } catch {
+          /* ignore */
+        }
+        return fromLegacy;
+      }
+      return { activeId: "default", threads: {} };
     }
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    if (legacy) {
-      const parsed = JSON.parse(legacy) as unknown;
-      const messages = Array.isArray(parsed)
-        ? (parsed as RelayMsg[]).filter(
-            (m) =>
-              m &&
-              typeof m === "object" &&
-              typeof m.id === "string" &&
-              (m.role === "user" || m.role === "assistant") &&
-              typeof m.text === "string"
-          )
-        : [];
-      const thread: RelayThread = {
-        id: "default",
-        title: threadTitleFromMessages(messages),
-        updatedAt: Date.now(),
-        messages,
-      };
-      return { activeId: "default", threads: { default: thread } };
-    }
+
+    const shared = parseRelayStoreRaw(localStorage.getItem(STORE_KEY));
+    if (shared) return shared;
+    const fromLegacy = migrateLegacyV1Messages();
+    return fromLegacy ?? { activeId: "default", threads: {} };
   } catch {
     /* ignore */
   }
   return { activeId: "default", threads: {} };
 }
 
-export function saveRelayThreadStore(store: RelayThreadStore): void {
+export function saveRelayThreadStore(store: RelayThreadStore, userId?: string | null): void {
   try {
     const trimmed: Record<string, RelayThread> = {};
     const entries = Object.values(store.threads)
@@ -78,7 +128,13 @@ export function saveRelayThreadStore(store: RelayThreadStore): void {
       };
     }
     const activeId = trimmed[store.activeId] ? store.activeId : entries[0]?.id ?? store.activeId;
-    localStorage.setItem(STORE_KEY, JSON.stringify({ activeId, threads: trimmed }));
+    const payload = JSON.stringify({ activeId, threads: trimmed });
+    const uid = userId?.trim();
+    if (uid) {
+      localStorage.setItem(userRelayKey(uid), payload);
+    } else {
+      localStorage.setItem(STORE_KEY, payload);
+    }
   } catch {
     /* ignore */
   }

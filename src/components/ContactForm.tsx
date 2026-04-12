@@ -43,6 +43,7 @@ export default function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const urlHydratedRef = useRef(false);
+  const [mailtoSubjectOverride, setMailtoSubjectOverride] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -68,13 +69,17 @@ export default function ContactForm() {
     };
   }, []);
 
-  /** Marketplace / campaign deep links: `/contact?topic=integration&app=Slack` */
+  /** Deep links: `/contact?topic=integration&app=Slack`, `/contact?subject=…` */
   useEffect(() => {
     if (urlHydratedRef.current || typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
+    const subjectQ = p.get("subject")?.trim();
+    if (subjectQ) {
+      setMailtoSubjectOverride(subjectQ);
+    }
     const app = p.get("app")?.trim();
     const topic = p.get("topic")?.trim();
-    if (!app && !topic) return;
+    if (!app && !topic && !subjectQ) return;
     urlHydratedRef.current = true;
     setForm((prev) => {
       const next = { ...prev };
@@ -87,6 +92,9 @@ export default function ContactForm() {
       }
       if (topic === "integration" && !next.useCase) {
         next.useCase = "Other";
+      }
+      if (subjectQ && !next.message.trim()) {
+        next.message = `Regarding: ${subjectQ}`;
       }
       return next;
     });
@@ -125,7 +133,9 @@ export default function ContactForm() {
     setIsSubmitting(true);
     await new Promise((r) => setTimeout(r, 400));
 
-    const subject = `Route5 inquiry — ${form.company}`;
+    const subject =
+      mailtoSubjectOverride?.trim() ||
+      `Route5 inquiry — ${form.company}`;
     const body = [
       `Name: ${form.name}`,
       `Email: ${form.email}`,

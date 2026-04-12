@@ -26,6 +26,14 @@ export default function ClerkProviderWrapper({
     return children;
   }
   return (
-    <ClerkProvider appearance={clerkAppearance}>{children}</ClerkProvider>
+    <ClerkProvider
+      appearance={clerkAppearance}
+      signInUrl="/login"
+      signUpUrl="/sign-up"
+      /** After sign-out, land on the login screen — not the marketing homepage — so workspace sessions end cleanly. */
+      afterSignOutUrl="/login?signedOut=1"
+    >
+      {children}
+    </ClerkProvider>
   );
 }

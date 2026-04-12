@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, RotateCcw, Sparkles } from "lucide-react";
-import { clearDismissedInsights } from "@/lib/dashboard-insights";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
 export default function DashboardCustomizeSection() {
   const exp = useWorkspaceExperience();
+  const { t } = useI18n();
   const [ctx, setCtx] = useState("");
   useEffect(() => {
     const n = exp.prefs.dashboardCompanyNote?.trim();
@@ -52,7 +53,7 @@ export default function DashboardCustomizeSection() {
       }
       setSavedFlash(
         data.shortcuts?.length
-          ? "Layout updated — hero subtitle and Jump links refreshed."
+          ? "Overview subtitle and quick links updated."
           : "Subtitle saved."
       );
       window.setTimeout(() => setSavedFlash(null), 3200);
@@ -70,16 +71,9 @@ export default function DashboardCustomizeSection() {
     });
     setCtx("");
     setError(null);
-    setSavedFlash("Hero subtitle and Jump links cleared.");
+    setSavedFlash("Overview subtitle and quick links cleared.");
     window.setTimeout(() => setSavedFlash(null), 3200);
   }, [exp]);
-
-  const resetTipsOnly = useCallback(() => {
-    clearDismissedInsights();
-    window.dispatchEvent(new Event("route5:insights-dismiss-reset"));
-    setSavedFlash("Tip dismissals cleared.");
-    window.setTimeout(() => setSavedFlash(null), 2800);
-  }, []);
 
   return (
     <section
@@ -101,23 +95,28 @@ export default function DashboardCustomizeSection() {
               id="dash-custom-heading"
               className="mt-1 text-[clamp(1.1rem,2.6vw,1.35rem)] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]"
             >
-              Dashboard & layout
+              Overview subtitle
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)] sm:mx-0">
-              Describe your org, industry, and tools — we suggest a subtitle and Jump links for the Projects overview.
-              You can edit the text yourself anytime. One generate per request; the suggestion call leaves the
-              workspace when you run it.
+              Describe your org, workflow, and tools. Route5 can suggest a cleaner subtitle and a few quick
+              links for the Overview page.
             </p>
             <p className="mx-auto mt-3 max-w-2xl text-[12px] text-[var(--workspace-muted-fg)] sm:mx-0">
-              Timezone (for daily rotation):{" "}
+              <Link href="/settings#workspace-lang" className="font-medium text-[var(--workspace-accent)] hover:underline">
+                {t("lang.section")}
+              </Link>
+              {" · "}
               <Link href="/settings#workspace-prefs" className="font-medium text-[var(--workspace-accent)] hover:underline">
-                Time &amp; calendar in Settings
+                {t("prefs.timePlace")}
               </Link>
-              . See every tool in the{" "}
+              {" · "}
+              <Link href="/settings#workspace-surface" className="font-medium text-[var(--workspace-accent)] hover:underline">
+                {t("prefs.surfaceMaterialLabel")}
+              </Link>
+              {" · "}
               <Link href="/workspace/apps" className="font-medium text-[var(--workspace-accent)] hover:underline">
-                app launcher
+                {t("prefs.libraryLink")}
               </Link>
-              .
             </p>
           </div>
         </div>
@@ -153,7 +152,7 @@ export default function DashboardCustomizeSection() {
             ) : (
               <Sparkles className="h-4 w-4" aria-hidden />
             )}
-            Generate suggestions
+            Generate suggestion
           </button>
           <button
             type="button"
@@ -172,17 +171,10 @@ export default function DashboardCustomizeSection() {
             <RotateCcw className="h-3.5 w-3.5" aria-hidden />
             Reset layout
           </button>
-          <button
-            type="button"
-            onClick={resetTipsOnly}
-            className="rounded-lg border border-[var(--workspace-border)] px-3 py-2 text-[12px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-canvas)]/80 hover:text-[var(--workspace-fg)]"
-          >
-            Reset tips
-          </button>
         </div>
         {exp.prefs.dashboardAiShortcuts && exp.prefs.dashboardAiShortcuts.length > 0 ? (
           <p className="mt-4 text-center text-[12px] text-[var(--workspace-muted-fg)] sm:text-left">
-            Active Jump links:{" "}
+            Active quick links:{" "}
             {exp.prefs.dashboardAiShortcuts.map((s) => s.label).join(" · ")}
           </p>
         ) : null}

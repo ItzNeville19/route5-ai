@@ -70,19 +70,27 @@ export function listProjects(userId: string): SqliteProjectRow[] {
     .all(userId) as SqliteProjectRow[];
 }
 
-export function insertProject(userId: string, name: string): SqliteProjectRow {
+export function insertProject(
+  userId: string,
+  name: string,
+  iconEmoji?: string | null
+): SqliteProjectRow {
   const d = getDb();
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  let icon: string | null = null;
+  if (iconEmoji != null && String(iconEmoji).trim()) {
+    icon = [...String(iconEmoji).trim()][0] ?? null;
+  }
   d.prepare(
-    `INSERT INTO projects (id, clerk_user_id, name, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(id, userId, name, now, now);
+    `INSERT INTO projects (id, clerk_user_id, name, icon_emoji, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`
+  ).run(id, userId, name, icon, now, now);
   return {
     id,
     clerk_user_id: userId,
     name,
-    icon_emoji: null,
+    icon_emoji: icon,
     created_at: now,
     updated_at: now,
   };
@@ -124,6 +132,23 @@ export function updateProjectMetadata(
      WHERE id = ? AND clerk_user_id = ?`
   ).run(name, iconEmoji, now, projectId, userId);
   return getProjectById(userId, projectId);
+}
+
+/** Deletes every project (and cascaded extractions) for this Clerk user. */
+export function deleteAllWorkspaceDataForUser(userId: string): void {
+  const d = getDb();
+  d.prepare(`DELETE FROM projects WHERE clerk_user_id = ?`).run(userId);
+}
+
+/** Deletes the project and cascaded extractions (FK). Returns whether a row was removed. */
+export function deleteProject(userId: string, projectId: string): boolean {
+  const d = getDb();
+  const existing = getProjectById(userId, projectId);
+  if (!existing) return false;
+  const r = d
+    .prepare(`DELETE FROM projects WHERE id = ? AND clerk_user_id = ?`)
+    .run(projectId, userId);
+  return r.changes > 0;
 }
 
 export type SqliteExtractionRow = {
@@ -229,6 +254,7 @@ export type SummaryResult = {
     summary: string;
     created_at: string;
     projectName: string;
+    action_items: string;
   }[];
 };
 
@@ -252,7 +278,7 @@ export function getWorkspaceSummary(userId: string): SummaryResult {
     ).c ?? 0;
   const recentRows = d
     .prepare(
-      `SELECT id, project_id, summary, created_at FROM extractions
+      `SELECT id, project_id, summary, created_at, action_items FROM extractions
        WHERE clerk_user_id = ?
        ORDER BY created_at DESC LIMIT 6`
     )
@@ -261,6 +287,7 @@ export function getWorkspaceSummary(userId: string): SummaryResult {
     project_id: string;
     summary: string;
     created_at: string;
+    action_items: string;
   }[];
 
   const projectIds = [...new Set(recentRows.map((r) => r.project_id))];
@@ -286,8 +313,72 @@ export function getWorkspaceSummary(userId: string): SummaryResult {
       summary: r.summary,
       created_at: r.created_at,
       projectName: nameByProject.get(r.project_id) ?? "Project",
+      action_items: r.action_items,
     })),
   };
+}
+
+/** All extractions for analytics (capped). */
+/** Extractions at or after `sinceIso` (UTC), inclusive — for monthly plan caps. */
+export function countExtractionsSince(userId: string, sinceIso: string): number {
+  const d = getDb();
+  const row = d
+    .prepare(
+      `SELECT COUNT(*) as c FROM extractions WHERE clerk_user_id = ? AND created_at >= ?`
+    )
+    .get(userId, sinceIso) as { c: number };
+  return row?.c ?? 0;
+}
+
+export function listExtractionsForExecutionMetrics(
+  userId: string,
+  limit = 8000
+): {
+  project_id: string;
+  decisions: string;
+  action_items: string;
+  created_at: string;
+}[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT project_id, decisions, action_items, created_at FROM extractions
+       WHERE clerk_user_id = ?
+       ORDER BY created_at DESC
+       LIMIT ?`
+    )
+    .all(userId, limit) as {
+    project_id: string;
+    decisions: string;
+    action_items: string;
+    created_at: string;
+  }[];
+}
+
+function decisionsJsonLength(raw: string): number {
+  try {
+    const j = JSON.parse(raw) as unknown;
+    return Array.isArray(j) ? j.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Timestamps + decision counts for activity / chart APIs (last 14 days window). */
+export function listExtractionActivityPointsSince(
+  userId: string,
+  sinceIso: string
+): { created_at: string; decision_count: number }[] {
+  const d = getDb();
+  const rows = d
+    .prepare(
+      `SELECT created_at, decisions FROM extractions WHERE clerk_user_id = ? AND created_at >= ?`
+    )
+    .all(userId, sinceIso) as { created_at: string; decisions: string }[];
+  return rows.map((r) => ({
+    created_at: r.created_at,
+    decision_count: decisionsJsonLength(r.decisions ?? "[]"),
+  }));
 }
 
 export function listProjectPalette(userId: string): { id: string; name: string }[] {

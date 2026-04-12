@@ -3,7 +3,7 @@
  * Dev: expects Next at ELECTRON_START_URL (default http://127.0.0.1:3000).
  * Packaged: spawns the standalone server from resources, then opens the same URL.
  */
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, shell, session } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -126,6 +126,19 @@ function createWindow() {
 }
 
 async function ready() {
+  /** Deny invasive browser permissions inside the embedded workspace shell. */
+  session.defaultSession.setPermissionRequestHandler((_, permission, callback) => {
+    const deny = new Set([
+      "geolocation",
+      "media",
+      "display-capture",
+      "midi",
+      "serial",
+      "usb",
+    ]);
+    callback(!deny.has(permission));
+  });
+
   if (app.isPackaged) {
     startStandaloneServer();
     try {

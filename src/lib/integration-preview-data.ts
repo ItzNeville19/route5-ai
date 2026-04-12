@@ -1,16 +1,15 @@
 /**
- * When live vendor credentials aren’t present, Route5 still ships a complete,
- * Apple-style experience: real UI, sample rows, and working “import” that
- * feeds extractions — no API-key messaging in the product surface.
+ * Offline preview rows when Linear/GitHub API keys are not set on the server.
+ * Responses include `previewMode: true` — not live vendor data.
  */
 import type { GitHubIssueRow } from "@/lib/github-api";
 import type { LinearIssueRow } from "@/lib/linear-api";
 import { formatIssueForExtraction } from "@/lib/linear-api";
 import { parseGitHubIssueRef } from "@/lib/github-api";
 
-export const DEMO_LINEAR_ISSUES: LinearIssueRow[] = [
+export const PREVIEW_LINEAR_ISSUES: LinearIssueRow[] = [
   {
-    id: "demo-linear-eng-120",
+    id: "preview-linear-eng-120",
     identifier: "ENG-120",
     title: "Ship weekly digest emails",
     description:
@@ -21,7 +20,7 @@ export const DEMO_LINEAR_ISSUES: LinearIssueRow[] = [
     teamName: "Engineering",
   },
   {
-    id: "demo-linear-des-14",
+    id: "preview-linear-des-14",
     identifier: "DES-14",
     title: "Audit Figma handoff copy",
     description:
@@ -32,7 +31,7 @@ export const DEMO_LINEAR_ISSUES: LinearIssueRow[] = [
     teamName: "Design",
   },
   {
-    id: "demo-linear-gtm-7",
+    id: "preview-linear-gtm-7",
     identifier: "GTM-7",
     title: "Launch checklist for enterprise pilots",
     description: "## Blockers\nSecurity review · success criteria · rollback plan.",
@@ -43,7 +42,7 @@ export const DEMO_LINEAR_ISSUES: LinearIssueRow[] = [
   },
 ];
 
-export const DEMO_GITHUB_ISSUES: GitHubIssueRow[] = [
+export const PREVIEW_GITHUB_ISSUES: GitHubIssueRow[] = [
   {
     id: 900_001,
     number: 42,
@@ -73,23 +72,23 @@ export const DEMO_GITHUB_ISSUES: GitHubIssueRow[] = [
   },
 ];
 
-function pickLinearDemo(ref: string): LinearIssueRow {
+function pickLinearPreview(ref: string): LinearIssueRow {
   const u = ref.toUpperCase();
-  const byIdent = DEMO_LINEAR_ISSUES.find(
+  const byIdent = PREVIEW_LINEAR_ISSUES.find(
     (i) => u.includes(i.identifier) || ref.includes(i.id)
   );
-  return byIdent ?? DEMO_LINEAR_ISSUES[0]!;
+  return byIdent ?? PREVIEW_LINEAR_ISSUES[0]!;
 }
 
-export function demoLinearImport(ref: string): {
+export function previewLinearImport(ref: string): {
   issue: LinearIssueRow;
   bodyForExtraction: string;
 } {
-  const issue = pickLinearDemo(ref);
+  const issue = pickLinearPreview(ref);
   const base = formatIssueForExtraction(issue);
   const note =
     ref.trim().length > 0
-      ? `\n\n—\n_Walkthrough — you asked for: ${ref.trim().slice(0, 240)}_`
+      ? `\n\n—\n_Preview — you asked for: ${ref.trim().slice(0, 240)}_`
       : "";
   return {
     issue,
@@ -111,7 +110,7 @@ function formatGithubExtraction(issue: GitHubIssueRow): string {
     .join("\n");
 }
 
-export function demoGitHubImport(ref: string): {
+export function previewGitHubImport(ref: string): {
   issue: GitHubIssueRow;
   bodyForExtraction: string;
 } {
@@ -123,7 +122,7 @@ export function demoGitHubImport(ref: string): {
       number: parsed.number,
       title: `Track work for ${repoFullName}#${parsed.number}`,
       body:
-        "This is a **live-formatted preview** in your workspace. Run extraction on it like any other issue body.\n\nWhen your organization links GitHub, Route5 will pull the real thread here automatically.",
+        "This is a **local preview** (GitHub API not configured on the server). You can still run extraction on the text below.\n\nWhen `GITHUB_TOKEN` is set for your deployment, this flow fetches the real issue body from GitHub.",
       htmlUrl: `https://github.com/${parsed.owner}/${parsed.repo}/issues/${parsed.number}`,
       state: "open",
       repoFullName,
@@ -135,7 +134,7 @@ export function demoGitHubImport(ref: string): {
         `\n\n—\n_Reference: ${ref.trim().slice(0, 280)}_`,
     };
   }
-  const issue = DEMO_GITHUB_ISSUES[0]!;
+  const issue = PREVIEW_GITHUB_ISSUES[0]!;
   return {
     issue,
     bodyForExtraction:

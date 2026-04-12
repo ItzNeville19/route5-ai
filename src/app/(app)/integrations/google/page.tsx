@@ -14,7 +14,7 @@ export default function GoogleIntegrationPage() {
       </Link>
       <div className="mt-6">
         <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--workspace-surface)] shadow-sm ring-1 ring-black/[0.05] dark:ring-white/10">
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--workspace-surface)] shadow-sm ring-1 ring-[var(--workspace-ring-subtle)]">
             <IconGoogle className="h-7 w-7 text-[var(--workspace-fg)]" aria-hidden />
           </span>
           <div>

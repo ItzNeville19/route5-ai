@@ -1,384 +1,512 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import {
+  ArrowDownRight,
   ArrowUpRight,
+  BarChart3,
+  Bell,
   ChevronRight,
   Search,
 } from "lucide-react";
-import { getHeroHeadline, getWorkspaceWelcome } from "@/lib/workspace-welcome";
+import type {
+  ActivitySeriesByRange,
+  RecentExtractionRow,
+  WorkspaceActivityStats,
+  WorkspaceConnectorReadiness,
+  WorkspaceExecutionMetrics,
+} from "@/lib/workspace-summary";
+import {
+  getHeroHeadline,
+  getOverviewPersonalSubline,
+  type WorkspaceInsightContext,
+} from "@/lib/workspace-welcome";
 import { useCommandPalette } from "@/components/CommandPalette";
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
-import RelayCommandOrb from "@/components/workspace/RelayCommandOrb";
-import DashboardDailyTodos from "@/components/workspace/DashboardDailyTodos";
-
-const ease = [0.22, 1, 0.36, 1] as const;
-
-/** WHOOP-style ring: score 0–100 for arc length; `value` is the number shown in the center. */
-const RING_R = 34;
-const RING_STROKE = 5;
-
-function WhoopRing({
-  label,
-  value,
-  scorePct,
-  accent,
-  loading,
-}: {
-  label: string;
-  value: string | number;
-  scorePct: number;
-  accent: string;
-  loading: boolean;
-}) {
-  const r = RING_R;
-  const c = 2 * Math.PI * r;
-  const pct = Math.min(100, Math.max(0, scorePct));
-  const offset = c - (pct / 100) * c;
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-center justify-center px-1.5 py-2 sm:px-3">
-      <div className="relative h-[5rem] w-[5rem] sm:h-[5.25rem] sm:w-[5.25rem]">
-        <svg
-          className="h-full w-full -rotate-90"
-          viewBox="0 0 100 100"
-          aria-hidden
-        >
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
-            fill="none"
-            stroke="rgba(255,255,255,0.08)"
-            strokeWidth={RING_STROKE}
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
-            fill="none"
-            stroke={accent}
-            strokeWidth={RING_STROKE}
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={loading ? c : offset}
-            className="transition-[stroke-dashoffset] duration-700 ease-out"
-            style={{ filter: `drop-shadow(0 0 6px ${accent}44)` }}
-          />
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {loading ? (
-            <span className="h-6 w-8 animate-pulse rounded-md bg-white/10" />
-          ) : (
-            <span className="text-[1.35rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.5rem]">
-              {value}
-            </span>
-          )}
-        </div>
-      </div>
-      <p className="mt-1.5 text-center text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-        {label}
-      </p>
-    </div>
-  );
-}
-
-type Readiness = { openai: boolean; linear: boolean; github: boolean };
+import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
+import { getBrowserIanaTimezone } from "@/lib/workspace-location";
+import { isLightWorkspacePalette, resolveWorkspaceTheme } from "@/lib/workspace-themes";
+import DashboardTodayPanel from "@/components/workspace/DashboardTodayPanel";
+import EnterpriseIntelChartModal from "@/components/workspace/EnterpriseIntelChartModal";
+import { formatPlanCap } from "@/lib/plan-usage-display";
 
 type Props = {
   displayName: string;
   userId: string | undefined;
-  /** Workspace timezone — drives time-of-day hero headline. */
   workspaceTimezone?: string;
+  workspaceRegionKey?: string;
   summaryLoading: boolean;
   projectCount: number;
   extractionCount: number;
-  liveConnectorCount: number | null;
-  readiness: Readiness | null;
-  /** When true, hide guided setup in Jump (saves space for returning users). */
+  readiness: WorkspaceConnectorReadiness | null;
   onboardingComplete: boolean;
+  recent: RecentExtractionRow[];
+  activity: WorkspaceActivityStats;
+  activitySeries: ActivitySeriesByRange;
+  execution: WorkspaceExecutionMetrics;
 };
 
-function ringScoreProjects(n: number) {
-  if (n <= 0) return 0;
-  return Math.min(100, 18 + n * 14);
+function weekOverWeekLabel(a: WorkspaceActivityStats): string | null {
+  const { weekOverWeekPercent: w, prior7DaysCount: prior } = a;
+  if (w === null) return null;
+  if (prior === 0) return null;
+  return `${w >= 0 ? "+" : ""}${w.toFixed(1)}% vs prior week`;
 }
-function ringScoreExtractions(n: number) {
-  if (n <= 0) return 0;
-  return Math.min(100, 12 + n * 6);
-}
-function ringScoreConnections(n: number | null) {
-  if (n == null) return 0;
-  return Math.min(100, (n / 3) * 100);
+
+function integrationCountLive(readiness: WorkspaceConnectorReadiness | null): number | null {
+  if (!readiness) return null;
+  return [readiness.openai, readiness.linear, readiness.github, readiness.figma].filter(Boolean).length;
 }
 
 export default function DashboardWorkspaceHero({
   displayName,
   userId,
   workspaceTimezone,
+  workspaceRegionKey,
   summaryLoading,
   projectCount,
   extractionCount,
-  liveConnectorCount,
   readiness,
   onboardingComplete,
+  recent,
+  activity,
+  activitySeries,
+  execution,
 }: Props) {
-  const router = useRouter();
   const { open: openPalette } = useCommandPalette();
-  const exp = useWorkspaceExperience();
-  const customNote = exp.prefs.dashboardCompanyNote?.trim();
-  const aiShortcuts = exp.prefs.dashboardAiShortcuts ?? [];
-  const welcome = useMemo(
-    () => getWorkspaceWelcome(displayName, userId),
-    [displayName, userId]
+  const { entitlements, loadingEntitlements } = useWorkspaceData();
+  const { prefs } = useWorkspaceExperience();
+  const { intlLocale } = useI18n();
+  const minuteClockTick = useAlignedMinuteTick();
+  const heroLight = useMemo(
+    () =>
+      isLightWorkspacePalette(
+        resolveWorkspaceTheme(prefs, minuteClockTick).resolvedId
+      ),
+    [prefs, minuteClockTick]
   );
-
-  const [lineFlip, setLineFlip] = useState(0);
-  const [hourTick, setHourTick] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => setLineFlip((f) => f + 1), 12000);
-    return () => window.clearInterval(id);
-  }, []);
-  useEffect(() => {
-    const id = window.setInterval(() => setHourTick((t) => t + 1), 30 * 60 * 1000);
-    return () => window.clearInterval(id);
-  }, []);
-  const activeLine = lineFlip % 2 === 0 ? welcome.tagline : welcome.altTagline;
+  const reduceMotion = useReducedMotion();
+  const paidTierMotion =
+    !loadingEntitlements && (entitlements?.isPaidTier ?? false) && !reduceMotion;
+  const advancedAnalytics = entitlements?.features.advancedAnalytics ?? false;
+  const [chartModalOpen, setChartModalOpen] = useState(false);
 
   const first = displayName.trim().split(/\s+/)[0] || "there";
-  const heroHeadline = useMemo(
-    () => getHeroHeadline(first, userId, workspaceTimezone),
-    [first, userId, workspaceTimezone, hourTick]
+
+  const effectiveIana = useMemo(
+    () => workspaceTimezone?.trim() || getBrowserIanaTimezone(),
+    [workspaceTimezone]
   );
+
+  const insightCtx = useMemo<WorkspaceInsightContext>(
+    () => ({
+      projectCount,
+      extractionCount,
+      readiness,
+      latestExtraction: recent[0] ?? undefined,
+    }),
+    [projectCount, extractionCount, readiness, recent]
+  );
+
+  const headline = useMemo(() => {
+    void minuteClockTick;
+    return getHeroHeadline(first, userId, effectiveIana);
+  }, [first, userId, effectiveIana, minuteClockTick]);
+
+  const personalSub = useMemo(() => {
+    void minuteClockTick;
+    return getOverviewPersonalSubline(
+      insightCtx,
+      userId,
+      effectiveIana,
+      workspaceRegionKey,
+      intlLocale
+    );
+  }, [insightCtx, userId, effectiveIana, workspaceRegionKey, intlLocale, minuteClockTick]);
+
   const dateLine = useMemo(() => {
-    return new Date().toLocaleDateString(undefined, {
-      weekday: "short",
+    void minuteClockTick;
+    const tz = effectiveIana?.trim();
+    const opts: Intl.DateTimeFormatOptions = {
+      weekday: "long",
       month: "short",
       day: "numeric",
-    });
-  }, []);
+    };
+    if (tz) {
+      try {
+        return new Date().toLocaleDateString(intlLocale, { ...opts, timeZone: tz });
+      } catch {
+        /* fall through */
+      }
+    }
+    return new Date().toLocaleDateString(intlLocale, opts);
+  }, [effectiveIana, intlLocale, minuteClockTick]);
+
+  const wowText = useMemo(() => weekOverWeekLabel(activity), [activity]);
+  const latest = recent[0];
+
+  const planUsageLine = useMemo(() => {
+    if (loadingEntitlements || !entitlements?.limits || !entitlements.usage) return null;
+    const { limits, usage } = entitlements;
+    return `${usage.extractionsThisMonth.toLocaleString()} / ${formatPlanCap(limits.maxExtractionsPerMonth)} runs this month · ${usage.projectCount.toLocaleString()} / ${formatPlanCap(limits.maxProjects)} projects`;
+  }, [loadingEntitlements, entitlements]);
 
   return (
-    <motion.div
-      className="dashboard-whoop relative overflow-hidden rounded-2xl border border-white/[0.09] shadow-[0_36px_140px_-52px_rgba(0,0,0,0.88),inset_0_1px_0_rgba(255,255,255,0.06)]"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, ease }}
-    >
-      <div
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-24%,rgba(59,130,246,0.14),transparent_58%),radial-gradient(ellipse_70%_45%_at_100%_100%,rgba(168,85,247,0.1),transparent_52%),linear-gradient(180deg,#060607_0%,#0b0b0e_42%,#080809_100%)]"
-        aria-hidden
+    <div className="space-y-5">
+      <EnterpriseIntelChartModal
+        open={chartModalOpen}
+        onClose={() => setChartModalOpen(false)}
+        activitySeries={activitySeries}
+        execution={execution}
+        extractionCount={extractionCount}
       />
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:24px_24px]"
-        aria-hidden
-      />
-      <div className="relative z-[2] px-4 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-5">
-        {/* Top bar — HUD density */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
-          <div className="min-w-0 flex-1 text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 sm:justify-start">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-zinc-500">
-                Overview
-              </p>
-              <span className="hidden text-zinc-600 sm:inline" aria-hidden>
-                ·
-              </span>
-              <p className="text-[11px] font-medium tabular-nums text-zinc-500">{dateLine}</p>
-            </div>
-            <h1 className="mt-2 text-[clamp(1.35rem,3.8vw,1.85rem)] font-semibold leading-[1.15] tracking-[-0.03em] text-white">
-              {heroHeadline}
-            </h1>
-            {customNote ? (
-              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-zinc-300">{customNote}</p>
-            ) : (
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={activeLine}
-                  className="mt-3 max-w-lg text-[13px] leading-relaxed text-zinc-400"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -3 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  {activeLine}
-                </motion.p>
-              </AnimatePresence>
-            )}
-          </div>
-          <div className="flex w-full shrink-0 flex-col items-center gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-            <kbd className="hidden rounded-md border border-white/10 bg-white/[0.04] px-2 py-1 font-mono text-[10px] text-zinc-500 sm:inline-block">
-              ⌘K
-            </kbd>
-            <RelayCommandOrb />
-          </div>
-        </div>
 
-        {/* Three rings — compact score dials */}
-        <div className="mt-4 grid grid-cols-3 divide-x divide-white/[0.07] overflow-hidden rounded-2xl border border-white/[0.09] bg-[linear-gradient(165deg,rgba(255,255,255,0.05)_0%,rgba(0,0,0,0.45)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.07),0_18px_48px_-36px_rgba(0,0,0,0.9)]">
-          <WhoopRing
-            label="Projects"
-            value={projectCount}
-            scorePct={ringScoreProjects(projectCount)}
-            accent="#3b82f6"
-            loading={summaryLoading}
-          />
-          <WhoopRing
-            label="Extractions"
-            value={extractionCount}
-            scorePct={ringScoreExtractions(extractionCount)}
-            accent="#a855f7"
-            loading={summaryLoading}
-          />
-          <Link
-            href="/workspace/apps"
-            className="group flex min-w-0 flex-1 flex-col items-center justify-center border-0 px-1.5 py-2 transition hover:bg-white/[0.03] sm:px-3"
-            title="Open app launcher"
-          >
-            <div className="relative h-[5rem] w-[5rem] sm:h-[5.25rem] sm:w-[5.25rem]">
-              <svg
-                className="h-full w-full -rotate-90"
-                viewBox="0 0 100 100"
-                aria-hidden
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r={RING_R}
-                  fill="none"
-                  stroke="rgba(255,255,255,0.08)"
-                  strokeWidth={RING_STROKE}
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r={RING_R}
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth={RING_STROKE}
-                  strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * RING_R}
-                  strokeDashoffset={
-                    summaryLoading
-                      ? 2 * Math.PI * RING_R
-                      : 2 * Math.PI * RING_R -
-                        (ringScoreConnections(liveConnectorCount) / 100) * 2 * Math.PI * RING_R
-                  }
-                  className="transition-[stroke-dashoffset] duration-700 ease-out"
-                  style={{ filter: "drop-shadow(0 0 6px rgba(34,197,94,0.3))" }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                {summaryLoading ? (
-                  <span className="h-6 w-8 animate-pulse rounded-md bg-white/10" />
-                ) : (
-                  <span className="text-[1.35rem] font-semibold tabular-nums tracking-tight text-white sm:text-[1.5rem]">
-                    {liveConnectorCount ?? "—"}
-                  </span>
-                )}
-              </div>
-              <ArrowUpRight className="absolute right-0.5 top-0.5 h-3 w-3 text-zinc-600 opacity-0 transition group-hover:opacity-100" />
-            </div>
-            <p className="mt-1.5 text-center text-[9px] font-semibold uppercase tracking-[0.2em] text-zinc-400">
-              Connections
-            </p>
-          </Link>
-        </div>
-
-        <DashboardDailyTodos projectCount={projectCount} extractionCount={extractionCount} />
-
-        {/* Jump — no “App Store” label; optional guided setup only if not finished */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-2 border-t border-white/[0.06] pt-4 text-[12px] text-zinc-500">
-          <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
-            Jump
-          </span>
-          {!onboardingComplete ? (
+      <section
+        className={
+          heroLight
+            ? "workspace-depth-root workspace-liquid-glass liquid-glass-shimmer relative overflow-hidden rounded-[28px] border border-[var(--workspace-border)] text-[var(--workspace-fg)] shadow-[0_40px_100px_-48px_rgba(91,33,182,0.14)]"
+            : "workspace-depth-root workspace-liquid-glass liquid-glass-shimmer relative overflow-hidden rounded-[28px] border border-white/12 text-white shadow-[0_40px_100px_-48px_rgba(91,33,182,0.55)]"
+        }
+      >
+        <div className="pointer-events-none absolute inset-0">
+          {heroLight ? (
             <>
-              <Link
-                href="/onboarding?replay=1"
-                className="text-zinc-300 transition hover:text-white"
-              >
-                Guided setup
-              </Link>
-              <span className="text-zinc-700">·</span>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_100%_0%,rgba(139,92,246,0.14),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_0%_100%,rgba(91,33,182,0.08),transparent_50%)]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-[var(--workspace-canvas)]/95 via-[var(--workspace-surface)]/92 to-[var(--workspace-canvas)]" />
             </>
-          ) : null}
-          <Link href="/projects#new-project" className="text-zinc-300 transition hover:text-white">
-            New project
-          </Link>
-          <span className="text-zinc-700">·</span>
-          <Link href="/desk" className="text-zinc-300 transition hover:text-white">
-            Desk
-          </Link>
-          <span className="text-zinc-700">·</span>
-          <Link href="/marketplace" className="text-zinc-300 transition hover:text-white">
-            Marketplace
-          </Link>
-          {aiShortcuts.map((s) => (
-            <span key={s.href + s.label} className="contents">
-              <span className="text-zinc-700">·</span>
-              <Link href={s.href} className="text-zinc-300 transition hover:text-white">
-                {s.label}
-              </Link>
-            </span>
-          ))}
+          ) : (
+            <>
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_80%_at_100%_0%,rgba(139,92,246,0.35),transparent_55%)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_0%_100%,rgba(91,33,182,0.2),transparent_50%)]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-zinc-950/98 to-[#050506]" />
+            </>
+          )}
         </div>
 
-        {/* Primary actions */}
-        <motion.div
-          className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.35, ease }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              router.push("/projects#new-project");
-              window.setTimeout(() => document.getElementById("new-project-name")?.focus(), 120);
-            }}
-            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-white px-5 text-[13px] font-semibold text-zinc-950 shadow-lg shadow-black/30 transition hover:bg-zinc-100 sm:flex-initial"
-          >
-            New project
-            <ChevronRight className="h-4 w-4 opacity-60" aria-hidden />
-          </button>
-          <button
-            type="button"
-            onClick={() => openPalette()}
-            className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 text-[13px] font-medium text-zinc-200 backdrop-blur-sm transition hover:bg-white/[0.08] sm:flex-initial"
-          >
-            <Search className="h-4 w-4 text-zinc-500" aria-hidden />
-            Search
-            <kbd className="ml-0.5 rounded border border-white/10 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500">
-              ⌘K
-            </kbd>
-          </button>
-          <div className="hidden h-8 w-px bg-white/10 sm:mx-1 sm:block" aria-hidden />
-          <div className="flex flex-wrap items-center gap-1 sm:gap-0">
+        <div className="relative z-[1] flex flex-col px-4 py-6 sm:px-8 sm:py-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p
+                  className={
+                    heroLight
+                      ? "text-[11px] font-medium tracking-wide text-[var(--workspace-muted-fg)]"
+                      : "text-[11px] font-medium tracking-wide text-white/82"
+                  }
+                >
+                  {dateLine}
+                </p>
+                <Link
+                  href="/workspace/digest"
+                  className={
+                    heroLight
+                      ? "inline-flex items-center gap-1 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)] transition hover:border-[var(--workspace-border)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]"
+                      : "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/80 transition hover:border-white/20 hover:text-white"
+                  }
+                >
+                  <Bell className="h-3 w-3" aria-hidden />
+                  Daily digest
+                </Link>
+                <Link
+                  href="/account/plans"
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide transition ${
+                    heroLight
+                      ? !loadingEntitlements && entitlements?.isPaidTier
+                        ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-900 hover:border-emerald-600/50"
+                        : "border-amber-500/40 bg-amber-500/10 text-amber-950 hover:border-amber-600/50"
+                      : !loadingEntitlements && entitlements?.isPaidTier
+                        ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/50"
+                        : "border-amber-400/35 bg-amber-500/15 text-amber-100 hover:border-amber-300/50"
+                  }`}
+                >
+                  {loadingEntitlements ? "Plan…" : entitlements?.tierLabel ?? "Free"}
+                </Link>
+              </div>
+              {planUsageLine ? (
+                <p
+                  className={
+                    heroLight
+                      ? "mt-2 text-[11px] leading-snug text-[var(--workspace-muted-fg)]"
+                      : "mt-2 text-[11px] leading-snug text-white/65"
+                  }
+                >
+                  {planUsageLine}
+                </p>
+              ) : null}
+              <h1
+                className={
+                  heroLight
+                    ? "mt-3 text-[1.75rem] font-semibold leading-[1.12] tracking-[-0.04em] text-[var(--workspace-fg)] sm:text-[2.15rem]"
+                    : "mt-3 text-[1.75rem] font-semibold leading-[1.12] tracking-[-0.04em] text-white sm:text-[2.15rem]"
+                }
+              >
+                {headline}
+              </h1>
+              <p
+                className={
+                  heroLight
+                    ? "mt-3 max-w-2xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]"
+                    : "mt-3 max-w-2xl text-[14px] leading-relaxed text-white/90"
+                }
+              >
+                {personalSub}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <p
+              className={
+                heroLight
+                  ? "text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]"
+                  : "text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80"
+              }
+            >
+              Total runs
+            </p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-3">
+              {paidTierMotion && !summaryLoading ? (
+                <motion.span
+                  key={extractionCount}
+                  initial={{ opacity: 0.35, y: 10, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                  className={
+                    heroLight
+                      ? "text-[2.5rem] font-semibold leading-none tracking-[-0.04em] text-[var(--workspace-fg)] tabular-nums sm:text-[3rem]"
+                      : "text-[2.5rem] font-semibold leading-none tracking-[-0.04em] text-white tabular-nums sm:text-[3rem]"
+                  }
+                >
+                  {extractionCount}
+                </motion.span>
+              ) : (
+                <span
+                  className={
+                    heroLight
+                      ? "text-[2.5rem] font-semibold leading-none tracking-[-0.04em] text-[var(--workspace-fg)] tabular-nums sm:text-[3rem]"
+                      : "text-[2.5rem] font-semibold leading-none tracking-[-0.04em] text-white tabular-nums sm:text-[3rem]"
+                  }
+                >
+                  {summaryLoading ? "—" : extractionCount}
+                </span>
+              )}
+              {!summaryLoading && wowText ? (
+                <span
+                  className={
+                    heroLight
+                      ? "rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-900"
+                      : "rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300"
+                  }
+                >
+                  {wowText}
+                </span>
+              ) : null}
+            </div>
+            <p
+              className={
+                heroLight
+                  ? "mt-2 text-[13px] text-[var(--workspace-muted-fg)]"
+                  : "mt-2 text-[13px] text-white/78"
+              }
+            >
+              {summaryLoading ? (
+                "—"
+              ) : (
+                <>
+                  <span
+                    className={heroLight ? "text-[var(--workspace-fg)]" : "text-white/85"}
+                  >
+                    {projectCount} project{projectCount === 1 ? "" : "s"}
+                  </span>
+                  <span
+                    className={heroLight ? "text-[var(--workspace-muted-fg)]/70" : "text-white/45"}
+                  >
+                    {" "}
+                    ·{" "}
+                  </span>
+                  <span
+                    className={heroLight ? "text-[var(--workspace-fg)]" : "text-white/85"}
+                    title="OpenAI, Linear, GitHub, Figma — each can be connected under Integrations."
+                  >
+                    {readiness == null
+                      ? "—"
+                      : `${integrationCountLive(readiness)} of 4 integrations connected`}
+                  </span>
+                  {" · "}
+                  <Link
+                    href="/integrations"
+                    className={
+                      heroLight
+                        ? "font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline"
+                        : "font-medium text-violet-200 underline-offset-2 hover:text-white hover:underline"
+                    }
+                  >
+                    Integrations
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 shadow-lg shadow-black/25 transition hover:bg-zinc-100"
+            >
+              New project
+              <ArrowUpRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+            </button>
             <Link
               href="/desk"
-              className="min-h-[44px] rounded-lg px-3 py-2 text-[13px] font-semibold text-indigo-400 transition hover:text-indigo-300"
+              className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 shadow-md transition hover:bg-zinc-100"
             >
               Desk
+              <ArrowDownRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
             </Link>
-            <Link
-              href="/integrations"
-              className="min-h-[44px] rounded-lg px-3 py-2 text-[13px] font-medium text-zinc-500 transition hover:text-zinc-200"
+            <button
+              type="button"
+              onClick={() => setChartModalOpen(true)}
+              title={
+                advancedAnalytics
+                  ? "Workspace analytics"
+                  : "Upgrade to Pro for advanced analytics and full exports"
+              }
+              className={
+                heroLight
+                  ? "relative inline-flex h-11 items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                  : "relative inline-flex h-11 items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-medium text-white transition hover:bg-white/10"
+              }
             >
-              Integrations
-            </Link>
-            <Link
-              href="/marketplace"
-              className="min-h-[44px] rounded-lg px-3 py-2 text-[13px] font-medium text-zinc-500 transition hover:text-zinc-200"
+              <BarChart3
+                className={
+                  heroLight ? "h-4 w-4 text-[var(--workspace-muted-fg)]" : "h-4 w-4 text-white/85"
+                }
+                aria-hidden
+              />
+              Analytics
+              {!loadingEntitlements && !advancedAnalytics ? (
+                <span className="absolute -right-1 -top-1 rounded-full bg-amber-400/95 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-zinc-950">
+                  Pro
+                </span>
+              ) : null}
+            </button>
+            <button
+              type="button"
+              onClick={() => openPalette()}
+              className={
+                heroLight
+                  ? "inline-flex h-11 items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-transparent px-4 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                  : "inline-flex h-11 items-center gap-2 rounded-full border border-white/12 bg-transparent px-4 text-[13px] font-medium text-white/95 transition hover:bg-white/[0.06]"
+              }
             >
-              Marketplace
-            </Link>
+              <Search
+                className={
+                  heroLight ? "h-4 w-4 text-[var(--workspace-muted-fg)]" : "h-4 w-4 text-white/80"
+                }
+                aria-hidden
+              />
+              Search
+              <kbd
+                className={
+                  heroLight
+                    ? "rounded border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-1.5 py-0.5 font-mono text-[9px] text-[var(--workspace-muted-fg)]"
+                    : "rounded border border-white/15 bg-black/35 px-1.5 py-0.5 font-mono text-[9px] text-white/75"
+                }
+              >
+                ⌘K
+              </kbd>
+            </button>
           </div>
-        </motion.div>
-      </div>
-    </motion.div>
+
+          {!summaryLoading && !latest && projectCount > 0 && extractionCount === 0 ? (
+            <Link
+              href="/desk"
+              className={
+                heroLight
+                  ? "mt-4 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+                  : "mt-4 inline-flex items-center gap-1 text-[13px] font-semibold text-violet-200 hover:text-white"
+              }
+            >
+              Run your first capture on Desk
+              <ChevronRight className="h-4 w-4" aria-hidden />
+            </Link>
+          ) : null}
+
+          <div
+            className={
+              heroLight
+                ? "mt-8 space-y-6 border-t border-[var(--workspace-border)] pt-6"
+                : "mt-8 space-y-6 border-t border-white/10 pt-6"
+            }
+          >
+            <DashboardTodayPanel
+              projectCount={projectCount}
+              extractionCount={extractionCount}
+              readiness={readiness}
+              workspaceTimezone={effectiveIana}
+              workspaceRegionKey={workspaceRegionKey}
+              locale={intlLocale}
+              latestExtraction={recent[0] ?? null}
+              layout="default"
+              surface={heroLight ? "default" : "darkHero"}
+            />
+
+            <div
+              className={`flex flex-wrap items-center gap-3 pt-1 ${onboardingComplete ? "justify-end" : "justify-between"}`}
+              aria-label="Workspace shortcuts"
+            >
+              {!onboardingComplete ? (
+                <Link
+                  href="/onboarding?replay=1"
+                  className={
+                    heroLight
+                      ? "text-[10px] font-semibold uppercase tracking-[0.16em] text-lime-700 transition hover:text-lime-800"
+                      : "text-[10px] font-semibold uppercase tracking-[0.16em] text-[#d9f99d] transition hover:text-[#ecfccb]"
+                  }
+                >
+                  Get started
+                </Link>
+              ) : null}
+              <div className="flex items-center gap-2.5">
+                <Link
+                  href="/workspace/customize"
+                  className={
+                    heroLight
+                      ? "text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
+                      : "text-[10px] font-semibold uppercase tracking-[0.16em] text-white/72 transition hover:text-white"
+                  }
+                >
+                  Customize
+                </Link>
+                <span
+                  className={
+                    heroLight ? "text-[10px] text-[var(--workspace-muted-fg)]/50" : "text-[10px] text-white/40"
+                  }
+                  aria-hidden
+                >
+                  ·
+                </span>
+                <Link
+                  href="/settings"
+                  className={
+                    heroLight
+                      ? "text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
+                      : "text-[10px] font-semibold uppercase tracking-[0.16em] text-white/72 transition hover:text-white"
+                  }
+                >
+                  Settings
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

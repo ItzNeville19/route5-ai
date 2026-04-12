@@ -3,7 +3,7 @@
 import { SignIn, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
@@ -21,10 +21,17 @@ function closeMobileNavFromLogin() {
 export default function LoginPage() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
+  const [signedOutBanner, setSignedOutBanner] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("signedOut") === "1") setSignedOutBanner(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? "/projects" : "/onboarding";
+    const next = isOnboardingComplete(userId) ? "/desk" : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -104,6 +111,24 @@ export default function LoginPage() {
     <div className="theme-glass-site min-h-dvh">
       <Navbar />
       <div className="mx-auto flex max-w-[480px] flex-col px-4 pb-20 pt-24 sm:pt-28">
+        {signedOutBanner ? (
+          <div
+            role="status"
+            className="mb-6 rounded-2xl border border-[#0071e3]/25 bg-[#0071e3]/8 px-4 py-3 text-left text-[13px] leading-relaxed text-[#1d1d1f]"
+          >
+            <p className="font-semibold text-[#0071e3]">Signed out</p>
+            <p className="mt-1 text-[#6e6e73]">
+              Your workspace session ended. Sign in again to continue where you left off.
+            </p>
+            <button
+              type="button"
+              onClick={() => setSignedOutBanner(false)}
+              className="mt-2 text-[12px] font-medium text-[#0071e3] underline-offset-2 hover:underline"
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
         <p className="mb-6 text-center">
           <Link
             href="/"
@@ -117,8 +142,8 @@ export default function LoginPage() {
           <SignIn
             routing="hash"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl="/projects"
-            signUpFallbackRedirectUrl="/projects"
+            fallbackRedirectUrl="/desk"
+            signUpFallbackRedirectUrl="/desk"
             appearance={{
               elements: {
                 rootBox: "w-full mx-auto max-w-[420px]",

@@ -4,7 +4,8 @@ import DeskWorkspace from "@/components/desk/DeskWorkspace";
 
 export const metadata: Metadata = {
   title: "Desk — Route5",
-  description: "Capture, run extractions, and jump to integrations from one surface.",
+  description:
+    "Capture workspace: autosaved drafts, sales and product templates, paste/export tools, keyboard shortcuts, and one-click extraction into projects with actions and metrics.",
 };
 
 function DeskFallback() {

@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "launch-check": "npm run lint && npm run build",
+    "test:themes": "node scripts/audit-workspace-themes.mjs",
+    "launch-check": "npm run lint && npm run test:themes && npm run build",
     "electron": "electron .",
     "electron:dev": "concurrently -k \"cross-env BROWSER=none next dev --webpack -p 3000\" \"wait-on http://127.0.0.1:3000 && cross-env ELECTRON_START_URL=http://127.0.0.1:3000 electron .\"",
     "electron:build": "next build && node scripts/prepare-electron.mjs",
@@ -23,10 +24,11 @@
     "framer-motion": "^12.38.0",
     "lucide-react": "^0.577.0",
     "nanoid": "^5.1.7",
-    "next": "16.2.0",
+    "next": "16.2.3",
     "openai": "^6.34.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -39,13 +41,13 @@
     "electron": "^41.2.0",
     "electron-builder": "^26.8.1",
     "eslint": "^9",
-    "eslint-config-next": "16.2.0",
+    "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wait-on": "^9.0.4"
   },
   "optionalDependencies": {
-    "@next/swc-linux-arm64-gnu": "16.2.0"
+    "@next/swc-linux-arm64-gnu": "16.2.3"
   },
   "build": {
     "appId": "ai.route5.desktop",

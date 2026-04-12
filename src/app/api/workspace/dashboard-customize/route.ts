@@ -1,28 +1,53 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { z } from "zod";
 import {
   createOpenAIClient,
   getOpenAIModel,
   isOpenAIConfigured,
 } from "@/lib/ai/openai-client";
 import { publicWorkspaceError } from "@/lib/public-api-message";
+import { normalizeDashboardShortcutList } from "@/lib/dashboard-shortcut-href";
+import {
+  cleanText,
+  enforceRateLimits,
+  parseJsonBody,
+  userAndIpRateScopes,
+} from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
 
 type Shortcut = { label: string; href: string };
+
+const customizeBodySchema = z
+  .object({
+    companyContext: z.string().transform(cleanText).pipe(z.string().max(2000)).optional(),
+  })
+  .strict();
 
 function heuristicSuggestions(companyContext: string): { note: string; shortcuts: Shortcut[] } {
   const lower = companyContext.toLowerCase();
   const shortcuts: Shortcut[] = [
     { label: "Projects", href: "/projects" },
     { label: "Desk", href: "/desk" },
+    { label: "Daily digest", href: "/workspace/digest" },
+    { label: "Customize", href: "/workspace/customize" },
+    { label: "Team insights", href: "/team-insights" },
+    { label: "Reports", href: "/reports" },
     { label: "Integrations", href: "/integrations" },
+    { label: "App library", href: "/workspace/apps" },
   ];
   if (lower.includes("linear") || lower.includes("sprint")) {
     shortcuts.unshift({ label: "Linear", href: "/integrations/linear" });
   }
   if (lower.includes("github") || lower.includes("code")) {
     shortcuts.unshift({ label: "GitHub", href: "/integrations/github" });
+  }
+  if (lower.includes("slack")) {
+    shortcuts.splice(4, 0, { label: "Slack", href: "/integrations/slack" });
+  }
+  if (lower.includes("figma") || lower.includes("design")) {
+    shortcuts.splice(4, 0, { label: "Figma", href: "/integrations/figma" });
   }
   if (lower.includes("legal") || lower.includes("compliance")) {
     shortcuts.push({ label: "Documentation", href: "/docs/product" });
@@ -40,15 +65,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { companyContext?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+  const rateLimited = enforceRateLimits(
+    req,
+    userAndIpRateScopes(req, "dashboard-customize:post", userId, {
+      userLimit: 12,
+      ipLimit: 24,
+    })
+  );
+  if (rateLimited) return rateLimited;
 
-  const companyContext =
-    typeof body.companyContext === "string" ? body.companyContext.slice(0, 2000) : "";
+  const parsedBody = await parseJsonBody(req, customizeBodySchema);
+  if (!parsedBody.ok) return parsedBody.response;
+
+  const companyContext = parsedBody.data.companyContext ?? "";
 
   try {
     if (isOpenAIConfigured()) {
@@ -65,7 +94,7 @@ export async function POST(req: Request) {
               content: `You help configure a B2B workspace dashboard. Reply ONLY with valid JSON, no markdown:
 {"note":"One short subtitle (max 220 chars) for the dashboard hero, professional tone.",
 "shortcuts":[{"label":"string","href":"string"}]}
-Rules: href must be a path starting with / (e.g. /projects, /desk, /integrations/linear). 3–6 shortcuts. Labels ≤24 chars.`,
+Rules: href must be a path starting with / (e.g. /projects, /desk, /integrations/linear). Never use /dashboard — the workspace overview is /projects. 3–6 shortcuts. Labels ≤24 chars.`,
             },
             {
               role: "user",
@@ -92,7 +121,7 @@ Rules: href must be a path starting with / (e.g. /projects, /desk, /integrations
             if (shortcuts.length > 0) {
               return NextResponse.json({
                 note: parsed.note.slice(0, 280),
-                shortcuts,
+                shortcuts: normalizeDashboardShortcutList(shortcuts),
                 mode: "ai" as const,
               });
             }
@@ -104,7 +133,11 @@ Rules: href must be a path starting with / (e.g. /projects, /desk, /integrations
     }
 
     const h = heuristicSuggestions(companyContext);
-    return NextResponse.json({ ...h, mode: "offline" as const });
+    return NextResponse.json({
+      ...h,
+      shortcuts: normalizeDashboardShortcutList(h.shortcuts),
+      mode: "offline" as const,
+    });
   } catch (e) {
     return NextResponse.json(
       { error: publicWorkspaceError(e) },
