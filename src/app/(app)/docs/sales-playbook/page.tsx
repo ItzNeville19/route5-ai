@@ -13,7 +13,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Pilot & discovery — Route5",
-  description: "Questions and example metrics for teams validating Route5 with real work.",
+  description:
+    "Discovery questions, validation gates, warm intros, pilot metrics, and countering the “AI wrapper” objection.",
 };
 
 export default function SalesPlaybookPage() {
@@ -22,8 +23,8 @@ export default function SalesPlaybookPage() {
       backHref="/docs"
       backLabel="Guides"
       kicker="Guides"
-      title="Pilot & discovery questions"
-      intro="Use these in conversations with a team or client. Keep answers in your own notes — or paste into Desk if you want them turned into a structured run."
+      title="Pilot & discovery"
+      intro="Questions and scripts for conversations with a team or client. Keep answers in your own notes — or paste into Desk if you want them turned into a structured run."
     >
       <section className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] p-5 sm:p-6">
         <p className="text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">{DISCOVERY_INTRO}</p>

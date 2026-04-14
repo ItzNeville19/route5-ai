@@ -31,8 +31,8 @@ const guides: { href: string; title: string; desc: string }[] = [
   },
   {
     href: "/docs/sales-playbook",
-    title: "Pilot & discovery questions",
-    desc: "Eight discovery questions, validation gates, warm-intro language, and how to counter the “AI wrapper” objection.",
+    title: "Pilot & discovery",
+    desc: "Eight discovery questions, validation gates, warm-intro language, example pilot metrics, and how to counter the “AI wrapper” objection.",
   },
 ];
 
