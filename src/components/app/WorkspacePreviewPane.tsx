@@ -1,6 +1,7 @@
 "use client";
 
 import type { Extraction } from "@/lib/types";
+import ExtractionWorkFrame from "@/components/app/ExtractionWorkFrame";
 
 type Props = {
   projectName: string;
@@ -43,9 +44,10 @@ export default function WorkspacePreviewPane({
           </div>
         ) : (
           <div className="space-y-5">
+            <ExtractionWorkFrame extraction={selected} />
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-                Summary
+                Snapshot
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
                 {selected.summary || "—"}

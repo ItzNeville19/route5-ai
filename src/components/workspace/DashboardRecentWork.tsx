@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import type { Project } from "@/lib/types";
 import type { RecentExtractionRow } from "@/lib/workspace-summary";
+import { deskUrl } from "@/lib/desk-routes";
 import { formatRelativeLong } from "@/lib/relative-time";
 
 type Props = {
@@ -39,7 +40,7 @@ export default function DashboardRecentWork({
             </p>
           </div>
           <Link
-            href="/desk"
+            href={deskUrl()}
             className="text-[13px] font-medium text-[var(--workspace-accent)] hover:underline"
           >
             Desk

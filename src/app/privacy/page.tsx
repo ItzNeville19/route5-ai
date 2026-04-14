@@ -62,8 +62,8 @@ We do not collect or store the contents of your production databases, source cod
     title: "6. Security",
     content: `Route5 implements industry-standard security practices to protect your information:
 
-- All data in transit is encrypted using TLS 1.3.
-- Data at rest is encrypted using AES-256.
+- All data in transit is encrypted using TLS 1.3 (modern asymmetric key exchange, e.g. elliptic-curve Diffie–Hellman, plus symmetric encryption such as AES-256-GCM for the session).
+- Data at rest is encrypted using AES-256 (where supported by our hosting and database providers).
 - Access to production systems is restricted to authorized personnel via multi-factor authentication.
 - We conduct periodic security assessments and penetration tests.
 - We apply controls appropriate to our current deployment stage and iterate as we scale.

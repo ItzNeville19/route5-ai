@@ -10,7 +10,7 @@ export default function DocsTermsWorkspacePage() {
   return (
     <WorkspaceArticle
       backHref="/docs"
-      backLabel="Documentation"
+      backLabel="Guides"
       kicker="Legal"
       title="Terms (workspace)"
       intro="Summary for quick orientation. Binding language is on the public terms page."

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { BrandSquircle } from "@/components/marketplace/brand-icons";
 import { markOnboardingComplete } from "@/lib/onboarding-storage";
+import { deskUrl } from "@/lib/desk-routes";
 import { PRODUCT_HONEST, PRODUCT_INTEGRATIONS } from "@/lib/product-truth";
 import type { Project } from "@/lib/types";
 
@@ -41,7 +42,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [health, setHealth] = useState<Health | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
-  const [projectName, setProjectName] = useState("My first project");
+  const [projectName, setProjectName] = useState("Client program — pilot");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createdProject, setCreatedProject] = useState<Project | null>(null);
@@ -97,7 +98,7 @@ export default function OnboardingPage() {
   function finish() {
     if (!userId) return;
     markOnboardingComplete(userId);
-    router.push("/desk");
+    router.push(deskUrl());
   }
 
   function skip() {
@@ -170,7 +171,7 @@ export default function OnboardingPage() {
                 Dashboard
               </Link>
               <Link
-                href="/desk"
+                href={deskUrl()}
                 className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
               >
                 Desk
@@ -307,11 +308,11 @@ export default function OnboardingPage() {
             className="space-y-6"
           >
             <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">
-              Create your first project
+              Name your first program or account
             </h2>
             <p className="text-[15px] leading-relaxed text-neutral-600">
-              Same action as the dashboard: we&apos;ll open the project when it&apos;s ready so you can
-              paste text and extract.
+              Projects scope every commitment and action — same as the dashboard. We&apos;ll open it
+              when it&apos;s ready so you can paste operational text and run a pass.
             </p>
             <label className="block">
               <span className="text-[13px] font-medium text-neutral-700">
@@ -322,7 +323,7 @@ export default function OnboardingPage() {
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
                 className="mt-2 w-full rounded-xl border border-black/[0.1] bg-white px-4 py-3 text-[16px] text-neutral-900 shadow-inner outline-none ring-0 transition focus:border-neutral-400"
-                placeholder="e.g. Q1 planning"
+                placeholder="e.g. Acme contract · Region North"
                 autoComplete="off"
               />
             </label>

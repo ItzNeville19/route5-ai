@@ -12,10 +12,10 @@ export default function DocsProductPage() {
   return (
     <WorkspaceArticle
       backHref="/docs"
-      backLabel="Documentation"
-      kicker="Documentation"
+      backLabel="Guides"
+      kicker="Guides"
       title="What we ship"
-      intro="Below is what the signed-in workspace does today. Roadmap items are listed separately — they are not installed connectors."
+      intro="Simple version: projects hold your work, Desk turns pasted notes into clear next steps and checklists, and the overview shows real progress. Details and honest limits are below."
     >
       <section className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-5 sm:p-6">
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { RecentExtractionRow } from "@/lib/workspace-summary";
+import { deskUrl } from "@/lib/desk-routes";
 import { formatRelativeShort } from "@/lib/relative-time";
 
 type Props = {
@@ -38,10 +39,10 @@ export default function DashboardOverviewAside({
     <aside className="w-full min-w-0 max-w-md space-y-0 lg:max-w-[300px]">
       <div className={shell}>
         <p className={`text-[11px] font-semibold uppercase tracking-[0.14em] ${label}`}>
-          Recent extractions
+          Recent passes
         </p>
         <p className={`mt-0.5 text-[11px] leading-snug ${sub}`}>
-          Live from your workspace summary — newest first.
+          Live from saved runs — newest first.
         </p>
 
         {loading ? (
@@ -56,8 +57,8 @@ export default function DashboardOverviewAside({
         ) : rows.length === 0 ? (
           <p className={`mt-3 text-[13px] leading-relaxed ${body}`}>
             No runs yet.{" "}
-            <Link href="/desk" className={`font-semibold ${link}`}>
-              Capture on Desk
+            <Link href={deskUrl()} className={`font-semibold ${link}`}>
+              Paste a thread on Desk
             </Link>
           </p>
         ) : (

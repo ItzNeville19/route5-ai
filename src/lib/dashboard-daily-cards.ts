@@ -2,6 +2,7 @@
  * Context-aware cards for Overview — prioritized, dismissible per calendar day.
  */
 
+import { deskUrl } from "@/lib/desk-routes";
 import { stableHash } from "@/lib/stable-hash";
 import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
 
@@ -28,7 +29,7 @@ const DAILY_TIPS: readonly { body: string; learnMoreHref: string }[] = [
   { body: "Pin projects in the sidebar so active work stays on top.", learnMoreHref: "/docs/product" },
   { body: "⌘K opens search — jump to Desk, Integrations, or a project by name.", learnMoreHref: "/docs/product" },
   {
-    body: "Duplicate an extraction when you want to iterate without losing the original.",
+    body: "Duplicate a saved run when you want to iterate without losing the original.",
     learnMoreHref: "/docs/product",
   },
   { body: "Templates on Desk pre-fill structure; you still edit before you run.", learnMoreHref: "/docs/product" },
@@ -38,7 +39,7 @@ const DAILY_TIPS: readonly { body: string; learnMoreHref: string }[] = [
   { body: "Reports exports JSON for standups — same totals you see on Overview.", learnMoreHref: "/reports" },
   { body: "Team insights shows the same live counts as Overview for shared visibility.", learnMoreHref: "/team-insights" },
   { body: "Replay guided onboarding anytime from the link in Today tips or Desk.", learnMoreHref: "/onboarding?replay=1" },
-  { body: "Plans and extraction limits live under Account → Plans.", learnMoreHref: "/account/plans" },
+  { body: "Plans and run limits live under Account → Plans.", learnMoreHref: "/account/plans" },
 ] as const;
 
 export type DashboardCardContext = {
@@ -72,10 +73,10 @@ export function buildDashboardDailyCards(
   if (ctx.projectCount > 0 && ctx.extractionCount === 0) {
     out.push({
       id: "first-extraction",
-      title: "Run your first extraction",
+      title: "Run your first pass on Desk",
       body: "Open Desk, pick this project, paste notes or a thread, and run — that’s the core loop.",
       ctaLabel: "Open Desk",
-      href: "/desk",
+      href: deskUrl(),
       tone: "accent",
     });
   }
@@ -83,9 +84,9 @@ export function buildDashboardDailyCards(
   if (r && !r.openai) {
     out.push({
       id: "openai-key",
-      title: "AI extraction status",
-      body: "Your deployment has not enabled the hosted model path yet — open AI settings to pick extraction defaults, or ask your admin.",
-      ctaLabel: "AI & extraction",
+      title: "Optional AI",
+      body: "Your deployment has not enabled the hosted model path yet — open AI settings to pick defaults, or ask your admin.",
+      ctaLabel: "AI settings",
       href: "/settings",
       tone: "amber",
     });

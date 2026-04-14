@@ -31,8 +31,8 @@ export default function DashboardPurposeCard({
   const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   const steps = [
-    { id: "project", label: "Create a project", done: projectCount > 0 },
-    { id: "run", label: "Run an extraction on Desk", done: extractionCount > 0 },
+    { id: "project", label: "Create a program or client project", done: projectCount > 0 },
+    { id: "run", label: "Run a Desk pass on real operational text", done: extractionCount > 0 },
     { id: "ai", label: "Enable AI extraction (optional)", done: openaiReady },
     {
       id: "conn",
@@ -90,7 +90,7 @@ export default function DashboardPurposeCard({
         id="getting-started-heading"
         className="mt-2 pr-8 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]"
       >
-        Your execution loop
+        Commitment operations
       </h2>
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--workspace-canvas)]/80">
         <div
@@ -120,7 +120,7 @@ export default function DashboardPurposeCard({
         ))}
       </ul>
       <p className="mt-5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-        Route5 tracks decisions and actions from every run — metrics on Overview come from your data.{" "}
+        Route5 stores commitments and named actions from every run — Overview reads your saved data, not a chat.{" "}
         <Link
           href="/docs/product"
           className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"

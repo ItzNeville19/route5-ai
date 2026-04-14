@@ -1,13 +1,14 @@
 import type { MetadataRoute } from "next";
+import { deskUrl } from "@/lib/desk-routes";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Route5 — Execution intelligence",
+    name: "Route5 — Project workspace",
     short_name: "Route5",
     description:
       "Projects, structured extractions, decisions and actions — workspace intelligence from your data.",
     id: "/",
-    start_url: "/desk",
+    start_url: deskUrl(),
     scope: "/",
     display: "standalone",
     orientation: "any",
@@ -36,7 +37,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Overview", short_name: "Home", url: "/projects", description: "Workspace overview" },
-      { name: "Desk", short_name: "Desk", url: "/desk", description: "Capture & extract" },
+      { name: "Desk", short_name: "Desk", url: deskUrl(), description: "Capture & extract" },
       { name: "Reports", short_name: "Reports", url: "/reports", description: "Execution snapshot" },
       { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & workspace" },
     ],

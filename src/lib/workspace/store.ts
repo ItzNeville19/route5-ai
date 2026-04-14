@@ -1,4 +1,5 @@
 import type { ActionItemStored } from "@/lib/ai/schema";
+import { parseOpenQuestionsField, parseOpenQuestionsFromDbJson } from "@/lib/ai/schema";
 import type { Extraction, Project } from "@/lib/types";
 import type { OpenActionRef, RecentExtractionRow } from "@/lib/workspace-summary";
 import {
@@ -209,7 +210,7 @@ export async function getProjectDetailForUser(
     const { data: rows, error: eErr } = await supabase
       .from("extractions")
       .select(
-        "id, project_id, clerk_user_id, raw_input, summary, decisions, action_items, created_at"
+        "id, project_id, clerk_user_id, raw_input, summary, problem, solution, open_questions, decisions, action_items, created_at"
       )
       .eq("project_id", projectId)
       .order("created_at", { ascending: false });
@@ -221,6 +222,9 @@ export async function getProjectDetailForUser(
       clerkUserId: row.clerk_user_id,
       rawInput: row.raw_input,
       summary: row.summary,
+      problem: typeof row.problem === "string" ? row.problem : "",
+      solution: typeof row.solution === "string" ? row.solution : "",
+      openQuestions: parseOpenQuestionsField(row.open_questions),
       decisions: parseDecisions(row.decisions),
       actionItems: parseActionItems(row.action_items),
       createdAt: row.created_at,
@@ -245,6 +249,9 @@ export async function getProjectDetailForUser(
       clerkUserId: row.clerk_user_id,
       rawInput: row.raw_input,
       summary: row.summary,
+      problem: row.problem ?? "",
+      solution: row.solution ?? "",
+      openQuestions: parseOpenQuestionsFromDbJson(row.open_questions ?? "[]"),
       decisions,
       actionItems: parseActionItemsFromDbJson(row.action_items),
       createdAt: row.created_at,
@@ -353,6 +360,9 @@ export async function insertExtractionRow(params: {
   projectId: string;
   rawInput: string;
   summary: string;
+  problem: string;
+  solution: string;
+  openQuestions: string[];
   decisions: string[];
   actionItems: ActionItemStored[];
 }): Promise<{ id: string }> {
@@ -365,6 +375,9 @@ export async function insertExtractionRow(params: {
         clerk_user_id: params.userId,
         raw_input: params.rawInput,
         summary: params.summary,
+        problem: params.problem,
+        solution: params.solution,
+        open_questions: params.openQuestions,
         decisions: params.decisions,
         action_items: params.actionItems,
       })
@@ -382,6 +395,9 @@ export async function insertExtractionRow(params: {
     userId: params.userId,
     rawInput: params.rawInput,
     summary: params.summary,
+    problem: params.problem,
+    solution: params.solution,
+    openQuestions: params.openQuestions,
     decisions: params.decisions,
     actionItems: params.actionItems,
   });
@@ -690,6 +706,9 @@ export async function duplicateExtractionForUser(
     projectId,
     rawInput: source.rawInput,
     summary,
+    problem: source.problem?.trim() ? `${source.problem.trim()} (copy)` : "",
+    solution: source.solution?.trim() ? `${source.solution.trim()} (copy)` : "",
+    openQuestions: [...(source.openQuestions ?? [])],
     decisions: [...source.decisions],
     actionItems,
   });

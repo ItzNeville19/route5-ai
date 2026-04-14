@@ -12,8 +12,8 @@ export default function DocsRoadmapPage() {
   return (
     <WorkspaceArticle
       backHref="/docs"
-      backLabel="Documentation"
-      kicker="Documentation"
+      backLabel="Guides"
+      kicker="Guides"
       title="Roadmap"
       intro="This page exists so “roadmap” is never a mystery link. Nothing below is guaranteed or sold as shipped product."
     >

@@ -5,6 +5,7 @@ import { Show } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { deskUrl } from "@/lib/desk-routes";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -129,7 +130,7 @@ export default function Hero({ commandTheme = false }: HeroProps) {
                       </p>
                       <div className="mt-5 flex flex-wrap gap-2">
                         <Link
-                          href="/desk"
+                          href={deskUrl()}
                           className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
                         >
                           {t("marketing.hero.openDesk")}

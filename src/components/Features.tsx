@@ -3,7 +3,7 @@
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 import { defaultTransition, easeApple, inViewOpts, springLiquid } from "@/lib/motion";
-import { PRODUCT_ROADMAP } from "@/lib/product-truth";
+import { POSITIONING_WEDGE, PRODUCT_ROADMAP } from "@/lib/product-truth";
 
 const liveFeatures = [
   {
@@ -12,8 +12,8 @@ const liveFeatures = [
         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Structured extraction",
-    description: "Summary, decisions, and actions from every run — stored per project.",
+    title: "Structured passes",
+    description: "Problem, path, decisions, and actions from every run — stored per client or program project.",
   },
   {
     icon: (
@@ -22,7 +22,7 @@ const liveFeatures = [
       </svg>
     ),
     title: "Action tracking",
-    description: "Check off work item by item; completion feeds workspace analytics.",
+    description: "Named next steps you check off; completion and aging feed workspace analytics.",
   },
   {
     icon: (
@@ -31,7 +31,7 @@ const liveFeatures = [
       </svg>
     ),
     title: "Execution metrics",
-    description: "Completion rate, stale open actions, and activity trends from your data.",
+    description: "Completion rate, stale open actions, and trends — from saved runs, not demos.",
   },
   {
     icon: (
@@ -81,10 +81,13 @@ export default function Features() {
           transition={defaultTransition}
           className="mb-12 max-w-[720px]"
         >
-          <p className="label-text mb-5 text-[rgba(167,139,250,0.55)]">Product</p>
+          <p className="label-text mb-5 text-[rgba(167,139,250,0.55)]">{POSITIONING_WEDGE.label}</p>
           <h2 className="section-headline text-white">
-            Execution intelligence — shipped vs next.
+            What ships today — execution-grade workspace, honest roadmap.
           </h2>
+          <p className="mt-4 max-w-[640px] text-[15px] leading-relaxed text-white/50">
+            {POSITIONING_WEDGE.taglineShort}
+          </p>
         </motion.div>
 
         <p className="mb-5 text-[12px] font-semibold uppercase tracking-widest text-[#a78bfa]">

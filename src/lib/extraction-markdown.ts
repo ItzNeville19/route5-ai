@@ -1,11 +1,34 @@
 import type { Extraction } from "@/lib/types";
 
+/** Safe filename for downloads (ASCII, no path chars). */
+export function extractionMarkdownFilename(ex: Extraction): string {
+  const stamp = new Date(ex.createdAt).toISOString().slice(0, 19).replace(/[T:]/g, "-");
+  return `route5-run-${stamp}-${ex.id.slice(0, 8)}.md`;
+}
+
 /** Markdown export for sharing / downstream tools. */
 export function extractionToMarkdown(ex: Extraction): string {
   const lines: string[] = [];
   lines.push(`# Extraction · ${new Date(ex.createdAt).toISOString()}`);
   lines.push("");
-  lines.push("## Summary");
+  if (ex.problem?.trim()) {
+    lines.push("## Problem");
+    lines.push(ex.problem.trim());
+    lines.push("");
+  }
+  if (ex.solution?.trim()) {
+    lines.push("## Path forward");
+    lines.push(ex.solution.trim());
+    lines.push("");
+  }
+  if (ex.openQuestions?.length) {
+    lines.push("## Open questions");
+    for (const q of ex.openQuestions) {
+      lines.push(`- ${q}`);
+    }
+    lines.push("");
+  }
+  lines.push("## Snapshot");
   lines.push(ex.summary?.trim() || "_None_");
   lines.push("");
   lines.push("## Decisions");

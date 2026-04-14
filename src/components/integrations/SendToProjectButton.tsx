@@ -58,7 +58,10 @@ export default function SendToProjectButton({
     }
     writeExtractionDraft(trimmed, sourceLabel);
     setOpen(false);
-    pushDeskWithDraft(router, { projectId, preset: deskPreset ?? null });
+    pushDeskWithDraft(router, {
+      projectId,
+      ...(deskPreset !== undefined ? { preset: deskPreset ?? null } : {}),
+    });
     pushToast("Opening Desk…", "success");
   }
 

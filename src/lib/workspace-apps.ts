@@ -2,6 +2,8 @@
  * Tiles for the workspace “app launcher” — one grid, every entry is a real route.
  */
 
+import { deskUrl } from "@/lib/desk-routes";
+
 export type WorkspaceAppTile = {
   href: string;
   label: string;
@@ -10,7 +12,12 @@ export type WorkspaceAppTile = {
 };
 
 export const WORKSPACE_APP_TILES: WorkspaceAppTile[] = [
-  { group: "Work", href: "/desk", label: "Desk", description: "Capture and run extractions" },
+  {
+    group: "Work",
+    href: deskUrl(),
+    label: "Desk",
+    description: "Capture and run extractions",
+  },
   { group: "Work", href: "/projects", label: "Projects", description: "Overview and list" },
   { group: "Reports", href: "/reports", label: "Reports", description: "Counts and recent runs" },
   { group: "Connections", href: "/integrations", label: "Integrations hub", description: "All connection routes" },

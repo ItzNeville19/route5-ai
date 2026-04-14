@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink, Loader2, MessageSquare, RefreshCw } from "lucide-react";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { deskUrl } from "@/lib/desk-routes";
 
 export default function SlackIntegrationPage() {
   const { pushToast } = useWorkspaceExperience();
@@ -103,7 +104,7 @@ export default function SlackIntegrationPage() {
           Refresh status
         </button>
         <Link
-          href="/desk"
+          href={deskUrl()}
           className="inline-flex items-center gap-2 rounded-xl bg-[var(--workspace-accent)] px-3 py-2 text-[13px] font-semibold text-[var(--workspace-on-accent)] transition hover:opacity-95"
         >
           Open Desk
@@ -145,7 +146,7 @@ export default function SlackIntegrationPage() {
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           <li>Copy a thread or export from Slack.</li>
           <li>
-            Open <Link href="/desk">Desk</Link> and paste — run extraction to get decisions and checklists.
+            Open <Link href={deskUrl()}>Desk</Link> and paste — run extraction to get decisions and checklists.
           </li>
           <li>Pro+ enables this integration page, marketplace shortcuts, and optional server-side tokens.</li>
         </ol>

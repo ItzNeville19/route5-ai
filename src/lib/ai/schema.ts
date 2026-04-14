@@ -6,6 +6,11 @@ export type ActionItemInput = {
 /** Model output before we assign ids and completed flags. */
 export type ExtractionModelResult = {
   summary: string;
+  /** What is broken, at risk, or unclear — distinct from paraphrasing the paste. */
+  problem: string;
+  /** How to resolve it or what to decide between — execution-oriented. */
+  solution: string;
+  openQuestions: string[];
   decisions: string[];
   actionItems: ActionItemInput[];
 };
@@ -30,7 +35,15 @@ export function parseExtractionJson(raw: string): ExtractionModelResult {
     throw new Error("Model JSON must be an object");
   }
   const o = parsed as Record<string, unknown>;
-  const summary = typeof o.summary === "string" ? o.summary : "";
+  const summary = typeof o.summary === "string" ? o.summary.trim() : "";
+  const problem = typeof o.problem === "string" ? o.problem.trim() : "";
+  const solution = typeof o.solution === "string" ? o.solution.trim() : "";
+  const openQuestionsRaw = Array.isArray(o.openQuestions) ? o.openQuestions : [];
+  const openQuestions = openQuestionsRaw
+    .filter((q): q is string => typeof q === "string")
+    .map((q) => q.trim())
+    .filter(Boolean)
+    .slice(0, 12);
   const decisions = Array.isArray(o.decisions)
     ? o.decisions.filter((d): d is string => typeof d === "string")
     : [];
@@ -51,7 +64,34 @@ export function parseExtractionJson(raw: string): ExtractionModelResult {
     })
     .filter((x): x is ActionItemInput => x !== null);
 
-  return { summary, decisions, actionItems };
+  return { summary, problem, solution, openQuestions, decisions, actionItems };
+}
+
+export function parseOpenQuestionsFromDbJson(text: string): string[] {
+  try {
+    const raw = JSON.parse(text) as unknown;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .filter((q): q is string => typeof q === "string")
+      .map((q) => q.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
+/** Supabase jsonb array or SQLite JSON string. */
+export function parseOpenQuestionsField(raw: unknown): string[] {
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((q): q is string => typeof q === "string")
+      .map((q) => q.trim())
+      .filter(Boolean)
+      .slice(0, 12);
+  }
+  if (typeof raw === "string") return parseOpenQuestionsFromDbJson(raw);
+  return [];
 }
 
 export function clampRawInput(raw: string): string {

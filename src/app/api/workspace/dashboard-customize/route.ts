@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/openai-client";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { normalizeDashboardShortcutList } from "@/lib/dashboard-shortcut-href";
+import { deskUrl } from "@/lib/desk-routes";
 import {
   cleanText,
   enforceRateLimits,
@@ -29,7 +30,7 @@ function heuristicSuggestions(companyContext: string): { note: string; shortcuts
   const lower = companyContext.toLowerCase();
   const shortcuts: Shortcut[] = [
     { label: "Projects", href: "/projects" },
-    { label: "Desk", href: "/desk" },
+    { label: "Desk", href: deskUrl() },
     { label: "Daily digest", href: "/workspace/digest" },
     { label: "Customize", href: "/workspace/customize" },
     { label: "Team insights", href: "/team-insights" },

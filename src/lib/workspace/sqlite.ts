@@ -31,6 +31,9 @@ function getDb(): Database.Database {
       clerk_user_id TEXT NOT NULL,
       raw_input TEXT NOT NULL,
       summary TEXT NOT NULL DEFAULT '',
+      problem TEXT NOT NULL DEFAULT '',
+      solution TEXT NOT NULL DEFAULT '',
+      open_questions TEXT NOT NULL DEFAULT '[]',
       decisions TEXT NOT NULL DEFAULT '[]',
       action_items TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL,
@@ -45,6 +48,21 @@ function getDb(): Database.Database {
     .all() as { name: string }[];
   if (!cols.some((c) => c.name === "icon_emoji")) {
     database.exec(`ALTER TABLE projects ADD COLUMN icon_emoji TEXT`);
+  }
+  const extColNames = () =>
+    (database.prepare(`PRAGMA table_info(extractions)`).all() as { name: string }[]).map(
+      (c) => c.name
+    );
+  if (!extColNames().includes("problem")) {
+    database.exec(`ALTER TABLE extractions ADD COLUMN problem TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!extColNames().includes("solution")) {
+    database.exec(`ALTER TABLE extractions ADD COLUMN solution TEXT NOT NULL DEFAULT ''`);
+  }
+  if (!extColNames().includes("open_questions")) {
+    database.exec(
+      `ALTER TABLE extractions ADD COLUMN open_questions TEXT NOT NULL DEFAULT '[]'`
+    );
   }
   db = database;
   return database;
@@ -157,6 +175,9 @@ export type SqliteExtractionRow = {
   clerk_user_id: string;
   raw_input: string;
   summary: string;
+  problem?: string;
+  solution?: string;
+  open_questions?: string;
   decisions: string;
   action_items: string;
   created_at: string;
@@ -169,7 +190,7 @@ export function listExtractionsForProject(
   const d = getDb();
   return d
     .prepare(
-      `SELECT id, project_id, clerk_user_id, raw_input, summary, decisions, action_items, created_at
+      `SELECT id, project_id, clerk_user_id, raw_input, summary, problem, solution, open_questions, decisions, action_items, created_at
        FROM extractions WHERE project_id = ? AND clerk_user_id = ?
        ORDER BY created_at DESC`
     )
@@ -181,6 +202,9 @@ export function insertExtraction(params: {
   userId: string;
   rawInput: string;
   summary: string;
+  problem: string;
+  solution: string;
+  openQuestions: string[];
   decisions: string[];
   actionItems: ActionItemStored[];
 }): { id: string } {
@@ -188,14 +212,17 @@ export function insertExtraction(params: {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   d.prepare(
-    `INSERT INTO extractions (id, project_id, clerk_user_id, raw_input, summary, decisions, action_items, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO extractions (id, project_id, clerk_user_id, raw_input, summary, problem, solution, open_questions, decisions, action_items, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     params.projectId,
     params.userId,
     params.rawInput,
     params.summary,
+    params.problem ?? "",
+    params.solution ?? "",
+    JSON.stringify(params.openQuestions ?? []),
     JSON.stringify(params.decisions),
     JSON.stringify(params.actionItems),
     now
@@ -215,7 +242,7 @@ export function getExtractionForUser(
   const d = getDb();
   const row = d
     .prepare(
-      `SELECT id, project_id, clerk_user_id, raw_input, summary, decisions, action_items, created_at
+      `SELECT id, project_id, clerk_user_id, raw_input, summary, problem, solution, open_questions, decisions, action_items, created_at
        FROM extractions WHERE id = ? AND project_id = ? AND clerk_user_id = ?`
     )
     .get(extractionId, projectId, userId) as SqliteExtractionRow | undefined;

@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CommandOrbIcon } from "@/components/brand/CommandOrbIcon";
 import { MERIDIAN_FULL, MERIDIAN_SHORT, MERIDIAN_TAGLINE } from "@/lib/assistant-brand";
+import { deskUrl } from "@/lib/desk-routes";
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { hourInTimezone } from "@/lib/timezone-date";
 import { getBrowserIanaTimezone } from "@/lib/workspace-location";
@@ -147,7 +148,7 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   {
     label: "Desk capture flow",
     prompt: "Walk me through Desk: pick project, paste, run extraction.",
-    learnMoreHref: "/desk",
+    learnMoreHref: deskUrl(),
     keywords: ["desk", "paste", "capture", "inbox", "compose", "raw", "input", "template", "preset"],
   },
   {

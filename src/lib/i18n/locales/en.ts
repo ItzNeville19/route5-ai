@@ -19,7 +19,7 @@ export const en: Record<string, string> = {
   "sidebar.projectsEmptyNew": "New project",
   "sidebar.loading": "Loading…",
   "sidebar.runs": "{projects} · {runs} runs",
-  "sidebar.docs": "Docs",
+  "sidebar.docs": "Guides",
   "sidebar.support": "Support",
   "sidebar.privacy": "Privacy",
   "sidebar.terms": "Terms",
@@ -60,45 +60,45 @@ export const en: Record<string, string> = {
   "prefs.appearanceIntro": "Themes, previews, and mesh options live in",
   "prefs.signedInSync": "Signed in — workspace preferences sync across devices via your account.",
 
-  "overview.openActionsStrip.badge": "Execution",
+  "overview.openActionsStrip.badge": "Commitments",
   "overview.openActionsStrip.title": "{count} unfinished action(s) in queue",
   "overview.openActionsStrip.lead":
-    "Oldest items surface first on Desk — complete them there or in the project.",
+    "Oldest commitments surface first on Desk — complete them there or in the project.",
   "overview.openActionsStrip.cta": "Go to Desk",
   "overview.openActionsStrip.caughtUp":
-    "No open actions in your queue — checklists are clear. Capture the next thread on Desk when you're ready.",
+    "No open actions in your queue — checklists are clear. Capture the next client or program thread on Desk when you're ready.",
 
   "desk.llmOffTitle": "No LLM on this deployment.",
   "desk.llmOffLead":
-    "Runs use a fast heuristic digest (labeled on each run as \"Heuristic\") — not full semantic analysis. Add",
-  "desk.llmOffTail": "for structured AI extractions.",
+    "Runs use a fast heuristic pass (labeled \"Heuristic\" on each run) — not full semantic analysis. Add",
+  "desk.llmOffTail": "for structured AI passes.",
   "desk.llmOffRead": "Read what you're buying →",
 
   "desk.badge": "Desk",
-  "desk.heroTitle": "Capture desk — where text becomes execution",
+  "desk.heroTitle": "Desk — operational text in, owned next steps out",
   "desk.heroBody":
-    "Pick a project, paste raw material (or send it here from Integrations), run extraction. Runs stay in that project; Overview and Reports use the same saved data — not a throwaway chat.",
+    "Pick a program or client project, paste notes, escalations, or threads (or pull from Integrations), run a pass. Each run is saved there — Overview reads the same data, not scrollback.",
   "desk.pipelineAria": "Desk workflow",
   "desk.pipelineOneLiner":
-    "Choose project → paste text → run extraction → open the project to complete actions and see metrics.",
+    "Choose project → paste text → run a pass → check off named actions and see completion in Overview.",
   "desk.navOverview": "Projects & overview",
   "desk.navSettings": "Workspace settings",
   "desk.navDocs": "Product guide",
   "desk.navMarketplace": "Templates & apps",
   "desk.stepCapture": "Capture",
-  "desk.stepExtract": "Extract",
+  "desk.stepExtract": "Pass",
   "desk.stepProject": "Project",
   "desk.stepOverview": "Overview",
-  "desk.aiExtraction": "AI & extraction",
+  "desk.aiExtraction": "AI & passes",
   "desk.store": "Store",
   "desk.cmdK": "Command palette",
 
   "desk.statusHeading": "What’s configured",
-  "desk.statusAiTitle": "Structured extraction (AI)",
+  "desk.statusAiTitle": "Structured pass (AI)",
   "desk.statusAiOn":
-    "Server has an OpenAI key — extractions return JSON: summary, decisions, and action items.",
+    "Server has an OpenAI key — passes return JSON: what’s wrong, path forward, open questions, snapshot, decisions, and actions.",
   "desk.statusAiOff":
-    "No API key — runs use a labeled heuristic digest (not full semantic analysis). Deploy OPENAI_API_KEY or add it in your host’s env to enable AI.",
+    "No API key — runs use a labeled heuristic pass (not full semantic analysis). Deploy OPENAI_API_KEY or add it in your host’s env to enable AI.",
   "desk.statusBadgeOk": "Enabled",
   "desk.statusBadgeNeeds": "Heuristic only",
   "desk.statusIntegOn": "Tokens or env detected — browse and import from the integration screen.",
@@ -107,9 +107,9 @@ export const en: Record<string, string> = {
   "desk.statusCtaOpen": "Open",
 
   "desk.howHeading": "How Desk works",
-  "desk.howStep1": "Create or select a project — every extraction is stored under it.",
-  "desk.howStep2": "Paste notes, tickets, or threads. Optional: pick a template to pre-fill the box.",
-  "desk.howStep3": "Run extraction. AI produces structured fields; without AI you still get a checklist-friendly digest (marked as heuristic).",
+  "desk.howStep1": "Create or select a project — every pass is stored under that client or program.",
+  "desk.howStep2": "Paste notes, tickets, QBR bullets, or escalations. Optional: pick Client program or another template.",
+  "desk.howStep3": "Run a pass. With AI you get structured fields (problem, path, questions, actions); without AI you still get a labeled heuristic pass.",
   "desk.howStep4":
     "Clear open actions from the queue above or in the project — Overview charts use those completions.",
 
@@ -121,10 +121,10 @@ export const en: Record<string, string> = {
   "desk.ready": "Ready",
   "desk.off": "Off",
 
-  "desk.inbox": "Run extraction",
-  "desk.captureTagline": "Paste raw material for the selected project",
+  "desk.inbox": "Run pass",
+  "desk.captureTagline": "Paste operational text for the selected program or account",
   "desk.captureHelper":
-    "Runs up to 100k characters. Output appears in the project’s Extractions tab with decisions and actions you can complete.",
+    "Runs up to 100k characters. Output lands in the project’s runs list with named actions you can check off.",
   "desk.newProjectCta": "New project",
   "desk.shapeTemplates": "Quick-start templates",
   "desk.presetCategory.product": "Product & design",
@@ -132,17 +132,17 @@ export const en: Record<string, string> = {
   "desk.presetCategory.ops": "Ops & delivery",
   "desk.emptyNoProjectTitle": "Create a project first",
   "desk.emptyNoProjectBody":
-    "Desk always saves to a project. Create one (or pick from Overview), then paste text here.",
+    "Desk always saves to a project. Create one for a client or program (or pick from Overview), then paste text here.",
   "desk.emptyNoProjectCta": "Create project",
   "desk.workInput": "Work input",
   "desk.capturePlaceholder":
-    "Meeting notes, incidents, tickets, retro bullets, Slack exports — material for decisions & actions…",
+    "QBR notes, client escalations, contract threads, meeting notes, tickets, Slack exports — material for decisions & owned actions…",
   "desk.charCount": "{current} / {max} characters",
-  "desk.runExtraction": "Run extraction",
+  "desk.runExtraction": "Run pass",
   "desk.savedTo": "Saved to {name}.",
   "desk.reviewRun": "Review run & actions",
 
-  "desk.outcomesTitle": "Recent extractions · this project",
+  "desk.outcomesTitle": "Recent passes · this project",
   "desk.latestRun": "Latest run",
   "desk.openActionsOnRun": "{count} open action(s) on last run",
   "desk.noOpenActionsOnRun": "No open actions on last run",
@@ -151,11 +151,11 @@ export const en: Record<string, string> = {
   "desk.loading": "Loading…",
   "desk.noRunsProject": "No runs yet for this project.",
   "desk.openCount": "· {count} open",
-  "desk.fullHistory": "Full extraction history",
+  "desk.fullHistory": "Full run history",
 
   "desk.openQueueTitle": "Open next steps (workspace)",
   "desk.openQueueLead":
-    "Oldest unfinished actions first — check them off here without leaving Desk, or open the project.",
+    "Oldest unfinished commitments first — check them off here without leaving Desk, or open the project.",
   "desk.openQueueEmpty": "No open actions left — you're caught up on checklists.",
   "desk.openQueueDone": "Marked done.",
   "desk.openQueueError": "Couldn't update — open the project and try again.",
@@ -164,12 +164,12 @@ export const en: Record<string, string> = {
 
   "desk.errorChooseProject": "Choose a project — runs are always saved there.",
   "desk.errorAddMaterial": "Add raw material to process — notes, logs, or pasted threads.",
-  "desk.errorExtractionFailed": "Couldn't run extraction.",
+  "desk.errorExtractionFailed": "Couldn't complete the pass.",
   "desk.errorNetwork": "Network error.",
   "desk.toastImportedFrom": "Imported from {source}.",
   "desk.toastNothingToImport": "Nothing to import — fetch from Integrations first.",
   "desk.toastImportNeedProject":
-    "Imported from {source}. Create a project (or pick one in the rail) to run extraction.",
+    "Imported from {source}. Create a project (or pick one in the rail) to run a pass.",
 
   "desk.preset.decision.label": "Decision",
   "desk.preset.decision.use": "Choose between options, record rationale.",
@@ -191,6 +191,10 @@ export const en: Record<string, string> = {
   "desk.preset.crm.use": "Stakeholders, health, follow-ups.",
   "desk.preset.competitive.label": "Competitive",
   "desk.preset.competitive.use": "Battlecard / win-loss.",
+  "desk.preset.client-program.label": "Client program",
+  "desk.preset.client-program.use": "QBR prep, escalations, contract commitments.",
+  "desk.preset.postmortem.label": "Post-mortem",
+  "desk.preset.postmortem.use": "Blameless review: impact, timeline, follow-ups.",
   "desk.preset.retro.label": "Retro",
   "desk.preset.retro.use": "What went well / improve / actions.",
 
@@ -228,13 +232,13 @@ export const en: Record<string, string> = {
   "modal.newProject.title": "New project",
   "modal.newProject.close": "Close",
   "modal.newProject.step1Intro":
-    "Name this workspace and pick an icon. You can change these later from the project page.",
+    "Name this workspace for a client, program, or account. You can change these later from the project page.",
   "modal.newProject.icon": "Icon",
   "modal.newProject.projectIconAria": "Project icon",
   "modal.newProject.projectName": "Project name",
-  "modal.newProject.namePlaceholder": "Q4 planning, incident review…",
+  "modal.newProject.namePlaceholder": "Acme contract · Region North, QBR pilot…",
   "modal.newProject.step2Intro":
-    "Optional: start from a template. We'll open Desk with this shape after you create.",
+    "Optional: start from a template (e.g. Client program). We'll open Desk with this shape after you create.",
   "modal.newProject.templateBlank": "Blank",
   "modal.newProject.step3Intro": "You're ready. We'll copy the project link after creation.",
   "modal.newProject.templateLabel": "Template:",
@@ -252,25 +256,25 @@ export const en: Record<string, string> = {
   "modal.newProject.toastCopied": "Project created — link copied.",
   "modal.newProject.toastCreated": "Project created.",
 
-  "marketing.hero.kicker": "Close the execution gap",
-  "marketing.hero.headline": "Decisions and actions, not just summaries.",
+  "marketing.hero.kicker": "Contract & program operations — not a chat tab",
+  "marketing.hero.headline": "Owned next steps per program — proof in your workspace data.",
   "marketing.hero.subtitle":
-    "Knowledge work still arrives as unstructured text — threads, tickets, notes. Route5 is the workspace that turns that pile into clear decisions, checkable actions, and charts from what you actually finish — not a disposable chat.",
-  "marketing.hero.mono": "route5 / workspace · execution intelligence",
+    "Client threads, QBR notes, and internal follow-ups still land as messy text. Route5 turns them into named actions and checklists per project — with history and completion metrics you can stand behind, not scrollback.",
+  "marketing.hero.mono": "route5 / workspace · commitment operations",
   "marketing.hero.cardBody":
-    "Built for the gap between talk and delivery: one capture surface, structured runs, checklists, real completion metrics, Linear/GitHub when you wire them.",
-  "marketing.hero.signedInTitle": "You're signed in — Desk is your daily workspace; Overview rolls up outcomes.",
+    "Built for delivery risk: one capture surface, structured runs, audit-friendly history, real completion metrics — Linear/GitHub when you wire them.",
+  "marketing.hero.signedInTitle": "You're signed in — Desk is where commitments become checklists; Overview proves what got done.",
   "marketing.hero.signedInBody":
-    "Capture imports from connectors, run extractions, and switch projects without losing context.",
+    "Capture imports from connectors, run structured passes, and switch programs without losing ownership context.",
   "marketing.hero.openDesk": "Open Desk",
   "marketing.hero.marketplace": "Marketplace",
-  "marketing.hero.signedOutTitle": "One flow: sign in → project → capture → extract → track.",
-  "marketing.hero.signedOutBody": "Structured runs, checklists, and metrics from your real data.",
+  "marketing.hero.signedOutTitle": "One flow: sign in → project → capture → pass → prove completion.",
+  "marketing.hero.signedOutBody": "Structured runs, owned actions, and metrics from data you saved — not vibes.",
   "marketing.hero.createAccount": "Create account",
   "marketing.hero.logIn": "Log in",
   "marketing.hero.dashboard": "Dashboard",
-  "marketing.hero.noClerkTitle": "One flow: sign in → project → capture → extract.",
-  "marketing.hero.noClerkBody": "Execution intelligence — clear scope, real metrics.",
+  "marketing.hero.noClerkTitle": "One flow: sign in → project → capture → pass → prove completion.",
+  "marketing.hero.noClerkBody": "Clear ownership and metrics from what you save — not a disposable chat.",
   "marketing.hero.contact": "Contact",
   "marketing.hero.getInTouch": "Get in touch",
   "marketing.hero.plans": "Plans",
@@ -279,16 +283,16 @@ export const en: Record<string, string> = {
   "marketing.simple.kicker": "Plain English",
   "marketing.simple.title": "What is Route5?",
   "marketing.simple.lead":
-    "When words pile up and nothing ships, that is the problem Route5 is for. Imagine notes, a ticket, a long thread in one box — turned into clear decisions and to-dos you check off, with progress you can see in your own data. Simple to picture; serious when you use it.",
-  "marketing.simple.step1Title": "One inbox for your words",
+    "When commitments live in email and meeting notes, the failure mode is follow-through — not “we need a summary.” Route5 is for program and client delivery: one place where messy text becomes named owners and checklists, with progress you can see in your own data.",
+  "marketing.simple.step1Title": "One inbox for operational text",
   "marketing.simple.step1Body":
-    "Drop text on Desk or inside a project — paste, import, or pull from Linear or GitHub when you have them set up.",
-  "marketing.simple.step2Title": "A neat list, not a vague blob",
+    "Drop text on Desk or inside a project — escalations, QBR prep, threads — paste, import, or pull from Linear or GitHub when you have them set up.",
+  "marketing.simple.step2Title": "A checklist, not a vague blob",
   "marketing.simple.step2Body":
-    "Each run can give you a summary plus decisions and action items. With AI enabled you get structured JSON; without it, a fast labeled digest — never sold as magic.",
+    "Each run surfaces what’s blocked, what to do next, and open questions — plus decisions and actions. With AI you get structured JSON; without it, a fast labeled pass — never sold as magic.",
   "marketing.simple.step3Title": "Check off work, see real numbers",
   "marketing.simple.step3Body":
-    "Overview and reports read the same timestamps as Desk — completion rates and trends from what you actually stored.",
+    "Overview and reports read the same timestamps as Desk — completion rates, stale actions, and trends from what you actually stored.",
   "marketing.simple.vsChat.kicker": "The objection",
   "marketing.simple.vsChat.colArea": "Area",
   "marketing.simple.vsChat.colChat": "General chat",
@@ -302,9 +306,9 @@ export const en: Record<string, string> = {
   "marketing.simple.anchor": "Plain-English story",
 
   "marketing.showcase.kicker": "Inside the workspace",
-  "marketing.showcase.title": "Every surface, one execution loop",
+  "marketing.showcase.title": "Every surface, one commitment loop",
   "marketing.showcase.subtitle":
-    "The same command canvas after sign-in — Desk for capture, Overview (projects) for the roll-up, Reports for trends. Tap a card to jump in; Clerk signs you in when needed.",
+    "The same command canvas after sign-in — Desk for capture, Overview for open actions and completion, Reports for trends. Tap a card to jump in; Clerk signs you in when needed.",
   "marketing.showcase.tileCta": "Open",
   "marketing.showcase.footnote":
     "Every tile opens the real app. Integration screens say when a token is required; without it you may see labeled samples. Metrics are from your saved runs — not invented numbers.",

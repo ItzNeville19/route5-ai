@@ -10,7 +10,7 @@ export default function DocsPrivacyWorkspacePage() {
   return (
     <WorkspaceArticle
       backHref="/docs"
-      backLabel="Documentation"
+      backLabel="Guides"
       kicker="Legal"
       title="Privacy (workspace)"
       intro="This is the in-workspace summary. The canonical legal text lives on the public site."

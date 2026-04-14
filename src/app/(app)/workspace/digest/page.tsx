@@ -12,6 +12,7 @@ import {
   formatDigestDateLine,
 } from "@/lib/workspace-daily-digest";
 import { digestFingerprint, markDigestFingerprintSeen } from "@/lib/workspace-digest-read";
+import { deskUrl } from "@/lib/desk-routes";
 import { formatRelativeLong } from "@/lib/relative-time";
 
 function weekOverWeekLine(
@@ -79,7 +80,7 @@ export default function WorkspaceDailyDigestPage() {
           the app.
         </p>
         {!loadingSummary && wow ? (
-          <p className="text-[13px] font-medium text-[var(--workspace-success-fg)]">{wow} · rolling 7-day extraction activity</p>
+          <p className="text-[13px] font-medium text-[var(--workspace-success-fg)]">{wow} · rolling 7-day run activity</p>
         ) : null}
       </header>
 
@@ -162,7 +163,7 @@ export default function WorkspaceDailyDigestPage() {
             No runs yet. Capture something on Desk to start your digest.
           </p>
           <Link
-            href="/desk"
+            href={deskUrl()}
             className="mt-3 inline-flex items-center gap-1 text-[14px] font-semibold text-[var(--workspace-accent)] hover:underline"
           >
             Open Desk

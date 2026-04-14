@@ -161,6 +161,9 @@ export async function POST(req: Request) {
       projectId,
       rawInput,
       summary: parsed.summary,
+      problem: parsed.problem,
+      solution: parsed.solution,
+      openQuestions: parsed.openQuestions,
       decisions: parsed.decisions,
       actionItems,
     });
@@ -168,6 +171,9 @@ export async function POST(req: Request) {
     return NextResponse.json({
       extractionId: inserted.id,
       summary: parsed.summary,
+      problem: parsed.problem,
+      solution: parsed.solution,
+      openQuestions: parsed.openQuestions,
       decisions: parsed.decisions,
       actionItems,
       mode: extractionMode,

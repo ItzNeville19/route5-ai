@@ -1,3 +1,5 @@
+import { deskUrl } from "@/lib/desk-routes";
+
 export type WorkspacePaletteProject = { id: string; name: string };
 
 export type PaletteSection =
@@ -136,13 +138,13 @@ export function buildPaletteItems(params: {
   const deskDescription =
     openActionsCount > 0
       ? `${openActionsCount} open action${openActionsCount === 1 ? "" : "s"} — clear the queue on Desk (oldest first)`
-      : "Primary workplace — capture, structured runs & open-action queue";
+      : "Capture operational text — structured passes & commitment queue";
 
   const agent: PaletteItem[] = [
     {
       id: "desk",
       label: "Desk",
-      href: "/desk",
+      href: deskUrl(),
       description: deskDescription,
       keywords: [
         "desk",
@@ -163,7 +165,7 @@ export function buildPaletteItems(params: {
       id: "overview",
       label: "Overview",
       href: "/projects",
-      description: `${who} · projects & workspace snapshot`,
+      description: `${who} · programs, open actions & completion snapshot`,
       keywords: ["home", "workspace", "overview", "dashboard", "projects"],
       section: "agent",
     },
@@ -187,7 +189,7 @@ export function buildPaletteItems(params: {
       id: "new-project",
       label: "New project",
       href: "/projects#new-project",
-      description: "Create · ⌘N",
+      description: "Client or program workspace · ⌘N",
       keywords: ["create", "add", "project"],
       section: "agent",
     },
@@ -245,7 +247,7 @@ export function buildPaletteItems(params: {
     id: `project-${p.id}`,
     label: p.name,
     href: `/projects/${p.id}`,
-    description: "Open project workspace",
+    description: "Runs, actions & history",
     keywords: ["project", p.name.toLowerCase()],
     section: "projects",
   }));
@@ -303,6 +305,22 @@ export function buildPaletteItems(params: {
       href: "/docs/terms",
       description: "Short terms summary",
       keywords: ["terms", "docs"],
+      section: "legal",
+    },
+    {
+      id: "doc-ceo-brief",
+      label: "Executive brief (2 min)",
+      href: "/docs/ceo-brief",
+      description: "Plain-language overview for leaders",
+      keywords: ["ceo", "executive", "brief", "investor", "docs", "guides"],
+      section: "legal",
+    },
+    {
+      id: "doc-sales-playbook",
+      label: "Pilot & discovery questions",
+      href: "/docs/sales-playbook",
+      description: "Questions and metrics for validation",
+      keywords: ["sales", "discovery", "pilot", "validation", "docs", "guides"],
       section: "legal",
     },
     {

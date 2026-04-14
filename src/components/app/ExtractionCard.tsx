@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, CopyPlus, Loader2 } from "lucide-react";
-import { extractionToMarkdown } from "@/lib/extraction-markdown";
+import { Check, Copy, CopyPlus, Download, Loader2 } from "lucide-react";
+import {
+  extractionMarkdownFilename,
+  extractionToMarkdown,
+} from "@/lib/extraction-markdown";
 import { isHeuristicExtractionSummary } from "@/lib/extraction-mode";
 import type { Extraction } from "@/lib/types";
+import ExtractionWorkFrame from "@/components/app/ExtractionWorkFrame";
 
 type Props = {
   projectId: string;
@@ -56,6 +60,22 @@ export default function ExtractionCard({
       window.setTimeout(() => setCopiedMd(false), 2000);
     } catch {
       setErr("Could not copy to clipboard.");
+    }
+  }
+
+  function downloadMarkdown() {
+    try {
+      const md = extractionToMarkdown(extraction);
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = extractionMarkdownFilename(extraction);
+      a.rel = "noopener";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setErr("Could not download file.");
     }
   }
 
@@ -124,7 +144,7 @@ export default function ExtractionCard({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--workspace-border)] pb-3">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-            Extraction
+            Saved run
           </span>
           {heuristicRun ? (
             <span
@@ -186,13 +206,26 @@ export default function ExtractionCard({
             )}
             {copiedMd ? "Copied" : "Markdown"}
           </button>
+          <button
+            type="button"
+            title="Download run as a .md file for email or contract files"
+            onClick={(e) => {
+              e.stopPropagation();
+              downloadMarkdown();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-2.5 py-1.5 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-surface)]"
+          >
+            <Download className="h-3.5 w-3.5 opacity-70" aria-hidden />
+            Download
+          </button>
         </div>
       </div>
 
       <div className="mt-4 space-y-4">
+        <ExtractionWorkFrame extraction={extraction} />
         <div>
           <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-            Summary
+            Snapshot
           </h3>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-fg)]">
             {extraction.summary || "—"}

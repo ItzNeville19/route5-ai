@@ -25,7 +25,8 @@ import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperien
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { MERIDIAN_SHORT } from "@/lib/assistant-brand";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
-import { PRODUCT_MISSION } from "@/lib/product-truth";
+import { deskUrl } from "@/lib/desk-routes";
+import { POSITIONING_WEDGE, PRODUCT_MISSION } from "@/lib/product-truth";
 import type { Project } from "@/lib/types";
 
 const tierLabel =
@@ -190,6 +191,9 @@ export default function WorkspaceSidebar() {
         >
           {PRODUCT_MISSION.name}
         </Link>
+        <p className="mt-1.5 line-clamp-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
+          {POSITIONING_WEDGE.label}
+        </p>
       </div>
 
       {/* Account — compact strip */}
@@ -247,7 +251,7 @@ export default function WorkspaceSidebar() {
         ) : null}
 
         <NavLink
-          href="/desk"
+          href={deskUrl()}
           active={path === "/desk"}
           icon={PanelTop}
           label={t("sidebar.desk")}

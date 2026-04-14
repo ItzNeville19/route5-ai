@@ -38,6 +38,11 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 ## Route 5 app (Clerk + Supabase + OpenAI)
 
 1. Copy `.env.example` to `.env.local` and set **Clerk**, **OpenAI**, and **Supabase** variables (see comments in `.env.example`).
-2. In [Supabase](https://supabase.com) SQL Editor, run [`supabase/migrations/001_route5_mvp.sql`](supabase/migrations/001_route5_mvp.sql).
+2. In [Supabase](https://supabase.com) SQL Editor, run migrations **in order**:
+   - [`supabase/migrations/001_route5_mvp.sql`](supabase/migrations/001_route5_mvp.sql)
+   - [`supabase/migrations/002_project_icon_emoji.sql`](supabase/migrations/002_project_icon_emoji.sql)
+   - [`supabase/migrations/003_extraction_problem_solution.sql`](supabase/migrations/003_extraction_problem_solution.sql) (structured pass fields: problem, path, open questions)
 3. In Clerk, allow your production URL (and `http://localhost:3000` for dev) under **Domains**.
-4. Deploy to Vercel and add the same env vars in the project settings (never commit secrets).
+4. Run `npm run launch-check` locally before shipping (lint, theme audit, production build).
+5. Deploy to Vercel (or your host) and add the same env vars in project settings (never commit secrets).
+6. Signed-in workspace docs live under `/docs` (e.g. **Executive brief**, **Sales playbook**, **What we ship**).

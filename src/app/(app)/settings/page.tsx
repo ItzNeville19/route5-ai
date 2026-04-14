@@ -28,7 +28,7 @@ function PlanUsageStrip() {
       <p className="font-semibold text-[var(--workspace-fg)]">
         <span className={paid ? "text-violet-200" : ""}>{entitlements.tierLabel}</span>
         {" · "}
-        {entitlements.usage.projectCount}/{maxLabel} projects · {month}/{capLabel} extractions this month (UTC) ·{" "}
+        {entitlements.usage.projectCount}/{maxLabel} projects · {month}/{capLabel} runs this month (UTC) ·{" "}
         {entitlements.usage.extractionCount} all-time
       </p>
       <p className="mt-2 text-[12px] text-[var(--workspace-muted-fg)]">{entitlements.tierTagline}</p>

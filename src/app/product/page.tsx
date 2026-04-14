@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import AdvertisingSafeHarbor from "@/components/marketing/AdvertisingSafeHarbor";
 import {
+  POSITIONING_WEDGE,
   PRODUCT_LIVE,
   PRODUCT_PROBLEM,
   PRODUCT_ROADMAP,
@@ -13,7 +14,7 @@ import {
 export const metadata: Metadata = {
   title: "What we ship — Route5",
   description:
-    "Live product scope, roadmap, and how Route5 differs from general-purpose chat — durable projects, actions, and metrics.",
+    "Live scope for program and client delivery: projects, structured passes, owned actions, completion metrics — plus roadmap and chat comparison.",
 };
 
 export default function ProductPage() {
@@ -34,7 +35,20 @@ export default function ProductPage() {
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            01 — The problem Route5 targets
+            01 — Who we built for first
+          </h2>
+          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
+            <strong className="font-semibold">{POSITIONING_WEDGE.label}.</strong> Primary
+            buyers: {POSITIONING_WEDGE.buyerRoles.join("; ")}.
+          </p>
+          <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
+            {POSITIONING_WEDGE.buyerSafePromise}
+          </p>
+        </section>
+
+        <section className="mt-12 border-t border-black/[0.08] pt-12">
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
+            02 — The problem Route5 targets
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
             <strong className="font-semibold">{PRODUCT_PROBLEM.headline}.</strong>{" "}
@@ -50,7 +64,7 @@ export default function ProductPage() {
           className="mt-12 scroll-mt-28 border-t border-black/[0.08] pt-12"
         >
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            02 — {PRODUCT_VS_EPHEMERAL_CHAT.sectionTitle}
+            03 — {PRODUCT_VS_EPHEMERAL_CHAT.sectionTitle}
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             {PRODUCT_VS_EPHEMERAL_CHAT.intro}
@@ -79,11 +93,11 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            03 — What we built (live)
+            04 — What we built (live)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-            Route5 is a signed-in workspace: projects, paste-in extraction, and
-            structured outputs backed by your own tenant data store.
+            Route5 is a signed-in workspace: projects, Desk passes, structured fields, and
+            action checklists — backed by your tenant data store. {POSITIONING_WEDGE.qualityBar}
           </p>
           <ul className="mt-6 space-y-4 text-[15px] leading-relaxed text-[#1d1d1f]">
             <li className="glass-surface rounded-2xl px-5 py-4">
@@ -113,7 +127,7 @@ export default function ProductPage() {
 
         <section id="roadmap" className="mt-12 scroll-mt-28 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            04 — Roadmap (explicitly not “vapor”)
+            05 — Roadmap (explicitly not “vapor”)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             These are directions we may pursue — they are{" "}
@@ -131,7 +145,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            05 — Why teams talk to us
+            06 — Why teams talk to us
           </h2>
           <ul className="mt-6 space-y-3 text-[15px] leading-relaxed text-[#1d1d1f]">
             <li>· Clarity: one workspace, one extraction flow, traceable history.</li>
@@ -142,7 +156,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            06 — Risks (we say them out loud)
+            07 — Risks (we say them out loud)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             Language models can hallucinate or miss context. Route5 outputs are
@@ -153,7 +167,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            07 — The ask
+            08 — The ask
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             If the fit is interesting: we&apos;ll walk your team through the

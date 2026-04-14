@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { deskUrl } from "@/lib/desk-routes";
 import { Check, X } from "lucide-react";
 
 function dismissedKey(userId: string | undefined) {
@@ -77,10 +78,18 @@ export default function DashboardStartHereCard({
             Where to start
           </p>
           <p className="mt-2 max-w-3xl text-[13px] leading-relaxed text-zinc-400">
-            Route5 is <strong className="font-semibold text-zinc-200">execution intelligence</strong>: paste messy
-            text into a <strong className="font-semibold text-zinc-200">project</strong>, run a structured extraction
-            (summary, decisions, actions), then check work off — this page shows real completion and activity from your
-            data.
+            <strong className="font-semibold text-zinc-200">Projects</strong> hold your work.{" "}
+            <strong className="font-semibold text-zinc-200">Desk</strong> turns pasted notes into clear next steps you
+            can check off. This page shows <strong className="font-semibold text-zinc-200">real progress</strong> from
+            what you saved — not a chat that scrolls away.
+          </p>
+          <p className="mt-3">
+            <Link
+              href="/docs/ceo-brief"
+              className="text-[12px] font-semibold text-[var(--workspace-accent-hover)] underline-offset-2 hover:underline"
+            >
+              New here? Read the 2‑minute executive brief →
+            </Link>
           </p>
         </div>
         <button
@@ -159,10 +168,12 @@ export default function DashboardStartHereCard({
               {hasRun ? <Check className="h-4 w-4 text-[#d9f99d]" strokeWidth={2.5} aria-hidden /> : null}
             </div>
             <p className="mt-2 text-[13px] font-medium leading-snug text-zinc-200">Capture on Desk</p>
-            <p className="mt-1 text-[11px] leading-snug text-zinc-300">Paste notes or tickets, then run extraction.</p>
+            <p className="mt-1 text-[11px] leading-snug text-zinc-300">
+              Paste notes or tickets, then run one step to get next moves.
+            </p>
             {!hasRun ? (
               <Link
-                href="/desk"
+                href={deskUrl()}
                 className="mt-3 inline-block text-[12px] font-semibold text-[var(--workspace-accent-hover)] underline-offset-2 hover:underline"
               >
                 Open Desk →
@@ -187,7 +198,7 @@ export default function DashboardStartHereCard({
             <span className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">Step 3</span>
             <p className="mt-2 text-[13px] font-medium leading-snug text-zinc-200">Track execution</p>
             <p className="mt-1 text-[11px] leading-snug text-zinc-400">
-              Check off actions in a project; metrics below update from your database.
+              Check off actions in a project; charts below reflect what you actually finished.
             </p>
             <Link
               href="/reports"

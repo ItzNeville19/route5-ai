@@ -32,6 +32,8 @@ import DeskCaptureToolbar from "@/components/desk/DeskCaptureToolbar";
 import DeskOpenActions from "@/components/desk/DeskOpenActions";
 import DeskShortcutsModal from "@/components/desk/DeskShortcutsModal";
 import { deskCaptureStorageKey } from "@/lib/desk-storage";
+import { deskUrl } from "@/lib/desk-routes";
+import { DEFAULT_DESK_PRESET_ID } from "@/lib/positioning-wedge";
 import {
   EXTRACTION_PRESETS,
   getExtractionPreset,
@@ -47,12 +49,12 @@ import {
 
 const MAX_CHARS = 100_000;
 
+/** Desk URL preserving explicit `preset: null` (no template) vs default wedge preset. */
 function buildDeskPath(opts: { projectId?: string | null; preset?: string | null }): string {
-  const q = new URLSearchParams();
-  if (opts.projectId) q.set("projectId", opts.projectId);
-  if (opts.preset?.trim()) q.set("preset", opts.preset.trim());
-  const s = q.toString();
-  return s ? `/desk?${s}` : "/desk";
+  const projectId = opts.projectId ?? undefined;
+  if (opts.preset === null) return deskUrl({ projectId, preset: null });
+  if (opts.preset?.trim()) return deskUrl({ projectId, preset: opts.preset.trim() });
+  return deskUrl({ projectId });
 }
 
 function openNewProjectModal() {
@@ -193,7 +195,11 @@ export default function DeskWorkspace() {
     () =>
       PRESET_CATEGORY_ORDER.map((category) => ({
         category,
-        presets: EXTRACTION_PRESETS.filter((p) => p.category === category),
+        presets: EXTRACTION_PRESETS.filter((p) => p.category === category).sort((a, b) => {
+          if (a.id === DEFAULT_DESK_PRESET_ID) return -1;
+          if (b.id === DEFAULT_DESK_PRESET_ID) return 1;
+          return a.label.localeCompare(b.label);
+        }),
       })),
     []
   );
@@ -220,6 +226,21 @@ export default function DeskWorkspace() {
       return projects[0]?.id ?? "";
     });
   }, [searchParams, projects]);
+
+  /** Wedge default: add Client program to URL when there is no saved draft (plan: primary Desk path). */
+  useEffect(() => {
+    if (searchParams.get("draft") === "1") return;
+    if (searchParams.get("preset")) return;
+    if (!projectId || loadingProjects) return;
+    let hasDraft = false;
+    try {
+      hasDraft = Boolean(localStorage.getItem(deskCaptureStorageKey(projectId))?.trim());
+    } catch {
+      /* ignore */
+    }
+    if (hasDraft) return;
+    router.replace(buildDeskPath({ projectId }), { scroll: false });
+  }, [projectId, loadingProjects, searchParams, router]);
 
   useEffect(() => {
     if (searchParams.get("draft") === "1") return;
@@ -804,7 +825,9 @@ export default function DeskWorkspace() {
                               key={p.id}
                               type="button"
                               onClick={() => {
-                                router.replace(`/desk?preset=${encodeURIComponent(p.id)}`, { scroll: false });
+                                router.replace(buildDeskPath({ projectId, preset: p.id }), {
+                                  scroll: false,
+                                });
                                 setText(p.body);
                               }}
                               className={`rounded-xl border px-3 py-2 text-left text-[12px] font-medium transition ${

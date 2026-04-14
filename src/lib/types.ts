@@ -15,7 +15,14 @@ export type Extraction = {
   projectId: string;
   clerkUserId: string;
   rawInput: string;
+  /** Short headline / stakes — not a paste replay (see problem & solution). */
   summary: string;
+  /** Core pressure, gap, or ambiguity to resolve. */
+  problem: string;
+  /** Agreed or recommended direction; may state options if undecided. */
+  solution: string;
+  /** Unknowns still to answer (0–8 in model; empty when none). */
+  openQuestions: string[];
   decisions: string[];
   actionItems: ActionItemStored[];
   createdAt: string;

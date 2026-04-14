@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, FileJson, Users } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { deskUrl } from "@/lib/desk-routes";
 import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
 
 type Summary = {
@@ -103,7 +104,7 @@ export default function TeamInsightsContent() {
           transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 p-5 transition hover:border-[var(--workspace-accent)]/25"
         >
-          <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Extractions (workspace)</p>
+          <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Saved runs (workspace)</p>
           <p className="mt-2 text-[28px] font-semibold tabular-nums text-[var(--workspace-fg)]">
             {loading || loadError ? "—" : data?.extractionCount ?? "—"}
           </p>
@@ -213,15 +214,15 @@ export default function TeamInsightsContent() {
             Reports
           </Link>{" "}
           read one workspace snapshot. For execution detail, use{" "}
-          <Link href="/desk" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+          <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
             Desk
           </Link>{" "}
           — then duplicate any run inside a project when you need a clean copy to iterate on.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           <span className="font-medium text-[var(--workspace-fg)]">Duplicate a run:</span> open a project →
-          extractions → <span className="text-[var(--workspace-fg)]">Duplicate</span> on a card (same project,
-          new extraction id).
+          saved runs → <span className="text-[var(--workspace-fg)]">Duplicate</span> on a card (same project,
+          new run id).
         </p>
       </motion.div>
 

@@ -3,6 +3,8 @@
  * Shown in the workspace sidebar “App library” list.
  */
 
+import { deskUrl } from "@/lib/desk-routes";
+
 export type WorkspaceShortcutAction = "palette" | "relay" | "activityPanel";
 
 export type WorkspaceShortcut =
@@ -23,7 +25,7 @@ export const WORKSPACE_SHORTCUTS: WorkspaceShortcut[] = [
   { id: "s0b", label: "Reports", href: "/reports" },
   { id: "s1", label: "Dashboard", href: "/projects" },
   { id: "s2", label: "New project", href: "/projects#new-project" },
-  { id: "s3", label: "Desk", href: "/desk" },
+  { id: "s3", label: "Desk", href: deskUrl() },
   { id: "s4", label: "Marketplace", href: "/marketplace" },
   { id: "s5", label: "Guided setup", href: "/onboarding" },
   { id: "s6", label: "Integrations", href: "/integrations" },

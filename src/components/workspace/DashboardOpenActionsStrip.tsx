@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, ListTodo } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { deskUrl } from "@/lib/desk-routes";
 
 type Props = {
   loading: boolean;
@@ -53,7 +54,7 @@ export default function DashboardOpenActionsStrip({
           </div>
         </div>
         <Link
-          href="/desk"
+          href={deskUrl()}
           className="mt-4 inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] transition hover:opacity-95 sm:mt-0"
         >
           {t("overview.openActionsStrip.cta")}

@@ -21,6 +21,7 @@ import {
   MARKETPLACE_CATEGORIES,
   type MarketplaceApp,
 } from "@/lib/marketplace-catalog";
+import { deskUrl } from "@/lib/desk-routes";
 import { launchHrefForApp } from "@/lib/marketplace-links";
 
 const appleEase = [0.22, 1, 0.36, 1] as const;
@@ -112,7 +113,7 @@ function StickyLaunchCta({ app }: { app: MarketplaceApp }) {
       "flex min-h-[50px] w-full items-center justify-center rounded-[12px] bg-[var(--workspace-fg)] text-[17px] font-semibold text-[var(--workspace-canvas)] shadow-lg transition-transform active:scale-[0.98] sm:min-h-[52px]";
     return (
       <div className="flex flex-col gap-2">
-        <Link href="/desk" className={deskPrimaryClass}>
+        <Link href={deskUrl()} className={deskPrimaryClass}>
           Use Desk
         </Link>
         {app.contactTopic ? (
@@ -217,9 +218,9 @@ export default function MarketplaceAppLaunchScreen({
             : "Embedded database active"
         : app.id === "openai"
           ? health.extractionMode === "ai"
-            ? "LLM extraction"
+            ? "AI pass"
             : health.extractionMode === "offline"
-              ? "Heuristic extraction"
+              ? "Offline pass"
               : null
           : null
       : null;

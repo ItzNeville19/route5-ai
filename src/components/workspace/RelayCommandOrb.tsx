@@ -15,6 +15,7 @@ import {
 import { CommandOrbIcon } from "@/components/brand/CommandOrbIcon";
 import { useCommandPalette } from "@/components/CommandPalette";
 import { MERIDIAN_SHORT } from "@/lib/assistant-brand";
+import { deskUrl } from "@/lib/desk-routes";
 
 export default function RelayCommandOrb() {
   const router = useRouter();
@@ -122,7 +123,7 @@ export default function RelayCommandOrb() {
             Integrations hub
           </Link>
           <Link
-            href="/desk"
+            href={deskUrl()}
             role="menuitem"
             className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-zinc-200 transition hover:bg-white/[0.06]"
             onClick={() => setOpen(false)}

@@ -61,10 +61,10 @@ function heuristicReply(
     return "Ask me about projects, extractions, integrations, or what to do next.";
   }
   if (m.includes("help") || m.includes("lost") || m.includes("start")) {
-    return `Hi ${ctx.firstName} — here’s the fast path: (1) Create a project on Projects. (2) Open it and paste text. (3) Run extraction. Use the sidebar for Desk, Apps, and Integrations. Pin projects you use often.`;
+    return `Hi ${ctx.firstName} — fast path: (1) Create a project for a client or program on Projects. (2) Open Desk, pick it, paste operational text. (3) Run a pass and check off actions. Pin programs you use often.`;
   }
   if (m.includes("project") && ctx.projectCount === 0) {
-    return "You don’t have a project yet. Go to Projects → name one (e.g. “Q4 planning”) → Create. Then open it to run extractions.";
+    return "You don’t have a project yet. Go to Projects → name one for a client or program (e.g. “Acme contract · North”) → Create. Then run a pass from Desk.";
   }
   if (m.includes("template")) {
     return "Templates (Decision, Meeting, …) jump you into a project with the composer pre-filled. Pick one on the Projects page or use ?preset= on a project URL.";
@@ -73,12 +73,12 @@ function heuristicReply(
     return "Open Integrations — Linear and GitHub work immediately with samples and imports. Link your org anytime for live sync.";
   }
   if (m.includes("desk")) {
-    return "Desk is your capture surface — use it to draft before you file into a project.";
+    return "Desk is where you paste client threads, notes, or escalations, run a structured pass, and clear open actions — always saved to a project.";
   }
   if (ctx.recentProjectNames.length > 0 && (m.includes("which") || m.includes("last"))) {
     return `Recent context: you’ve worked in “${ctx.recentProjectNames[0]}”. Open it from the sidebar or Projects.`;
   }
-  return `You have ${ctx.projectCount} project(s) and ${ctx.extractionCount} extraction run(s). Tell me “help” for steps, or ask about integrations and templates.`;
+  return `You have ${ctx.projectCount} project(s) and ${ctx.extractionCount} saved run(s). Say “help” for steps, or ask about Desk, actions, or integrations.`;
 }
 
 export async function POST(req: Request) {
@@ -127,12 +127,13 @@ export async function POST(req: Request) {
       try {
         const openai = createOpenAIClient();
         const model = getOpenAIModel();
-        const system = `You are ${MERIDIAN_FULL}, the in-app workspace helper. Stay in character across turns: read the full thread and answer the latest user message in context. Be concise, friendly, iMessage-short. You know:
+        const system = `You are ${MERIDIAN_FULL}, the in-app workspace helper. Stay in character across turns: read the full thread and answer the latest user message in context. Be concise, friendly, iMessage-short. Route5 is built for contract and program operations: commitments, named actions, and completion metrics — not disposable chat.
+You know:
 - User’s first name: ${firstName}
-- Projects: ${summary.projectCount}, extractions: ${summary.extractionCount}
+- Projects: ${summary.projectCount}, saved runs: ${summary.extractionCount}
 - Recent project names: ${recentProjectNames.join(", ") || "none"}
 - User notes (memory): ${memory || "none"}
-Only give accurate product advice: projects hold extractions; paste text and run extraction; integrations for Linear/GitHub; Desk for capture. You can suggest navigation: link users to /projects, /desk, /integrations, /workspace/apps, /settings, /docs/product. No claiming features that don’t exist.`;
+Only give accurate product advice: projects hold runs with structured fields and action checklists; Desk is for paste-and-pass; Overview shows completion from saved data; integrations for Linear/GitHub as documented. Suggest /projects, /desk, /integrations, /workspace/apps, /settings, /docs/product. No claiming features that don’t exist.`;
 
         const chatMessages = normalized.map((t) => ({
           role: t.role as "user" | "assistant",

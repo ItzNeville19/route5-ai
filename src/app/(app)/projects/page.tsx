@@ -14,6 +14,7 @@ import DashboardWorkspaceHero from "@/components/workspace/DashboardWorkspaceHer
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+import { deskUrl } from "@/lib/desk-routes";
 import { EXTRACTION_PRESETS } from "@/lib/extraction-presets";
 import type { Project } from "@/lib/types";
 
@@ -156,7 +157,7 @@ export default function ProjectsPage() {
             </p>
           </div>
           <Link
-            href="/desk"
+            href={deskUrl()}
             className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
           >
             Open Desk
@@ -180,7 +181,7 @@ export default function ProjectsPage() {
           </button>
 
           <Link
-            href={projects[0] ? `/projects/${projects[0].id}` : "/desk"}
+            href={projects[0] ? `/projects/${projects[0].id}` : deskUrl()}
             className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/72 px-5 py-5 transition hover:bg-[var(--workspace-nav-hover)]"
           >
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">

@@ -5,7 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
+import { deskUrl } from "@/lib/desk-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+
+const DESK_HREF = deskUrl();
 
 function hasClerkKey() {
   return Boolean(
@@ -31,7 +34,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? "/desk" : "/onboarding";
+    const next = isOnboardingComplete(userId) ? DESK_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -142,8 +145,8 @@ export default function LoginPage() {
           <SignIn
             routing="hash"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl="/desk"
-            signUpFallbackRedirectUrl="/desk"
+            fallbackRedirectUrl={DESK_HREF}
+            signUpFallbackRedirectUrl={DESK_HREF}
             appearance={{
               elements: {
                 rootBox: "w-full mx-auto max-w-[420px]",

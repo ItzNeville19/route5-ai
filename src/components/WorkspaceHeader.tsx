@@ -8,13 +8,16 @@ import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { deskUrl } from "@/lib/desk-routes";
+
+const DESK_HREF = deskUrl();
 
 const NAV: readonly {
   href: string;
   label: string;
   match: (p: string) => boolean;
 }[] = [
-  { href: "/desk", label: "Desk", match: (p) => p === "/desk" },
+  { href: DESK_HREF, label: "Desk", match: (p) => p === "/desk" },
   {
     href: "/projects",
     label: "Overview",

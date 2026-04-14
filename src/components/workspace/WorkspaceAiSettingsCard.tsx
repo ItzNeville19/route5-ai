@@ -28,10 +28,10 @@ export default function WorkspaceAiSettingsCard() {
               id="ai-prefs-heading"
               className="text-[16px] font-semibold tracking-[-0.02em] text-neutral-900 dark:text-[var(--workspace-fg)]"
             >
-              AI &amp; extraction
+              AI &amp; passes
             </h2>
             <p className="text-[12px] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Used for Desk and project extractions.{" "}
+              Used for Desk and project runs.{" "}
               <Link href="/marketplace" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
                 Marketplace
               </Link>{" "}
@@ -47,7 +47,7 @@ export default function WorkspaceAiSettingsCard() {
             htmlFor="extraction-provider"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]"
           >
-            Extraction provider
+            Pass provider
           </label>
           <select
             id="extraction-provider"

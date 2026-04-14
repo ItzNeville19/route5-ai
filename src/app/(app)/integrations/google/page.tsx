@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { deskUrl } from "@/lib/desk-routes";
 import { IconGoogle } from "@/components/marketplace/brand-icons";
 
 export default function GoogleIntegrationPage() {
@@ -33,7 +34,7 @@ export default function GoogleIntegrationPage() {
           </h2>
           <p className="mt-3 text-[14px] leading-relaxed text-[var(--workspace-fg)]">
             Paste meeting notes or email excerpts into{" "}
-            <Link href="/desk" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+            <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
               Desk
             </Link>{" "}
             or a project and run extraction — same structured output you already use. Native Google OAuth and file
@@ -41,7 +42,7 @@ export default function GoogleIntegrationPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
-              href="/desk"
+              href={deskUrl()}
               className="inline-flex items-center justify-center rounded-xl bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-md transition hover:opacity-95"
             >
               Open Desk

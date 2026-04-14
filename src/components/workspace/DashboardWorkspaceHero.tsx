@@ -31,6 +31,7 @@ import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { getBrowserIanaTimezone } from "@/lib/workspace-location";
 import DashboardTodayPanel from "@/components/workspace/DashboardTodayPanel";
 import EnterpriseIntelChartModal from "@/components/workspace/EnterpriseIntelChartModal";
+import { deskUrl } from "@/lib/desk-routes";
 import { formatPlanCap } from "@/lib/plan-usage-display";
 
 type Props = {
@@ -297,7 +298,7 @@ export default function DashboardWorkspaceHero({
               <ArrowUpRight className="h-4 w-4" strokeWidth={2.5} aria-hidden />
             </button>
             <Link
-              href="/desk"
+              href={deskUrl()}
               className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 shadow-md transition hover:bg-zinc-100"
             >
               Desk
@@ -336,7 +337,7 @@ export default function DashboardWorkspaceHero({
 
           {!summaryLoading && !latest && projectCount > 0 && extractionCount === 0 ? (
             <Link
-              href="/desk"
+              href={deskUrl()}
               className="mt-4 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
             >
               Run your first capture on Desk

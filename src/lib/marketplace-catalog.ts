@@ -1,4 +1,5 @@
 import type { BrandIconId } from "@/components/marketplace/brand-icons";
+import { deskUrl } from "@/lib/desk-routes";
 
 export type MarketplaceCategoryId =
   | "all"
@@ -62,11 +63,11 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "virtual-desk",
     name: "Desk",
-    subtitle: "Capture text, run extractions — your main surface.",
+    subtitle: "Paste text, run a pass — your main workspace surface.",
     category: "built-in",
     kind: "native",
     brandId: "workspaceHome",
-    href: "/desk",
+    href: deskUrl(),
   },
   {
     id: "linear",
@@ -91,7 +92,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "figma",
     name: "Figma",
-    subtitle: "Design links and feedback → structured extractions on Desk.",
+    subtitle: "Design links and feedback → structured runs on Desk.",
     category: "collaboration",
     kind: "native",
     brandId: "figma",
@@ -129,7 +130,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "workspace-reports",
     name: "Reports",
-    subtitle: "Workspace counts and recent extraction activity with links into each run.",
+    subtitle: "Workspace counts and recent run activity with links into each project.",
     category: "data",
     kind: "native",
     brandId: "workspaceSparkle",
@@ -226,7 +227,7 @@ export const MARKETPLACE_STACK: MarketplaceApp[] = [
   {
     id: "openai",
     name: "OpenAI",
-    subtitle: "Smarter extractions when available — graceful offline mode always on.",
+    subtitle: "Smarter passes when AI is on — offline pass always available.",
     category: "data",
     kind: "stack",
     brandId: "openai",
@@ -250,7 +251,7 @@ export const MARKETPLACE_ROADMAP: MarketplaceApp[] = [
   {
     id: "teams",
     name: "Microsoft Teams",
-    subtitle: "Channel context → extraction (planned).",
+    subtitle: "Channel context → Desk runs (planned).",
     category: "collaboration",
     kind: "roadmap",
     brandId: "teams",

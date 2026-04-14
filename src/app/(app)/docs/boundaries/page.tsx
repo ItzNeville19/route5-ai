@@ -12,10 +12,10 @@ export default function DocsBoundariesPage() {
   return (
     <WorkspaceArticle
       backHref="/docs"
-      backLabel="Documentation"
-      kicker="Documentation"
-      title="Boundaries"
-      intro={PRODUCT_HONEST.oneLine}
+      backLabel="Guides"
+      kicker="Guides"
+      title="What we do not do (yet)"
+      intro="Route5 is honest about limits so nobody expects magic. Summary below; details in What we ship."
     >
       <section className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] p-5 sm:p-6">
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">

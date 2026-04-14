@@ -7,7 +7,7 @@ import { BILLING_LIVE } from "@/lib/plans-catalog";
 
 export const metadata: Metadata = {
   title: "Plans & billing — Route5",
-  description: "Workspace plans, limits, and upgrades for Route5 execution intelligence.",
+  description: "Workspace plans, limits, and upgrades for Route5.",
 };
 
 export default function AccountPlansPage() {

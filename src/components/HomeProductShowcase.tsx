@@ -16,6 +16,7 @@ import {
   Users,
 } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { deskUrl } from "@/lib/desk-routes";
 import { easeApple, staggerContainer, staggerItemTight } from "@/lib/motion";
 
 type Tile = {
@@ -36,7 +37,7 @@ export default function HomeProductShowcase() {
 
   const tiles: Tile[] = [
     {
-      href: "/desk",
+      href: deskUrl(),
       icon: <Inbox className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
       title: t("marketing.showcase.deskTitle"),
       body: t("marketing.showcase.deskBody"),

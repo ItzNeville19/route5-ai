@@ -8,6 +8,7 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import ExecutionTrendChart from "@/components/workspace/ExecutionTrendChart";
 import ReportsActivityHeatmap from "@/components/workspace/ReportsActivityHeatmap";
 import { emptyActivitySeries } from "@/lib/workspace-activity-stats";
+import { deskUrl } from "@/lib/desk-routes";
 import type {
   ActivitySeriesByRange,
   ChartTimeRange,
@@ -360,7 +361,7 @@ export default function ReportsPage() {
         ) : recent.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-5 py-10 text-center text-[13px] text-[var(--workspace-muted-fg)]">
             No runs yet — open{" "}
-            <Link href="/desk" className="font-medium text-[var(--workspace-accent)] hover:underline">
+            <Link href={deskUrl()} className="font-medium text-[var(--workspace-accent)] hover:underline">
               Desk
             </Link>{" "}
             or a{" "}

@@ -78,6 +78,26 @@ export const EXTRACTION_PRESETS: ExtractionPreset[] = [
 `,
   },
   {
+    id: "client-program",
+    label: "Client program",
+    use: "QBR prep, escalations, contract commitments.",
+    category: "gtm",
+    body: `## Account / program
+
+## Client context (sites, contract window, stakeholders)
+
+## What we committed to (verbatim if possible)
+
+## Open issues / escalations
+
+## Risks & dependencies
+
+## Next internal actions (owner / due)
+
+## Notes for QBR or exec readout
+`,
+  },
+  {
     id: "sales-call",
     label: "Sales call",
     use: "Discovery notes → next step.",
@@ -145,6 +165,28 @@ export const EXTRACTION_PRESETS: ExtractionPreset[] = [
 ## Root cause (if known)
 
 ## Next steps
+`,
+  },
+  {
+    id: "postmortem",
+    label: "Post-mortem",
+    use: "Blameless review: impact, timeline, follow-ups.",
+    category: "ops",
+    body: `## Summary (what happened in one paragraph)
+
+## Severity / customer impact
+
+## Timeline (UTC)
+
+## Detection & response
+
+## Root cause & contributing factors
+
+## What went well
+
+## What we will change
+
+## Action items (owner / due)
 `,
   },
   {

@@ -36,9 +36,9 @@ export default function SupportPage() {
         </a>
       </div>
       <p className="mt-8 text-[13px] text-[var(--workspace-muted-fg)]">
-        Prefer docs first?{" "}
+        Prefer guides first?{" "}
         <Link href="/docs" className="font-medium text-[var(--workspace-accent)] hover:underline">
-          Documentation hub
+          Open Guides
         </Link>
         .
       </p>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import type { ProjectHealthRow } from "@/lib/workspace-activity-stats";
+import { deskUrl } from "@/lib/desk-routes";
 import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
 
 type Props = {
@@ -99,7 +100,7 @@ export default function DashboardStatusCard({
               Capture → extract → actions land in projects and feed these scores.
             </p>
             <Link
-              href="/desk"
+              href={deskUrl()}
               className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--workspace-accent)] hover:underline"
             >
               Open Desk

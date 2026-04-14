@@ -112,7 +112,7 @@ export default function WorkspaceNotificationsPopover() {
         {hasAlertContent ? (
           <span
             className="inline-flex items-center gap-1 rounded-full border border-sky-500/35 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-300"
-            title="Execution intelligence digest"
+            title="Workspace digest"
           >
             <Info className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
             Live

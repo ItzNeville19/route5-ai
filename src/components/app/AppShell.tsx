@@ -8,7 +8,10 @@ import Navbar from "@/components/Navbar";
 import OnboardingShell from "@/components/app/OnboardingShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { deskUrl } from "@/lib/desk-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+
+const DESK_HREF = deskUrl();
 
 const clerkSignInAppearance = {
   elements: {
@@ -91,7 +94,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <SignIn
                 routing="hash"
                 signUpUrl="/sign-up"
-                fallbackRedirectUrl="/desk"
+                fallbackRedirectUrl={DESK_HREF}
                 signUpFallbackRedirectUrl="/onboarding"
                 appearance={clerkSignInAppearance}
               />
@@ -146,7 +149,7 @@ function SignedInAppShell({
         typeof window !== "undefined" &&
         new URLSearchParams(window.location.search).get("replay") === "1";
       if (isOnboardingComplete(userId) && !replay) {
-        router.replace("/desk");
+        router.replace(DESK_HREF);
         setGate("redirecting");
         return;
       }

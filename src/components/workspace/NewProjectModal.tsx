@@ -7,6 +7,7 @@ import { Check, ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { deskUrl, DEFAULT_DESK_PRESET_ID } from "@/lib/desk-routes";
 import { EXTRACTION_PRESETS } from "@/lib/extraction-presets";
 import type { Project } from "@/lib/types";
 
@@ -27,7 +28,7 @@ export default function NewProjectModal() {
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
   const [iconEmoji, setIconEmoji] = useState("");
-  const [presetId, setPresetId] = useState<string | null>(null);
+  const [presetId, setPresetId] = useState<string | null>(DEFAULT_DESK_PRESET_ID);
   const [openDeskAfter, setOpenDeskAfter] = useState(true);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export default function NewProjectModal() {
     setStep(1);
     setName("");
     setIconEmoji("");
-    setPresetId(null);
+    setPresetId(DEFAULT_DESK_PRESET_ID);
     setOpenDeskAfter(true);
     setError(null);
     setCreating(false);
@@ -118,7 +119,10 @@ export default function NewProjectModal() {
         close();
         if (openDeskAfter) {
           router.push(
-            `/desk?projectId=${pid}${presetId ? `&preset=${encodeURIComponent(presetId)}` : ""}`,
+            deskUrl({
+              projectId: pid,
+              ...(presetId === null ? { preset: null } : { preset: presetId }),
+            }),
             { scroll: true }
           );
         } else {

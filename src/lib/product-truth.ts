@@ -1,16 +1,20 @@
+import { POSITIONING_WEDGE } from "@/lib/positioning-wedge";
+
+export { POSITIONING_WEDGE } from "@/lib/positioning-wedge";
+
 /**
- * Honest scope — what Route5 does in this app, framed as execution intelligence.
+ * Honest scope — what Route5 does in this app (plain language, no buzzwords).
  * UI must match: no fake agents, sync, or connectors that are not shipped.
+ * Primary GTM: contract & program operations (see POSITIONING_WEDGE).
  */
 export const PRODUCT_HONEST = {
-  oneLine:
-    "Turn messy text into tracked decisions and actions — your workspace for execution, not just summaries.",
+  oneLine: POSITIONING_WEDGE.productOneLine,
   whatItIs:
-    "Route5 is an execution intelligence workspace: you capture context in projects, run structured extractions (summary, decisions, actions), check work off over time, and see real completion and activity trends. Linear and GitHub bring issue context into the same loop when you configure them.",
+    "You work in projects. Desk and in-project capture turn pasted threads, tickets, or notes into structured runs: what’s wrong, what to do about it, open questions, a short snapshot, decisions, and checkable actions. Complete actions over time; Overview and Reports read the same saved data. Linear and GitHub fit in when you configure them.",
   howSteps: [
     "Create a project for an initiative, team, or thread of work.",
-    "Capture on Desk or in a project — paste notes, tickets, or imports — then run extraction (AI when configured, or a fast offline digest).",
-    "Review decisions, complete actions, and use Overview to see completion rate, stale work, and velocity from your real data.",
+    "Capture on Desk or in a project — paste notes, tickets, or imports — then run a pass (AI when configured, or a fast offline pass).",
+    "Clear next moves from Desk or the project; Overview shows completion and activity from what you actually saved.",
   ] as const,
   notThis:
     "There is no autonomous email sync. Slack: paste-to-Desk works for everyone; the Slack integration page and API are Pro+ (optional SLACK_BOT_TOKEN / SLACK_WEBHOOK_URL for deployment). Linear/GitHub paste-and-import flows are as documented on each screen.",
@@ -23,11 +27,11 @@ export const PRODUCT_HONEST = {
  * widespread failure mode in knowledge work — unstructured input without durable follow-through.
  */
 export const PRODUCT_PROBLEM = {
-  headline: "Unstructured text is where decisions stall",
+  headline: "Client and internal commitments stall in unstructured text",
   body:
-    "Threads, tickets, notes, and write-ups pile up faster than teams can restate them. Chat summaries evaporate. The gap between what was said and what gets done is the hidden tax on execution — and it is the gap Route5 is built to narrow.",
+    "Threads, tickets, and notes pile up faster than anyone can restate them. The gap between what was said and what gets done is where delivery risk lives — Route5 narrows that gap with saved runs, named actions, and checklists you can audit, not another scrollback.",
   route5Does:
-    "One workspace to capture messy input, run structured extractions (decisions + actions), check work off from Desk or projects (open-actions queue surfaces the oldest unfinished first), and chart completion from data you saved — Linear and GitHub when you connect them.",
+    "One workspace to capture messy input, run structured passes (problem, path, questions, actions), check work off from Desk or projects (oldest open items first), and chart completion from data you saved — Linear and GitHub when you connect them.",
 } as const;
 
 /**
@@ -35,9 +39,9 @@ export const PRODUCT_PROBLEM = {
  * Chat is best for thinking; Route5 is for durable execution artifacts.
  */
 export const PRODUCT_VS_EPHEMERAL_CHAT = {
-  sectionTitle: 'Why "I\'ll just use ChatGPT" is the wrong comparison',
+  sectionTitle: "Route5 vs. a chat tab",
   intro:
-    "General-purpose chat is excellent for drafting, tutoring, and exploration. It is a weak place to run initiatives: threads interleave topics, checkbox state does not roll into org metrics, and there is no first-class project boundary tied to your data store. Route5 is built for that latter job — not to replace chat, but to finish what chat starts.",
+    "A chat tab is fine for thinking out loud. It is a weak place to run work that has to ship: threads mix topics, checkboxes do not roll into metrics, and nothing stays tied to a project in your database. Route5 is built for that job — its own surface, not a wrapper around a chat model.",
   rows: [
     {
       label: "Where the work lives",
@@ -47,7 +51,7 @@ export const PRODUCT_VS_EPHEMERAL_CHAT = {
     {
       label: "Structure you can execute",
       chat: "Free-form replies; you copy bullets into Jira or a doc by hand.",
-      route5: "Summary + decisions + action items stored per run; check off in-app; metrics from completions.",
+      route5: "Problem + path forward + open questions + snapshot, then decisions and checkable actions per run — metrics from completions.",
     },
     {
       label: "Follow-through in the UI",
@@ -62,21 +66,19 @@ export const PRODUCT_VS_EPHEMERAL_CHAT = {
   ] as const,
 } as const;
 
-/** Marketing line — matches in-app analytics (real extraction rows, no black box). */
+/** Short positioning line — matches in-app analytics (real rows, no black box). */
 export const ENTERPRISE_INTELLIGENCE = {
-  oneLine:
-    "Route5 turns captured context into projects you can execute: structured extractions, checklists, and activity you can chart and export — Linear and GitHub when you connect them.",
+  oneLine: `${POSITIONING_WEDGE.taglineShort} Charts and open-action queues from your saved runs. Linear and GitHub when you connect them.`,
   surfaces: "Overview and Reports use the same timestamps as Desk; metrics are from your workspace data.",
 } as const;
 
 export const PRODUCT_MISSION = {
   name: "Route5",
   tagline: PRODUCT_HONEST.oneLine,
-  sidebarTagline:
-    "Projects and Desk → structured extractions and checklists. Overview and Reports use your real runs — not demos.",
+  sidebarTagline: POSITIONING_WEDGE.taglineShort,
   headline: PRODUCT_HONEST.oneLine,
   boundaryNote: PRODUCT_HONEST.notThis,
-  company: "Structured extractions, action tracking, real analytics, optional Linear/GitHub.",
+  company: POSITIONING_WEDGE.qualityBar,
 } as const;
 
 /**
@@ -86,7 +88,7 @@ export const PRODUCT_LIVE = {
   auth: "Clerk sign-in (SSO if you configure it).",
   projects: "Projects hold extractions, decisions, action checklists, and history.",
   extract:
-    "Paste raw text. With OPENAI_API_KEY: JSON extraction (summary, decisions, actions). Without: heuristic digest labeled in the run — not GPT analysis.",
+    "Paste raw text. With OPENAI_API_KEY: JSON extraction (problem, path forward, open questions, snapshot summary, decisions, actions). Without: heuristic pass with the same fields, labeled in the run — not GPT-grade analysis.",
   linear: "Integrations → Linear: browse, import by link, send context into projects.",
   github: "Integrations → GitHub: samples and import by URL into projects.",
   actions: "Check off action items; saved per extraction; completion rolls into workspace metrics.",
@@ -112,19 +114,17 @@ export const PRODUCT_ROADMAP = [
 ] as const;
 
 /**
- * Harsh reality for buyers — summarizing alone is not “execution intelligence.”
- * Route5 charges for persistence, structured output, action tracking, and metrics;
- * semantic depth requires an LLM on the server.
+ * Buyer clarity — Route5 is not “AI that does your job.”
  */
 export const PRODUCT_VALUE_REALITY = {
-  headline: "What “execution intelligence” actually is here",
+  headline: "What you actually get",
   summary:
-    "Summaries are one field. Execution intelligence in this product means: structured extractions (summary + decisions + actions), durable storage per project, checklists you complete, and dashboards computed from those completions — not magic autonomous work in Jira or Slack.",
+    "The core is next steps you can execute: what is wrong, what to do, open questions, decisions, and checkboxes — saved per project, with charts from what people finish. Route5 does not run autonomous bots inside Jira or Slack.",
   withoutAi:
-    "Without OPENAI_API_KEY (or equivalent), extractions use a fast heuristic: first-paragraph digest, bullet/line heuristics for “decisions,” and pattern-matched lines for actions. It is labeled in the output. Do not sell that as GPT-grade analysis.",
+    "Without an OpenAI API key (or equivalent), runs use a fast pattern-based pass and say so on each run. That is not the same as full AI understanding — be honest when you demo.",
   withAi:
-    "With intelligence enabled, the model returns JSON (summary, decisions, actionItems). That is closer to the marketing story — still not auto-execution in external tools.",
+    "With AI enabled, the service returns structured fields (problem, path, questions, snapshot, decisions, actions). It still does not execute work in other tools by itself.",
   integrationsHonesty:
-    "Linear/GitHub/Figma without API tokens show preview/sample rows where documented. That is not live org sync; billing should not assume it.",
+    "Linear, GitHub, and similar: live lists need the right setup on your deployment. Screens without credentials may show samples — that is not full company sync.",
   linkDocs: "/docs/product",
 } as const;

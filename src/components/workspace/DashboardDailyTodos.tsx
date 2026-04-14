@@ -11,6 +11,7 @@ import {
   type DashboardTodo,
 } from "@/lib/dashboard-todos";
 import { stableHash } from "@/lib/stable-hash";
+import { deskUrl } from "@/lib/desk-routes";
 import { DOCS_PRODUCT, learnMoreForHref } from "@/lib/workspace-suggestion-links";
 
 type Props = {
@@ -55,7 +56,7 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
   if (extractionCount === 0) {
     candidates.push({
       text: "Run an extraction from Desk (paste notes, then extract)",
-      href: "/desk",
+      href: deskUrl(),
       learnMoreHref: DOCS_PRODUCT,
     });
   } else {

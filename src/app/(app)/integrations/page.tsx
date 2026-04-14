@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import IntegrationStatusStrip from "@/components/integrations/IntegrationStatusStrip";
+import { deskUrl } from "@/lib/desk-routes";
 
 export const metadata: Metadata = {
   title: "Integrations — Route5",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 const cards = [
   {
-    href: "/desk",
+    href: deskUrl(),
     name: "Desk",
     desc: "Capture and run extractions — your main working surface.",
     badge: "Start",
@@ -56,7 +57,7 @@ export default function IntegrationsHubPage() {
         Integrations
       </h1>
       <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
-        <Link href="/desk" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+        <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
           Desk
         </Link>{" "}
         is where you capture and run work: connectors pull Linear, GitHub, Figma, and Google context into the same

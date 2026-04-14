@@ -1,5 +1,8 @@
 import type { ExtractionModelResult } from "@/lib/ai/schema";
 
+const HEURISTIC_TAG =
+  "Heuristic run — enable AI extraction on your deployment for problem/path-quality output.\n\n";
+
 /**
  * Builds a structured extraction without calling an LLM — used when AI
  * extraction isn’t enabled so projects and the UI still work end-to-end.
@@ -8,25 +11,43 @@ export function buildOfflineExtraction(rawInput: string): ExtractionModelResult 
   const text = rawInput.replace(/\r\n/g, "\n").trim();
   if (!text) {
     return {
-      summary: "No text was provided.",
+      summary: HEURISTIC_TAG + "No text was provided.",
+      problem: "Nothing to analyze.",
+      solution: "Paste notes, a ticket, or a thread, then run extraction again.",
+      openQuestions: [],
       decisions: [],
-      actionItems: [{ text: "Paste content to generate a digest." }],
+      actionItems: [{ text: "Paste content to generate a structured pass." }],
     };
   }
 
   const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
   const firstBlock = paragraphs[0] ?? text;
-  const summaryBody =
-    firstBlock.length > 900 ? `${firstBlock.slice(0, 897)}…` : firstBlock;
-
-  const summary =
-    "Heuristic digest (full AI structuring runs when your workspace has intelligence enabled).\n\n" +
-    summaryBody;
-
   const lines = text
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
+
+  const questionLines = lines.filter((l) => l.includes("?")).slice(0, 8);
+  const openQuestions = questionLines.map((l) => (l.length > 320 ? `${l.slice(0, 317)}…` : l));
+
+  const tension =
+    /\b(issue|blocker|risk|delay|deadline|broken|fails?|stuck|urgent|incident|outage|regression)\b/i;
+  const problemGuess = lines.find((l) => tension.test(l) && l.length >= 12);
+  const problem =
+    problemGuess?.slice(0, 600) ??
+    (firstBlock.length > 420 ? `${firstBlock.slice(0, 417)}…` : firstBlock);
+
+  const pathish =
+    /\b(should|recommend|propose|decided|will\s+do|next\s+step|mitigation|fix|roll\s*back|ship|launch)\b/i;
+  const pathLines = lines.filter((l) => pathish.test(l) && l.length >= 16).slice(0, 4);
+  const solution =
+    pathLines.length > 0
+      ? pathLines.map((l) => (l.length > 400 ? `${l.slice(0, 397)}…` : l)).join("\n\n")
+      : "No clear recommended path was detected in the text — add a decision or owner, or enable AI extraction for a stronger read.";
+
+  const summary =
+    HEURISTIC_TAG +
+    (firstBlock.length > 360 ? `${firstBlock.slice(0, 357)}…` : firstBlock);
 
   const bulletLike = lines.filter(
     (l) =>
@@ -66,9 +87,9 @@ export function buildOfflineExtraction(rawInput: string): ExtractionModelResult 
       ? taskLines.slice(0, 15).map((l) => ({ text: l.slice(0, 500) }))
       : [
           {
-            text: "Review this digest and refine notes; enable AI extraction in your deployment for automated structuring.",
+            text: "Tighten the problem statement in your notes, then re-run — or enable AI extraction for structured problem / path / actions.",
           },
         ];
 
-  return { summary, decisions, actionItems };
+  return { summary, problem, solution, openQuestions, decisions, actionItems };
 }
