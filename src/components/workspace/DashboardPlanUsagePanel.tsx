@@ -25,13 +25,13 @@ const FEATURE_ROWS: FeatureRow[] = [
   {
     key: "advancedAnalytics",
     label: "Advanced analytics & chart exports",
-    href: "/reports",
+    href: "/overview",
     unlockHint: "Pro+",
   },
   {
     key: "exportFull",
     label: "Full Reports exports (JSON, print, SVG)",
-    href: "/reports",
+    href: "/overview",
     unlockHint: "Pro+",
   },
   {
@@ -41,9 +41,21 @@ const FEATURE_ROWS: FeatureRow[] = [
     unlockHint: "Pro+",
   },
   {
+    key: "gmailConnector",
+    label: "Gmail connector & executive email summaries",
+    href: "/workspace/integrations",
+    unlockHint: "Pro+",
+  },
+  {
+    key: "notionConnector",
+    label: "Notion connector (OAuth + polling)",
+    href: "/workspace/integrations",
+    unlockHint: "Pro+",
+  },
+  {
     key: "teamInsightsFull",
     label: "Full Team insights treatment",
-    href: "/team-insights",
+    href: "/overview",
     unlockHint: "Pro+",
   },
   {

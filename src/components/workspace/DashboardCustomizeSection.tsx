@@ -114,8 +114,8 @@ export default function DashboardCustomizeSection() {
                 {t("prefs.surfaceMaterialLabel")}
               </Link>
               {" · "}
-              <Link href="/workspace/apps" className="font-medium text-[var(--workspace-accent)] hover:underline">
-                {t("prefs.libraryLink")}
+              <Link href="/settings#connections" className="font-medium text-[var(--workspace-accent)] hover:underline">
+                {t("sidebar.integrations")}
               </Link>
             </p>
           </div>

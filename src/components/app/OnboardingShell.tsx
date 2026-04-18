@@ -18,7 +18,7 @@ export default function OnboardingShell({
       <header className="relative z-20 border-b border-[var(--workspace-border)] bg-[var(--workspace-mission-bg)] px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex max-w-[720px] flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <Link
-            href="/projects"
+            href="/overview"
             className="text-[15px] font-semibold tracking-tight text-[var(--workspace-fg)]"
           >
             {PRODUCT_MISSION.name}

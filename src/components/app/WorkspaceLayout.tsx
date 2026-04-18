@@ -4,7 +4,6 @@ import { Suspense } from "react";
 import WorkspaceHeader from "@/components/WorkspaceHeader";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
 import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
-import WorkspaceAssistant from "@/components/app/WorkspaceAssistant";
 import NewProjectModal from "@/components/workspace/NewProjectModal";
 import WorkspaceSidebar from "@/components/app/WorkspaceSidebar";
 import {
@@ -38,7 +37,6 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-      <WorkspaceAssistant />
       <NewProjectModal />
     </div>
   );

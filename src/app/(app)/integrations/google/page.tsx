@@ -8,7 +8,7 @@ export default function GoogleIntegrationPage() {
   return (
     <div className="mx-auto max-w-[800px] pb-24">
       <Link
-        href="/integrations"
+        href="/settings#connections"
         className="text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
       >
         ← Integrations
@@ -48,7 +48,7 @@ export default function GoogleIntegrationPage() {
               Open Desk
             </Link>
             <Link
-              href="/integrations"
+              href="/settings#connections"
               className="inline-flex items-center justify-center rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] shadow-sm transition hover:border-[var(--workspace-accent)]/35"
             >
               All integrations

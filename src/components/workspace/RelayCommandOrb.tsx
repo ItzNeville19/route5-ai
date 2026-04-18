@@ -81,7 +81,7 @@ export default function RelayCommandOrb() {
             Open {MERIDIAN_SHORT}
           </button>
           <Link
-            href="/workspace/apps"
+            href="/marketplace"
             role="menuitem"
             className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-zinc-200 transition hover:bg-white/[0.06]"
             onClick={() => setOpen(false)}
@@ -114,7 +114,7 @@ export default function RelayCommandOrb() {
             </kbd>
           </button>
           <Link
-            href="/integrations"
+            href="/settings#connections"
             role="menuitem"
             className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-zinc-200 transition hover:bg-white/[0.06]"
             onClick={() => setOpen(false)}

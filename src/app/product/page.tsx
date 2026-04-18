@@ -8,13 +8,14 @@ import {
   PRODUCT_LIVE,
   PRODUCT_PROBLEM,
   PRODUCT_ROADMAP,
+  PRODUCT_VISION,
   PRODUCT_VS_EPHEMERAL_CHAT,
 } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
-  title: "What we ship — Route5",
+  title: "What we ship — Route5.ai",
   description:
-    "Live scope for program and client delivery: projects, structured passes, owned actions, completion metrics — plus roadmap and chat comparison.",
+    "Enterprise execution layer: owned commitments and accountability state—live MVP scope, roadmap, and how we compare to chat.",
 };
 
 export default function ProductPage() {
@@ -32,6 +33,17 @@ export default function ProductPage() {
           What we ship today, what&apos;s on the roadmap, and how we engage — no borrowed
           traction metrics, no fake logos.
         </p>
+
+        <section className="mt-10 rounded-2xl border border-black/[0.08] bg-black/[0.02] px-5 py-6 md:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#86868b]">
+            North star
+          </p>
+          <p className="mt-3 text-[17px] leading-relaxed text-[#1d1d1f]">{PRODUCT_VISION.category}</p>
+          <p className="mt-3 text-[17px] leading-relaxed text-[#6e6e73]">{PRODUCT_VISION.problem}</p>
+          <p className="mt-3 text-[16px] leading-relaxed text-[#1d1d1f]">{PRODUCT_VISION.outcome}</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-[#6e6e73]">{PRODUCT_VISION.not}</p>
+          <p className="mt-4 text-[14px] leading-relaxed text-[#86868b]">{PRODUCT_VISION.icp}</p>
+        </section>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
@@ -105,6 +117,9 @@ export default function ProductPage() {
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
               <span className="font-semibold">Projects.</span> {PRODUCT_LIVE.projects}
+            </li>
+            <li className="glass-surface rounded-2xl px-5 py-4">
+              <span className="font-semibold">Automation ingest.</span> {PRODUCT_LIVE.ingest}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
               <span className="font-semibold">Extraction.</span> {PRODUCT_LIVE.extract}
@@ -189,7 +204,7 @@ export default function ProductPage() {
               Log in
             </Link>
             <Link
-              href="/projects"
+              href="/overview"
               className="inline-flex items-center rounded-full border border-black/[0.12] bg-white/80 px-7 py-3 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-white"
             >
               Workspace

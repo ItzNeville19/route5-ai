@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function AccountPlansPage() {
   return (
     <WorkspaceArticle
-      backHref="/projects"
+      backHref="/overview"
       backLabel="Overview"
       kicker="Account"
       title="Plans & billing"

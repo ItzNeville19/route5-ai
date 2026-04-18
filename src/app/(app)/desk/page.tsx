@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import DeskWorkspace from "@/components/desk/DeskWorkspace";
+import CommitmentDesk from "@/components/desk/CommitmentDesk";
 
 export const metadata: Metadata = {
   title: "Desk — Route5",
   description:
-    "Capture workspace: autosaved drafts, sales and product templates, paste/export tools, keyboard shortcuts, and one-click extraction into projects with actions and metrics.",
+    "Turn emails, notes, and threads into owned next steps: pick a project, paste source material, run one structured pass — saved per program with checklists and audit-friendly history.",
 };
 
 function DeskFallback() {
@@ -19,7 +19,7 @@ function DeskFallback() {
 export default function DeskPage() {
   return (
     <Suspense fallback={<DeskFallback />}>
-      <DeskWorkspace />
+      <CommitmentDesk />
     </Suspense>
   );
 }

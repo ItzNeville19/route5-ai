@@ -117,6 +117,12 @@ export const MARKETPLACE_INSTALL_TO_EXTRACTION: Partial<
   "qwen3-asr-1.7b-8bit": "offline",
 };
 
+/** When user enables an LLM listing in Marketplace, sync the Settings default. */
+export const MARKETPLACE_INSTALL_TO_LLM: Partial<Record<string, LlmProviderId>> = {
+  "openai-llm": "openai",
+  "groq-llm": "groq-llm",
+};
+
 export function resolveExtractionRoute(
   extractionProviderId: string | undefined,
   openaiConfigured: boolean

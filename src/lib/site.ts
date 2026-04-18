@@ -1,5 +1,5 @@
 /** Single source for public contact info (marketing, mailto, copy). */
-export const CONTACT_EMAIL = "neville@rayze.xyz" as const;
+export const CONTACT_EMAIL = "contact@route5.ai" as const;
 
 export function mailtoHref(subject: string, body?: string): string {
   const q = new URLSearchParams();

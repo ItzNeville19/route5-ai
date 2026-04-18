@@ -3,18 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import {
-  BarChart3,
-  Bell,
-  Command,
-  FolderKanban,
-  Inbox,
-  Palette,
-  Store,
-  Plug,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { BarChart3, BookOpen, Inbox } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { deskUrl } from "@/lib/desk-routes";
 import { easeApple, staggerContainer, staggerItemTight } from "@/lib/motion";
@@ -27,10 +16,7 @@ type Tile = {
   className?: string;
 };
 
-/**
- * Logged-out home: dense but readable preview of the real workspace — bento grid,
- * honest labels, deep links (Clerk gates app routes).
- */
+/** Logged-out home: only execution tracking + positioning (Desk, Overview, story). */
 export default function HomeProductShowcase() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
@@ -44,59 +30,18 @@ export default function HomeProductShowcase() {
       className: "lg:col-span-2 min-h-[200px]",
     },
     {
-      href: "/projects",
-      icon: <FolderKanban className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
+      href: "/overview",
+      icon: <BarChart3 className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
       title: t("marketing.showcase.projectsTitle"),
       body: t("marketing.showcase.projectsBody"),
+      className: "lg:col-span-2 min-h-[200px]",
     },
     {
-      href: "/workspace/digest",
-      icon: <Bell className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.digestTitle"),
-      body: t("marketing.showcase.digestBody"),
-    },
-    {
-      href: "/reports",
-      icon: <BarChart3 className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.reportsTitle"),
-      body: t("marketing.showcase.reportsBody"),
-    },
-    {
-      href: "/integrations",
-      icon: <Plug className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.integrationsTitle"),
-      body: t("marketing.showcase.integrationsBody"),
-      className: "lg:col-span-2",
-    },
-    {
-      href: "/marketplace",
-      icon: <Store className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.marketplaceTitle"),
-      body: t("marketing.showcase.marketplaceBody"),
-    },
-    {
-      href: "/team-insights",
-      icon: <Users className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.teamTitle"),
-      body: t("marketing.showcase.teamBody"),
-    },
-    {
-      href: "/workspace/customize",
-      icon: <Palette className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.customizeTitle"),
-      body: t("marketing.showcase.customizeBody"),
-    },
-    {
-      href: "/docs/product",
-      icon: (
-        <span className="flex items-center gap-1.5" aria-hidden>
-          <Sparkles className="h-5 w-5" strokeWidth={1.75} />
-          <Command className="h-5 w-5 opacity-80" strokeWidth={1.75} />
-        </span>
-      ),
-      title: t("marketing.showcase.relayTitle"),
-      body: t("marketing.showcase.relayBody"),
-      className: "lg:col-span-3",
+      href: "/product",
+      icon: <BookOpen className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
+      title: t("marketing.showcase.storyTitle"),
+      body: t("marketing.showcase.storyBody"),
+      className: "lg:col-span-4",
     },
   ];
 
@@ -125,7 +70,7 @@ export default function HomeProductShowcase() {
         </motion.div>
 
         <motion.div
-          className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-4"
           style={{ perspective: 1200 }}
           variants={staggerContainer}
           initial="hidden"

@@ -24,6 +24,7 @@
 # local embedded DB (auto-created; not committed)
 /data/*.sqlite
 /data/*.sqlite-*
+/data/org-commitment-uploads/
 
 # misc
 .DS_Store

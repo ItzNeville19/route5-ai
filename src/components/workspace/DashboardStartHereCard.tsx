@@ -201,7 +201,7 @@ export default function DashboardStartHereCard({
               Check off actions in a project; charts below reflect what you actually finished.
             </p>
             <Link
-              href="/reports"
+              href="/overview"
               className="mt-3 inline-block text-[12px] font-semibold text-[var(--workspace-accent-hover)] underline-offset-2 hover:underline"
             >
               Reports →

@@ -10,7 +10,7 @@ export default function SupportPage() {
   return (
     <div className="mx-auto max-w-[640px] pb-20">
       <Link
-        href="/projects"
+        href="/overview"
         className="inline-flex text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
       >
         ← Projects

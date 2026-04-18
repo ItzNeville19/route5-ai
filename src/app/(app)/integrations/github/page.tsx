@@ -151,7 +151,7 @@ export default function GitHubIntegrationPage() {
   return (
     <div className="mx-auto max-w-[900px] pb-24">
       <Link
-        href="/integrations"
+        href="/settings#connections"
         className="text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
       >
         ← Integrations
@@ -293,7 +293,7 @@ export default function GitHubIntegrationPage() {
 
       <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
         Same runs power{" "}
-        <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+        <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           Overview
         </Link>{" "}
         metrics — Desk is where you capture and execute; projects stay the system of record.

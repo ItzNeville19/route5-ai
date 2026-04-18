@@ -1,4 +1,5 @@
 import { formatRelativeLong } from "@/lib/relative-time";
+import type { ExecutionOverview } from "@/lib/commitment-types";
 import type { WorkspaceExecutionMetrics } from "@/lib/workspace-activity-stats";
 import type { RecentExtractionRow } from "@/lib/workspace-summary";
 
@@ -41,10 +42,12 @@ export function formatDigestDateLine(intlLocale: string, workspaceTimezone?: str
 export function buildDailyDigestListItems(input: {
   loadingSummary: boolean;
   summary: DailyDigestSummarySlice | null;
+  /** Commitment engine snapshot — overdue / at risk / unowned. */
+  executionOverview?: ExecutionOverview | null;
   intlLocale: string;
   workspaceTimezone?: string;
 }): DailyDigestListItem[] {
-  const { loadingSummary, summary, intlLocale, workspaceTimezone } = input;
+  const { loadingSummary, summary, executionOverview, intlLocale, workspaceTimezone } = input;
   const today = formatDigestDateLine(intlLocale, workspaceTimezone);
   const items: DailyDigestListItem[] = [
     {
@@ -61,14 +64,31 @@ export function buildDailyDigestListItems(input: {
   items.push({
     title: "Execution snapshot",
     body: `${extractionCount} total runs · ${projectCount} project${projectCount === 1 ? "" : "s"} · ${execution.actionItemsCompleted}/${execution.actionItemsTotal || 0} actions checked off`,
-    href: "/projects",
+    href: "/overview",
   });
+
+  if (executionOverview) {
+    const s = executionOverview.summary;
+    items.push({
+      title: "Commitment accountability",
+      body: `${s.activeTotal} open commitments · ${s.overdueCount} overdue · ${s.atRiskCount} at risk · ${s.unassignedCount} without owner`,
+      href: "/overview",
+    });
+    if (s.overdueCount > 0 || s.atRiskCount > 0 || s.unassignedCount > 0) {
+      items.push({
+        title: "Escalation signals",
+        body: "Review commitments on Desk — statuses reconcile from due dates and seven-day inactivity.",
+        href: "/desk",
+        tone: "warn",
+      });
+    }
+  }
 
   if (stale > 0) {
     items.push({
       title: "Needs attention",
       body: `${stale} open action${stale === 1 ? "" : "s"} on runs older than 7 days (UTC). Review in projects.`,
-      href: "/projects",
+      href: "/overview",
       tone: "warn",
     });
   }

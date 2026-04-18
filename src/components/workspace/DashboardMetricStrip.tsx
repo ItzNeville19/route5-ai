@@ -91,7 +91,7 @@ export default function DashboardMetricStrip({
         </div>
         <p className="mt-2 text-[10px] leading-snug text-zinc-300">
           Unchecked items ·{" "}
-          <Link href="/reports" className="text-violet-300/90 hover:underline">
+          <Link href="/overview" className="text-violet-300/90 hover:underline">
             Reports
           </Link>{" "}
           for detail

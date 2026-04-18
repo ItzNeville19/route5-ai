@@ -20,6 +20,7 @@ import {
 import { getLimitsForTier, resolveTierForUser } from "@/lib/entitlements";
 import {
   countExtractionsThisUtcMonthForUser,
+  insertCommitmentsFromExtractionActionItems,
   insertExtractionRow,
   verifyProjectOwned,
 } from "@/lib/workspace/store";
@@ -167,6 +168,17 @@ export async function POST(req: Request) {
       decisions: parsed.decisions,
       actionItems,
     });
+
+    try {
+      await insertCommitmentsFromExtractionActionItems(
+        userId,
+        projectId,
+        inserted.id,
+        actionItems
+      );
+    } catch (syncErr) {
+      console.error("[route5] commitments sync from extraction failed", syncErr);
+    }
 
     return NextResponse.json({
       extractionId: inserted.id,

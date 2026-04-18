@@ -79,7 +79,7 @@ export default function DashboardEnterpriseIntel({
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Link
-            href="/reports"
+            href="/overview"
             className="rounded-full border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-medium text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
           >
             Reports →
@@ -121,7 +121,7 @@ export default function DashboardEnterpriseIntel({
           </div>
           <p className="mt-2 text-[13px] font-medium leading-snug text-zinc-200">{integrationLine}</p>
           <p className="mt-1 text-[11px] text-zinc-300">
-            <Link href="/integrations" className="text-violet-300/90 hover:underline">
+            <Link href="/settings#connections" className="text-violet-300/90 hover:underline">
               Manage
             </Link>
           </p>

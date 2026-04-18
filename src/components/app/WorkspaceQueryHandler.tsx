@@ -31,7 +31,7 @@ export default function WorkspaceQueryHandler() {
   }, [openPalette, pathname, router, searchParams]);
 
   useEffect(() => {
-    if (pathname !== "/projects" || searchParams.get("focus") !== "new-project") {
+    if (pathname !== "/overview" || searchParams.get("focus") !== "new-project") {
       handledNewProject.current = false;
       return;
     }

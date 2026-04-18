@@ -30,25 +30,25 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
   if (projectCount === 0) {
     candidates.push({
       text: "Create your first project",
-      href: "/projects",
+      href: "/overview",
       learnMoreHref: DOCS_PRODUCT,
     });
   } else {
     candidates.push(
       {
         text: "Open a project and review the latest extraction",
-        href: "/projects",
+        href: "/overview",
         learnMoreHref: DOCS_PRODUCT,
       },
       {
-        text: "Check Reports for run history and JSON export",
-        href: "/reports",
-        learnMoreHref: learnMoreForHref("/reports"),
+        text: "Review completion and stale items on Overview",
+        href: "/overview",
+        learnMoreHref: DOCS_PRODUCT,
       },
       {
-        text: "See workspace-wide counts on Team insights",
-        href: "/team-insights",
-        learnMoreHref: learnMoreForHref("/team-insights"),
+        text: "See workspace-wide completion on Overview",
+        href: "/overview",
+        learnMoreHref: DOCS_PRODUCT,
       }
     );
   }
@@ -63,32 +63,32 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
     candidates.push(
       {
         text: "Pin an active project in the sidebar for faster access",
-        href: "/projects",
+        href: "/overview",
         learnMoreHref: DOCS_PRODUCT,
       },
       {
-        text: "Read the full daily digest page",
-        href: "/workspace/digest",
-        learnMoreHref: learnMoreForHref("/workspace/digest"),
+        text: "Review open actions from Overview",
+        href: "/overview",
+        learnMoreHref: DOCS_PRODUCT,
       },
       {
-        text: "Tune Overview shortcuts under Customize",
-        href: "/workspace/customize",
-        learnMoreHref: learnMoreForHref("/workspace/customize"),
+        text: "Adjust timezone and locale in Settings",
+        href: "/settings",
+        learnMoreHref: learnMoreForHref("/settings"),
       }
     );
   }
 
   candidates.push(
     {
-      text: "Connect integrations (Linear, GitHub, and more)",
-      href: "/integrations",
-      learnMoreHref: learnMoreForHref("/integrations"),
+      text: "Optional connectors (Linear, GitHub) under Settings",
+      href: "/settings#connections",
+      learnMoreHref: learnMoreForHref("/settings"),
     },
     {
-      text: "Browse the Marketplace for workspace routes",
-      href: "/marketplace",
-      learnMoreHref: learnMoreForHref("/marketplace"),
+      text: "Read why Route5 exists (execution layer story)",
+      href: "/product",
+      learnMoreHref: DOCS_PRODUCT,
     },
     {
       text: "Adjust AI, locale, and timezone in Settings",
@@ -96,9 +96,9 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
       learnMoreHref: learnMoreForHref("/settings"),
     },
     {
-      text: "Open the app library for every workspace route",
-      href: "/workspace/apps",
-      learnMoreHref: learnMoreForHref("/workspace/apps"),
+      text: "Clear open actions from Desk (oldest first)",
+      href: deskUrl(),
+      learnMoreHref: DOCS_PRODUCT,
     }
   );
 

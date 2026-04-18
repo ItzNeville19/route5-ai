@@ -53,7 +53,7 @@ export default function DocsIndexPage() {
   return (
     <div className="mx-auto max-w-[720px] pb-20">
       <Link
-        href="/projects"
+        href="/overview"
         className="inline-flex text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
       >
         ← Workspace

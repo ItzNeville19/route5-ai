@@ -29,14 +29,12 @@ const customizeBodySchema = z
 function heuristicSuggestions(companyContext: string): { note: string; shortcuts: Shortcut[] } {
   const lower = companyContext.toLowerCase();
   const shortcuts: Shortcut[] = [
-    { label: "Projects", href: "/projects" },
+    { label: "Overview", href: "/overview" },
     { label: "Desk", href: deskUrl() },
-    { label: "Daily digest", href: "/workspace/digest" },
-    { label: "Customize", href: "/workspace/customize" },
-    { label: "Team insights", href: "/team-insights" },
-    { label: "Reports", href: "/reports" },
-    { label: "Integrations", href: "/integrations" },
-    { label: "App library", href: "/workspace/apps" },
+    { label: "Marketplace", href: "/marketplace" },
+    { label: "Themes", href: "/workspace/customize" },
+    { label: "Analytics", href: "/reports" },
+    { label: "Connections", href: "/settings#connections" },
   ];
   if (lower.includes("linear") || lower.includes("sprint")) {
     shortcuts.unshift({ label: "Linear", href: "/integrations/linear" });

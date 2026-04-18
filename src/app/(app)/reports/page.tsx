@@ -365,7 +365,7 @@ export default function ReportsPage() {
               Desk
             </Link>{" "}
             or a{" "}
-            <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+            <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
               project
             </Link>
             .
@@ -403,7 +403,7 @@ export default function ReportsPage() {
       </motion.section>
 
       <p className="mt-10 text-center text-[12px] text-[var(--workspace-muted-fg)] print:hidden">
-        <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+        <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           ← Projects overview
         </Link>
       </p>

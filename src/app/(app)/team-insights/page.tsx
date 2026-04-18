@@ -32,7 +32,7 @@ export default function TeamInsightsPage() {
       <TeamInsightsContent />
 
       <p className="mt-10 text-center text-[12px] text-[var(--workspace-muted-fg)]">
-        <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+        <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           ← Overview
         </Link>
       </p>

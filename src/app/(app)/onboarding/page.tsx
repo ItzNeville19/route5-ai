@@ -98,7 +98,7 @@ export default function OnboardingPage() {
   function finish() {
     if (!userId) return;
     markOnboardingComplete(userId);
-    router.push(deskUrl());
+    router.push("/overview");
   }
 
   function skip() {
@@ -159,16 +159,17 @@ export default function OnboardingPage() {
               Hi {firstName} — here&apos;s your map
             </h1>
             <p className="max-w-xl text-[16px] leading-relaxed text-neutral-600">
-              {PRODUCT_HONEST.oneLine} Use the sidebar: <strong className="text-neutral-900">Start here</strong>{" "}
-              opens this guide anytime; <strong className="text-neutral-900">App library</strong> lists every screen;
-              <strong className="text-neutral-900"> History</strong> shows recent extractions.
+              {PRODUCT_HONEST.oneLine} Use the sidebar: <strong className="text-neutral-900">Overview</strong>{" "}
+              shows execution health and risk; <strong className="text-neutral-900">Desk</strong> is where you paste
+              text and confirm commitments; <strong className="text-neutral-900">Settings</strong> holds connections
+              and your profile.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <Link
-                href="/projects"
+                href="/overview"
                 className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
               >
-                Dashboard
+                Overview
               </Link>
               <Link
                 href={deskUrl()}
@@ -177,10 +178,10 @@ export default function OnboardingPage() {
                 Desk
               </Link>
               <Link
-                href="/marketplace"
+                href="/settings"
                 className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
               >
-                Marketplace
+                Settings
               </Link>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -473,7 +474,7 @@ export default function OnboardingPage() {
               </Link>
             ) : (
               <Link
-                href="/projects#new-project"
+                href="/overview#new-project"
                 className="flex items-center justify-between rounded-2xl border border-black/[0.08] bg-white p-5 shadow-sm transition hover:border-black/[0.14]"
               >
                 <div>

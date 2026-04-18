@@ -64,8 +64,285 @@ function getDb(): Database.Database {
       `ALTER TABLE extractions ADD COLUMN open_questions TEXT NOT NULL DEFAULT '[]'`
     );
   }
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS commitments (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL,
+      clerk_user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      owner_user_id TEXT,
+      owner_display_name TEXT,
+      source TEXT NOT NULL,
+      source_reference TEXT NOT NULL DEFAULT '',
+      status TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      due_date TEXT,
+      last_updated_at TEXT NOT NULL,
+      activity_log TEXT NOT NULL DEFAULT '[]',
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_commitments_project ON commitments(project_id);
+    CREATE INDEX IF NOT EXISTS idx_commitments_clerk ON commitments(clerk_user_id);
+  `);
+  const commitmentCols = (
+    database.prepare(`PRAGMA table_info(commitments)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!commitmentCols.includes("archived_at")) {
+    database.exec(`ALTER TABLE commitments ADD COLUMN archived_at TEXT`);
+  }
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS escalation_events (
+      id TEXT PRIMARY KEY,
+      clerk_user_id TEXT NOT NULL,
+      project_id TEXT NOT NULL,
+      commitment_id TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      previous_status TEXT,
+      new_status TEXT,
+      created_at TEXT NOT NULL,
+      notified_at TEXT,
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_escalation_clerk ON escalation_events(clerk_user_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS integration_oauth_connections (
+      id TEXT PRIMARY KEY,
+      clerk_user_id TEXT NOT NULL,
+      provider TEXT NOT NULL,
+      access_token TEXT,
+      refresh_token TEXT,
+      team_id TEXT,
+      team_name TEXT,
+      bot_user_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (clerk_user_id, provider)
+    );
+    CREATE TABLE IF NOT EXISTS organizations (
+      id TEXT PRIMARY KEY,
+      clerk_user_id TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL DEFAULT 'Workspace',
+      plan TEXT NOT NULL DEFAULT 'free',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_organizations_clerk ON organizations(clerk_user_id);
+  `);
+  const projCols = database
+    .prepare(`PRAGMA table_info(projects)`)
+    .all() as { name: string }[];
+  if (!projCols.some((c) => c.name === "org_id")) {
+    database.exec(`ALTER TABLE projects ADD COLUMN org_id TEXT REFERENCES organizations(id) ON DELETE SET NULL`);
+    database.exec(`CREATE INDEX IF NOT EXISTS idx_projects_org ON projects(org_id)`);
+  }
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS org_commitments (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      description TEXT,
+      owner_id TEXT NOT NULL,
+      deadline TEXT NOT NULL,
+      priority TEXT NOT NULL,
+      status TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      completed_at TEXT,
+      last_activity_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_commitments_org ON org_commitments(org_id) WHERE deleted_at IS NULL;
+    CREATE INDEX IF NOT EXISTS idx_org_commitments_owner ON org_commitments(owner_id) WHERE deleted_at IS NULL;
+    CREATE TABLE IF NOT EXISTS org_commitment_comments (
+      id TEXT PRIMARY KEY,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS org_commitment_attachments (
+      id TEXT PRIMARY KEY,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      file_url TEXT NOT NULL,
+      storage_kind TEXT NOT NULL DEFAULT 'supabase',
+      local_path TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS org_commitment_history (
+      id TEXT PRIMARY KEY,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      changed_by TEXT NOT NULL,
+      field_changed TEXT NOT NULL,
+      old_value TEXT,
+      new_value TEXT,
+      changed_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS org_commitment_dependencies (
+      id TEXT PRIMARY KEY,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      depends_on_commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      UNIQUE (commitment_id, depends_on_commitment_id),
+      CHECK (commitment_id <> depends_on_commitment_id)
+    );
+    CREATE TABLE IF NOT EXISTS org_escalations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      severity TEXT NOT NULL,
+      triggered_at TEXT NOT NULL,
+      resolved_at TEXT,
+      resolved_by TEXT,
+      resolution_notes TEXT,
+      snoozed_until TEXT,
+      snooze_reason TEXT,
+      notified_owner_at TEXT,
+      notified_manager_at TEXT,
+      notified_admin_at TEXT,
+      notified_all_admins_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_escalations_org ON org_escalations(org_id, triggered_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_org_escalations_commitment ON org_escalations(commitment_id);
+    CREATE TABLE IF NOT EXISTS org_integrations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      type TEXT NOT NULL,
+      access_token_encrypted TEXT NOT NULL,
+      refresh_token_encrypted TEXT,
+      team_id TEXT,
+      team_name TEXT,
+      bot_user_id TEXT,
+      webhook_url TEXT,
+      scope TEXT,
+      status TEXT NOT NULL,
+      connected_at TEXT,
+      disconnected_at TEXT,
+      last_used_at TEXT,
+      metadata TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (org_id, type)
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_integrations_org ON org_integrations(org_id);
+    CREATE TABLE IF NOT EXISTS slack_captured_messages (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      slack_team_id TEXT NOT NULL,
+      slack_channel_id TEXT NOT NULL,
+      slack_message_ts TEXT NOT NULL,
+      slack_user_id TEXT,
+      content TEXT NOT NULL,
+      processed INTEGER NOT NULL DEFAULT 0,
+      decision_detected INTEGER NOT NULL DEFAULT 0,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      captured_at TEXT NOT NULL,
+      confidence_score REAL,
+      decision_text TEXT,
+      UNIQUE (slack_team_id, slack_channel_id, slack_message_ts)
+    );
+    CREATE INDEX IF NOT EXISTS idx_slack_captured_org ON slack_captured_messages(org_id);
+    CREATE TABLE IF NOT EXISTS gmail_captured_emails (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      gmail_message_id TEXT NOT NULL UNIQUE,
+      gmail_thread_id TEXT NOT NULL,
+      from_email TEXT NOT NULL,
+      from_name TEXT,
+      subject TEXT NOT NULL DEFAULT '',
+      body_text TEXT NOT NULL DEFAULT '',
+      received_at TEXT NOT NULL,
+      processed INTEGER NOT NULL DEFAULT 0,
+      decision_detected INTEGER NOT NULL DEFAULT 0,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      confidence_score REAL,
+      decision_text TEXT,
+      captured_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_gmail_captured_org ON gmail_captured_emails(org_id, captured_at DESC);
+    CREATE TABLE IF NOT EXISTS gmail_watch (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      history_id TEXT NOT NULL,
+      expiration TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (org_id)
+    );
+    CREATE TABLE IF NOT EXISTS notion_captured_pages (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      notion_page_id TEXT NOT NULL UNIQUE,
+      notion_database_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      content_text TEXT NOT NULL DEFAULT '',
+      page_url TEXT,
+      created_time TEXT,
+      last_edited_time TEXT,
+      processed INTEGER NOT NULL DEFAULT 0,
+      decision_detected INTEGER NOT NULL DEFAULT 0,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      confidence_score REAL,
+      decision_text TEXT,
+      captured_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_notion_captured_org ON notion_captured_pages(org_id, captured_at DESC);
+    CREATE TABLE IF NOT EXISTS notion_watched_databases (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      notion_database_id TEXT NOT NULL,
+      database_name TEXT,
+      database_url TEXT,
+      watching INTEGER NOT NULL DEFAULT 1,
+      last_cursor TEXT,
+      last_polled_at TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (org_id, notion_database_id)
+    );
+    CREATE TABLE IF NOT EXISTS notion_completed_sync (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      notion_page_id TEXT NOT NULL,
+      synced_at TEXT NOT NULL,
+      sync_status TEXT NOT NULL DEFAULT 'ok'
+    );
+    CREATE TABLE IF NOT EXISTS execution_snapshots (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      health_score REAL NOT NULL,
+      active_count INTEGER NOT NULL,
+      on_track_count INTEGER NOT NULL,
+      at_risk_count INTEGER NOT NULL,
+      overdue_count INTEGER NOT NULL,
+      completed_week_count INTEGER NOT NULL,
+      completed_month_count INTEGER NOT NULL,
+      snapshot_date TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      UNIQUE (org_id, snapshot_date)
+    );
+    CREATE INDEX IF NOT EXISTS idx_execution_snapshots_org ON execution_snapshots(org_id, snapshot_date DESC);
+  `);
+  const oaCols = (
+    database.prepare(`PRAGMA table_info(org_commitment_attachments)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!oaCols.includes("storage_kind")) {
+    database.exec(
+      `ALTER TABLE org_commitment_attachments ADD COLUMN storage_kind TEXT NOT NULL DEFAULT 'supabase'`
+    );
+  }
+  if (!oaCols.includes("local_path")) {
+    database.exec(`ALTER TABLE org_commitment_attachments ADD COLUMN local_path TEXT`);
+  }
   db = database;
   return database;
+}
+
+/** @internal — org-commitments repo shares the same embedded DB. */
+export function getSqliteHandle(): Database.Database {
+  return getDb();
 }
 
 export type SqliteProjectRow = {
@@ -73,15 +350,39 @@ export type SqliteProjectRow = {
   clerk_user_id: string;
   name: string;
   icon_emoji: string | null;
+  org_id: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/** Phase 1: one org per Clerk user; backfills project.org_id. */
+export function ensureOrganizationForClerkUser(userId: string): string {
+  const d = getDb();
+  const existing = d
+    .prepare(`SELECT id FROM organizations WHERE clerk_user_id = ?`)
+    .get(userId) as { id: string } | undefined;
+  const now = new Date().toISOString();
+  if (existing) {
+    d.prepare(`UPDATE projects SET org_id = ? WHERE clerk_user_id = ? AND org_id IS NULL`).run(
+      existing.id,
+      userId
+    );
+    return existing.id;
+  }
+  const id = crypto.randomUUID();
+  d.prepare(
+    `INSERT INTO organizations (id, clerk_user_id, name, plan, created_at, updated_at)
+     VALUES (?, ?, 'Workspace', 'free', ?, ?)`
+  ).run(id, userId, now, now);
+  d.prepare(`UPDATE projects SET org_id = ? WHERE clerk_user_id = ?`).run(id, userId);
+  return id;
+}
 
 export function listProjects(userId: string): SqliteProjectRow[] {
   const d = getDb();
   return d
     .prepare(
-      `SELECT id, clerk_user_id, name, icon_emoji, created_at, updated_at
+      `SELECT id, clerk_user_id, name, icon_emoji, org_id, created_at, updated_at
        FROM projects WHERE clerk_user_id = ?
        ORDER BY updated_at DESC`
     )
@@ -91,7 +392,8 @@ export function listProjects(userId: string): SqliteProjectRow[] {
 export function insertProject(
   userId: string,
   name: string,
-  iconEmoji?: string | null
+  iconEmoji?: string | null,
+  orgId?: string | null
 ): SqliteProjectRow {
   const d = getDb();
   const id = crypto.randomUUID();
@@ -100,18 +402,29 @@ export function insertProject(
   if (iconEmoji != null && String(iconEmoji).trim()) {
     icon = [...String(iconEmoji).trim()][0] ?? null;
   }
+  const resolvedOrg = orgId ?? ensureOrganizationForClerkUser(userId);
   d.prepare(
-    `INSERT INTO projects (id, clerk_user_id, name, icon_emoji, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(id, userId, name, icon, now, now);
+    `INSERT INTO projects (id, clerk_user_id, name, icon_emoji, org_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, userId, name, icon, resolvedOrg, now, now);
   return {
     id,
     clerk_user_id: userId,
     name,
     icon_emoji: icon,
+    org_id: resolvedOrg,
     created_at: now,
     updated_at: now,
   };
+}
+
+/** Resolve project owner for server-side ingest (webhook) — no user scope. */
+export function getProjectOwnerClerkId(projectId: string): string | null {
+  const d = getDb();
+  const row = d
+    .prepare(`SELECT clerk_user_id FROM projects WHERE id = ?`)
+    .get(projectId) as { clerk_user_id: string } | undefined;
+  return row?.clerk_user_id ?? null;
 }
 
 export function getProjectById(
@@ -121,7 +434,7 @@ export function getProjectById(
   const d = getDb();
   const row = d
     .prepare(
-      `SELECT id, clerk_user_id, name, icon_emoji, created_at, updated_at FROM projects
+      `SELECT id, clerk_user_id, name, icon_emoji, org_id, created_at, updated_at FROM projects
        WHERE id = ? AND clerk_user_id = ?`
     )
     .get(projectId, userId) as SqliteProjectRow | undefined;
@@ -156,6 +469,7 @@ export function updateProjectMetadata(
 export function deleteAllWorkspaceDataForUser(userId: string): void {
   const d = getDb();
   d.prepare(`DELETE FROM projects WHERE clerk_user_id = ?`).run(userId);
+  d.prepare(`DELETE FROM organizations WHERE clerk_user_id = ?`).run(userId);
 }
 
 /** Deletes the project and cascaded extractions (FK). Returns whether a row was removed. */
@@ -442,4 +756,274 @@ export function listProjectPalette(userId: string): { id: string; name: string }
        ORDER BY updated_at DESC LIMIT 40`
     )
     .all(userId) as { id: string; name: string }[];
+}
+
+// --- Commitments (execution layer) ---
+
+export type SqliteCommitmentRow = {
+  id: string;
+  project_id: string;
+  clerk_user_id: string;
+  title: string;
+  description: string | null;
+  owner_user_id: string | null;
+  owner_display_name: string | null;
+  source: string;
+  source_reference: string;
+  status: string;
+  priority: string;
+  created_at: string;
+  due_date: string | null;
+  last_updated_at: string;
+  activity_log: string;
+  archived_at: string | null;
+};
+
+export function insertCommitmentRow(params: {
+  projectId: string;
+  userId: string;
+  title: string;
+  description: string | null;
+  ownerUserId: string | null;
+  ownerDisplayName: string | null;
+  source: string;
+  sourceReference: string;
+  status: string;
+  priority: string;
+  dueDate: string | null;
+  activityLogJson: string;
+}): { id: string } {
+  const d = getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  d.prepare(
+    `INSERT INTO commitments (
+      id, project_id, clerk_user_id, title, description,
+      owner_user_id, owner_display_name, source, source_reference,
+      status, priority, created_at, due_date, last_updated_at, activity_log, archived_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    params.projectId,
+    params.userId,
+    params.title,
+    params.description,
+    params.ownerUserId,
+    params.ownerDisplayName,
+    params.source,
+    params.sourceReference,
+    params.status,
+    params.priority,
+    now,
+    params.dueDate,
+    now,
+    params.activityLogJson,
+    null
+  );
+  d.prepare(`UPDATE projects SET updated_at = ? WHERE id = ?`).run(now, params.projectId);
+  return { id };
+}
+
+export function getCommitmentRow(
+  userId: string,
+  projectId: string,
+  commitmentId: string
+): SqliteCommitmentRow | null {
+  const d = getDb();
+  const row = d
+    .prepare(
+      `SELECT * FROM commitments WHERE id = ? AND project_id = ? AND clerk_user_id = ?`
+    )
+    .get(commitmentId, projectId, userId) as SqliteCommitmentRow | undefined;
+  return row ?? null;
+}
+
+export function listCommitmentsForProject(
+  userId: string,
+  projectId: string
+): SqliteCommitmentRow[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT * FROM commitments WHERE project_id = ? AND clerk_user_id = ?
+       AND (archived_at IS NULL OR archived_at = '')
+       ORDER BY last_updated_at DESC`
+    )
+    .all(projectId, userId) as SqliteCommitmentRow[];
+}
+
+/** Active (non-archived) commitments — Desk, Overview, reconciliation. */
+export function listCommitmentsForUser(userId: string): SqliteCommitmentRow[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT * FROM commitments WHERE clerk_user_id = ?
+       AND (archived_at IS NULL OR archived_at = '')
+       ORDER BY last_updated_at DESC`
+    )
+    .all(userId) as SqliteCommitmentRow[];
+}
+
+/** Includes archived rows — audit log and compliance views. */
+export function listCommitmentsForUserAll(userId: string): SqliteCommitmentRow[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT * FROM commitments WHERE clerk_user_id = ?
+       ORDER BY last_updated_at DESC`
+    )
+    .all(userId) as SqliteCommitmentRow[];
+}
+
+export function updateCommitmentRow(
+  userId: string,
+  projectId: string,
+  commitmentId: string,
+  patch: {
+    title?: string;
+    description?: string | null;
+    ownerUserId?: string | null;
+    ownerDisplayName?: string | null;
+    status?: string;
+    priority?: string;
+    dueDate?: string | null;
+    activityLogJson?: string;
+  }
+): SqliteCommitmentRow | null {
+  const d = getDb();
+  const existing = getCommitmentRow(userId, projectId, commitmentId);
+  if (!existing) return null;
+  const now = new Date().toISOString();
+  const title = patch.title !== undefined ? patch.title : existing.title;
+  const description =
+    patch.description !== undefined ? patch.description : existing.description;
+  const ownerUserId =
+    patch.ownerUserId !== undefined ? patch.ownerUserId : existing.owner_user_id;
+  const ownerDisplayName =
+    patch.ownerDisplayName !== undefined
+      ? patch.ownerDisplayName
+      : existing.owner_display_name;
+  const status = patch.status !== undefined ? patch.status : existing.status;
+  const priority = patch.priority !== undefined ? patch.priority : existing.priority;
+  const dueDate = patch.dueDate !== undefined ? patch.dueDate : existing.due_date;
+  const activityLog =
+    patch.activityLogJson !== undefined ? patch.activityLogJson : existing.activity_log;
+
+  d.prepare(
+    `UPDATE commitments SET
+      title = ?, description = ?, owner_user_id = ?, owner_display_name = ?,
+      status = ?, priority = ?, due_date = ?, last_updated_at = ?, activity_log = ?
+     WHERE id = ? AND project_id = ? AND clerk_user_id = ?`
+  ).run(
+    title,
+    description,
+    ownerUserId,
+    ownerDisplayName,
+    status,
+    priority,
+    dueDate,
+    now,
+    activityLog,
+    commitmentId,
+    projectId,
+    userId
+  );
+  d.prepare(`UPDATE projects SET updated_at = ? WHERE id = ?`).run(now, projectId);
+  return getCommitmentRow(userId, projectId, commitmentId);
+}
+
+/** Soft-archive: row stays in DB for audit; hidden from active lists. */
+export function archiveCommitmentRow(
+  userId: string,
+  projectId: string,
+  commitmentId: string,
+  activityLogJson: string
+): boolean {
+  const d = getDb();
+  const now = new Date().toISOString();
+  const r = d
+    .prepare(
+      `UPDATE commitments SET archived_at = ?, last_updated_at = ?, activity_log = ?
+       WHERE id = ? AND project_id = ? AND clerk_user_id = ?
+         AND (archived_at IS NULL OR archived_at = '')`
+    )
+    .run(now, now, activityLogJson, commitmentId, projectId, userId);
+  if (r.changes > 0) {
+    d.prepare(`UPDATE projects SET updated_at = ? WHERE id = ?`).run(now, projectId);
+  }
+  return r.changes > 0;
+}
+
+export function insertEscalationEvent(params: {
+  userId: string;
+  projectId: string;
+  commitmentId: string;
+  reason: string;
+  previousStatus: string | null;
+  newStatus: string | null;
+  notifiedAt: string | null;
+}): void {
+  const d = getDb();
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  d.prepare(
+    `INSERT INTO escalation_events (
+      id, clerk_user_id, project_id, commitment_id, reason, previous_status, new_status, created_at, notified_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    params.userId,
+    params.projectId,
+    params.commitmentId,
+    params.reason,
+    params.previousStatus,
+    params.newStatus,
+    now,
+    params.notifiedAt
+  );
+}
+
+export function listEscalationEventsForUser(userId: string, limit = 80): {
+  id: string;
+  project_id: string;
+  commitment_id: string;
+  reason: string;
+  previous_status: string | null;
+  new_status: string | null;
+  created_at: string;
+}[] {
+  const d = getDb();
+  return d
+    .prepare(
+      `SELECT id, project_id, commitment_id, reason, previous_status, new_status, created_at
+       FROM escalation_events WHERE clerk_user_id = ?
+       ORDER BY created_at DESC LIMIT ?`
+    )
+    .all(userId, limit) as {
+    id: string;
+    project_id: string;
+    commitment_id: string;
+    reason: string;
+    previous_status: string | null;
+    new_status: string | null;
+    created_at: string;
+  }[];
+}
+
+export function deleteCommitmentRow(
+  userId: string,
+  projectId: string,
+  commitmentId: string
+): boolean {
+  const d = getDb();
+  const r = d
+    .prepare(
+      `DELETE FROM commitments WHERE id = ? AND project_id = ? AND clerk_user_id = ?`
+    )
+    .run(commitmentId, projectId, userId);
+  if (r.changes > 0) {
+    const now = new Date().toISOString();
+    d.prepare(`UPDATE projects SET updated_at = ? WHERE id = ?`).run(now, projectId);
+  }
+  return r.changes > 0;
 }

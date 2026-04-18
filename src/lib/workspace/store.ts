@@ -13,8 +13,21 @@ import {
   type WorkspaceActivityStats,
   type WorkspaceExecutionMetrics,
 } from "@/lib/workspace-activity-stats";
+import { nanoid } from "nanoid";
+import type {
+  Commitment,
+  CommitmentActivityEntry,
+  CommitmentPriority,
+  CommitmentStatus,
+  ExecutionOverview,
+} from "@/lib/commitment-types";
+import { mapRowToCommitment, serializeActivityLog } from "@/lib/commitment-map";
+import { buildExecutionOverview } from "@/lib/execution-overview";
+import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
+import { notifyEscalationEmail } from "@/lib/notify-resend";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
+import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import * as sqlite from "@/lib/workspace/sqlite";
 
 export type StorageBackend = "supabase" | "sqlite";
@@ -157,6 +170,7 @@ function rowToProject(row: {
 }
 
 export async function listProjectsForUser(userId: string): Promise<Project[]> {
+  await ensureOrganizationForClerkUser(userId);
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     const { data, error } = await supabase
@@ -175,6 +189,7 @@ export async function createProjectForUser(
   name: string,
   opts?: { iconEmoji?: string | null }
 ): Promise<Project> {
+  const orgId = await ensureOrganizationForClerkUser(userId);
   let icon: string | null = null;
   if (opts?.iconEmoji != null && String(opts.iconEmoji).trim()) {
     icon = [...String(opts.iconEmoji).trim()][0] ?? null;
@@ -183,13 +198,13 @@ export async function createProjectForUser(
     const supabase = getServiceClient();
     const { data, error } = await supabase
       .from("projects")
-      .insert({ clerk_user_id: userId, name, icon_emoji: icon })
+      .insert({ clerk_user_id: userId, name, icon_emoji: icon, org_id: orgId })
       .select("id, clerk_user_id, name, icon_emoji, created_at, updated_at")
       .single();
     if (error) throw error;
     return rowToProject(data);
   }
-  const row = sqlite.insertProject(userId, name, icon);
+  const row = sqlite.insertProject(userId, name, icon, orgId);
   return rowToProject(row);
 }
 
@@ -511,6 +526,7 @@ export async function getWorkspaceSummaryForUser(
   activitySeries: ActivitySeriesByRange;
   execution: WorkspaceExecutionMetrics;
 }> {
+  await ensureOrganizationForClerkUser(userId);
   /** Long window for “all time” monthly buckets; heatmap still uses only the last 14d of these points. */
   const chartPointsSince = new Date(Date.now() - 20 * 365 * 86400000).toISOString();
 
@@ -717,6 +733,7 @@ export async function duplicateExtractionForUser(
 export async function listPaletteProjectsForUser(
   userId: string
 ): Promise<{ id: string; name: string }[]> {
+  await ensureOrganizationForClerkUser(userId);
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     const { data, error } = await supabase
@@ -740,12 +757,510 @@ export async function deleteAllWorkspaceDataForUser(userId: string): Promise<voi
       .delete()
       .eq("clerk_user_id", userId);
     if (exErr) throw exErr;
+    const { error: coErr } = await supabase
+      .from("commitments")
+      .delete()
+      .eq("clerk_user_id", userId);
+    if (coErr) throw coErr;
     const { error: prErr } = await supabase
       .from("projects")
       .delete()
       .eq("clerk_user_id", userId);
     if (prErr) throw prErr;
+    const { error: orgErr } = await supabase
+      .from("organizations")
+      .delete()
+      .eq("clerk_user_id", userId);
+    if (orgErr) throw orgErr;
     return;
   }
   sqlite.deleteAllWorkspaceDataForUser(userId);
+}
+
+function initialActivityLog(userId: string, body: string): CommitmentActivityEntry[] {
+  return [
+    {
+      id: nanoid(),
+      at: new Date().toISOString(),
+      kind: "system",
+      body,
+      actorUserId: userId,
+    },
+  ];
+}
+
+export async function listCommitmentsForProject(
+  userId: string,
+  projectId: string
+): Promise<Commitment[]> {
+  const owned = await verifyProjectOwned(userId, projectId);
+  if (!owned) return [];
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("commitments")
+      .select("*")
+      .eq("project_id", projectId)
+      .eq("clerk_user_id", userId)
+      .is("archived_at", null)
+      .order("last_updated_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((r) => mapRowToCommitment(r as Parameters<typeof mapRowToCommitment>[0]));
+  }
+  return sqlite.listCommitmentsForProject(userId, projectId).map(mapRowToCommitment);
+}
+
+export async function getCommitmentForUser(
+  userId: string,
+  projectId: string,
+  commitmentId: string
+): Promise<Commitment | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("commitments")
+      .select("*")
+      .eq("id", commitmentId)
+      .eq("project_id", projectId)
+      .eq("clerk_user_id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]) : null;
+  }
+  const row = sqlite.getCommitmentRow(userId, projectId, commitmentId);
+  return row ? mapRowToCommitment(row) : null;
+}
+
+export async function insertCommitmentsFromDrafts(
+  userId: string,
+  projectId: string,
+  drafts: ExtractedCommitmentDraft[],
+  opts?: { assignOwnerUserId?: string | null; createdLogBody?: string }
+): Promise<Commitment[]> {
+  const owned = await verifyProjectOwned(userId, projectId);
+  if (!owned) throw new Error("NOT_FOUND");
+  const out: Commitment[] = [];
+  const logBody = opts?.createdLogBody?.trim() || "Created from captured input";
+  for (const d of drafts) {
+    const assign = opts?.assignOwnerUserId ?? null;
+    const ownerDisplayName = d.ownerName?.trim() || null;
+    const log = initialActivityLog(userId, logBody);
+    const logJson = serializeActivityLog(log);
+    if (isSupabaseConfigured()) {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("commitments")
+        .insert({
+          project_id: projectId,
+          clerk_user_id: userId,
+          title: d.title.slice(0, 2000),
+          description: d.description ?? null,
+          owner_user_id: assign,
+          owner_display_name: ownerDisplayName,
+          source: d.source,
+          source_reference: d.sourceReference ?? "",
+          status: "active",
+          priority: d.priority,
+          due_date: d.dueDate ?? null,
+          activity_log: log,
+          archived_at: null,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      if (data) out.push(mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]));
+    } else {
+      const { id } = sqlite.insertCommitmentRow({
+        projectId,
+        userId,
+        title: d.title.slice(0, 2000),
+        description: d.description ?? null,
+        ownerUserId: assign,
+        ownerDisplayName: ownerDisplayName,
+        source: d.source,
+        sourceReference: d.sourceReference ?? "",
+        status: "active",
+        priority: d.priority,
+        dueDate: d.dueDate ?? null,
+        activityLogJson: logJson,
+      });
+      const row = sqlite.getCommitmentRow(userId, projectId, id);
+      if (row) out.push(mapRowToCommitment(row));
+    }
+  }
+  return out;
+}
+
+/**
+ * Creates one commitment per extraction action item so Overview / Desk execution intel
+ * reflects the same work as structured runs (system of record).
+ */
+export async function insertCommitmentsFromExtractionActionItems(
+  userId: string,
+  projectId: string,
+  extractionId: string,
+  actionItems: ActionItemStored[]
+): Promise<Commitment[]> {
+  if (actionItems.length === 0) return [];
+  const drafts: ExtractedCommitmentDraft[] = actionItems.map((a) => ({
+    title: a.text.trim().slice(0, 2000) || "Action item",
+    description: null,
+    ownerName: a.owner?.trim() || null,
+    source: "meeting",
+    sourceReference: `extraction:${extractionId}`,
+    priority: "medium",
+    dueDate: null,
+  }));
+  return insertCommitmentsFromDrafts(userId, projectId, drafts, {
+    createdLogBody: "Created from extraction run",
+  });
+}
+
+export async function updateCommitmentForUser(
+  userId: string,
+  projectId: string,
+  commitmentId: string,
+  patch: {
+    title?: string;
+    description?: string | null;
+    ownerUserId?: string | null;
+    ownerDisplayName?: string | null;
+    status?: CommitmentStatus;
+    priority?: CommitmentPriority;
+    dueDate?: string | null;
+    note?: string;
+  }
+): Promise<Commitment | null> {
+  const existing = await getCommitmentForUser(userId, projectId, commitmentId);
+  if (!existing) return null;
+
+  const now = new Date().toISOString();
+  const newEntries: CommitmentActivityEntry[] = [];
+  if (patch.note?.trim()) {
+    newEntries.push({
+      id: nanoid(),
+      at: now,
+      kind: "note",
+      body: patch.note.trim(),
+      actorUserId: userId,
+    });
+  }
+  if (patch.status !== undefined && patch.status !== existing.status) {
+    newEntries.push({
+      id: nanoid(),
+      at: now,
+      kind: "status",
+      body: `Status → ${patch.status}`,
+      actorUserId: userId,
+    });
+  }
+  if (patch.ownerUserId !== undefined && patch.ownerUserId !== existing.ownerUserId) {
+    newEntries.push({
+      id: nanoid(),
+      at: now,
+      kind: "owner",
+      body: "Owner updated",
+      actorUserId: userId,
+    });
+  }
+  const log = [...newEntries, ...existing.activityLog];
+
+  const nextStatus = patch.status ?? existing.status;
+  const nextTitle = patch.title ?? existing.title;
+  const nextDesc = patch.description !== undefined ? patch.description : existing.description;
+  const nextOwner = patch.ownerUserId !== undefined ? patch.ownerUserId : existing.ownerUserId;
+  const nextOwnerName =
+    patch.ownerDisplayName !== undefined ? patch.ownerDisplayName : existing.ownerDisplayName;
+  const nextPri = patch.priority ?? existing.priority;
+  const nextDue = patch.dueDate !== undefined ? patch.dueDate : existing.dueDate;
+
+  const logJson = serializeActivityLog(log);
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("commitments")
+      .update({
+        title: nextTitle,
+        description: nextDesc,
+        owner_user_id: nextOwner,
+        owner_display_name: nextOwnerName,
+        status: nextStatus,
+        priority: nextPri,
+        due_date: nextDue,
+        last_updated_at: now,
+        activity_log: log,
+      })
+      .eq("id", commitmentId)
+      .eq("project_id", projectId)
+      .eq("clerk_user_id", userId)
+      .select("*")
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]) : null;
+  }
+
+  const row = sqlite.updateCommitmentRow(userId, projectId, commitmentId, {
+    title: nextTitle,
+    description: nextDesc,
+    ownerUserId: nextOwner,
+    ownerDisplayName: nextOwnerName,
+    status: nextStatus,
+    priority: nextPri,
+    dueDate: nextDue,
+    activityLogJson: logJson,
+  });
+  return row ? mapRowToCommitment(row) : null;
+}
+
+/**
+ * Soft-archive: commitment remains in the database for audit; removed from active Desk/Overview lists.
+ * Prefer this over hard delete except for full account purge.
+ */
+export async function archiveCommitmentForUser(
+  userId: string,
+  projectId: string,
+  commitmentId: string
+): Promise<boolean> {
+  const existing = await getCommitmentForUser(userId, projectId, commitmentId);
+  if (!existing || existing.archivedAt) return false;
+
+  const now = new Date().toISOString();
+  const log: CommitmentActivityEntry[] = [
+    {
+      id: nanoid(),
+      at: now,
+      kind: "system",
+      body: "Archived from active lists — full history remains available in the audit log.",
+      actorUserId: userId,
+    },
+    ...existing.activityLog,
+  ];
+  const logPayload = serializeActivityLog(log);
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("commitments")
+      .update({
+        archived_at: now,
+        last_updated_at: now,
+        activity_log: log,
+      })
+      .eq("id", commitmentId)
+      .eq("project_id", projectId)
+      .eq("clerk_user_id", userId)
+      .is("archived_at", null)
+      .select("id");
+    if (error) throw error;
+    const ok = (data?.length ?? 0) > 0;
+    if (ok) {
+      await supabase
+        .from("projects")
+        .update({ updated_at: now })
+        .eq("id", projectId);
+    }
+    return ok;
+  }
+
+  return sqlite.archiveCommitmentRow(userId, projectId, commitmentId, logPayload);
+}
+
+/** @deprecated Use archiveCommitmentForUser — retained name for internal account wipe only. */
+export async function deleteCommitmentForUser(
+  userId: string,
+  projectId: string,
+  commitmentId: string
+): Promise<boolean> {
+  return archiveCommitmentForUser(userId, projectId, commitmentId);
+}
+
+const RECONCILE_STALE_MS = 7 * 24 * 60 * 60 * 1000;
+
+function parseRowStatus(raw: string): CommitmentStatus {
+  if (raw === "active" || raw === "at_risk" || raw === "overdue" || raw === "completed") {
+    return raw;
+  }
+  return "active";
+}
+
+async function recordEscalationForReconcile(
+  userId: string,
+  projectId: string,
+  commitmentId: string,
+  title: string,
+  previousStatus: CommitmentStatus,
+  newStatus: CommitmentStatus
+): Promise<void> {
+  if (newStatus !== "overdue" && newStatus !== "at_risk") return;
+  const reason =
+    newStatus === "overdue" ? "DUE_DATE_PASSED" : "STALE_INACTIVITY_OR_FLAGGED";
+  const n = new Date().toISOString();
+  const email = await notifyEscalationEmail({
+    commitmentTitle: title,
+    projectId,
+    commitmentId,
+    reason,
+    newStatus,
+  });
+  const notifiedAt = email.sent ? n : null;
+
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("escalation_events").insert({
+        clerk_user_id: userId,
+        project_id: projectId,
+        commitment_id: commitmentId,
+        reason,
+        previous_status: previousStatus,
+        new_status: newStatus,
+        notified_at: notifiedAt,
+      });
+      if (error) throw error;
+    } catch {
+      /* Table missing until migration 003 applied — reconciliation still updates commitments. */
+    }
+    return;
+  }
+  sqlite.insertEscalationEvent({
+    userId,
+    projectId,
+    commitmentId,
+    reason,
+    previousStatus,
+    newStatus,
+    notifiedAt,
+  });
+}
+
+/**
+ * Persists escalation: overdue from due date, at_risk from inactivity (7d).
+ * Records escalation_events + optional email when status tightens.
+ */
+export async function reconcileCommitmentStatesForUser(userId: string): Promise<void> {
+  const now = Date.now();
+
+  const considerRow = async (
+    projectId: string,
+    commitmentId: string,
+    title: string,
+    dueRaw: string | null,
+    lastUpdated: string,
+    storedRaw: string
+  ) => {
+    const stored = parseRowStatus(storedRaw);
+    if (stored === "completed") return;
+
+    let desired: CommitmentStatus | null = null;
+    if (dueRaw) {
+      const t = new Date(dueRaw).getTime();
+      if (!Number.isNaN(t) && t < now && stored !== "overdue") {
+        desired = "overdue";
+      }
+    }
+    if (!desired) {
+      const idle = now - new Date(lastUpdated).getTime();
+      if (idle > RECONCILE_STALE_MS && stored === "active") {
+        desired = "at_risk";
+      }
+    }
+    if (!desired || desired === stored) return;
+
+    const updated = await updateCommitmentForUser(userId, projectId, commitmentId, {
+      status: desired,
+    });
+    if (!updated) return;
+    await recordEscalationForReconcile(
+      userId,
+      projectId,
+      commitmentId,
+      title,
+      stored,
+      desired
+    );
+  };
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data: rows, error } = await supabase
+      .from("commitments")
+      .select("id, project_id, title, due_date, last_updated_at, status")
+      .eq("clerk_user_id", userId)
+      .is("archived_at", null)
+      .neq("status", "completed");
+    if (error) throw error;
+    for (const r of rows ?? []) {
+      const row = r as {
+        id: string;
+        project_id: string;
+        title: string;
+        due_date: string | null;
+        last_updated_at: string;
+        status: string;
+      };
+      await considerRow(
+        row.project_id,
+        row.id,
+        row.title,
+        row.due_date,
+        row.last_updated_at,
+        row.status
+      );
+    }
+    return;
+  }
+
+  for (const row of sqlite.listCommitmentsForUser(userId)) {
+    if (row.status === "completed") continue;
+    await considerRow(
+      row.project_id,
+      row.id,
+      row.title,
+      row.due_date,
+      row.last_updated_at,
+      row.status
+    );
+  }
+}
+
+export async function getProjectOwnerClerkId(projectId: string): Promise<string | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("projects")
+      .select("clerk_user_id")
+      .eq("id", projectId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as { clerk_user_id: string } | null)?.clerk_user_id ?? null;
+  }
+  return sqlite.getProjectOwnerClerkId(projectId);
+}
+
+export async function getExecutionOverviewForUser(userId: string): Promise<ExecutionOverview> {
+  await reconcileCommitmentStatesForUser(userId);
+
+  const projects = await listProjectsForUser(userId);
+  const nameById = new Map(projects.map((p) => [p.id, p.name]));
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("commitments")
+      .select("*")
+      .eq("clerk_user_id", userId)
+      .is("archived_at", null)
+      .order("last_updated_at", { ascending: false })
+      .limit(5000);
+    if (error) throw error;
+    const commitments = (data ?? []).map((r) =>
+      mapRowToCommitment(r as Parameters<typeof mapRowToCommitment>[0])
+    );
+    return buildExecutionOverview(commitments, nameById);
+  }
+
+  const rows = sqlite.listCommitmentsForUser(userId);
+  const commitments = rows.map(mapRowToCommitment);
+  return buildExecutionOverview(commitments, nameById);
 }

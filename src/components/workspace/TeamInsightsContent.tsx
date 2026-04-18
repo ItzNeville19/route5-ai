@@ -152,7 +152,7 @@ export default function TeamInsightsContent() {
                 roadmap
               </Link>
               . For standups, open{" "}
-              <Link href="/reports" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+              <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Reports
               </Link>{" "}
               and export JSON for a portable weekly snapshot.
@@ -163,7 +163,7 @@ export default function TeamInsightsContent() {
           <li className="flex gap-2">
             <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
             <span>
-              <Link href="/projects" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+              <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Overview
               </Link>{" "}
               — rings, enterprise strip, and charts match these numbers.
@@ -172,7 +172,7 @@ export default function TeamInsightsContent() {
           <li className="flex gap-2">
             <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
             <span>
-              <Link href="/reports" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+              <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Reports
               </Link>{" "}
               — execution analytics +{" "}
@@ -186,7 +186,7 @@ export default function TeamInsightsContent() {
           <li className="flex gap-2">
             <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
             <span>
-              <Link href="/integrations" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+              <Link href="/settings#connections" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Integrations
               </Link>{" "}
               — Linear/GitHub when your deployment has API access configured (see each integration page).
@@ -206,11 +206,11 @@ export default function TeamInsightsContent() {
         </p>
         <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-fg)]">
           Same numbers everywhere:{" "}
-          <Link href="/projects" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+          <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
             Overview
           </Link>
           , this page, and{" "}
-          <Link href="/reports" className="font-semibold text-[var(--workspace-accent)] hover:underline">
+          <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
             Reports
           </Link>{" "}
           read one workspace snapshot. For execution detail, use{" "}

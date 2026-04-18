@@ -56,7 +56,7 @@ export default function Navbar() {
     if (pathname !== "/") return;
 
     const observers = new Map<string, IntersectionObserver>();
-    const ids = ["showcase", "product", "contact"];
+    const ids = ["showcase", "story", "contact"];
 
     ids.forEach((id) => {
       const element = document.getElementById(id);
@@ -97,10 +97,7 @@ export default function Navbar() {
   function linkIsHighlighted(link: (typeof navLinks)[0]) {
     if (linkIsActive(link.href)) return true;
     if (pathname !== "/") return false;
-    if (
-      link.href === "/product" &&
-      (activeHomeSection === "product" || activeHomeSection === "showcase")
-    )
+    if (link.href === "/product" && ["showcase", "story"].includes(activeHomeSection ?? ""))
       return true;
     if (link.href === "/contact" && activeHomeSection === "contact")
       return true;
@@ -236,7 +233,7 @@ export default function Navbar() {
                   : "site-brand-wordmark text-[#1d1d1f]"
               }
             >
-              Route 5
+              Route5
             </span>
           </Link>
 

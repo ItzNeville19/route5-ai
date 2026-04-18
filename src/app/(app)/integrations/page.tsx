@@ -66,10 +66,10 @@ export default function IntegrationsHubPage() {
       <IntegrationStatusStrip />
       <p className="mt-4">
         <Link
-          href="/workspace/apps"
+          href="/marketplace"
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
         >
-          Open library
+          Browse marketplace
         </Link>
       </p>
       <ul className="mt-10 grid gap-4 sm:grid-cols-2">

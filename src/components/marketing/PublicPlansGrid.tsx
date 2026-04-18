@@ -14,7 +14,7 @@ function TierCta({
   if (tierId === "free") {
     return signedIn ? (
       <Link
-        href="/projects"
+        href="/overview"
         className="btn-primary inline-flex w-full justify-center rounded-xl py-2.5 text-[13px] font-semibold"
       >
         Open workspace

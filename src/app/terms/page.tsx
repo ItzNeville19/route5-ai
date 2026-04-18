@@ -122,7 +122,7 @@ For new users, the Terms in effect at the time of account creation apply immedia
     content: `Questions about these Terms should be directed to:
 
 **Route5**
-neville@rayze.xyz`,
+contact@route5.ai`,
   },
 ];
 

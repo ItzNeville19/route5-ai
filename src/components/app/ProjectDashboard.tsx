@@ -250,7 +250,7 @@ export default function ProjectDashboard({ projectId }: Props) {
           Project not found or you don&apos;t have access.
         </p>
         <Link
-          href="/projects"
+          href="/overview"
           className="mt-4 inline-block text-[14px] font-medium text-[var(--workspace-accent)] hover:underline"
         >
           Back to overview
@@ -264,7 +264,7 @@ export default function ProjectDashboard({ projectId }: Props) {
       <div className="min-w-0 flex-1 space-y-8">
         <div>
           <Link
-            href="/projects"
+            href="/overview"
             className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
           >
             ← Overview
@@ -371,7 +371,7 @@ export default function ProjectDashboard({ projectId }: Props) {
           onClose={() => setDeleteOpen(false)}
           onDeleted={() => {
             pushToast("Project deleted.", "success");
-            router.push("/projects");
+            router.push("/overview");
           }}
         />
 
@@ -417,7 +417,10 @@ export default function ProjectDashboard({ projectId }: Props) {
         <div className="sticky top-[52px] z-20 xl:static xl:z-auto">
           <InputPanel
             projectId={projectId}
-            onExtracted={() => void load()}
+            onExtracted={() => {
+              void load();
+              window.dispatchEvent(new Event("route5:project-updated"));
+            }}
             prefillText={prefill}
             onPrefillConsumed={() => setPrefill(null)}
           />

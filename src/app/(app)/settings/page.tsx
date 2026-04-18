@@ -5,6 +5,8 @@ import { PRODUCT_MISSION } from "@/lib/product-truth";
 import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
+import SettingsConnectionsSection from "@/components/settings/SettingsConnectionsSection";
+import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebhookCard";
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
@@ -55,7 +57,7 @@ export default function WorkspaceSettingsPage() {
       <PlanUsageStrip />
       <div>
         <Link
-          href="/projects"
+          href="/overview"
           className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
           ← Overview
@@ -83,6 +85,10 @@ export default function WorkspaceSettingsPage() {
           .
         </p>
       </div>
+
+      <SettingsConnectionsSection />
+
+      <SettingsIngestWebhookCard />
 
       <WorkspaceAiSettingsCard />
 

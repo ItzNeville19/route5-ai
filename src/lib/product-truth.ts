@@ -3,18 +3,38 @@ import { POSITIONING_WEDGE } from "@/lib/positioning-wedge";
 export { POSITIONING_WEDGE } from "@/lib/positioning-wedge";
 
 /**
+ * North star / investor narrative — not a promise that every line is shipped yet.
+ * Use next to PRODUCT_LIVE on docs, pitch, and “why Route5” copy.
+ */
+export const PRODUCT_VISION = {
+  category:
+    "Enterprise AI execution layer — sits above Slack, Notion, email, and project tools without replacing them.",
+  problem:
+    "Decisions happen in meetings, Slack, and documents, but they are rarely owned, tracked, or executed. Work gets summarized; accountability does not.",
+  outcome:
+    "Persistent accountability state: what was decided, who owns it, deadlines, and whether it happened—with risk surfaced before failure.",
+  not:
+    "Not a task manager, not a generic AI summarizer, not another PM suite—it closes the loop from decision to done.",
+  icp:
+    "B2B SaaS for C-suite and COOs at mid-market companies (often 50–500 employees) in finance, law, consulting, and operations-heavy businesses.",
+  wedge:
+    "Land with one team, expand org-wide. Enterprise contracts; scope scales with rollout.",
+  techDirection:
+    "Supabase/Firebase-class data, LLM-assisted extraction and (roadmap) agents for ingestion and escalation; integrations Slack, Gmail, Notion APIs; mobile can follow native patterns.",
+} as const;
+
+/**
  * Honest scope — what Route5 does in this app (plain language, no buzzwords).
  * UI must match: no fake agents, sync, or connectors that are not shipped.
- * Primary GTM: contract & program operations (see POSITIONING_WEDGE).
  */
 export const PRODUCT_HONEST = {
   oneLine: POSITIONING_WEDGE.productOneLine,
   whatItIs:
-    "You work in projects. Desk and in-project capture turn pasted threads, tickets, or notes into structured runs: what’s wrong, what to do about it, open questions, a short snapshot, decisions, and checkable actions. Complete actions over time; Overview and Reports read the same saved data. Linear and GitHub fit in when you configure them.",
+    "Route5 is an execution system: you organize work in projects, paste communication into Desk or a project, and the system extracts structured commitments (owners, status, due dates). Activity and inactivity roll up on Overview so you see what is overdue, at risk, or missing an owner — not another task list disconnected from decisions.",
   howSteps: [
-    "Create a project for an initiative, team, or thread of work.",
-    "Capture on Desk or in a project — paste notes, tickets, or imports — then run a pass (AI when configured, or a fast offline pass).",
-    "Clear next moves from Desk or the project; Overview shows completion and activity from what you actually saved.",
+    "Create a project for a team, initiative, or thread of execution you need to track.",
+    "Paste notes, tickets, or meeting text — run extraction (AI when configured, or a fast offline pass). Confirm commitments and owners.",
+    "Use Desk to resolve items; Overview shows execution health, stale work, and load from saved data. Optional Linear/GitHub when you configure them.",
   ] as const,
   notThis:
     "There is no autonomous email sync. Slack: paste-to-Desk works for everyone; the Slack integration page and API are Pro+ (optional SLACK_BOT_TOKEN / SLACK_WEBHOOK_URL for deployment). Linear/GitHub paste-and-import flows are as documented on each screen.",
@@ -27,11 +47,11 @@ export const PRODUCT_HONEST = {
  * widespread failure mode in knowledge work — unstructured input without durable follow-through.
  */
 export const PRODUCT_PROBLEM = {
-  headline: "Client and internal commitments stall in unstructured text",
+  headline: "Execution breaks after decisions are made",
   body:
-    "Threads, tickets, and notes pile up faster than anyone can restate them. The gap between what was said and what gets done is where delivery risk lives — Route5 narrows that gap with saved runs, named actions, and checklists you can audit, not another scrollback.",
+    "Companies decide things in meetings, Slack, Notion, and email — but those decisions are rarely turned into owned, tracked work. Nobody stays accountable; tools require someone to remember to log work; summarizers capture what was said, not what must happen next. The gap is persistent accountability state, not another dashboard.",
   route5Does:
-    "One workspace to capture messy input, run structured passes (problem, path, questions, actions), check work off from Desk or projects (oldest open items first), and chart completion from data you saved — Linear and GitHub when you connect them.",
+    "Route5 converts communication into owned commitments you can track to completion: capture and extract, assign ownership, monitor risk and staleness on Overview, and integrate with existing tools where configured — starting with paste and API-backed paths today.",
 } as const;
 
 /**
@@ -68,8 +88,8 @@ export const PRODUCT_VS_EPHEMERAL_CHAT = {
 
 /** Short positioning line — matches in-app analytics (real rows, no black box). */
 export const ENTERPRISE_INTELLIGENCE = {
-  oneLine: `${POSITIONING_WEDGE.taglineShort} Charts and open-action queues from your saved runs. Linear and GitHub when you connect them.`,
-  surfaces: "Overview and Reports use the same timestamps as Desk; metrics are from your workspace data.",
+  oneLine: `${POSITIONING_WEDGE.taglineShort} Charts and open-action queues from your saved runs.`,
+  surfaces: "Overview and Analytics use the same timestamps as Desk; metrics are from your workspace data.",
 } as const;
 
 export const PRODUCT_MISSION = {
@@ -87,10 +107,12 @@ export const PRODUCT_MISSION = {
 export const PRODUCT_LIVE = {
   auth: "Clerk sign-in (SSO if you configure it).",
   projects: "Projects hold extractions, decisions, action checklists, and history.",
+  ingest:
+    "Optional POST /api/ingest/webhook with ROUTE5_INGEST_SECRET — push text into a project as commitments (Zapier, scripts, Slack outgoing).",
   extract:
     "Paste raw text. With OPENAI_API_KEY: JSON extraction (problem, path forward, open questions, snapshot summary, decisions, actions). Without: heuristic pass with the same fields, labeled in the run — not GPT-grade analysis.",
-  linear: "Integrations → Linear: browse, import by link, send context into projects.",
-  github: "Integrations → GitHub: samples and import by URL into projects.",
+  linear: "Settings → Connections → Linear: browse, import by link when API access is configured.",
+  github: "Settings → Connections → GitHub: samples and import by URL when a token is configured.",
   actions: "Check off action items; saved per extraction; completion rolls into workspace metrics.",
   analytics:
     "Overview shows action completion rate, stale open actions, activity trends, and per-project health from real rows.",
@@ -107,10 +129,12 @@ export const PRODUCT_INTEGRATIONS = {
 } as const;
 
 export const PRODUCT_ROADMAP = [
+  "Automatic ingestion: Slack, email, Notion, meeting transcripts (connectors)",
+  "Agents: monitor progress, surface blockers, escalation before deadlines slip",
+  "Executive and org-wide execution health views",
   "Deeper two-way sync with Linear and GitHub",
-  "Slack and email capture (connector)",
-  "Team roles and shared workspaces",
-  "On-premise and bring-your-own LLM",
+  "Team roles, shared workspaces, audit posture",
+  "On-premise and bring-your-own LLM where required",
 ] as const;
 
 /**

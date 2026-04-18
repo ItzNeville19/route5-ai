@@ -158,7 +158,7 @@ export default function LinearIntegrationPage() {
   return (
     <div className="mx-auto max-w-[900px] pb-24">
       <Link
-        href="/integrations"
+        href="/settings#connections"
         className="text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
       >
         ← Integrations
@@ -296,7 +296,7 @@ export default function LinearIntegrationPage() {
 
       <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
         Runs sync with{" "}
-        <Link href="/projects" className="font-medium text-[var(--workspace-accent)] hover:underline">
+        <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           Overview
         </Link>{" "}
         — Desk is your daily workspace; projects stay the system of record.

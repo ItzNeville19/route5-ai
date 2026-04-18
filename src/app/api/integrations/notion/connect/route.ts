@@ -1,0 +1,28 @@
+import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { signNotionOAuthState } from "@/lib/integrations/notion-oauth-state";
+import { appBaseUrl } from "@/lib/integrations/app-url";
+
+export const runtime = "nodejs";
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.redirect(new URL("/login", appBaseUrl()));
+  }
+  const clientId = process.env.NOTION_CLIENT_ID?.trim();
+  if (!clientId) {
+    return NextResponse.json({ error: "Notion OAuth is not configured (NOTION_CLIENT_ID)" }, { status: 503 });
+  }
+  await ensureOrganizationForClerkUser(userId);
+  const redirectUri = `${appBaseUrl()}/api/integrations/notion/callback`;
+  const state = signNotionOAuthState(userId);
+  const url = new URL("https://api.notion.com/v1/oauth/authorize");
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("owner", "user");
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("state", state);
+  return NextResponse.redirect(url.toString());
+}

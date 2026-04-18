@@ -153,7 +153,7 @@ export default function SlackIntegrationPage() {
       </div>
 
       <p className="mt-10 text-center text-[12px] text-[var(--workspace-muted-fg)]">
-        <Link href="/integrations" className="font-medium text-[var(--workspace-accent)] hover:underline">
+        <Link href="/settings#connections" className="font-medium text-[var(--workspace-accent)] hover:underline">
           ← All integrations
         </Link>
       </p>

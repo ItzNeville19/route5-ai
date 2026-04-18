@@ -233,7 +233,7 @@ export default function InputPanel({
             Jump to extractions
           </button>
           <Link
-            href="/projects"
+            href="/overview"
             className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
           >
             All projects

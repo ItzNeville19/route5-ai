@@ -27,17 +27,17 @@ export function dismissedStorageKey(userId: string): string {
 
 const DAILY_TIPS: readonly { body: string; learnMoreHref: string }[] = [
   { body: "Pin projects in the sidebar so active work stays on top.", learnMoreHref: "/docs/product" },
-  { body: "⌘K opens search — jump to Desk, Integrations, or a project by name.", learnMoreHref: "/docs/product" },
+  { body: "⌘K opens search — jump to Desk, Marketplace, or a project by name.", learnMoreHref: "/docs/product" },
   {
     body: "Duplicate a saved run when you want to iterate without losing the original.",
     learnMoreHref: "/docs/product",
   },
   { body: "Templates on Desk pre-fill structure; you still edit before you run.", learnMoreHref: "/docs/product" },
   { body: "The workspace assistant uses your live project and run counts — ask what to do next.", learnMoreHref: "/docs/product" },
-  { body: "The daily digest page mirrors the header bell — same counts, calmer layout.", learnMoreHref: "/workspace/digest" },
-  { body: "Customize Overview hero shortcuts from Workspace → Customize overview.", learnMoreHref: "/workspace/customize" },
-  { body: "Reports exports JSON for standups — same totals you see on Overview.", learnMoreHref: "/reports" },
-  { body: "Team insights shows the same live counts as Overview for shared visibility.", learnMoreHref: "/team-insights" },
+  { body: "Overview shows the same commitment metrics as the header bell — fewer places to look.", learnMoreHref: "/overview" },
+  { body: "Themes under Customize adjust layout and palette without touching your runs.", learnMoreHref: "/workspace/customize" },
+  { body: "Analytics and JSON export live under Reports — same totals as Overview, more depth.", learnMoreHref: "/reports" },
+  { body: "Optional connectors are in Settings — nothing blocks your first capture on Desk.", learnMoreHref: "/settings#connections" },
   { body: "Replay guided onboarding anytime from the link in Today tips or Desk.", learnMoreHref: "/onboarding?replay=1" },
   { body: "Plans and run limits live under Account → Plans.", learnMoreHref: "/account/plans" },
 ] as const;
@@ -65,7 +65,7 @@ export function buildDashboardDailyCards(
       title: "Give your work a home",
       body: "Projects hold every extraction, decision, and action. Create one, then capture on Desk.",
       ctaLabel: "Create project",
-      href: "/projects",
+      href: "/overview",
       tone: "accent",
     });
   }
@@ -124,15 +124,6 @@ export function buildDashboardDailyCards(
       tone: "neutral",
     });
   }
-
-  out.push({
-    id: "team-share",
-    title: "Team visibility",
-    body: "Export JSON from Reports for standups, or use Team insights for the same live counts as Overview.",
-    ctaLabel: "Team insights",
-    href: "/team-insights",
-    tone: "neutral",
-  });
 
   const tipIdx = stableHash(`${userId ?? "anon"}:${dayKey()}:tip`) % DAILY_TIPS.length;
   const tip = DAILY_TIPS[tipIdx]!;

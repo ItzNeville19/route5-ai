@@ -30,7 +30,7 @@ export default function WorkspaceDailyDigestPage() {
   const { intlLocale } = useI18n();
   const { prefs } = useWorkspaceExperience();
   const tz = prefs.workspaceTimezone?.trim();
-  const { summary, loadingSummary } = useWorkspaceData();
+  const { summary, executionOverview, loadingSummary } = useWorkspaceData();
 
   const dateHeading = useMemo(() => formatDigestDateLine(intlLocale, tz), [intlLocale, tz]);
 
@@ -39,22 +39,27 @@ export default function WorkspaceDailyDigestPage() {
       buildDailyDigestListItems({
         loadingSummary,
         summary,
+        executionOverview,
         intlLocale,
         workspaceTimezone: tz,
       }),
-    [loadingSummary, summary, intlLocale, tz]
+    [loadingSummary, summary, executionOverview, intlLocale, tz]
   );
 
   const fingerprint = useMemo(() => {
     if (!summary) return "0:0:0:";
     const latestId = summary.recent[0]?.id ?? null;
+    const ex = executionOverview?.summary;
     return digestFingerprint({
       projectCount: summary.projectCount,
       extractionCount: summary.extractionCount,
       staleOpenActions: summary.execution.staleOpenActions,
       latestExtractionId: latestId,
+      commitmentOverdue: ex?.overdueCount,
+      commitmentAtRisk: ex?.atRiskCount,
+      commitmentUnassigned: ex?.unassignedCount,
     });
-  }, [summary]);
+  }, [summary, executionOverview]);
 
   useEffect(() => {
     if (!userId || loadingSummary) return;
@@ -174,7 +179,7 @@ export default function WorkspaceDailyDigestPage() {
 
       <div className="flex flex-wrap gap-3 border-t border-[var(--workspace-border)] pt-6">
         <Link
-          href="/projects"
+          href="/overview"
           className="inline-flex items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-surface)]"
         >
           <FolderOpen className="h-4 w-4" strokeWidth={2} aria-hidden />

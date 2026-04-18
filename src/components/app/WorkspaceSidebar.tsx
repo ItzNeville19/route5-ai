@@ -7,23 +7,23 @@ import { motion } from "framer-motion";
 import { UserButton, useUser } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangle,
+  BarChart3,
+  Plug,
   LayoutDashboard,
-  Library,
-  MessageCircle,
   PanelTop,
   Pin,
   PinOff,
-  Plug2,
   Plus,
   Rocket,
+  ScrollText,
   Settings,
-  SlidersHorizontal,
+  Target,
 } from "lucide-react";
 import WorkspaceInstallControls from "@/components/workspace/WorkspaceInstallControls";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { MERIDIAN_SHORT } from "@/lib/assistant-brand";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 import { deskUrl } from "@/lib/desk-routes";
 import { POSITIONING_WEDGE, PRODUCT_MISSION } from "@/lib/product-truth";
@@ -162,10 +162,9 @@ export default function WorkspaceSidebar() {
     [projects]
   );
 
-  const activeProjectId =
-    pathname?.startsWith("/projects/") && pathname !== "/projects"
-      ? pathname.split("/")[2]
-      : null;
+  const activeProjectId = pathname?.startsWith("/projects/")
+    ? pathname.split("/")[2]
+    : null;
 
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
@@ -186,8 +185,9 @@ export default function WorkspaceSidebar() {
       {/* Brand — minimal */}
       <div className="shrink-0 px-4 pt-5 pb-3">
         <Link
-          href="/projects"
+          href="/overview"
           className="workspace-brand-wordmark block truncate text-[var(--workspace-fg)] transition hover:opacity-90"
+          title="Overview — execution health"
         >
           {PRODUCT_MISSION.name}
         </Link>
@@ -251,47 +251,52 @@ export default function WorkspaceSidebar() {
         ) : null}
 
         <NavLink
+          href="/overview"
+          active={path === "/overview" || path.startsWith("/projects/")}
+          icon={LayoutDashboard}
+          label={t("sidebar.overview")}
+        />
+        <NavLink
           href={deskUrl()}
           active={path === "/desk"}
           icon={PanelTop}
           label={t("sidebar.desk")}
         />
         <NavLink
-          href="/projects"
-          active={path === "/projects" || path.startsWith("/projects/")}
-          icon={LayoutDashboard}
-          label={t("sidebar.overview")}
+          href="/workspace/dashboard"
+          active={path === "/workspace/dashboard"}
+          icon={BarChart3}
+          label={t("sidebar.dashboard")}
         />
         <NavLink
-          href="/integrations"
-          active={path.startsWith("/integrations")}
-          icon={Plug2}
+          href="/workspace/escalations"
+          active={path === "/workspace/escalations"}
+          icon={AlertTriangle}
+          label={t("sidebar.escalations")}
+        />
+        <NavLink
+          href="/workspace/integrations"
+          active={path === "/workspace/integrations"}
+          icon={Plug}
           label={t("sidebar.integrations")}
         />
         <NavLink
-          href="/workspace/apps"
-          active={path.startsWith("/workspace/apps")}
-          icon={Library}
-          label={t("sidebar.library")}
+          href="/workspace/commitments"
+          active={path === "/workspace/commitments"}
+          icon={Target}
+          label={t("sidebar.commitments")}
         />
         <NavLink
-          href="/workspace/customize"
-          active={path.startsWith("/workspace/customize")}
-          icon={SlidersHorizontal}
-          label={t("sidebar.customize")}
+          href="/workspace/audit"
+          active={path === "/workspace/audit"}
+          icon={ScrollText}
+          label={t("sidebar.audit")}
         />
         <NavLink
           href="/settings"
           active={path === "/settings"}
           icon={Settings}
           label={t("sidebar.settings")}
-        />
-
-        <NavLink
-          active={false}
-          icon={MessageCircle}
-          label={MERIDIAN_SHORT}
-          onClick={() => window.dispatchEvent(new Event("route5:assistant-open"))}
         />
       </nav>
 
@@ -364,14 +369,8 @@ export default function WorkspaceSidebar() {
 
       <div className="mt-auto shrink-0 space-y-3 border-t border-[var(--workspace-border)]/70 bg-[var(--workspace-sidebar)]/80 px-3 py-3 backdrop-blur-xl">
         <div className="flex items-center justify-center gap-3 text-[10px] font-medium text-[var(--workspace-muted-fg)]">
-          <Link href="/docs" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.docs")}
-          </Link>
-          <span className="text-[var(--workspace-border)]" aria-hidden>
-            ·
-          </span>
-          <Link href="/support" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.support")}
+          <Link href="/product" className="transition hover:text-[var(--workspace-fg)]">
+            {t("sidebar.product")}
           </Link>
         </div>
         <WorkspaceInstallControls />

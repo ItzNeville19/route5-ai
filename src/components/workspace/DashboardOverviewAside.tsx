@@ -82,7 +82,7 @@ export default function DashboardOverviewAside({
         )}
 
         {!loading && rows.length > 0 ? (
-          <Link href="/projects" className={`mt-2 inline-flex text-[12px] font-semibold ${link}`}>
+          <Link href="/overview" className={`mt-2 inline-flex text-[12px] font-semibold ${link}`}>
             All projects
           </Link>
         ) : null}

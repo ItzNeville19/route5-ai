@@ -36,10 +36,9 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     shortcuts: [
-      { name: "Overview", short_name: "Home", url: "/projects", description: "Workspace overview" },
-      { name: "Desk", short_name: "Desk", url: deskUrl(), description: "Capture & extract" },
-      { name: "Reports", short_name: "Reports", url: "/reports", description: "Execution snapshot" },
-      { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & workspace" },
+      { name: "Overview", short_name: "Home", url: "/overview", description: "Execution & commitments" },
+      { name: "Desk", short_name: "Desk", url: deskUrl(), description: "Capture & track" },
+      { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & connections" },
     ],
   };
 }

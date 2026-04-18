@@ -109,6 +109,10 @@ export function getLimitsForTier(tier: PlanTierId): TierLimits {
 export type TierFeatures = {
   /** Pro+ — Slack integration page and API are usable (org still configures tokens). */
   slackConnector: boolean;
+  /** Pro+ — Gmail OAuth, Pub/Sub push, and weekly executive email (same gate as Slack). */
+  gmailConnector: boolean;
+  /** Pro+ — Notion OAuth and polling (same gate as Slack). */
+  notionConnector: boolean;
   /** Pro+ — full analytics / exports positioning. */
   advancedAnalytics: boolean;
   prioritySupport: boolean;
@@ -124,6 +128,8 @@ export function getFeaturesForTier(tier: PlanTierId): TierFeatures {
     case "free":
       return {
         slackConnector: false,
+        gmailConnector: false,
+        notionConnector: false,
         advancedAnalytics: false,
         prioritySupport: false,
         teamInsightsFull: false,
@@ -133,6 +139,8 @@ export function getFeaturesForTier(tier: PlanTierId): TierFeatures {
     case "pro":
       return {
         slackConnector: true,
+        gmailConnector: true,
+        notionConnector: true,
         advancedAnalytics: true,
         prioritySupport: true,
         teamInsightsFull: true,
@@ -142,6 +150,8 @@ export function getFeaturesForTier(tier: PlanTierId): TierFeatures {
     case "ultra":
       return {
         slackConnector: true,
+        gmailConnector: true,
+        notionConnector: true,
         advancedAnalytics: true,
         prioritySupport: true,
         teamInsightsFull: true,
@@ -151,6 +161,8 @@ export function getFeaturesForTier(tier: PlanTierId): TierFeatures {
     case "enterprise":
       return {
         slackConnector: true,
+        gmailConnector: true,
+        notionConnector: true,
         advancedAnalytics: true,
         prioritySupport: true,
         teamInsightsFull: true,

@@ -13,9 +13,9 @@ export const CEO_BRIEF = {
   sections: [
     {
       heading: "Who we built for first",
-      body: `We focus first on **${POSITIONING_WEDGE.label}** — ${POSITIONING_WEDGE.buyerRoles.join(
+      body: `We focus first on people who own **follow-through** — ${POSITIONING_WEDGE.buyerRoles.join(
         "; "
-      )}. The job is **commitment handoff**: what was promised, who owns it, and a record you can audit — ${POSITIONING_WEDGE.qualityBar.toLowerCase()}`,
+      )}. Route5 is the **${POSITIONING_WEDGE.label.toLowerCase()}**: what was promised, who owns it, and a record you can audit — ${POSITIONING_WEDGE.qualityBar.toLowerCase()}`,
     },
     {
       heading: "The problem",

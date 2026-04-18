@@ -2526,3 +2526,61 @@ body {
   display: none;
 }
 
+/* ── Marketing home: premium void (grid + grain) over command canvas ── */
+.theme-route5-command.theme-agent-shell.landing-premium .agent-canvas {
+  position: relative;
+}
+
+.theme-route5-command.theme-agent-shell.landing-premium .agent-canvas::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.42;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.038) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.038) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 38%, black 18%, transparent 68%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 38%, black 18%, transparent 68%);
+}
+
+.theme-route5-command.theme-agent-shell.landing-premium .agent-canvas::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+.theme-route5-command.theme-agent-shell.landing-premium .agent-canvas > * {
+  position: relative;
+  z-index: 5;
+}
+
+@keyframes landing-aurora-shift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(2%, -1%, 0) scale(1.03);
+    opacity: 0.72;
+  }
+}
+
+.landing-aurora-blob {
+  animation: landing-aurora-shift 14s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-aurora-blob {
+    animation: none;
+  }
+}
+

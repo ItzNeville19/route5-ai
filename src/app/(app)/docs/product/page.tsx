@@ -52,6 +52,10 @@ export default function DocsProductPage() {
             {PRODUCT_LIVE.projects}
           </li>
           <li className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3">
+            <span className="font-medium text-[var(--workspace-fg)]">Automation ingest.</span>{" "}
+            {PRODUCT_LIVE.ingest}
+          </li>
+          <li className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3">
             <span className="font-medium text-[var(--workspace-fg)]">Extraction.</span>{" "}
             {PRODUCT_LIVE.extract}
           </li>

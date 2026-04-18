@@ -58,11 +58,11 @@ export default function DashboardStatusCard({
               Connectors, runs, and project scores
             </h2>
             <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              Live from your workspace. Apps and extensions live in the{" "}
-              <Link href="/marketplace" className="font-medium text-[var(--workspace-accent)] hover:underline">
-                marketplace
-              </Link>{" "}
-              — browse from the bottom of this page when you are ready.
+              Live from your workspace. Optional API connectors are configured in{" "}
+              <Link href="/settings#connections" className="font-medium text-[var(--workspace-accent)] hover:underline">
+                Settings → Connections
+              </Link>
+              .
             </p>
           </div>
           <div className="flex flex-wrap justify-end gap-2">
@@ -87,7 +87,7 @@ export default function DashboardStatusCard({
                 : `${projectCount} project${projectCount === 1 ? "" : "s"} · ${extractionCount} run${extractionCount === 1 ? "" : "s"}`}
             </p>
             <Link
-              href="/projects#new-project"
+              href="/overview#new-project"
               className="mt-2 inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--workspace-accent)] hover:underline"
             >
               Add project

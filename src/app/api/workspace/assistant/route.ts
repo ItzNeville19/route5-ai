@@ -133,7 +133,7 @@ You know:
 - Projects: ${summary.projectCount}, saved runs: ${summary.extractionCount}
 - Recent project names: ${recentProjectNames.join(", ") || "none"}
 - User notes (memory): ${memory || "none"}
-Only give accurate product advice: projects hold runs with structured fields and action checklists; Desk is for paste-and-pass; Overview shows completion from saved data; integrations for Linear/GitHub as documented. Suggest /projects, /desk, /integrations, /workspace/apps, /settings, /docs/product. No claiming features that don’t exist.`;
+Only give accurate product advice: projects hold runs with structured fields and action checklists; Desk is for paste-and-pass; Overview shows completion from saved data; optional connectors under Settings → Connections. Suggest /projects, /desk, /marketplace, /settings, /docs/product. No claiming features that don’t exist.`;
 
         const chatMessages = normalized.map((t) => ({
           role: t.role as "user" | "assistant",

@@ -35,7 +35,7 @@ export default function DeskOpenActions({
 
   return (
     <section
-      className="dashboard-home-card rounded-[24px] p-5 sm:p-6"
+      className="dashboard-home-card relative rounded-[24px] border-l-2 border-l-[var(--workspace-accent)]/35 p-5 sm:p-6"
       aria-labelledby="desk-open-queue-heading"
     >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">

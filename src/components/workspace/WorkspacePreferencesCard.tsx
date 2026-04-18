@@ -112,8 +112,8 @@ export default function WorkspacePreferencesCard() {
           </h3>
           <p className="workspace-pref-secondary mt-2 max-w-xl text-[13px] leading-relaxed">
             {t("prefs.timeIntro")}{" "}
-            <Link href="/workspace/apps" className="font-medium text-[var(--workspace-accent)] hover:underline">
-              {t("prefs.libraryLink")}
+            <Link href="/product" className="font-medium text-[var(--workspace-accent)] hover:underline">
+              {t("sidebar.product")}
             </Link>
             .
           </p>
@@ -181,10 +181,7 @@ export default function WorkspacePreferencesCard() {
         <h3 className="text-[14px] font-semibold text-[var(--workspace-fg)]">{t("prefs.appearanceSection")}</h3>
         <p className="workspace-pref-secondary text-[12px] leading-relaxed">
           {t("prefs.appearanceIntro")}{" "}
-          <Link
-            href="/workspace/customize#appearance"
-            className="font-medium text-[var(--workspace-accent)] hover:underline"
-          >
+          <Link href="/settings" className="font-medium text-[var(--workspace-accent)] hover:underline">
             {t("prefs.appearanceLink")}
           </Link>
           .

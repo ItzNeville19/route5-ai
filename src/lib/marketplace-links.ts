@@ -19,9 +19,29 @@ export function launchHrefForApp(app: MarketplaceApp): string {
   if (!href) return "/marketplace";
   if (href.startsWith("http")) return href;
 
-  if (href === "/projects#new-project") {
-    return "/projects?focus=new-project&origin=marketplace";
+  if (href === "/overview#new-project") {
+    return "/overview?focus=new-project&origin=marketplace";
   }
 
   return appendMarketplaceOrigin(href);
+}
+
+/**
+ * After enabling a marketplace listing, navigate here so the user lands on a real screen:
+ * Settings (AI prefs) for engines/providers, or the integration page for actions.
+ */
+export function marketplaceAfterEnableHref(app: MarketplaceApp): string {
+  if (app.kind === "installable" && app.id === "linear-action") {
+    return appendMarketplaceOrigin("/integrations/linear");
+  }
+
+  const base = launchHrefForApp(app);
+  if (app.kind !== "installable") return base;
+
+  const pathOnly = base.includes("#") ? base.slice(0, base.indexOf("#")) : base;
+
+  if (app.category === "ai-providers") {
+    return `${pathOnly}#llm-provider`;
+  }
+  return `${pathOnly}#extraction-provider`;
 }

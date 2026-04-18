@@ -10,12 +10,19 @@ export function digestFingerprint(input: {
   extractionCount: number;
   staleOpenActions: number;
   latestExtractionId: string | null;
+  /** From execution overview — bumps digest when commitment risk changes. */
+  commitmentOverdue?: number;
+  commitmentAtRisk?: number;
+  commitmentUnassigned?: number;
 }): string {
   return [
     input.projectCount,
     input.extractionCount,
     input.staleOpenActions,
     input.latestExtractionId ?? "",
+    input.commitmentOverdue ?? 0,
+    input.commitmentAtRisk ?? 0,
+    input.commitmentUnassigned ?? 0,
   ].join(":");
 }
 

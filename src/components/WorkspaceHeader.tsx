@@ -17,28 +17,13 @@ const NAV: readonly {
   label: string;
   match: (p: string) => boolean;
 }[] = [
-  { href: DESK_HREF, label: "Desk", match: (p) => p === "/desk" },
   {
-    href: "/projects",
+    href: "/overview",
     label: "Overview",
-    match: (p) => p === "/projects" || p.startsWith("/projects/"),
+    match: (p) => p === "/overview" || p.startsWith("/projects/"),
   },
-  { href: "/reports", label: "Reports", match: (p) => p === "/reports" },
-  {
-    href: "/team-insights",
-    label: "Team",
-    match: (p) => p === "/team-insights",
-  },
-  {
-    href: "/integrations",
-    label: "Integrations",
-    match: (p) => p === "/integrations" || p.startsWith("/integrations/"),
-  },
-  {
-    href: "/marketplace",
-    label: "Marketplace",
-    match: (p) => p === "/marketplace" || p.startsWith("/marketplace/"),
-  },
+  { href: DESK_HREF, label: "Desk", match: (p) => p === "/desk" },
+  { href: "/settings", label: "Settings", match: (p) => p === "/settings" },
 ];
 
 function NavPill({
@@ -90,10 +75,10 @@ export default function WorkspaceHeader() {
         </button>
 
         <Link
-          href="/projects"
+          href="/overview"
           className="workspace-brand-wordmark shrink-0 py-1 text-[var(--workspace-fg)] transition hover:opacity-90"
         >
-          Route 5
+          Route5
         </Link>
 
         <nav
@@ -155,7 +140,7 @@ export default function WorkspaceHeader() {
 
       {projectIdFromPath && projectTitle ? (
         <div className="border-t border-[var(--workspace-border)]/80 bg-black/25 px-4 py-2.5 text-[13px] text-[var(--workspace-muted-fg)] sm:px-8">
-          <Link href="/projects" className="font-medium transition hover:text-[var(--workspace-fg)]">
+          <Link href="/overview" className="font-medium transition hover:text-[var(--workspace-fg)]">
             Overview
           </Link>
           <span className="mx-2 text-[var(--workspace-muted-fg)]/70" aria-hidden>

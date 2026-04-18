@@ -236,7 +236,7 @@ export function CommandPaletteProvider({
         const path = href.slice(0, hashIdx);
         const hash = href.slice(hashIdx + 1);
         router.push(`${path}#${hash}`);
-        if (path === "/projects") {
+        if (path === "/overview") {
           window.setTimeout(() => {
             document.getElementById("new-project-name")?.focus();
           }, 0);
@@ -289,8 +289,9 @@ export function CommandPaletteProvider({
   const inAppShell =
     !!pathname &&
     (pathname.startsWith("/projects") ||
+      pathname === "/overview" ||
+      pathname === "/desk" ||
       pathname === "/settings" ||
-      pathname.startsWith("/marketplace") ||
       pathname.startsWith("/integrations") ||
       pathname.startsWith("/docs") ||
       pathname === "/support" ||
@@ -298,7 +299,7 @@ export function CommandPaletteProvider({
   const agentShell = signedIn && inAppShell;
 
   const placeholder = agentShell
-    ? `Search workspace${displayName ? ` (${displayName})` : ""} — projects, settings, site…`
+    ? `Search workspace${displayName ? ` (${displayName})` : ""} — Desk, Overview, settings…`
     : "Search Route5 — pages, workspace, legal…";
 
   const overlay = (

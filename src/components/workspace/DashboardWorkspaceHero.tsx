@@ -189,11 +189,11 @@ export default function DashboardWorkspaceHero({
                   {dateLine}
                 </p>
                 <Link
-                  href="/workspace/digest"
+                  href="/overview"
                   className="inline-flex items-center gap-1 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)] transition hover:border-[var(--workspace-border)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]"
                 >
                   <Bell className="h-3 w-3" aria-hidden />
-                  Daily digest
+                  Snapshot
                 </Link>
                 <Link
                   href="/account/plans"
@@ -270,7 +270,7 @@ export default function DashboardWorkspaceHero({
                   </span>
                   <span
                     className="text-[var(--workspace-fg)]"
-                    title="OpenAI, Linear, GitHub, Figma — each can be connected under Integrations."
+                    title="OpenAI, Linear, GitHub, Figma — optional; configure under Settings → Connections."
                   >
                     {readiness == null
                       ? "—"
@@ -278,10 +278,10 @@ export default function DashboardWorkspaceHero({
                   </span>
                   {" · "}
                   <Link
-                    href="/integrations"
+                    href="/settings#connections"
                     className="font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline"
                   >
-                    Integrations
+                    Connections
                   </Link>
                 </>
               )}
@@ -375,15 +375,6 @@ export default function DashboardWorkspaceHero({
                 </Link>
               ) : null}
               <div className="flex items-center gap-2.5">
-                <Link
-                  href="/workspace/customize"
-                  className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
-                >
-                  Customize
-                </Link>
-                <span className="text-[10px] text-[var(--workspace-muted-fg)]/50" aria-hidden>
-                  ·
-                </span>
                 <Link
                   href="/settings"
                   className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"

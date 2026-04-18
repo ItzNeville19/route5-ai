@@ -9,18 +9,14 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  Github,
   Inbox,
   Keyboard,
-  LayoutGrid,
   ListTodo,
   Loader2,
   Plug2,
   Send,
   Settings,
   Sparkles,
-  BarChart3,
-  Shield,
   Tag,
   Zap,
 } from "lucide-react";
@@ -112,59 +108,41 @@ function DeskStatusTile({
   );
 }
 
-function IntegrationTiles({
+function ConnectorStrip({
   readiness,
   t,
 }: {
   readiness: WorkspaceConnectorReadiness | null;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
-  const items: {
-    id: string;
-    title: string;
-    href: string;
-    ok: boolean;
-    icon: React.ReactNode;
-  }[] = [
-    {
-      id: "linear",
-      title: "Linear",
-      href: "/integrations/linear",
-      ok: !!readiness?.linear,
-      icon: <ListTodo className="h-4 w-4" aria-hidden />,
-    },
-    {
-      id: "github",
-      title: "GitHub",
-      href: "/integrations/github",
-      ok: !!readiness?.github,
-      icon: <Github className="h-4 w-4" aria-hidden />,
-    },
-    {
-      id: "figma",
-      title: "Figma",
-      href: "/integrations/figma",
-      ok: !!readiness?.figma,
-      icon: <LayoutGrid className="h-4 w-4" aria-hidden />,
-    },
+  const items: { id: string; title: string; href: string; ok: boolean }[] = [
+    { id: "linear", title: "Linear", href: "/integrations/linear", ok: !!readiness?.linear },
+    { id: "github", title: "GitHub", href: "/integrations/github", ok: !!readiness?.github },
+    { id: "figma", title: "Figma", href: "/integrations/figma", ok: !!readiness?.figma },
   ];
-
   return (
-    <>
-      {items.map((it) => (
-        <DeskStatusTile
-          key={it.id}
-          icon={it.icon}
-          title={it.title}
-          ok={it.ok}
-          okBadge={t("desk.ready")}
-          badBadge={t("desk.off")}
-          body={it.ok ? t("desk.statusIntegOn") : t("desk.statusIntegOff")}
-          href={it.href}
-          cta={it.ok ? t("desk.statusCtaOpen") : t("desk.statusCtaSetup")}
-        />
-      ))}
-    </>
+    <div className="flex flex-col justify-center rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 p-4 sm:min-h-[120px]">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
+        {t("desk.connectors")}
+      </p>
+      <ul className="mt-3 flex flex-wrap gap-2" aria-label={t("desk.envStripAria")}>
+        {items.map((it) => (
+          <li key={it.id}>
+            <Link
+              href={it.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-1.5 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${it.ok ? "bg-emerald-400" : "bg-[var(--workspace-muted-fg)]/40"}`}
+                aria-hidden
+              />
+              {it.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[11px] leading-relaxed text-[var(--workspace-muted-fg)]">{t("desk.envStripLead")}</p>
+    </div>
   );
 }
 
@@ -566,18 +544,18 @@ export default function DeskWorkspace() {
               aria-label={t("desk.badge")}
             >
               <Link
-                href="/projects"
+                href="/overview"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
                 {t("desk.navOverview")}
                 <ChevronRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
               </Link>
               <Link
-                href="/integrations"
+                href="/settings#connections"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
               >
                 <Plug2 className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                {t("sidebar.integrations")}
+                {t("desk.navConnections")}
               </Link>
               <Link
                 href="/settings"
@@ -585,20 +563,6 @@ export default function DeskWorkspace() {
               >
                 <Settings className="h-3.5 w-3.5 opacity-80" aria-hidden />
                 {t("desk.navSettings")}
-              </Link>
-              <Link
-                href="/docs/product"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
-              >
-                <BookOpen className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                {t("desk.navDocs")}
-              </Link>
-              <Link
-                href="/marketplace"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-3 py-2 text-[12px] font-medium text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
-              >
-                <LayoutGrid className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                {t("desk.navMarketplace")}
               </Link>
               <button
                 type="button"
@@ -619,7 +583,7 @@ export default function DeskWorkspace() {
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
             {t("desk.statusHeading")}
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2">
             <DeskStatusTile
               icon={<Sparkles className="h-4 w-4" aria-hidden />}
               title={t("desk.statusAiTitle")}
@@ -630,7 +594,7 @@ export default function DeskWorkspace() {
               href="/settings"
               cta={readiness?.openai ? t("desk.statusCtaOpen") : t("desk.statusCtaSetup")}
             />
-            <IntegrationTiles readiness={readiness} t={t} />
+            <ConnectorStrip readiness={readiness} t={t} />
           </div>
         </section>
 
@@ -701,47 +665,38 @@ export default function DeskWorkspace() {
               <ul className="mt-3 space-y-2">
                 <li>
                   <Link
+                    href="/docs/ceo-brief"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.linkCeoBrief")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/docs/sales-playbook"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <ListTodo className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.linkPilot")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/docs/product"
+                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
+                  >
+                    <Tag className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
+                    {t("desk.linkProduct")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
                     href="/account/plans"
                     className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
                   >
                     <Zap className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
                     {t("desk.resourcePlans")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
-                  >
-                    <Tag className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
-                    {t("desk.resourcePricing")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/reports"
-                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
-                  >
-                    <BarChart3 className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
-                    {t("desk.resourceReports")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
-                  >
-                    <Send className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
-                    {t("desk.resourceContact")}
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/trust"
-                    className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
-                  >
-                    <Shield className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
-                    {t("desk.resourceTrust")}
                   </Link>
                 </li>
               </ul>
@@ -786,7 +741,7 @@ export default function DeskWorkspace() {
                     {t("desk.newProjectCta")}
                   </button>
                   <Link
-                    href="/projects"
+                    href="/overview"
                     className="shrink-0 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
                   >
                     {t("desk.navOverview")}
@@ -983,7 +938,7 @@ export default function DeskWorkspace() {
             ) : null}
             {hasProjects ? (
               <Link
-                href={projectId ? `/projects/${projectId}#extractions-section` : "/projects"}
+                href={projectId ? `/projects/${projectId}#extractions-section` : "/overview"}
                 className="inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
               >
                 {t("desk.fullHistory")}

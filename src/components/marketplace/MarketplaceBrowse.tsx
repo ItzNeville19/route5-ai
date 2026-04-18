@@ -32,6 +32,7 @@ import {
   filterMarketplaceApps,
 } from "@/lib/marketplace-catalog";
 import { featuredMarketplaceAppIdsForUtcDay } from "@/lib/marketplace-featured";
+import { marketplaceAfterEnableHref } from "@/lib/marketplace-links";
 import { PRODUCT_HONEST } from "@/lib/product-truth";
 
 const appleEase = [0.22, 1, 0.36, 1] as const;
@@ -50,6 +51,7 @@ type Health = {
 /* ── Install button per tile ── */
 
 function InstallButton({ app }: { app: MarketplaceApp }) {
+  const router = useRouter();
   const exp = useWorkspaceExperience();
   const installed = exp.isMarketplaceInstalled(app.id);
   const [busy, setBusy] = useState(false);
@@ -68,7 +70,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
           className="inline-flex h-[30px] items-center gap-1 rounded-full bg-neutral-100/80 px-3 text-[12px] font-semibold text-neutral-600 transition hover:bg-neutral-200 dark:bg-white/[0.08] dark:text-neutral-300 dark:hover:bg-white/[0.12]"
         >
           <CheckCircle2 className="h-3.5 w-3.5 text-green-500" aria-hidden />
-          Installed
+          Enabled
         </button>
         <AnimatePresence>
           {showUninstall && (
@@ -81,8 +83,8 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                exp.installMarketplaceApp(app.id);
-                exp.pushToast(`${app.name} removed.`, "info");
+                exp.uninstallMarketplaceApp(app.id);
+                exp.pushToast(`${app.name} disabled — related defaults reset when they were only used for this listing.`, "info");
                 setShowUninstall(false);
               }}
               className="inline-flex h-[30px] items-center gap-1 rounded-full bg-red-50 px-3 text-[12px] font-semibold text-red-600 transition hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400"
@@ -106,9 +108,13 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
         setBusy(true);
         setTimeout(() => {
           exp.installMarketplaceApp(app.id);
-          exp.pushToast(`${app.name} added — open Desk or Integrations to use it.`, "success");
+          exp.pushToast(
+            `${app.name} enabled — opening Settings so you can confirm pass / LLM defaults.`,
+            "success"
+          );
           setBusy(false);
-        }, 280);
+          router.push(marketplaceAfterEnableHref(app));
+        }, 220);
       }}
       className="inline-flex h-[30px] shrink-0 items-center gap-1 rounded-full bg-[#0071e3] px-4 text-[12px] font-semibold text-white shadow-sm transition hover:bg-[#0077ED] active:scale-[0.97] disabled:opacity-70 dark:bg-[var(--workspace-accent)]"
     >
@@ -117,7 +123,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
       ) : (
         <Download className="h-3.5 w-3.5" aria-hidden />
       )}
-      {busy ? "Installing…" : "Install"}
+      {busy ? "Enabling…" : "Enable"}
     </button>
   );
 }
@@ -359,7 +365,7 @@ export default function MarketplaceBrowse() {
               Marketplace
             </h1>
             <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-neutral-500 dark:text-[var(--ios-secondary)]">
-              A catalog of workspace tools, integrations, and provider options. Some entries are live today and some are clearly marked as planned.
+              Optional engines and provider shortcuts. Enable saves your choice in Settings (pass / LLM defaults) and opens the right section — roadmap entries stay browse-only until shipped.
             </p>
           </div>
           <div className="hidden flex-wrap items-center justify-end gap-2 sm:flex">
@@ -448,7 +454,7 @@ export default function MarketplaceBrowse() {
             Live today vs planned next
           </p>
           <p className="mt-2 max-w-md text-[15px] leading-relaxed text-white/70">
-            Route5 ships project-based extraction, history, actions, and optional OpenAI, Linear, and GitHub flows today. Other provider listings are roadmap or future backend options.
+            Core product is Desk and Overview — structured runs and completion from your data. Listings below include optional connectors and roadmap ideas; live behavior depends on your setup.
           </p>
           <span className="mt-5 inline-flex items-center gap-1 text-[15px] font-semibold text-white">
             Read product scope
@@ -527,7 +533,7 @@ export default function MarketplaceBrowse() {
                 : "—"}
           </span>
           <Link
-            href="/integrations"
+            href="/settings#connections"
             className="ml-auto font-semibold text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]"
           >
             Open

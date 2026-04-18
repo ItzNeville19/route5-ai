@@ -76,7 +76,7 @@ export default function WorkspaceAppsPage() {
 
       <p className="mt-8 text-center text-[12px] text-[var(--workspace-muted-fg)]">
         <Link
-          href="/projects"
+          href="/overview"
           className="font-medium text-[var(--workspace-accent)] hover:underline"
         >
           ← Back to overview

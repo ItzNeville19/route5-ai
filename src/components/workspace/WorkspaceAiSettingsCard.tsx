@@ -7,11 +7,15 @@ import {
   EXTRACTION_PROVIDER_OPTIONS,
   LLM_PROVIDER_OPTIONS,
 } from "@/lib/ai-provider-presets";
+import { getMarketplaceAppById } from "@/lib/marketplace-catalog";
 
 export default function WorkspaceAiSettingsCard() {
   const exp = useWorkspaceExperience();
   const extractionId = exp.prefs.extractionProviderId ?? "auto";
   const llmId = exp.prefs.llmProviderId ?? "auto";
+  const enabledFromMarketplace = (exp.prefs.installedMarketplaceAppIds ?? [])
+    .map((id) => getMarketplaceAppById(id))
+    .filter((a) => a && a.kind === "installable");
 
   return (
     <section
@@ -31,11 +35,11 @@ export default function WorkspaceAiSettingsCard() {
               AI &amp; passes
             </h2>
             <p className="text-[12px] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Used for Desk and project runs.{" "}
-              <Link href="/marketplace" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
-                Marketplace
-              </Link>{" "}
-              lists live, planned, and experimental providers.
+              Used for Desk and project runs. Defaults below apply to structured passes; optional connectors live under{" "}
+              <Link href="/settings#connections" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
+                Connections
+              </Link>
+              .
             </p>
           </div>
         </div>
@@ -89,6 +93,25 @@ export default function WorkspaceAiSettingsCard() {
             {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint}
           </p>
         </div>
+
+        {enabledFromMarketplace.length > 0 ? (
+          <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-3 py-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
+              Enabled from Marketplace
+            </p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {enabledFromMarketplace.map((a) =>
+                a ? (
+                  <li key={a.id}>
+                    <span className="inline-flex rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[12px] font-medium text-neutral-800 dark:border-[var(--workspace-border)] dark:bg-[var(--workspace-surface)] dark:text-[var(--workspace-fg)]">
+                      {a.name}
+                    </span>
+                  </li>
+                ) : null
+              )}
+            </ul>
+          </div>
+        ) : null}
 
         <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-[12px] leading-relaxed text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-100">
           Hosted Route5 uses the platform <strong>OpenAI</strong> connection when configured by the deployment — you do{" "}

@@ -118,13 +118,13 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   {
     label: "Linear & GitHub",
     prompt: "How do I use Linear or GitHub in Route5?",
-    learnMoreHref: "/integrations",
+    learnMoreHref: "/settings#connections",
     keywords: ["linear", "github", "issue", "import", "connector", "integration", "ticket", "pr", "repo"],
   },
   {
     label: "Team alignment",
     prompt: "How do Team insights, Overview, and Reports stay aligned?",
-    learnMoreHref: "/team-insights",
+    learnMoreHref: "/overview",
     keywords: ["team", "alignment", "standup", "insights", "reports", "overview", "same", "share", "org"],
   },
   {
@@ -1010,10 +1010,10 @@ export default function WorkspaceAssistant() {
                     </div>
                   </div>
                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 px-1 text-[11px]">
-                    <Link href="/projects" className="text-[#0a84ff] hover:underline">
+                    <Link href="/overview" className="text-[#0a84ff] hover:underline">
                       Projects
                     </Link>
-                    <Link href="/integrations" className="text-[#0a84ff] hover:underline">
+                    <Link href="/settings#connections" className="text-[#0a84ff] hover:underline">
                       Integrations
                     </Link>
                     <Link href="/docs/product" className="text-[#0a84ff] hover:underline">

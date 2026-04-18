@@ -53,12 +53,12 @@ export default function WorkspaceShortcuts() {
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
 
       e.preventDefault();
-      if (pathname === "/projects") {
+      if (pathname === "/overview") {
         document.getElementById("new-project-name")?.focus();
         return;
       }
       if (pathname?.startsWith("/projects/")) {
-        router.push("/projects#new-project");
+        router.push("/overview#new-project");
         window.setTimeout(() => {
           document.getElementById("new-project-name")?.focus();
         }, 0);
@@ -100,8 +100,7 @@ export default function WorkspaceShortcuts() {
                   <kbd className="rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-zinc-100 shadow-sm">
                     ?
                   </kbd>{" "}
-                  anytime outside a text field to toggle this panel. There are many more — open the command
-                  palette for the full list.
+                  anytime outside a text field                   to toggle this panel. Open the command palette (⌘K) for routes.
                 </p>
               </div>
 
@@ -112,7 +111,7 @@ export default function WorkspaceShortcuts() {
                   <kbd className="rounded-md border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[11px] text-amber-100">
                     ⌘K
                   </kbd>{" "}
-                  — then type to filter Desk, projects, integrations, privacy, plans, and more. Use{" "}
+                  — then type to filter Desk, Overview, Settings, projects, privacy, plans. Use{" "}
                   <kbd className="rounded-md border border-white/20 bg-black/30 px-1 py-0.5 font-mono text-[10px]">
                     ↑
                   </kbd>{" "}

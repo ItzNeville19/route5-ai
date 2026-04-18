@@ -25,18 +25,22 @@ export default function WorkspaceNotificationsPopover() {
   const [fullscreen, setFullscreen] = useState(false);
   const [readEpoch, setReadEpoch] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
-  const { summary, loadingSummary } = useWorkspaceData();
+  const { summary, executionOverview, loadingSummary } = useWorkspaceData();
 
   const fingerprint = useMemo(() => {
     if (!summary) return "0:0:0:";
     const latestId = summary.recent[0]?.id ?? null;
+    const ex = executionOverview?.summary;
     return digestFingerprint({
       projectCount: summary.projectCount,
       extractionCount: summary.extractionCount,
       staleOpenActions: summary.execution.staleOpenActions,
       latestExtractionId: latestId,
+      commitmentOverdue: ex?.overdueCount,
+      commitmentAtRisk: ex?.atRiskCount,
+      commitmentUnassigned: ex?.unassignedCount,
     });
-  }, [summary]);
+  }, [summary, executionOverview]);
 
   const unread = useMemo(() => {
     if (loadingSummary) return false;
@@ -84,14 +88,22 @@ export default function WorkspaceNotificationsPopover() {
       buildDailyDigestListItems({
         loadingSummary,
         summary,
+        executionOverview,
         intlLocale,
         workspaceTimezone: prefs.workspaceTimezone,
       }),
-    [summary, loadingSummary, intlLocale, prefs.workspaceTimezone]
+    [summary, executionOverview, loadingSummary, intlLocale, prefs.workspaceTimezone]
   );
 
   const hasAlertContent =
-    !loadingSummary && summary && (summary.execution.staleOpenActions > 0 || summary.extractionCount > 0);
+    !loadingSummary &&
+    summary &&
+    (summary.execution.staleOpenActions > 0 ||
+      summary.extractionCount > 0 ||
+      (executionOverview &&
+        (executionOverview.summary.overdueCount > 0 ||
+          executionOverview.summary.atRiskCount > 0 ||
+          executionOverview.summary.unassignedCount > 0)));
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -173,19 +185,19 @@ export default function WorkspaceNotificationsPopover() {
   const panelFooter = (
     <div className="border-t border-white/10 px-4 py-3">
       <Link
-        href="/workspace/digest"
+        href="/overview"
         onClick={() => handleOpenChange(false)}
         className="text-[12px] font-medium text-[var(--workspace-accent)] hover:underline"
       >
-        Full daily digest →
+        Overview
       </Link>
       <span className="mx-2 text-zinc-500">·</span>
       <Link
-        href="/reports"
+        href="/overview"
         onClick={() => handleOpenChange(false)}
         className="text-[12px] font-medium text-zinc-400 hover:text-zinc-200 hover:underline"
       >
-        Reports
+        Analytics
       </Link>
       <span className="mx-2 text-zinc-500">·</span>
       <Link

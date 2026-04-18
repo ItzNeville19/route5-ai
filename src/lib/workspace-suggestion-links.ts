@@ -14,12 +14,12 @@ export function learnMoreForHref(href: string): string {
     ) {
       return href;
     }
-    return "/integrations";
+    return "/settings#connections";
   }
   if (href.startsWith("/marketplace")) return "/marketplace";
-  if (href === "/settings") return DOCS_PRODUCT;
+  if (href === "/settings" || href.startsWith("/settings#")) return DOCS_PRODUCT;
   if (href === "/reports" || href === "/team-insights") return DOCS_PRODUCT;
-  if (href.startsWith("/desk") || href === "/projects") return DOCS_PRODUCT;
+  if (href.startsWith("/desk") || href === "/overview") return DOCS_PRODUCT;
   if (href === "/workspace/digest" || href === "/workspace/customize" || href === "/workspace/apps") {
     return DOCS_PRODUCT;
   }

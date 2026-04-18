@@ -5,6 +5,7 @@ import { Show } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { BrandSquircle, type BrandIconId } from "@/components/marketplace/brand-icons";
 import { deskUrl } from "@/lib/desk-routes";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -27,6 +28,19 @@ const item = {
 };
 
 const cardSpring = { type: "spring" as const, stiffness: 280, damping: 26 };
+
+const HERO_INPUT_ICONS: { id: BrandIconId; labelKey: string }[] = [
+  { id: "voice", labelKey: "marketing.hero.previewMeetings" },
+  { id: "slack", labelKey: "marketing.hero.previewSlack" },
+  { id: "generic", labelKey: "marketing.hero.previewEmail" },
+  { id: "google", labelKey: "marketing.hero.previewCalendar" },
+];
+
+const HERO_OUTPUT_ICONS: { id: BrandIconId; labelKey: string }[] = [
+  { id: "workspaceHome", labelKey: "marketing.hero.previewDesk" },
+  { id: "workspaceSparkle", labelKey: "marketing.hero.previewOverview" },
+  { id: "linear", labelKey: "marketing.hero.previewLinear" },
+];
 
 type HeroProps = {
   /** Match signed-in workspace/dashboard dark command canvas (marketing home). */
@@ -136,16 +150,10 @@ export default function Hero({ commandTheme = false }: HeroProps) {
                           {t("marketing.hero.openDesk")}
                         </Link>
                         <Link
-                          href="/integrations"
+                          href="/settings#connections"
                           className={secondaryBtn}
                         >
                           {t("sidebar.integrations")}
-                        </Link>
-                        <Link
-                          href="/marketplace"
-                          className={secondaryBtn}
-                        >
-                          {t("marketing.hero.marketplace")}
                         </Link>
                       </div>
                     </Show>
@@ -170,7 +178,7 @@ export default function Hero({ commandTheme = false }: HeroProps) {
                           {t("marketing.hero.logIn")}
                         </Link>
                         <Link
-                          href="/projects"
+                          href="/overview"
                           className={secondaryBtn}
                         >
                           {t("marketing.hero.dashboard")}
@@ -205,6 +213,65 @@ export default function Hero({ commandTheme = false }: HeroProps) {
               </div>
             </div>
           </motion.div>
+
+          {commandTheme ? (
+            <motion.div variants={item} className="mx-auto mt-12 w-full max-w-[720px] px-2">
+              <p
+                className={`text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${kicker}`}
+              >
+                {t("marketing.hero.previewKicker")}
+              </p>
+              <div
+                className="mt-6 flex flex-wrap items-end justify-center gap-x-1 gap-y-4 sm:gap-x-2"
+                aria-label={t("marketing.hero.previewAria")}
+              >
+                <div className="flex flex-wrap items-end justify-center gap-3 sm:gap-4">
+                  {HERO_INPUT_ICONS.map((row) => (
+                    <div
+                      key={row.labelKey}
+                      className="flex w-[68px] flex-col items-center gap-1.5 sm:w-[76px]"
+                    >
+                      <BrandSquircle id={row.id} sizeClass="h-11 w-11 sm:h-12 sm:w-12" />
+                      <span className={`text-center text-[10px] font-medium leading-tight ${small}`}>
+                        {t(row.labelKey)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <span
+                  className={`mb-8 hidden px-1 text-[18px] font-light sm:inline ${bodyMuted}`}
+                  aria-hidden
+                >
+                  →
+                </span>
+                <div className="flex flex-col items-center gap-1.5 px-2 sm:px-3">
+                  <BrandSquircle id="route5" sizeClass="h-14 w-14 sm:h-16 sm:w-16" />
+                  <span className={`text-center text-[11px] font-semibold leading-tight ${emphasis}`}>
+                    Route5
+                  </span>
+                </div>
+                <span
+                  className={`mb-8 hidden px-1 text-[18px] font-light sm:inline ${bodyMuted}`}
+                  aria-hidden
+                >
+                  →
+                </span>
+                <div className="flex flex-wrap items-end justify-center gap-3 sm:gap-4">
+                  {HERO_OUTPUT_ICONS.map((row) => (
+                    <div
+                      key={row.labelKey}
+                      className="flex w-[68px] flex-col items-center gap-1.5 sm:w-[76px]"
+                    >
+                      <BrandSquircle id={row.id} sizeClass="h-11 w-11 sm:h-12 sm:w-12" />
+                      <span className={`text-center text-[10px] font-medium leading-tight ${small}`}>
+                        {t(row.labelKey)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
 
           <motion.div
             variants={item}

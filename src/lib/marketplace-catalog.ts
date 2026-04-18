@@ -72,7 +72,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "linear",
     name: "Linear",
-    subtitle: "Browse issues, import into projects — configure your org for live lists.",
+    subtitle: "Optional connector — browse/import when your deployment has API access.",
     category: "productivity",
     kind: "native",
     brandId: "linear",
@@ -82,7 +82,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "github-issues",
     name: "GitHub issues",
-    subtitle: "Import by URL or browse samples — same flow as production.",
+    subtitle: "Optional connector — samples or live issues when a token is configured.",
     category: "data",
     kind: "native",
     brandId: "github",
@@ -111,12 +111,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   },
   {
     id: "integrations-hub",
-    name: "Integrations hub",
-    subtitle: "Linear, GitHub, and design flows — status and entry points.",
+    name: "Connections",
+    subtitle: "All optional connectors — configure under Settings.",
     category: "stack",
     kind: "native",
     brandId: "workspaceHub",
-    href: "/integrations",
+    href: "/settings#connections",
   },
   {
     id: "intelligence",
@@ -125,12 +125,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
     category: "built-in",
     kind: "native",
     brandId: "route5",
-    href: "/projects",
+    href: "/overview",
   },
   {
     id: "workspace-reports",
-    name: "Reports",
-    subtitle: "Workspace counts and recent run activity with links into each project.",
+    name: "Analytics & export",
+    subtitle: "Deeper charts and JSON export — same data as Overview.",
     category: "data",
     kind: "native",
     brandId: "workspaceSparkle",
@@ -138,12 +138,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   },
   {
     id: "workspace-apps",
-    name: "Library",
-    subtitle: "Installed apps and shortcuts from the workspace.",
+    name: "Catalog home",
+    subtitle: "Everything in this marketplace — extensions are optional.",
     category: "built-in",
     kind: "native",
     brandId: "obsidian",
-    href: "/workspace/apps",
+    href: "/marketplace",
   },
   {
     id: "composer",
@@ -152,12 +152,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
     category: "built-in",
     kind: "native",
     brandId: "workspaceCompose",
-    href: "/projects#new-project",
+    href: "/overview#new-project",
   },
   {
     id: "palette",
     name: "Command palette",
-    subtitle: "⌘K — jump anywhere in the workspace.",
+    subtitle: "⌘K — search and jump without leaving the keyboard.",
     category: "productivity",
     kind: "native",
     brandId: "voice",
@@ -165,8 +165,8 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   },
   {
     id: "documentation",
-    name: "Documentation",
-    subtitle: "Product, roadmap, boundaries, and legal.",
+    name: "Guides",
+    subtitle: "Product scope, roadmap, and legal — from the footer too.",
     category: "built-in",
     kind: "native",
     brandId: "generic",
@@ -185,7 +185,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "support",
     name: "Support",
-    subtitle: "Sales, integrations, and help.",
+    subtitle: "Contact — when you need a human.",
     category: "enterprise",
     kind: "native",
     brandId: "generic",
@@ -221,7 +221,7 @@ export const MARKETPLACE_STACK: MarketplaceApp[] = [
     category: "stack",
     kind: "stack",
     brandId: "supabase",
-    href: "/integrations",
+    href: "/settings",
     manageUrl: INTEGRATION_MANAGE_URLS.supabase,
   },
   {
@@ -231,7 +231,7 @@ export const MARKETPLACE_STACK: MarketplaceApp[] = [
     category: "data",
     kind: "stack",
     brandId: "openai",
-    href: "/integrations",
+    href: "/settings",
     manageUrl: INTEGRATION_MANAGE_URLS.openai,
   },
 ];
@@ -564,24 +564,23 @@ export const ALL_MARKETPLACE_APPS: MarketplaceApp[] = [
 ];
 
 /** Ordered picks for Overview footer — one tile per `brandId` so icons never duplicate in the strip. */
+/** Visual variety only — tiles link to `/marketplace` in the Overview strip (see component). */
 const OVERVIEW_SHOWCASE_IDS = [
   "virtual-desk",
+  "intelligence",
   "linear",
   "github-issues",
   "figma",
   "google-workspace",
-  "slack",
-  "notion",
   "clerk",
   "supabase",
   "openai",
-  "groq-llm",
   "cloudflare-ai",
   "huggingface-hub",
+  "notion",
+  "slack",
   "jira",
   "teams",
-  "intelligence",
-  "marketplace",
 ] as const;
 
 export function marketplaceOverviewShowcaseApps(): MarketplaceApp[] {

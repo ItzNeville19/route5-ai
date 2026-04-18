@@ -29,6 +29,8 @@ import {
   tierTaglineForTier,
   type EntitlementsPayload,
 } from "@/lib/entitlements";
+import type { ExecutionOverview } from "@/lib/commitment-types";
+import { emptyExecutionOverview } from "@/lib/execution-overview";
 
 type WorkspaceSummaryState = {
   projectCount: number;
@@ -44,6 +46,8 @@ type WorkspaceSummaryState = {
 type WorkspaceDataValue = {
   projects: Project[];
   summary: WorkspaceSummaryState;
+  /** Commitment engine aggregates — same payload as GET /api/workspace/execution. */
+  executionOverview: ExecutionOverview | null;
   entitlements: EntitlementsPayload | null;
   loadingProjects: boolean;
   loadingSummary: boolean;
@@ -83,6 +87,7 @@ export function WorkspaceDataProvider({
 }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [summary, setSummary] = useState<WorkspaceSummaryState>(EMPTY_SUMMARY);
+  const [executionOverview, setExecutionOverview] = useState<ExecutionOverview | null>(null);
   const [entitlements, setEntitlements] = useState<EntitlementsPayload | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -138,10 +143,22 @@ export function WorkspaceDataProvider({
   const refreshSummary = useCallback(async () => {
     setLoadingSummary(true);
     try {
-      const res = await fetch("/api/workspace/summary", {
-        credentials: "same-origin",
-      });
-      const data = (await res.json().catch(() => ({}))) as {
+      const [sumRes, execRes] = await Promise.all([
+        fetch("/api/workspace/summary", { credentials: "same-origin" }),
+        fetch("/api/workspace/execution", { credentials: "same-origin" }),
+      ]);
+
+      const execJson = (await execRes.json().catch(() => ({}))) as {
+        overview?: ExecutionOverview;
+        error?: string;
+      };
+      if (execRes.ok) {
+        setExecutionOverview(execJson.overview ?? emptyExecutionOverview());
+      } else {
+        setExecutionOverview(emptyExecutionOverview());
+      }
+
+      const data = (await sumRes.json().catch(() => ({}))) as {
         projectCount?: number;
         extractionCount?: number;
         recent?: RecentExtractionRow[];
@@ -151,8 +168,9 @@ export function WorkspaceDataProvider({
         execution?: WorkspaceExecutionMetrics;
         readiness?: Partial<WorkspaceConnectorReadiness> & Record<string, unknown>;
       };
-      if (!res.ok) {
+      if (!sumRes.ok) {
         setSummary(EMPTY_SUMMARY);
+        setExecutionOverview(null);
         return;
       }
       const r = data.readiness;
@@ -176,6 +194,7 @@ export function WorkspaceDataProvider({
       });
     } catch {
       setSummary(EMPTY_SUMMARY);
+      setExecutionOverview(null);
     } finally {
       setLoadingSummary(false);
     }
@@ -204,6 +223,7 @@ export function WorkspaceDataProvider({
     () => ({
       projects,
       summary,
+      executionOverview,
       entitlements,
       loadingProjects,
       loadingSummary,
@@ -217,6 +237,7 @@ export function WorkspaceDataProvider({
     [
       projects,
       summary,
+      executionOverview,
       entitlements,
       loadingProjects,
       loadingSummary,

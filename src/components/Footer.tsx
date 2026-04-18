@@ -5,7 +5,7 @@ const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
   { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },
-  { href: "/projects", label: "Workspace", title: "Signed-in app — projects and Desk" },
+  { href: "/overview", label: "Overview", title: "Signed-in app — execution dashboard and Desk" },
   { href: "/login", label: "Log in", title: "Sign in with Clerk" },
 ];
 
@@ -79,8 +79,8 @@ export default function Footer({ tone = "light" }: FooterProps) {
               </span>
             </div>
             <p className={`mt-3 text-[14px] leading-relaxed ${muted}`}>
-              Structured intelligence from enterprise text — honest about what is live
-              versus roadmap.
+              Enterprise execution layer — decisions become owned commitments with persistent
+              accountability. Sits above Slack, Notion, and email; does not replace them.
             </p>
           </div>
 

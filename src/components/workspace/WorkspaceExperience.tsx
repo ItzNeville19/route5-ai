@@ -25,7 +25,10 @@ import {
   resolveWorkspaceTheme,
 } from "@/lib/workspace-themes";
 import { resolveWorkspaceSurfaceMaterial } from "@/lib/workspace-surface-material";
-import { MARKETPLACE_INSTALL_TO_EXTRACTION } from "@/lib/ai-provider-presets";
+import {
+  MARKETPLACE_INSTALL_TO_EXTRACTION,
+  MARKETPLACE_INSTALL_TO_LLM,
+} from "@/lib/ai-provider-presets";
 
 type ToastItem = {
   id: string;
@@ -41,6 +44,7 @@ type WorkspaceExperienceValue = {
   toggleMarketplaceFavorite: (appId: string) => void;
   isMarketplaceFavorite: (appId: string) => boolean;
   installMarketplaceApp: (appId: string) => void;
+  uninstallMarketplaceApp: (appId: string) => void;
   isMarketplaceInstalled: (appId: string) => boolean;
   shellModifierClass: string;
   /** Same condition as `workspace-palette-light` on the shell — frosted light UI vs dark command glass. */
@@ -191,10 +195,31 @@ export function WorkspaceExperienceProvider({
       const cur = new Set(prev.installedMarketplaceAppIds ?? []);
       cur.add(appId);
       const extractionSync = MARKETPLACE_INSTALL_TO_EXTRACTION[appId];
+      const llmSync = MARKETPLACE_INSTALL_TO_LLM[appId];
       return mergeWorkspacePrefsPatch(prev, {
         installedMarketplaceAppIds: [...cur],
         ...(extractionSync ? { extractionProviderId: extractionSync } : {}),
+        ...(llmSync ? { llmProviderId: llmSync } : {}),
       });
+    });
+  }, []);
+
+  const uninstallMarketplaceApp = useCallback((appId: string) => {
+    setPrefsState((prev) => {
+      const cur = new Set(prev.installedMarketplaceAppIds ?? []);
+      cur.delete(appId);
+      const extractionSync = MARKETPLACE_INSTALL_TO_EXTRACTION[appId];
+      const llmSync = MARKETPLACE_INSTALL_TO_LLM[appId];
+      const patch: Partial<WorkspacePrefsV1> = {
+        installedMarketplaceAppIds: [...cur],
+      };
+      if (extractionSync && prev.extractionProviderId === extractionSync) {
+        patch.extractionProviderId = "auto";
+      }
+      if (llmSync && prev.llmProviderId === llmSync) {
+        patch.llmProviderId = "auto";
+      }
+      return mergeWorkspacePrefsPatch(prev, patch);
     });
   }, []);
 
@@ -255,6 +280,7 @@ export function WorkspaceExperienceProvider({
       toggleMarketplaceFavorite,
       isMarketplaceFavorite,
       installMarketplaceApp,
+      uninstallMarketplaceApp,
       isMarketplaceInstalled,
       shellModifierClass,
       workspacePaletteLight,
@@ -268,6 +294,7 @@ export function WorkspaceExperienceProvider({
       toggleMarketplaceFavorite,
       isMarketplaceFavorite,
       installMarketplaceApp,
+      uninstallMarketplaceApp,
       isMarketplaceInstalled,
       shellModifierClass,
       workspacePaletteLight,

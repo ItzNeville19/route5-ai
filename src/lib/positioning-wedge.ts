@@ -1,34 +1,36 @@
 /**
- * Primary go-to-market wedge — one focused buyer group (contract & program operations).
+ * Primary positioning — execution layer above Slack, Notion, email, and docs.
  * Used across marketing, Guides, and in-app mission copy. Does not change API shapes.
  */
 
-/** Default Desk template for the contract & program operations wedge (QBR / escalation / commitments). */
+/** Default Desk template (client/program delivery). */
 export const DEFAULT_DESK_PRESET_ID = "client-program" as const;
 
 export const POSITIONING_WEDGE = {
-  id: "contract-program-ops" as const,
+  id: "execution-layer" as const,
   /** Short label for headers and kickers */
-  label: "Contract & program operations",
+  label: "Execution layer",
   /** Who we speak to first in sales and marketing */
   buyerRoles: [
-    "Regional and program operations leads",
-    "Account directors and client delivery",
-    "Heads of multi-site or contract services delivery",
+    "C-suite and COOs who own operational outcomes",
+    "Mid-market companies (~50–500 employees) where execution breakdown costs money",
+    "Finance, law, consulting, and operations-heavy teams",
   ] as const,
   /**
-   * Buyer-safe promise — execution hygiene, not “AI magic.”
-   * (Aligned with B2B wedge plan; honest about what the product stores.)
+   * Buyer-safe promise — persistent accountability state, not “another summary.”
    */
   buyerSafePromise:
-    "Route5 turns messy operational text into owned next steps per client or program, with a checklist and history your team can't lose in chat — and dashboards from what people actually complete.",
+    "Route5 converts decisions into owned, tracked commitments—persistent accountability state so leadership always knows what was decided, who owns it, and whether it is happening.",
   /** Sidebar / hero — one line */
   taglineShort:
-    "Commitment operations: owned next steps per program — proof in your workspace data.",
+    "The execution layer above your stack—decisions become owned commitments with persistent accountability.",
   /** One line for PRODUCT_HONEST / mission */
   productOneLine:
-    "Route5 is a commitment workspace for program and client delivery: messy notes in, owned next steps and checklists out — saved per project, measurable on Overview.",
-  /** Subtle — not claiming F500; describes bar */
+    "Route5.ai is an enterprise execution layer: it turns decisions from meetings, threads, and documents into owned, tracked commitments—so nothing falls through the cracks between tools.",
+  /** Subtle — discipline of execution */
   qualityBar:
-    "Built for the discipline of execution: audit-friendly history, named owners, and completion metrics — not a disposable chat.",
+    "Not a task manager or summarizer—a system of record for who owes what, with health you can read from real state.",
+  /** Shark-style closer — qualify “real time” as in-app execution state, not omnichannel firehose */
+  sharkOneLine:
+    "Route5 sits above Slack, Notion, and email as the layer that enforces execution—persistent accountability from decision to done.",
 } as const;

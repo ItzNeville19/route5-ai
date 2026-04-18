@@ -86,7 +86,7 @@ export default function FigmaIntegrationPage() {
   return (
     <div className="mx-auto max-w-[900px] pb-24">
       <Link
-        href="/integrations"
+        href="/settings#connections"
         className="text-[13px] font-medium text-[var(--workspace-muted-fg)] hover:text-[var(--workspace-fg)]"
       >
         ← Integrations

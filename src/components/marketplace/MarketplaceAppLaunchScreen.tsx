@@ -22,7 +22,7 @@ import {
   type MarketplaceApp,
 } from "@/lib/marketplace-catalog";
 import { deskUrl } from "@/lib/desk-routes";
-import { launchHrefForApp } from "@/lib/marketplace-links";
+import { launchHrefForApp, marketplaceAfterEnableHref } from "@/lib/marketplace-links";
 
 const appleEase = [0.22, 1, 0.36, 1] as const;
 
@@ -180,6 +180,45 @@ function StickyLaunchCta({ app }: { app: MarketplaceApp }) {
           </span>
         ) : (
           "Add"
+        )}
+      </button>
+    );
+  }
+
+  if (app.kind === "installable") {
+    const afterEnable = marketplaceAfterEnableHref(app);
+    if (installed) {
+      return (
+        <button type="button" className={stickyBtnClass} onClick={() => router.push(afterEnable)}>
+          Open settings
+        </button>
+      );
+    }
+    return (
+      <button
+        type="button"
+        disabled={installing}
+        className={`${stickyBtnClass} disabled:opacity-80`}
+        onClick={() => {
+          setInstalling(true);
+          window.setTimeout(() => {
+            exp.installMarketplaceApp(app.id);
+            exp.pushToast(
+              `${app.name} enabled — confirm pass / LLM defaults on the next screen.`,
+              "success"
+            );
+            setInstalling(false);
+            router.push(afterEnable);
+          }, 320);
+        }}
+      >
+        {installing ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            Enabling…
+          </span>
+        ) : (
+          "Enable"
         )}
       </button>
     );
@@ -486,7 +525,7 @@ export default function MarketplaceAppLaunchScreen({
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[var(--workspace-canvas)] via-[var(--workspace-canvas)]/95 to-transparent pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8">
         <div className="pointer-events-auto mx-auto max-w-lg px-4">
           <p className="mb-2 text-center text-[11px] font-medium text-[var(--ios-secondary)]">
-            Runs in your browser — no separate download.
+            Runs in your browser. Add saves it to this workspace.
           </p>
           <StickyLaunchCta app={app} />
         </div>
