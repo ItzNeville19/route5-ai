@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { collectAllDatabaseIds, exchangeNotionOAuthCode } from "@/lib/integrations/notion-api";
 import { verifyNotionOAuthState } from "@/lib/integrations/notion-oauth-state";
-import { upsertNotionIntegration } from "@/lib/integrations/org-integrations-store";
+import { checkPlanLimit } from "@/lib/billing/gate";
+import {
+  getNotionIntegrationForOrg,
+  upsertNotionIntegration,
+} from "@/lib/integrations/org-integrations-store";
 import { replaceNotionWatchedDatabasesForOrg } from "@/lib/integrations/notion-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { appBaseUrl } from "@/lib/integrations/app-url";
@@ -31,6 +35,13 @@ export async function GET(req: Request) {
   const redirectUri = `${appBaseUrl()}/api/integrations/notion/callback`;
 
   try {
+    const prior = await getNotionIntegrationForOrg(orgId);
+    if (!prior || prior.status !== "connected") {
+      const gate = await checkPlanLimit(orgId, "integrations");
+      if (!gate.allowed) {
+        return NextResponse.redirect(`${redirectBase}?notion=error&reason=plan_limit`);
+      }
+    }
     const tok = await exchangeNotionOAuthCode(code, redirectUri);
     await upsertNotionIntegration({
       orgId,

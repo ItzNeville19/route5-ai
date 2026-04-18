@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { checkPlanLimit } from "@/lib/billing/gate";
+import { getGmailIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { signGmailOAuthState } from "@/lib/integrations/gmail-oauth-state";
 import { appBaseUrl } from "@/lib/integrations/app-url";
@@ -16,7 +18,16 @@ export async function GET() {
   if (!clientId) {
     return NextResponse.json({ error: "Google OAuth is not configured (GOOGLE_CLIENT_ID)" }, { status: 503 });
   }
-  await ensureOrganizationForClerkUser(userId);
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  const existing = await getGmailIntegrationForOrg(orgId);
+  if (!existing || existing.status !== "connected") {
+    const gate = await checkPlanLimit(orgId, "integrations");
+    if (!gate.allowed) {
+      return NextResponse.redirect(
+        new URL("/workspace/integrations?billingLimit=integrations", appBaseUrl()).toString()
+      );
+    }
+  }
   const redirectUri = `${appBaseUrl()}/api/integrations/gmail/callback`;
   const state = signGmailOAuthState(userId);
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");

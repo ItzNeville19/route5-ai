@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { exchangeSlackOAuthCode } from "@/lib/integrations/slack-oauth-exchange";
 import { verifySlackOAuthState } from "@/lib/integrations/slack-oauth-state";
-import { upsertSlackIntegration } from "@/lib/integrations/org-integrations-store";
+import { checkPlanLimit } from "@/lib/billing/gate";
+import {
+  getSlackIntegrationForOrg,
+  upsertSlackIntegration,
+} from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { appBaseUrl } from "@/lib/integrations/app-url";
 
@@ -30,6 +34,13 @@ export async function GET(req: Request) {
   const redirectUri = `${appBaseUrl()}/api/integrations/slack/callback`;
 
   try {
+    const prior = await getSlackIntegrationForOrg(orgId);
+    if (!prior || prior.status !== "connected") {
+      const gate = await checkPlanLimit(orgId, "integrations");
+      if (!gate.allowed) {
+        return NextResponse.redirect(`${redirectBase}?slack=error&reason=plan_limit`);
+      }
+    }
     const tok = await exchangeSlackOAuthCode(code, redirectUri);
     await upsertSlackIntegration({
       orgId,

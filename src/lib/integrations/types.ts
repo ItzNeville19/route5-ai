@@ -11,6 +11,20 @@ export type OrgIntegrationMetadata = {
   slack_user_to_clerk?: Record<string, string>;
   /** Gmail OAuth access token expiry (ms since epoch) for refresh rotation. */
   gmail_access_token_expires_at_ms?: number;
+  /** Google OAuth `sub` (user id) — maps Workspace Events / Meet notifications to this org. */
+  google_oauth_sub?: string | null;
+  /** Zoom OAuth token expiry (ms since epoch). */
+  zoom_access_token_expires_at_ms?: number;
+  /** Microsoft Graph token expiry (ms since epoch). */
+  teams_access_token_expires_at_ms?: number;
+  /** Teams + Outlook: monitored channel IDs (Graph). */
+  teams_monitored_channel_ids?: string[];
+  /** Graph subscription for Teams messages. */
+  teams_graph_subscription_id?: string | null;
+  teams_graph_subscription_expires_at?: string | null;
+  /** Google Workspace Events subscription name for Meet (optional). */
+  gmeet_workspace_subscription_name?: string | null;
+  gmeet_workspace_subscription_expire_time?: string | null;
 };
 
 export type OrgIntegrationRow = {

@@ -18,6 +18,24 @@ import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
 import { computeAutomaticOrgCommitmentStatus } from "@/lib/org-commitments/status";
+import { sendNotification } from "@/lib/notifications/service";
+
+function workspaceCommitmentLink(commitmentId: string): string {
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.VERCEL_URL?.trim() ||
+    "http://localhost:3000";
+  const b = base.startsWith("http") ? base : `https://${base}`;
+  return `${b}/workspace/commitments?id=${encodeURIComponent(commitmentId)}`;
+}
+
+function formatDeadlineLine(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  } catch {
+    return iso;
+  }
+}
 
 const BUCKET = "commitment-attachments";
 const PRIORITY_RANK: Record<OrgCommitmentPriority, number> = {
@@ -211,10 +229,58 @@ export async function recomputeOrgCommitmentStatusById(
 ): Promise<void> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
+    const { data: beforeRow, error: beforeErr } = await supabase
+      .from("org_commitments")
+      .select("status, org_id, owner_id, title, deadline")
+      .eq("id", commitmentId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (beforeErr) throw beforeErr;
+    const prevStatus = beforeRow ? String((beforeRow as { status: string }).status) : null;
+
     const { error } = await supabase.rpc("recompute_org_commitment_status", {
       p_id: commitmentId,
     });
     if (error) throw error;
+
+    const { data: afterRow, error: afterErr } = await supabase
+      .from("org_commitments")
+      .select("status, org_id, owner_id, title, deadline")
+      .eq("id", commitmentId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (afterErr) throw afterErr;
+    if (
+      afterRow &&
+      prevStatus !== "overdue" &&
+      String((afterRow as { status: string }).status) === "overdue"
+    ) {
+      const r = afterRow as {
+        org_id: string;
+        owner_id: string;
+        title: string;
+        deadline: string;
+      };
+      const title = String(r.title);
+      void sendNotification({
+        orgId: String(r.org_id),
+        userId: String(r.owner_id),
+        type: "commitment_overdue",
+        title: `Overdue: ${title.slice(0, 70)}`,
+        body: `This commitment is past its deadline (${formatDeadlineLine(String(r.deadline))}).`,
+        metadata: {
+          commitmentId,
+          link: workspaceCommitmentLink(commitmentId),
+          deadline: String(r.deadline),
+        },
+      });
+      const { data: fullRow } = await supabase.from("org_commitments").select("*").eq("id", commitmentId).single();
+      if (fullRow) {
+        void import("@/lib/public-api/webhooks-events").then((m) =>
+          m.emitCommitmentOverdue(String(r.org_id), mapRow(fullRow as Record<string, unknown>))
+        );
+      }
+    }
     return;
   }
   const d = getSqliteHandle();
@@ -222,18 +288,41 @@ export async function recomputeOrgCommitmentStatusById(
     .prepare(`SELECT * FROM org_commitments WHERE id = ? AND deleted_at IS NULL`)
     .get(commitmentId) as Record<string, unknown> | undefined;
   if (!row) return;
+  const prevStatus = String(row.status);
   const next = computeAutomaticOrgCommitmentStatus({
     deadline: String(row.deadline),
     lastActivityAt: String(row.last_activity_at),
     completedAt: row.completed_at == null ? null : String(row.completed_at),
   });
-  if (String(row.status) !== next) {
+  if (prevStatus !== next) {
     const now = new Date().toISOString();
     d.prepare(`UPDATE org_commitments SET status = ?, updated_at = ? WHERE id = ?`).run(
       next,
       now,
       commitmentId
     );
+    if (prevStatus !== "overdue" && next === "overdue") {
+      const title = String(row.title);
+      void sendNotification({
+        orgId: String(row.org_id),
+        userId: String(row.owner_id),
+        type: "commitment_overdue",
+        title: `Overdue: ${title.slice(0, 70)}`,
+        body: `This commitment is past its deadline (${formatDeadlineLine(String(row.deadline))}).`,
+        metadata: {
+          commitmentId,
+          link: workspaceCommitmentLink(commitmentId),
+          deadline: String(row.deadline),
+        },
+      });
+      const full = d.prepare(`SELECT * FROM org_commitments WHERE id = ?`).get(commitmentId) as Record<
+        string,
+        unknown
+      >;
+      void import("@/lib/public-api/webhooks-events").then((m) =>
+        m.emitCommitmentOverdue(String(row.org_id), mapRow(full))
+      );
+    }
   }
 }
 
@@ -500,7 +589,12 @@ export async function createOrgCommitment(
     });
     await recomputeOrgCommitmentStatusById(id);
     const { data: final } = await supabase.from("org_commitments").select("*").eq("id", id).single();
-    return mapRow((final ?? data) as Record<string, unknown>);
+    const out = mapRow((final ?? data) as Record<string, unknown>);
+    void import("@/lib/public-api/webhooks-events").then((m) => m.emitCommitmentCreated(orgId, out));
+    void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+      m.syncCalendarDeadlinesForCommitment(orgId, out)
+    );
+    return out;
   }
 
   const d = getSqliteHandle();
@@ -533,7 +627,12 @@ export async function createOrgCommitment(
   });
   await recomputeOrgCommitmentStatusById(id);
   const row = d.prepare(`SELECT * FROM org_commitments WHERE id = ?`).get(id) as Record<string, unknown>;
-  return mapRow(row);
+  const out = mapRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) => m.emitCommitmentCreated(orgId, out));
+  void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+    m.syncCalendarDeadlinesForCommitment(orgId, out)
+  );
+  return out;
 }
 
 export async function updateOrgCommitment(
@@ -656,7 +755,17 @@ export async function updateOrgCommitment(
         })
       );
     }
-    return { row: mapRow((fin ?? data) as Record<string, unknown>), previousOwnerId };
+    const updatedRow = mapRow((fin ?? data) as Record<string, unknown>);
+    void import("@/lib/public-api/webhooks-events").then((m) =>
+      m.emitCommitmentUpdated(orgId, updatedRow, {
+        status: existing.status,
+        completedAt: existing.completedAt,
+      })
+    );
+    void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+      m.syncCalendarDeadlinesForCommitment(orgId, updatedRow)
+    );
+    return { row: updatedRow, previousOwnerId };
   }
 
   const d = getSqliteHandle();
@@ -744,7 +853,17 @@ export async function updateOrgCommitment(
       })
     );
   }
-  return { row: mapRow(row), previousOwnerId };
+  const updatedRow = mapRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) =>
+    m.emitCommitmentUpdated(orgId, updatedRow, {
+      status: existing.status,
+      completedAt: existing.completedAt,
+    })
+  );
+  void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+    m.syncCalendarDeadlinesForCommitment(orgId, updatedRow)
+  );
+  return { row: updatedRow, previousOwnerId };
 }
 
 export async function softDeleteOrgCommitment(
@@ -752,6 +871,8 @@ export async function softDeleteOrgCommitment(
   commitmentId: string
 ): Promise<boolean> {
   const orgId = await resolveOrgId(userId);
+  const existing = await getOrgCommitmentDetail(userId, commitmentId);
+  if (!existing) return false;
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
@@ -763,7 +884,13 @@ export async function softDeleteOrgCommitment(
       .is("deleted_at", null)
       .select("id");
     if (error) throw error;
-    return (data?.length ?? 0) > 0;
+    const ok = (data?.length ?? 0) > 0;
+    if (ok) {
+      void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+        m.syncCalendarDeadlinesForCommitment(orgId, { ...existing, deletedAt: now })
+      );
+    }
+    return ok;
   }
   const d = getSqliteHandle();
   const r = d
@@ -771,7 +898,13 @@ export async function softDeleteOrgCommitment(
       `UPDATE org_commitments SET deleted_at = ?, updated_at = ? WHERE id = ? AND org_id = ? AND deleted_at IS NULL`
     )
     .run(now, now, commitmentId, orgId);
-  return r.changes > 0;
+  const ok = r.changes > 0;
+  if (ok) {
+    void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+      m.syncCalendarDeadlinesForCommitment(orgId, { ...existing, deletedAt: now })
+    );
+  }
+  return ok;
 }
 
 export async function addOrgCommitmentComment(
@@ -985,4 +1118,664 @@ export async function createOrgCommitmentAsOrgOwner(
   const owner = await getOrganizationClerkUserId(orgId);
   if (!owner) throw new Error("Organization not found");
   return createOrgCommitment(owner, input);
+}
+
+const API_ACTOR = (apiKeyId: string) => `api_key:${apiKeyId}`;
+
+/** Public API: list commitments with pagination (same filters as workspace list). */
+export async function listOrgCommitmentsForOrgId(
+  orgId: string,
+  opts: {
+    status?: string;
+    priority?: string;
+    owner?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    q?: string;
+    sort?: OrgCommitmentListSort;
+    order?: "asc" | "desc";
+    limit: number;
+    offset: number;
+  }
+): Promise<{ rows: OrgCommitmentRow[]; total: number }> {
+  const sort = opts.sort ?? "deadline";
+  const order = opts.order ?? "asc";
+  const limit = Math.min(100, Math.max(1, opts.limit));
+  const offset = Math.max(0, opts.offset);
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    let q = supabase
+      .from("org_commitments")
+      .select("*")
+      .eq("org_id", orgId)
+      .is("deleted_at", null);
+    if (opts.status) q = q.eq("status", opts.status);
+    if (opts.priority) q = q.eq("priority", opts.priority);
+    if (opts.owner) q = q.eq("owner_id", opts.owner);
+    if (opts.dateFrom) q = q.gte("deadline", opts.dateFrom);
+    if (opts.dateTo) q = q.lte("deadline", opts.dateTo);
+    if (sort === "priority") {
+      q = q.order("priority", { ascending: order === "asc" });
+    } else {
+      q = q.order(
+        sort === "created_at"
+          ? "created_at"
+          : sort === "updated_at"
+            ? "updated_at"
+            : sort === "status"
+              ? "status"
+              : "deadline",
+        { ascending: order === "asc" }
+      );
+    }
+    const { data, error } = await q;
+    if (error) throw error;
+    let rows = (data ?? []).map((x) => mapRow(x as Record<string, unknown>));
+    if (opts.q?.trim()) {
+      const low = opts.q.trim().toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          r.title.toLowerCase().includes(low) || (r.description?.toLowerCase().includes(low) ?? false)
+      );
+    }
+    if (sort === "priority") {
+      const mul = order === "asc" ? 1 : -1;
+      rows = [...rows].sort(
+        (a, b) => (PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]) * mul
+      );
+    }
+    const total = rows.length;
+    const page = rows.slice(offset, offset + limit);
+    return { rows: page, total };
+  }
+
+  const d = getSqliteHandle();
+  const parts: string[] = ["org_id = ?", "deleted_at IS NULL"];
+  const params: unknown[] = [orgId];
+  if (opts.status) {
+    parts.push("status = ?");
+    params.push(opts.status);
+  }
+  if (opts.priority) {
+    parts.push("priority = ?");
+    params.push(opts.priority);
+  }
+  if (opts.owner) {
+    parts.push("owner_id = ?");
+    params.push(opts.owner);
+  }
+  if (opts.dateFrom) {
+    parts.push("deadline >= ?");
+    params.push(opts.dateFrom);
+  }
+  if (opts.dateTo) {
+    parts.push("deadline <= ?");
+    params.push(opts.dateTo);
+  }
+  let sql = `SELECT * FROM org_commitments WHERE ${parts.join(" AND ")}`;
+  if (opts.q?.trim()) {
+    sql +=
+      " AND (title LIKE ? ESCAPE '\\' OR IFNULL(description,'') LIKE ? ESCAPE '\\')";
+    const qq = `%${opts.q.trim()}%`;
+    params.push(qq, qq);
+  }
+  const orderCol =
+    sort === "priority"
+      ? "priority"
+      : sort === "status"
+        ? "status"
+        : sort === "created_at"
+          ? "created_at"
+          : sort === "updated_at"
+            ? "updated_at"
+            : "deadline";
+  sql += ` ORDER BY ${orderCol} ${order === "asc" ? "ASC" : "DESC"}`;
+  const raw = d.prepare(sql).all(...params) as Record<string, unknown>[];
+  let rows = raw.map((x) => mapRow(x));
+  if (opts.q?.trim()) {
+    const low = opts.q.trim().toLowerCase();
+    rows = rows.filter(
+      (r) =>
+        r.title.toLowerCase().includes(low) || (r.description?.toLowerCase().includes(low) ?? false)
+    );
+  }
+  if (sort === "priority") {
+    const mul = order === "asc" ? 1 : -1;
+    rows = [...rows].sort(
+      (a, b) => (PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority]) * mul
+    );
+  }
+  const total = rows.length;
+  const page = rows.slice(offset, offset + limit);
+  return { rows: page, total };
+}
+
+export async function getOrgCommitmentDetailForOrgId(
+  orgId: string,
+  commitmentId: string
+): Promise<OrgCommitmentDetail | null> {
+  return getOrgCommitmentDetailByOrgIdInternal(orgId, commitmentId);
+}
+
+async function getOrgCommitmentDetailByOrgIdInternal(
+  orgId: string,
+  commitmentId: string
+): Promise<OrgCommitmentDetail | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data: row, error } = await supabase
+      .from("org_commitments")
+      .select("*")
+      .eq("id", commitmentId)
+      .eq("org_id", orgId)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) return null;
+    const base = mapRow(row as Record<string, unknown>);
+    const [{ data: comments }, { data: attachments }, { data: history }, { data: deps }] =
+      await Promise.all([
+        supabase
+          .from("org_commitment_comments")
+          .select("*")
+          .eq("commitment_id", commitmentId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("org_commitment_attachments")
+          .select("*")
+          .eq("commitment_id", commitmentId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("org_commitment_history")
+          .select("*")
+          .eq("commitment_id", commitmentId)
+          .order("changed_at", { ascending: false }),
+        supabase
+          .from("org_commitment_dependencies")
+          .select("*")
+          .eq("commitment_id", commitmentId),
+      ]);
+    const depIds = (deps ?? []).map((x) => (x as { depends_on_commitment_id: string }).depends_on_commitment_id);
+    const titles: Record<string, string> = {};
+    if (depIds.length) {
+      const { data: titleRows } = await supabase
+        .from("org_commitments")
+        .select("id, title")
+        .eq("org_id", orgId)
+        .in("id", depIds);
+      for (const t of titleRows ?? []) {
+        const tr = t as { id: string; title: string };
+        titles[tr.id] = tr.title;
+      }
+    }
+    return {
+      ...base,
+      comments: (comments ?? []).map(
+        (c) =>
+          ({
+            id: String((c as Record<string, unknown>).id),
+            commitmentId: String((c as Record<string, unknown>).commitment_id),
+            userId: String((c as Record<string, unknown>).user_id),
+            content: String((c as Record<string, unknown>).content),
+            createdAt: String((c as Record<string, unknown>).created_at),
+          }) satisfies OrgCommitmentComment
+      ),
+      attachments: (attachments ?? []).map((a) => {
+        const ar = a as Record<string, unknown>;
+        return {
+          id: String(ar.id),
+          commitmentId: String(ar.commitment_id),
+          userId: String(ar.user_id),
+          fileName: String(ar.file_name),
+          fileUrl: `/api/commitments/${commitmentId}/attachments/${String(ar.id)}/file`,
+          createdAt: String(ar.created_at),
+        } satisfies OrgCommitmentAttachment;
+      }),
+      history: (history ?? []).map(
+        (h) =>
+          ({
+            id: String((h as Record<string, unknown>).id),
+            commitmentId: String((h as Record<string, unknown>).commitment_id),
+            changedBy: String((h as Record<string, unknown>).changed_by),
+            fieldChanged: String((h as Record<string, unknown>).field_changed),
+            oldValue:
+              (h as Record<string, unknown>).old_value == null
+                ? null
+                : String((h as Record<string, unknown>).old_value),
+            newValue:
+              (h as Record<string, unknown>).new_value == null
+                ? null
+                : String((h as Record<string, unknown>).new_value),
+            changedAt: String((h as Record<string, unknown>).changed_at),
+          }) satisfies OrgCommitmentHistoryEntry
+      ),
+      dependencies: (deps ?? []).map(
+        (x) =>
+          ({
+            id: String((x as Record<string, unknown>).id),
+            commitmentId: String((x as Record<string, unknown>).commitment_id),
+            dependsOnCommitmentId: String((x as Record<string, unknown>).depends_on_commitment_id),
+          }) satisfies OrgCommitmentDependency
+      ),
+      dependencyTitles: titles,
+    };
+  }
+
+  const d = getSqliteHandle();
+  const row = d
+    .prepare(
+      `SELECT * FROM org_commitments WHERE id = ? AND org_id = ? AND deleted_at IS NULL`
+    )
+    .get(commitmentId, orgId) as Record<string, unknown> | undefined;
+  if (!row) return null;
+  const base = mapRow(row);
+  const comments = d
+    .prepare(
+      `SELECT * FROM org_commitment_comments WHERE commitment_id = ? ORDER BY created_at ASC`
+    )
+    .all(commitmentId) as Record<string, unknown>[];
+  const atts = d
+    .prepare(
+      `SELECT * FROM org_commitment_attachments WHERE commitment_id = ? ORDER BY created_at DESC`
+    )
+    .all(commitmentId) as Record<string, unknown>[];
+  const history = d
+    .prepare(
+      `SELECT * FROM org_commitment_history WHERE commitment_id = ? ORDER BY changed_at DESC`
+    )
+    .all(commitmentId) as Record<string, unknown>[];
+  const deps = d
+    .prepare(`SELECT * FROM org_commitment_dependencies WHERE commitment_id = ?`)
+    .all(commitmentId) as Record<string, unknown>[];
+  const titles: Record<string, string> = {};
+  for (const dep of deps) {
+    const tid = String(dep.depends_on_commitment_id);
+    const t = d
+      .prepare(`SELECT title FROM org_commitments WHERE id = ? AND org_id = ?`)
+      .get(tid, orgId) as { title: string } | undefined;
+    if (t) titles[tid] = t.title;
+  }
+  return {
+    ...base,
+    comments: comments.map(
+      (c) =>
+        ({
+          id: String(c.id),
+          commitmentId: String(c.commitment_id),
+          userId: String(c.user_id),
+          content: String(c.content),
+          createdAt: String(c.created_at),
+        }) satisfies OrgCommitmentComment
+    ),
+    attachments: atts.map((a) => ({
+      id: String(a.id),
+      commitmentId: String(a.commitment_id),
+      userId: String(a.user_id),
+      fileName: String(a.file_name),
+      fileUrl: String(a.file_url).startsWith("sqlite-local:")
+        ? `/api/commitments/${commitmentId}/attachments/${String(a.id)}/file`
+        : String(a.file_url),
+      createdAt: String(a.created_at),
+    })),
+    history: history.map(
+      (h) =>
+        ({
+          id: String(h.id),
+          commitmentId: String(h.commitment_id),
+          changedBy: String(h.changed_by),
+          fieldChanged: String(h.field_changed),
+          oldValue: h.old_value == null ? null : String(h.old_value),
+          newValue: h.new_value == null ? null : String(h.new_value),
+          changedAt: String(h.changed_at),
+        }) satisfies OrgCommitmentHistoryEntry
+    ),
+    dependencies: deps.map(
+      (x) =>
+        ({
+          id: String(x.id),
+          commitmentId: String(x.commitment_id),
+          dependsOnCommitmentId: String(x.depends_on_commitment_id),
+        }) satisfies OrgCommitmentDependency
+    ),
+    dependencyTitles: titles,
+  };
+}
+
+/** Public API: create with api_key actor in history. */
+export async function createOrgCommitmentForPublicApi(
+  orgId: string,
+  apiKeyId: string,
+  input: {
+    title: string;
+    description: string | null;
+    ownerId: string;
+    deadline: string;
+    priority: OrgCommitmentPriority;
+  }
+): Promise<OrgCommitmentRow> {
+  const actor = API_ACTOR(apiKeyId);
+  const id = crypto.randomUUID();
+  const now = new Date().toISOString();
+  const lastActivityAt = now;
+  const completedAt = null;
+  const status = computeAutomaticOrgCommitmentStatus({
+    deadline: input.deadline,
+    lastActivityAt,
+    completedAt,
+  });
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_commitments")
+      .insert({
+        id,
+        org_id: orgId,
+        title: input.title,
+        description: input.description,
+        owner_id: input.ownerId,
+        deadline: input.deadline,
+        priority: input.priority,
+        status,
+        created_at: now,
+        updated_at: now,
+        completed_at: null,
+        last_activity_at: lastActivityAt,
+        deleted_at: null,
+      })
+      .select("*")
+      .single();
+    if (error) throw error;
+    await appendHistory(supabase, null, {
+      commitmentId: id,
+      changedBy: actor,
+      fieldChanged: "created",
+      oldValue: null,
+      newValue: "1",
+    });
+    await recomputeOrgCommitmentStatusById(id);
+    const { data: final } = await supabase.from("org_commitments").select("*").eq("id", id).single();
+    const out = mapRow((final ?? data) as Record<string, unknown>);
+    void import("@/lib/public-api/webhooks-events").then((m) => m.emitCommitmentCreated(orgId, out));
+    void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+      m.syncCalendarDeadlinesForCommitment(orgId, out)
+    );
+    return out;
+  }
+
+  const d = getSqliteHandle();
+  d.prepare(
+    `INSERT INTO org_commitments (
+      id, org_id, title, description, owner_id, deadline, priority, status,
+      created_at, updated_at, completed_at, last_activity_at, deleted_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    orgId,
+    input.title,
+    input.description,
+    input.ownerId,
+    input.deadline,
+    input.priority,
+    status,
+    now,
+    now,
+    null,
+    lastActivityAt,
+    null
+  );
+  await appendHistory(null, d, {
+    commitmentId: id,
+    changedBy: actor,
+    fieldChanged: "created",
+    oldValue: null,
+    newValue: "1",
+  });
+  await recomputeOrgCommitmentStatusById(id);
+  const row = d.prepare(`SELECT * FROM org_commitments WHERE id = ?`).get(id) as Record<string, unknown>;
+  const created = mapRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) => m.emitCommitmentCreated(orgId, created));
+  void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+    m.syncCalendarDeadlinesForCommitment(orgId, created)
+  );
+  return created;
+}
+
+export async function updateOrgCommitmentForPublicApi(
+  orgId: string,
+  apiKeyId: string,
+  commitmentId: string,
+  patch: Partial<{
+    title: string;
+    description: string | null;
+    owner_id: string;
+    deadline: string;
+    priority: OrgCommitmentPriority;
+    completed: boolean;
+  }>
+): Promise<{ row: OrgCommitmentRow; previousStatus: OrgCommitmentStatus; previousCompletedAt: string | null }> {
+  const actor = API_ACTOR(apiKeyId);
+  const existing = await getOrgCommitmentDetailByOrgIdInternal(orgId, commitmentId);
+  if (!existing) throw new Error("NOT_FOUND");
+  const previousStatus = existing.status;
+  const previousCompletedAt = existing.completedAt;
+
+  const userId = actor;
+  const now = new Date().toISOString();
+  const title = patch.title !== undefined ? patch.title : existing.title;
+  const description = patch.description !== undefined ? patch.description : existing.description;
+  const ownerId = patch.owner_id !== undefined ? patch.owner_id : existing.ownerId;
+  const deadline = patch.deadline !== undefined ? patch.deadline : existing.deadline;
+  const priority = patch.priority !== undefined ? patch.priority : existing.priority;
+
+  let completedAt = existing.completedAt;
+  if (patch.completed === true) completedAt = now;
+  if (patch.completed === false) completedAt = null;
+
+  const lastActivityAt = now;
+
+  let status: OrgCommitmentStatus;
+  if (completedAt) {
+    status = "completed";
+  } else {
+    status = computeAutomaticOrgCommitmentStatus({
+      deadline,
+      lastActivityAt,
+      completedAt: null,
+    });
+  }
+
+  const fields: Record<string, unknown> = {
+    title,
+    description,
+    owner_id: ownerId,
+    deadline,
+    priority,
+    updated_at: now,
+    last_activity_at: lastActivityAt,
+    completed_at: completedAt,
+    status,
+  };
+
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_commitments")
+      .update(fields)
+      .eq("id", commitmentId)
+      .eq("org_id", orgId)
+      .is("deleted_at", null)
+      .select("*")
+      .single();
+    if (error) throw error;
+    if (patch.title !== undefined && patch.title !== existing.title) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "title",
+        oldValue: existing.title,
+        newValue: patch.title,
+      });
+    }
+    if (patch.description !== undefined && patch.description !== existing.description) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "description",
+        oldValue: existing.description,
+        newValue: patch.description,
+      });
+    }
+    if (patch.owner_id !== undefined && patch.owner_id !== existing.ownerId) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "owner_id",
+        oldValue: existing.ownerId,
+        newValue: patch.owner_id,
+      });
+    }
+    if (patch.deadline !== undefined && patch.deadline !== existing.deadline) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "deadline",
+        oldValue: existing.deadline,
+        newValue: patch.deadline,
+      });
+    }
+    if (patch.priority !== undefined && patch.priority !== existing.priority) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "priority",
+        oldValue: existing.priority,
+        newValue: patch.priority,
+      });
+    }
+    await recomputeOrgCommitmentStatusById(commitmentId);
+    const { data: fin } = await supabase.from("org_commitments").select("*").eq("id", commitmentId).single();
+    if (patch.completed === true && !existing.completedAt) {
+      void import("@/lib/integrations/notion-writeback").then((m) =>
+        m.maybeNotionWritebackOnCommitmentCompleted({
+          orgId,
+          commitmentId,
+          ownerId,
+        })
+      );
+    }
+    const updatedRow = mapRow((fin ?? data) as Record<string, unknown>);
+    void import("@/lib/public-api/webhooks-events").then((m) =>
+      m.emitCommitmentUpdated(orgId, updatedRow, {
+        status: previousStatus,
+        completedAt: previousCompletedAt,
+      })
+    );
+    void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+      m.syncCalendarDeadlinesForCommitment(orgId, updatedRow)
+    );
+    return {
+      row: updatedRow,
+      previousStatus,
+      previousCompletedAt,
+    };
+  }
+
+  const d = getSqliteHandle();
+  d.prepare(
+    `UPDATE org_commitments SET
+      title = ?,
+      description = ?,
+      owner_id = ?,
+      deadline = ?,
+      priority = ?,
+      updated_at = ?,
+      last_activity_at = ?,
+      completed_at = ?,
+      status = ?
+    WHERE id = ? AND org_id = ? AND deleted_at IS NULL`
+  ).run(
+    title,
+    description,
+    ownerId,
+    deadline,
+    priority,
+    now,
+    lastActivityAt,
+    completedAt,
+    status,
+    commitmentId,
+    orgId
+  );
+  if (patch.title !== undefined && patch.title !== existing.title) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "title",
+      oldValue: existing.title,
+      newValue: patch.title,
+    });
+  }
+  if (patch.description !== undefined && patch.description !== existing.description) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "description",
+      oldValue: existing.description,
+      newValue: patch.description ?? null,
+    });
+  }
+  if (patch.owner_id !== undefined && patch.owner_id !== existing.ownerId) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "owner_id",
+      oldValue: existing.ownerId,
+      newValue: patch.owner_id,
+    });
+  }
+  if (patch.deadline !== undefined && patch.deadline !== existing.deadline) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "deadline",
+      oldValue: existing.deadline,
+      newValue: patch.deadline,
+    });
+  }
+  if (patch.priority !== undefined && patch.priority !== existing.priority) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "priority",
+      oldValue: existing.priority,
+      newValue: patch.priority,
+    });
+  }
+  await recomputeOrgCommitmentStatusById(commitmentId);
+  const row = d.prepare(`SELECT * FROM org_commitments WHERE id = ?`).get(commitmentId) as Record<
+    string,
+    unknown
+  >;
+  if (patch.completed === true && !existing.completedAt) {
+    void import("@/lib/integrations/notion-writeback").then((m) =>
+      m.maybeNotionWritebackOnCommitmentCompleted({
+        orgId,
+        commitmentId,
+        ownerId,
+      })
+    );
+  }
+  const updatedRow = mapRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) =>
+    m.emitCommitmentUpdated(orgId, updatedRow, {
+      status: previousStatus,
+      completedAt: previousCompletedAt,
+    })
+  );
+  void import("@/lib/integrations/calendar-deadline-sync").then((m) =>
+    m.syncCalendarDeadlinesForCommitment(orgId, updatedRow)
+  );
+  return { row: updatedRow, previousStatus, previousCompletedAt };
 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { listAllOrganizationIds, fetchOrganizationName } from "@/lib/dashboard/store";
 import { collectWeeklySummaryRecipients } from "@/lib/escalations/notify";
 import { generateWeeklyExecutiveSummaryHtml } from "@/lib/org-commitments/weekly-executive-summary";
-import { sendOperationalEmail } from "@/lib/notify-resend";
+import { sendNotificationToEmail } from "@/lib/notifications/service";
 
 export const runtime = "nodejs";
 
@@ -36,9 +36,19 @@ export async function GET(req: Request) {
       const subject = `Weekly executive summary — ${orgName}`;
       const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
       for (const to of recipients) {
-        const r = await sendOperationalEmail({ to, subject, text, html });
-        if (r.sent) sent++;
-        else failed++;
+        try {
+          await sendNotificationToEmail({
+            orgId,
+            email: to,
+            type: "weekly_summary",
+            title: subject,
+            body: text,
+            htmlOverride: html,
+          });
+          sent++;
+        } catch {
+          failed++;
+        }
       }
     }
     return NextResponse.json({ ok: true, orgs: orgIds.length, emailsSent: sent, skipped, failed });

@@ -25,6 +25,7 @@ import { mapRowToCommitment, serializeActivityLog } from "@/lib/commitment-map";
 import { buildExecutionOverview } from "@/lib/execution-overview";
 import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { notifyEscalationEmail } from "@/lib/notify-resend";
+import { sendNotification } from "@/lib/notifications/service";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
@@ -1096,14 +1097,48 @@ async function recordEscalationForReconcile(
   const reason =
     newStatus === "overdue" ? "DUE_DATE_PASSED" : "STALE_INACTIVITY_OR_FLAGGED";
   const n = new Date().toISOString();
-  const email = await notifyEscalationEmail({
-    commitmentTitle: title,
-    projectId,
-    commitmentId,
-    reason,
-    newStatus,
-  });
-  const notifiedAt = email.sent ? n : null;
+  const base =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.VERCEL_URL?.trim() ||
+    "http://localhost:3000";
+  const appBase = base.startsWith("http") ? base : `https://${base}`;
+  const deskLink = `${appBase}/desk?projectId=${encodeURIComponent(projectId)}`;
+
+  let notifiedAt: string | null = null;
+  try {
+    const orgId = await ensureOrganizationForClerkUser(userId);
+    await sendNotification({
+      orgId,
+      userId,
+      type: newStatus === "overdue" ? "commitment_overdue" : "escalation_fired",
+      title:
+        newStatus === "overdue"
+          ? `Overdue: ${title.slice(0, 80)}`
+          : `At risk: ${title.slice(0, 80)}`,
+      body:
+        newStatus === "overdue"
+          ? `This desk commitment is past its deadline. Reason: ${reason}.`
+          : `This desk commitment needs attention. Reason: ${reason}.`,
+      metadata: {
+        projectId,
+        commitmentId,
+        reason,
+        previousStatus,
+        newStatus,
+        link: deskLink,
+      },
+    });
+    notifiedAt = n;
+  } catch {
+    const email = await notifyEscalationEmail({
+      commitmentTitle: title,
+      projectId,
+      commitmentId,
+      reason,
+      newStatus,
+    });
+    notifiedAt = email.sent ? n : null;
+  }
 
   if (isSupabaseConfigured()) {
     try {

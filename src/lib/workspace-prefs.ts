@@ -71,6 +71,8 @@ export type WorkspacePrefsV1 = {
   uiLocale?: UiLocaleCode;
   /** Sidebar, header, and dashboard glass: liquid | balanced standard | flat (no blur). */
   surfaceMaterial?: WorkspaceSurfaceMaterialId;
+  /** After workspace onboarding completes, hide the checklist card in the sidebar. */
+  onboardingChecklistDismissed?: boolean;
 };
 
 const defaultPrefs: WorkspacePrefsV1 = {

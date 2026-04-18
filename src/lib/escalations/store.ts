@@ -151,7 +151,11 @@ export async function insertOrgEscalation(params: {
       .select("*")
       .single();
     if (error) throw error;
-    return mapEscalationRow(data as Record<string, unknown>);
+    const mapped = mapEscalationRow(data as Record<string, unknown>);
+    void import("@/lib/public-api/webhooks-events").then((m) =>
+      m.emitEscalationFired(params.orgId, mapped)
+    );
+    return mapped;
   }
   const d = getSqliteHandle();
   d.prepare(
@@ -160,7 +164,11 @@ export async function insertOrgEscalation(params: {
     ) VALUES (?, ?, ?, ?, ?, ?)`
   ).run(id, params.orgId, params.commitmentId, params.severity, now, now);
   const row = d.prepare(`SELECT * FROM org_escalations WHERE id = ?`).get(id) as Record<string, unknown>;
-  return mapEscalationRow(row);
+  const mapped = mapEscalationRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) =>
+    m.emitEscalationFired(params.orgId, mapped)
+  );
+  return mapped;
 }
 
 export async function updateEscalationSeverity(
@@ -258,8 +266,11 @@ export async function listEscalationsForApi(params: {
   dateFrom?: string;
   dateTo?: string;
   limit?: number;
+  offset?: number;
 }): Promise<OrgEscalationRow[]> {
   const limit = Math.min(params.limit ?? 200, 500);
+  const offset = Math.max(0, params.offset ?? 0);
+  const fetchCap = Math.min(2000, Math.max(limit * 2, offset + limit) * 2);
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     let q = supabase.from("org_escalations").select("*").eq("org_id", params.orgId);
@@ -269,7 +280,7 @@ export async function listEscalationsForApi(params: {
     if (params.resolved === "resolved") q = q.not("resolved_at", "is", null);
     if (params.dateFrom) q = q.gte("triggered_at", params.dateFrom);
     if (params.dateTo) q = q.lte("triggered_at", params.dateTo);
-    q = q.order("triggered_at", { ascending: false }).limit(limit * 2);
+    q = q.order("triggered_at", { ascending: false }).limit(fetchCap);
     const { data, error } = await q;
     if (error) throw error;
     let rows = (data ?? []).map((x) => mapEscalationRow(x as Record<string, unknown>));
@@ -279,7 +290,7 @@ export async function listEscalationsForApi(params: {
     } else if (params.resolved === "open" && params.snoozed === "no") {
       rows = rows.filter((e) => !e.snoozedUntil || new Date(e.snoozedUntil).getTime() <= now);
     }
-    return rows.slice(0, limit);
+    return rows.slice(offset, offset + limit);
   }
   const d = getSqliteHandle();
   const parts = ["org_id = ?"];
@@ -303,7 +314,7 @@ export async function listEscalationsForApi(params: {
     vals.push(params.dateTo);
   }
   const sql = `SELECT * FROM org_escalations WHERE ${parts.join(" AND ")} ORDER BY triggered_at DESC LIMIT ?`;
-  vals.push(limit * 2);
+  vals.push(fetchCap);
   let rows = (d.prepare(sql).all(...vals) as Record<string, unknown>[]).map(mapEscalationRow);
   const now = Date.now();
   if (params.resolved === "open" && params.snoozed === "yes") {
@@ -311,7 +322,7 @@ export async function listEscalationsForApi(params: {
   } else if (params.resolved === "open" && params.snoozed === "no") {
     rows = rows.filter((e) => !e.snoozedUntil || new Date(e.snoozedUntil).getTime() <= now);
   }
-  return rows.slice(0, limit);
+  return rows.slice(offset, offset + limit);
 }
 
 export async function getEscalationByIdForOrg(
@@ -354,7 +365,11 @@ export async function snoozeEscalation(
       .select("*")
       .single();
     if (error) throw error;
-    return data ? mapEscalationRow(data as Record<string, unknown>) : null;
+    const mapped = data ? mapEscalationRow(data as Record<string, unknown>) : null;
+    if (mapped) {
+      void import("@/lib/public-api/webhooks-events").then((m) => m.emitEscalationSnoozed(orgId, mapped));
+    }
+    return mapped;
   }
   const d = getSqliteHandle();
   d.prepare(
@@ -363,7 +378,11 @@ export async function snoozeEscalation(
   const row = d.prepare(`SELECT * FROM org_escalations WHERE id = ?`).get(escalationId) as
     | Record<string, unknown>
     | undefined;
-  return row ? mapEscalationRow(row) : null;
+  const mapped = row ? mapEscalationRow(row) : null;
+  if (mapped) {
+    void import("@/lib/public-api/webhooks-events").then((m) => m.emitEscalationSnoozed(orgId, mapped));
+  }
+  return mapped;
 }
 
 export async function resolveEscalation(
@@ -388,7 +407,11 @@ export async function resolveEscalation(
       .select("*")
       .single();
     if (error) throw error;
-    return data ? mapEscalationRow(data as Record<string, unknown>) : null;
+    const mapped = data ? mapEscalationRow(data as Record<string, unknown>) : null;
+    if (mapped) {
+      void import("@/lib/public-api/webhooks-events").then((m) => m.emitEscalationResolved(orgId, mapped));
+    }
+    return mapped;
   }
   const d = getSqliteHandle();
   const r = d
@@ -402,7 +425,9 @@ export async function resolveEscalation(
     string,
     unknown
   >;
-  return mapEscalationRow(row);
+  const mapped = mapEscalationRow(row);
+  void import("@/lib/public-api/webhooks-events").then((m) => m.emitEscalationResolved(orgId, mapped));
+  return mapped;
 }
 
 export async function fetchOpenEscalationsNeedingStaleNotify(orgId: string): Promise<OrgEscalationRow[]> {

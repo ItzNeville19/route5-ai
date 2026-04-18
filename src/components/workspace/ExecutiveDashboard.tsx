@@ -25,6 +25,8 @@ import {
   Loader2,
   Radio,
 } from "lucide-react";
+import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
+import type { UpgradePromptPayload } from "@/lib/billing/types";
 
 type TeamRow = LiveDashboardMetrics["teamBreakdown"][number];
 
@@ -97,6 +99,7 @@ function healthColorClass(tier: "green" | "yellow" | "red"): string {
 type SortKey = keyof Pick<TeamRow, "displayName" | "total" | "completedOnTime" | "completionRate" | "overdueCount">;
 
 export default function ExecutiveDashboard() {
+  const { showUpgrade } = useBillingUpgrade();
   const [orgId, setOrgId] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<LiveDashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -298,6 +301,11 @@ export default function ExecutiveDashboard() {
     setExporting(true);
     try {
       const res = await fetch("/api/dashboard/export", { credentials: "same-origin" });
+      if (res.status === 409) {
+        const data = (await res.json().catch(() => ({}))) as { upgrade?: UpgradePromptPayload };
+        if (data.upgrade) showUpgrade(data.upgrade);
+        return;
+      }
       if (!res.ok) return;
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);

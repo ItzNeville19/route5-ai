@@ -1,9 +1,8 @@
 import { clerkClient } from "@clerk/nextjs/server";
-import { sendOperationalEmail } from "@/lib/notify-resend";
-import { isSlackIntegrationConfigured } from "@/lib/slack-integration";
 import type { OrgEscalationRow, OrgEscalationSeverity } from "@/lib/escalations/types";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { postSlackEscalationBlockKit } from "@/lib/integrations/slack-escalation-blocks";
+import { sendNotification, sendNotificationToEmail } from "@/lib/notifications/service";
 
 function appBaseUrl(): string {
   const base =
@@ -79,67 +78,6 @@ export async function collectWeeklySummaryRecipients(orgId: string): Promise<str
   return [...new Set([...base, ...extra])];
 }
 
-async function postSlackEscalation(text: string): Promise<boolean> {
-  const webhook = process.env.SLACK_WEBHOOK_URL?.trim();
-  if (webhook) {
-    const res = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    return res.ok;
-  }
-  const token = process.env.SLACK_BOT_TOKEN?.trim();
-  const channel = process.env.SLACK_ESCALATION_CHANNEL_ID?.trim();
-  if (token && channel) {
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      body: JSON.stringify({ channel, text }),
-    });
-    const j = (await res.json().catch(() => ({}))) as { ok?: boolean };
-    return Boolean(j.ok);
-  }
-  return false;
-}
-
-/** Best-effort DM via users.lookupByEmail + chat.postMessage(open a DM). */
-async function slackDmToEmail(email: string, text: string): Promise<boolean> {
-  const token = process.env.SLACK_BOT_TOKEN?.trim();
-  if (!token) return false;
-  const lu = await fetch(
-    `https://slack.com/api/users.lookupByEmail?${new URLSearchParams({ email })}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  const uj = (await lu.json().catch(() => ({}))) as { ok?: boolean; user?: { id?: string } };
-  const uid = uj.ok && uj.user?.id ? uj.user.id : null;
-  if (!uid) return false;
-  const open = await fetch("https://slack.com/api/conversations.open", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-    body: JSON.stringify({ users: uid }),
-  });
-  const oj = (await open.json().catch(() => ({}))) as { ok?: boolean; channel?: { id?: string } };
-  const ch = oj.ok && oj.channel?.id ? oj.channel.id : null;
-  if (!ch) return false;
-  const pm = await fetch("https://slack.com/api/chat.postMessage", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json; charset=utf-8",
-    },
-    body: JSON.stringify({ channel: ch, text }),
-  });
-  const pj = (await pm.json().catch(() => ({}))) as { ok?: boolean };
-  return Boolean(pj.ok);
-}
-
 function emailBody(params: {
   title: string;
   deadline: string;
@@ -189,12 +127,12 @@ export type EscalationNotifyContext = {
   ownerId: string;
   severity: OrgEscalationSeverity;
   escalation: OrgEscalationRow;
-  /** When true, still send owner line but mark as upgrade in Slack text */
   isUpgrade?: boolean;
 };
 
 /**
- * Sends emails (Resend) and optional Slack per severity. Updates notification timestamps on the row via caller.
+ * Sends notifications via unified service (in-app, email, Slack DM per preferences).
+ * Optional legacy channel post when Slack integration env is configured.
  */
 export async function notifyEscalationCreated(ctx: EscalationNotifyContext): Promise<{
   notifiedOwnerAt: string | null;
@@ -204,44 +142,85 @@ export async function notifyEscalationCreated(ctx: EscalationNotifyContext): Pro
   const { severity, title, deadline, commitmentId, ownerId, isUpgrade } = ctx;
   const subject = subjectForSeverity(severity, title, deadline);
   const body = emailBody({ title, deadline, severity, commitmentId });
+  const link = commitmentLink(commitmentId);
   const slackPrefix = isUpgrade ? "[Escalation upgraded] " : "";
+  const now = new Date().toISOString();
 
   let notifiedOwnerAt: string | null = null;
   let notifiedManagerAt: string | null = null;
   let notifiedAdminAt: string | null = null;
 
-  const ownerEmail = await getPrimaryEmail(ownerId);
-  if (ownerEmail) {
-    const r = await sendOperationalEmail({ to: ownerEmail, subject, text: body });
-    if (r.sent) notifiedOwnerAt = new Date().toISOString();
-  }
+  const baseMeta: Record<string, unknown> = {
+    commitmentId,
+    link,
+    severity,
+    title,
+    deadline,
+    escalationId: ctx.escalation.id,
+  };
 
-  const slackText = `${slackPrefix}${subject}\n${commitmentLink(commitmentId)}`;
+  if (isUpgrade) {
+    await sendNotification({
+      orgId: ctx.orgId,
+      userId: ownerId,
+      type: "escalation_escalated",
+      title: `${slackPrefix}${subject}`,
+      body,
+      metadata: { ...baseMeta, escalated: true },
+    });
+    notifiedOwnerAt = now;
+  } else {
+    await sendNotification({
+      orgId: ctx.orgId,
+      userId: ownerId,
+      type: "escalation_fired",
+      title: subject,
+      body,
+      metadata: baseMeta,
+    });
+    notifiedOwnerAt = now;
 
-  if (severity === "warning") {
-    return { notifiedOwnerAt, notifiedManagerAt, notifiedAdminAt };
-  }
-
-  if (severity === "urgent" || severity === "critical" || severity === "overdue") {
-    if (isSlackIntegrationConfigured() && ownerEmail) {
-      const dm = await slackDmToEmail(ownerEmail, slackText);
-      if (!dm) await postSlackEscalation(slackText);
+    if (severity === "warning" || severity === "urgent" || severity === "critical") {
+      const window =
+        severity === "warning" ? "72 hours" : severity === "urgent" ? "48 hours" : "24 hours";
+      await sendNotification({
+        orgId: ctx.orgId,
+        userId: ownerId,
+        type: "commitment_due_soon",
+        title: `Due soon: ${title.slice(0, 70)}`,
+        body: `Your commitment is due within ${window}.`,
+        metadata: { ...baseMeta, window, link },
+      });
     }
   }
 
   if (severity === "critical") {
     const mgr = await getManagerEmail(ownerId);
     if (mgr) {
-      const r = await sendOperationalEmail({ to: mgr, subject, text: body });
-      if (r.sent) notifiedManagerAt = new Date().toISOString();
+      await sendNotificationToEmail({
+        orgId: ctx.orgId,
+        email: mgr,
+        type: "escalation_escalated",
+        title: subject,
+        body,
+        metadata: baseMeta,
+      });
+      notifiedManagerAt = now;
     }
   }
 
   if (severity === "overdue") {
     const admins = await collectAdminEmails(ctx.orgId);
     for (const em of admins) {
-      const r = await sendOperationalEmail({ to: em, subject, text: body });
-      if (r.sent) notifiedAdminAt = new Date().toISOString();
+      await sendNotificationToEmail({
+        orgId: ctx.orgId,
+        email: em,
+        type: "escalation_escalated",
+        title: subject,
+        body,
+        metadata: { ...baseMeta, audience: "admin" },
+      });
+      notifiedAdminAt = now;
     }
   }
 
@@ -281,8 +260,19 @@ export async function notifyEscalationStale24h(params: {
   ].join("\n");
   let any = false;
   for (const to of admins) {
-    const r = await sendOperationalEmail({ to, subject, text });
-    if (r.sent) any = true;
+    await sendNotificationToEmail({
+      orgId: params.orgId,
+      email: to,
+      type: "escalation_escalated",
+      title: subject,
+      body: text,
+      metadata: {
+        commitmentId: params.commitmentId,
+        link: commitmentLink(params.commitmentId),
+        followUp: "24h",
+      },
+    });
+    any = true;
   }
   return any;
 }
@@ -309,8 +299,19 @@ export async function notifyEscalationStale48h(params: {
   ].join("\n");
   let any = false;
   for (const to of admins) {
-    const r = await sendOperationalEmail({ to, subject, text });
-    if (r.sent) any = true;
+    await sendNotificationToEmail({
+      orgId: params.orgId,
+      email: to,
+      type: "escalation_escalated",
+      title: subject,
+      body: text,
+      metadata: {
+        commitmentId: params.commitmentId,
+        link: commitmentLink(params.commitmentId),
+        followUp: "48h",
+      },
+    });
+    any = true;
   }
   return any;
 }

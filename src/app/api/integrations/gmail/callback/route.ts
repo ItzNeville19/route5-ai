@@ -4,8 +4,18 @@ import {
   getGmailProfile,
   gmailUsersWatch,
 } from "@/lib/integrations/gmail-google";
+import {
+  ensureMeetWorkspaceEventsSubscription,
+  fetchGoogleOAuthSub,
+} from "@/lib/integrations/gmeet-workspace-subscription";
+import { mergeGmailIntegrationMetadata } from "@/lib/integrations/org-integrations-store";
 import { verifyGmailOAuthState } from "@/lib/integrations/gmail-oauth-state";
-import { upsertGmailIntegration, upsertGmailWatchRow } from "@/lib/integrations/org-integrations-store";
+import { checkPlanLimit } from "@/lib/billing/gate";
+import {
+  getGmailIntegrationForOrg,
+  upsertGmailIntegration,
+  upsertGmailWatchRow,
+} from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { appBaseUrl } from "@/lib/integrations/app-url";
 
@@ -34,6 +44,13 @@ export async function GET(req: Request) {
   const redirectUri = `${appBaseUrl()}/api/integrations/gmail/callback`;
 
   try {
+    const prior = await getGmailIntegrationForOrg(orgId);
+    if (!prior || prior.status !== "connected") {
+      const gate = await checkPlanLimit(orgId, "integrations");
+      if (!gate.allowed) {
+        return NextResponse.redirect(`${redirectBase}?gmail=error&reason=plan_limit`);
+      }
+    }
     const tok = await exchangeGoogleOAuthCode(code, redirectUri);
     const profile = await getGmailProfile(tok.access_token);
     const expiresAt = Date.now() + (tok.expires_in ?? 3600) * 1000;
@@ -45,6 +62,12 @@ export async function GET(req: Request) {
       scope: tok.scope,
       accessTokenExpiresAtMs: expiresAt,
     });
+
+    const sub = await fetchGoogleOAuthSub(tok.access_token);
+    if (sub) {
+      await mergeGmailIntegrationMetadata(orgId, { google_oauth_sub: sub });
+      await ensureMeetWorkspaceEventsSubscription(orgId, tok.access_token, sub);
+    }
 
     const topic = process.env.GOOGLE_PUBSUB_TOPIC?.trim();
     if (topic) {

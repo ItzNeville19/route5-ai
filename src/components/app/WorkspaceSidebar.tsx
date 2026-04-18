@@ -19,8 +19,12 @@ import {
   ScrollText,
   Settings,
   Target,
+  CreditCard,
+  Bell,
+  Code2,
 } from "lucide-react";
 import WorkspaceInstallControls from "@/components/workspace/WorkspaceInstallControls";
+import OnboardingChecklistCard from "@/components/workspace/OnboardingChecklistCard";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -293,12 +297,20 @@ export default function WorkspaceSidebar() {
           label={t("sidebar.audit")}
         />
         <NavLink
+          href="/workspace/notifications/preferences"
+          active={path.startsWith("/workspace/notifications")}
+          icon={Bell}
+          label="Notifications"
+        />
+        <NavLink
           href="/settings"
           active={path === "/settings"}
           icon={Settings}
           label={t("sidebar.settings")}
         />
       </nav>
+
+      <OnboardingChecklistCard />
 
       <div className="mt-3 shrink-0 px-3">
         <button
@@ -368,7 +380,31 @@ export default function WorkspaceSidebar() {
       </div>
 
       <div className="mt-auto shrink-0 space-y-3 border-t border-[var(--workspace-border)]/70 bg-[var(--workspace-sidebar)]/80 px-3 py-3 backdrop-blur-xl">
-        <div className="flex items-center justify-center gap-3 text-[10px] font-medium text-[var(--workspace-muted-fg)]">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--workspace-muted-fg)]">
+          <Link
+            href="/workspace/developer"
+            className={`inline-flex items-center gap-1.5 transition hover:text-[var(--workspace-fg)] ${
+              path === "/workspace/developer" ? "text-[var(--workspace-fg)]" : ""
+            }`}
+          >
+            <Code2 className="h-3.5 w-3.5 opacity-80" aria-hidden />
+            Developer
+          </Link>
+          <span aria-hidden className="text-[var(--workspace-border)]">
+            ·
+          </span>
+          <Link
+            href="/workspace/billing"
+            className={`inline-flex items-center gap-1.5 transition hover:text-[var(--workspace-fg)] ${
+              path === "/workspace/billing" ? "text-[var(--workspace-fg)]" : ""
+            }`}
+          >
+            <CreditCard className="h-3.5 w-3.5 opacity-80" aria-hidden />
+            Billing
+          </Link>
+          <span aria-hidden className="text-[var(--workspace-border)]">
+            ·
+          </span>
           <Link href="/product" className="transition hover:text-[var(--workspace-fg)]">
             {t("sidebar.product")}
           </Link>

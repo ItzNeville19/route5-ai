@@ -153,8 +153,35 @@ function SignedInAppShell({
       setGate("ok");
       return;
     }
-    // Onboarding is optional: never block workspace or marketplace behind the wizard.
-    setGate("ok");
+
+    const workspaceOnboarding =
+      pathname === "/overview" ||
+      (pathname?.startsWith("/workspace") && !pathname.startsWith("/workspace/onboarding"));
+
+    if (!workspaceOnboarding) {
+      setGate("ok");
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/workspace/onboarding", { credentials: "same-origin" });
+        const data = (await res.json()) as { complete?: boolean };
+        if (cancelled) return;
+        if (data.complete === false) {
+          router.replace("/workspace/onboarding");
+          setGate("redirecting");
+          return;
+        }
+      } catch {
+        /* offline / misconfigured — do not block */
+      }
+      if (!cancelled) setGate("ok");
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId, pathname, router]);
 
   if (gate === "check" || gate === "redirecting") {

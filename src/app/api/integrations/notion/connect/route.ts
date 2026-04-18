@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { checkPlanLimit } from "@/lib/billing/gate";
+import { getNotionIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { signNotionOAuthState } from "@/lib/integrations/notion-oauth-state";
 import { appBaseUrl } from "@/lib/integrations/app-url";
@@ -15,7 +17,16 @@ export async function GET() {
   if (!clientId) {
     return NextResponse.json({ error: "Notion OAuth is not configured (NOTION_CLIENT_ID)" }, { status: 503 });
   }
-  await ensureOrganizationForClerkUser(userId);
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  const existing = await getNotionIntegrationForOrg(orgId);
+  if (!existing || existing.status !== "connected") {
+    const gate = await checkPlanLimit(orgId, "integrations");
+    if (!gate.allowed) {
+      return NextResponse.redirect(
+        new URL("/workspace/integrations?billingLimit=integrations", appBaseUrl()).toString()
+      );
+    }
+  }
   const redirectUri = `${appBaseUrl()}/api/integrations/notion/callback`;
   const state = signNotionOAuthState(userId);
   const url = new URL("https://api.notion.com/v1/oauth/authorize");

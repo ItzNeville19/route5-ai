@@ -15,6 +15,7 @@ import {
   parseJsonBody,
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
+import { checkPlanLimit, planLimitResponse } from "@/lib/billing/gate";
 
 export const runtime = "nodejs";
 
@@ -98,6 +99,10 @@ export async function POST(req: Request) {
 
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);
+    const gate = await checkPlanLimit(orgId, "commitments");
+    if (!gate.allowed && gate.upgrade) {
+      return planLimitResponse(gate.upgrade);
+    }
     const row = await createOrgCommitment(userId, {
       title: body.title,
       description: body.description ?? null,
@@ -108,6 +113,7 @@ export async function POST(req: Request) {
     broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
     if (body.ownerId !== userId) {
       void notifyOrgCommitmentAssignment({
+        orgId,
         ownerClerkId: body.ownerId,
         title: body.title,
         deadline: row.deadline,

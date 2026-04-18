@@ -1,5 +1,4 @@
-import { clerkClient } from "@clerk/nextjs/server";
-import { sendOperationalEmail } from "@/lib/notify-resend";
+import { sendNotification } from "@/lib/notifications/service";
 
 function appBaseUrl(): string {
   const base =
@@ -10,35 +9,30 @@ function appBaseUrl(): string {
 }
 
 export async function notifyOrgCommitmentAssignment(params: {
+  orgId: string;
   ownerClerkId: string;
   title: string;
   deadline: string;
   priority: string;
   commitmentId: string;
 }): Promise<{ sent: boolean; reason?: string }> {
-  let email: string | null = null;
-  try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(params.ownerClerkId);
-    email = user.primaryEmailAddress?.emailAddress ?? null;
-  } catch {
-    return { sent: false, reason: "Could not resolve owner email" };
-  }
-  if (!email) {
-    return { sent: false, reason: "Owner has no primary email" };
-  }
   const link = `${appBaseUrl()}/workspace/commitments?id=${encodeURIComponent(params.commitmentId)}`;
-  return sendOperationalEmail({
-    to: email,
-    subject: `[Route5] Commitment assigned: ${params.title.slice(0, 80)}`,
-    text: [
-      "You were assigned a commitment in Route5.",
-      "",
-      `Title: ${params.title}`,
-      `Deadline: ${params.deadline}`,
-      `Priority: ${params.priority}`,
-      "",
-      `Open: ${link}`,
-    ].join("\n"),
-  });
+  try {
+    await sendNotification({
+      orgId: params.orgId,
+      userId: params.ownerClerkId,
+      type: "commitment_assigned",
+      title: `Commitment assigned: ${params.title.slice(0, 80)}`,
+      body: `You were assigned a commitment. Deadline: ${params.deadline} · Priority: ${params.priority}`,
+      metadata: {
+        commitmentId: params.commitmentId,
+        deadline: params.deadline,
+        priority: params.priority,
+        link,
+      },
+    });
+    return { sent: true };
+  } catch (e) {
+    return { sent: false, reason: e instanceof Error ? e.message : "notify failed" };
+  }
 }

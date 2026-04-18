@@ -641,6 +641,32 @@ export async function updateGmailAccessTokenInPlace(
   ).run(accessEnc, JSON.stringify(meta), now, now, orgId);
 }
 
+export async function mergeGmailIntegrationMetadata(
+  orgId: string,
+  patch: Partial<OrgIntegrationMetadata>
+): Promise<void> {
+  const row = await getGmailIntegrationForOrg(orgId);
+  if (!row) return;
+  const meta = { ...parseMeta(row.metadata), ...patch };
+  const now = new Date().toISOString();
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { error } = await supabase
+      .from("org_integrations")
+      .update({ metadata: meta, updated_at: now })
+      .eq("org_id", orgId)
+      .eq("type", "gmail");
+    if (error) throw error;
+    return;
+  }
+  const d = getSqliteHandle();
+  d.prepare(`UPDATE org_integrations SET metadata = ?, updated_at = ? WHERE org_id = ? AND type = 'gmail'`).run(
+    JSON.stringify(meta),
+    now,
+    orgId
+  );
+}
+
 export async function getGmailIntegrationForOrg(orgId: string): Promise<OrgIntegrationRow | null> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();

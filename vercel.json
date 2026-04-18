@@ -27,6 +27,14 @@
     {
       "path": "/api/cron/notion-poll",
       "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/webhook-retries",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/teams-subscription-renew",
+      "schedule": "0 0 */2 * *"
     }
   ]
 }

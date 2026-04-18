@@ -9,6 +9,7 @@ import {
   fetchOrganizationName,
 } from "@/lib/dashboard/store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { checkPlanLimit, planLimitResponse } from "@/lib/billing/gate";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { enforceRateLimits, userAndIpRateScopes } from "@/lib/security/request-guards";
 
@@ -30,6 +31,10 @@ export async function GET(req: Request) {
 
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);
+    const gate = await checkPlanLimit(orgId, "export");
+    if (!gate.allowed && gate.upgrade) {
+      return planLimitResponse(gate.upgrade);
+    }
     const rows = await fetchMetricRowsForOrg(orgId);
     const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
     const names = await resolveOwnerDisplayNames(ownerIds);

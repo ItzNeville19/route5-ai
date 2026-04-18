@@ -29,6 +29,8 @@ import {
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
+import type { UpgradePromptPayload } from "@/lib/billing/types";
 
 const STATUSES = [
   "not_started",
@@ -48,6 +50,7 @@ function ownerLabel(ownerId: string, selfId: string | undefined) {
 
 export default function OrgCommitmentTracker() {
   const { user } = useUser();
+  const { showUpgrade } = useBillingUpgrade();
   const router = useRouter();
   const searchParams = useSearchParams();
   const selectedId = searchParams.get("id");
@@ -245,7 +248,15 @@ export default function OrgCommitmentTracker() {
           priority: cPriority,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { commitment?: OrgCommitmentRow; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        commitment?: OrgCommitmentRow;
+        error?: string;
+        upgrade?: UpgradePromptPayload;
+      };
+      if (res.status === 409 && data.upgrade) {
+        showUpgrade(data.upgrade);
+        return;
+      }
       if (!res.ok || !data.commitment) return;
       setCreateOpen(false);
       setCTitle("");

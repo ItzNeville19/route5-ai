@@ -309,6 +309,121 @@ function getDb(): Database.Database {
       synced_at TEXT NOT NULL,
       sync_status TEXT NOT NULL DEFAULT 'ok'
     );
+    CREATE TABLE IF NOT EXISTS org_subscriptions (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL UNIQUE REFERENCES organizations(id) ON DELETE CASCADE,
+      stripe_customer_id TEXT UNIQUE,
+      stripe_subscription_id TEXT UNIQUE,
+      plan TEXT NOT NULL,
+      status TEXT NOT NULL,
+      current_period_start TEXT,
+      current_period_end TEXT,
+      cancel_at_period_end INTEGER NOT NULL DEFAULT 0,
+      cancelled_at TEXT,
+      trial_end TEXT,
+      seat_count INTEGER NOT NULL DEFAULT 1,
+      payment_failed_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS org_invoices (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      stripe_invoice_id TEXT NOT NULL UNIQUE,
+      stripe_payment_intent_id TEXT,
+      amount_cents INTEGER NOT NULL,
+      currency TEXT NOT NULL DEFAULT 'usd',
+      status TEXT NOT NULL,
+      invoice_url TEXT,
+      invoice_pdf_url TEXT,
+      period_start TEXT,
+      period_end TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_invoices_org ON org_invoices(org_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS org_usage (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      metric TEXT NOT NULL,
+      value INTEGER NOT NULL,
+      recorded_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_usage_org_metric ON org_usage(org_id, metric, recorded_at DESC);
+    CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+      id TEXT PRIMARY KEY,
+      stripe_event_id TEXT NOT NULL UNIQUE,
+      created_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS org_notifications (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      metadata TEXT NOT NULL DEFAULT '{}',
+      read INTEGER NOT NULL DEFAULT 0,
+      read_at TEXT,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_notifications_user_created ON org_notifications(user_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS notification_preferences (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      in_app INTEGER NOT NULL DEFAULT 1,
+      email INTEGER NOT NULL DEFAULT 1,
+      slack INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (org_id, user_id, type)
+    );
+    CREATE INDEX IF NOT EXISTS idx_notification_preferences_org_user ON notification_preferences(org_id, user_id);
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      key_hash TEXT NOT NULL UNIQUE,
+      key_prefix TEXT NOT NULL,
+      scopes TEXT NOT NULL DEFAULT '["read"]',
+      last_used_at TEXT,
+      expires_at TEXT,
+      revoked INTEGER NOT NULL DEFAULT 0,
+      revoked_at TEXT,
+      created_by TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_api_keys_org ON api_keys(org_id);
+    CREATE TABLE IF NOT EXISTS webhook_endpoints (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      url TEXT NOT NULL,
+      description TEXT,
+      secret TEXT NOT NULL,
+      events TEXT NOT NULL DEFAULT '[]',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhook_endpoints_org ON webhook_endpoints(org_id);
+    CREATE TABLE IF NOT EXISTS webhook_deliveries (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      webhook_endpoint_id TEXT NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+      event_type TEXT NOT NULL,
+      payload TEXT NOT NULL DEFAULT '{}',
+      response_status INTEGER,
+      response_body TEXT,
+      attempt_count INTEGER NOT NULL DEFAULT 0,
+      delivered_at TEXT,
+      failed_at TEXT,
+      next_retry_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_endpoint ON webhook_deliveries(webhook_endpoint_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_retry ON webhook_deliveries(next_retry_at);
     CREATE TABLE IF NOT EXISTS execution_snapshots (
       id TEXT PRIMARY KEY,
       org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -324,7 +439,85 @@ function getDb(): Database.Database {
       UNIQUE (org_id, snapshot_date)
     );
     CREATE INDEX IF NOT EXISTS idx_execution_snapshots_org ON execution_snapshots(org_id, snapshot_date DESC);
+    CREATE TABLE IF NOT EXISTS zoom_meetings (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      zoom_meeting_id TEXT NOT NULL UNIQUE,
+      zoom_user_id TEXT,
+      topic TEXT,
+      start_time TEXT,
+      end_time TEXT,
+      transcript_fetched INTEGER NOT NULL DEFAULT 0,
+      transcript_text TEXT,
+      processed INTEGER NOT NULL DEFAULT 0,
+      needs_review INTEGER NOT NULL DEFAULT 0,
+      confidence_score REAL,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_zoom_meetings_org ON zoom_meetings(org_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS gmeet_meetings (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      google_event_id TEXT NOT NULL UNIQUE,
+      google_calendar_id TEXT,
+      summary TEXT,
+      start_time TEXT,
+      end_time TEXT,
+      transcript_fetched INTEGER NOT NULL DEFAULT 0,
+      transcript_text TEXT,
+      processed INTEGER NOT NULL DEFAULT 0,
+      needs_review INTEGER NOT NULL DEFAULT 0,
+      confidence_score REAL,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_gmeet_meetings_org ON gmeet_meetings(org_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS teams_captured_messages (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      teams_message_id TEXT NOT NULL UNIQUE,
+      teams_channel_id TEXT NOT NULL,
+      teams_team_id TEXT NOT NULL,
+      from_user_id TEXT,
+      from_display_name TEXT,
+      content TEXT NOT NULL,
+      received_at TEXT NOT NULL,
+      processed INTEGER NOT NULL DEFAULT 0,
+      decision_detected INTEGER NOT NULL DEFAULT 0,
+      commitment_id TEXT REFERENCES org_commitments(id) ON DELETE SET NULL,
+      confidence_score REAL,
+      captured_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_teams_captured_org ON teams_captured_messages(org_id, captured_at DESC);
+    CREATE TABLE IF NOT EXISTS calendar_deadline_events (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      commitment_id TEXT NOT NULL REFERENCES org_commitments(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL CHECK (provider IN ('google', 'outlook')),
+      calendar_event_id TEXT NOT NULL,
+      reminder_event_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (commitment_id, provider)
+    );
+    CREATE INDEX IF NOT EXISTS idx_calendar_deadline_org ON calendar_deadline_events(org_id);
+    CREATE TABLE IF NOT EXISTS onboarding_progress (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      step TEXT NOT NULL CHECK (step IN ('org_setup', 'invite_team', 'connect_integration', 'first_commitment', 'complete')),
+      completed INTEGER NOT NULL DEFAULT 0,
+      completed_at TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (org_id, user_id, step)
+    );
+    CREATE INDEX IF NOT EXISTS idx_onboarding_progress_user ON onboarding_progress(org_id, user_id);
   `);
+  const orgCols = database.prepare(`PRAGMA table_info(organizations)`).all() as { name: string }[];
+  if (!orgCols.some((c) => c.name === "primary_use_case")) {
+    database.exec(`ALTER TABLE organizations ADD COLUMN primary_use_case TEXT`);
+  }
   const oaCols = (
     database.prepare(`PRAGMA table_info(org_commitment_attachments)`).all() as { name: string }[]
   ).map((c) => c.name);

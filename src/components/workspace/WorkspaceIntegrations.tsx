@@ -141,13 +141,33 @@ export default function WorkspaceIntegrations() {
   const [notionReview, setNotionReview] = useState<ReviewRow[]>([]);
   const [loadingNotionReview, setLoadingNotionReview] = useState(false);
 
+  type ZoomInfo = {
+    connected: boolean;
+    label: string | null;
+    connectedAt: string | null;
+    meetingsProcessed: number;
+    decisionsCaptured: number;
+  };
+  type TeamsInfo = {
+    connected: boolean;
+    workspaceName: string | null;
+    tenantId: string | null;
+    monitoredChannels: number;
+    messagesCaptured: number;
+    decisionsCaptured: number;
+  };
+  const [zoomOAuth, setZoomOAuth] = useState<ZoomInfo | null>(null);
+  const [teamsOAuth, setTeamsOAuth] = useState<TeamsInfo | null>(null);
+
   const loadStatus = useCallback(async () => {
     setLoading(true);
     try {
-      const [slackRes, gmailRes, notionRes] = await Promise.all([
+      const [slackRes, gmailRes, notionRes, zoomRes, teamsRes] = await Promise.all([
         fetch("/api/integrations/slack", { credentials: "same-origin" }),
         fetch("/api/integrations/gmail", { credentials: "same-origin" }),
         fetch("/api/integrations/notion", { credentials: "same-origin" }),
+        fetch("/api/integrations/zoom", { credentials: "same-origin" }),
+        fetch("/api/integrations/teams", { credentials: "same-origin" }),
       ]);
       const data = (await slackRes.json().catch(() => ({}))) as {
         planAllows?: boolean;
@@ -161,6 +181,14 @@ export default function WorkspaceIntegrations() {
         planAllows?: boolean;
         notionOAuth?: NotionOAuthInfo | null;
         watchedDatabases?: NotionDbRow[];
+      };
+      const zoomData = (await zoomRes.json().catch(() => ({}))) as {
+        planAllows?: boolean;
+        zoomOAuth?: ZoomInfo | null;
+      };
+      const teamsData = (await teamsRes.json().catch(() => ({}))) as {
+        planAllows?: boolean;
+        teamsOAuth?: TeamsInfo | null;
       };
       const allows =
         Boolean(data.planAllows) || Boolean(gmailData.planAllows) || Boolean(notionData.planAllows);
@@ -182,6 +210,12 @@ export default function WorkspaceIntegrations() {
       if (notionRes.ok) {
         setNotionOAuth(notionData.notionOAuth ?? null);
         setNotionDatabases(notionData.watchedDatabases ?? []);
+      }
+      if (zoomRes.ok) {
+        setZoomOAuth(zoomData.zoomOAuth ?? null);
+      }
+      if (teamsRes.ok) {
+        setTeamsOAuth(teamsData.teamsOAuth ?? null);
       }
     } finally {
       setLoading(false);
@@ -456,6 +490,28 @@ export default function WorkspaceIntegrations() {
   const slackStatus = slackOAuth?.connected ? "connected" : "disconnected";
   const gmailStatus = gmailOAuth?.connected ? "connected" : "disconnected";
   const notionStatus = notionOAuth?.connected ? "connected" : "disconnected";
+  const zoomStatus = zoomOAuth?.connected ? "connected" : "disconnected";
+  const teamsStatus = teamsOAuth?.connected ? "connected" : "disconnected";
+
+  async function disconnectZoom() {
+    setSaving(true);
+    try {
+      await fetch("/api/integrations/zoom/disconnect", { method: "POST", credentials: "same-origin" });
+      await loadStatus();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disconnectTeams() {
+    setSaving(true);
+    try {
+      await fetch("/api/integrations/teams/disconnect", { method: "POST", credentials: "same-origin" });
+      await loadStatus();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[960px] flex-col gap-5 pb-24">
@@ -1006,27 +1062,108 @@ export default function WorkspaceIntegrations() {
         <IntegrationCard
           icon={Video}
           name="Zoom"
-          description="Meeting ingestion and recap routing (roadmap)."
-          status="coming_soon"
-        />
+          description="OAuth, recording transcripts, decision extraction, and commitments."
+          status={!planAllows ? "coming_soon" : zoomStatus}
+        >
+          {!planAllows ? (
+            <Link
+              href="/account/plans"
+              className="inline-flex rounded-full border border-[var(--workspace-border)] px-4 py-2 text-[12px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+            >
+              Upgrade to connect
+            </Link>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="/api/integrations/zoom/connect"
+                  className="inline-flex rounded-full bg-[var(--workspace-fg)] px-4 py-2 text-[12px] font-semibold text-[var(--workspace-canvas)]"
+                >
+                  {zoomOAuth?.connected ? "Reconnect Zoom" : "Connect Zoom"}
+                </a>
+                {zoomOAuth?.connected ? (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void disconnectZoom()}
+                    className="rounded-full border border-red-400/35 px-4 py-2 text-[12px] font-semibold text-red-200 disabled:opacity-50"
+                  >
+                    Disconnect
+                  </button>
+                ) : null}
+              </div>
+              {zoomOAuth?.connected ? (
+                <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+                  {zoomOAuth.label ?? "—"} · Meetings processed: {zoomOAuth.meetingsProcessed} · Decisions:{" "}
+                  {zoomOAuth.decisionsCaptured}
+                </p>
+              ) : null}
+            </>
+          )}
+        </IntegrationCard>
         <IntegrationCard
           icon={Calendar}
           name="Google Meet"
-          description="Calendar-aware capture (roadmap)."
-          status="coming_soon"
-        />
+          description="Uses your Gmail Google connection (Meet scope). Webhook at /api/integrations/gmeet/webhook."
+          status={!planAllows ? "coming_soon" : gmailOAuth?.connected ? "connected" : "disconnected"}
+        >
+          <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+            Connect Gmail above to enable Meet transcript hooks and Calendar sync.
+          </p>
+        </IntegrationCard>
         <IntegrationCard
           icon={Building2}
           name="Microsoft Teams"
-          description="Enterprise messaging bridge (roadmap)."
-          status="coming_soon"
-        />
+          description="Graph messages, /route5 commands, Outlook calendar for deadlines."
+          status={!planAllows ? "coming_soon" : teamsStatus}
+        >
+          {!planAllows ? (
+            <Link
+              href="/account/plans"
+              className="inline-flex rounded-full border border-[var(--workspace-border)] px-4 py-2 text-[12px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+            >
+              Upgrade to connect
+            </Link>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="/api/integrations/teams/connect"
+                  className="inline-flex rounded-full bg-[var(--workspace-fg)] px-4 py-2 text-[12px] font-semibold text-[var(--workspace-canvas)]"
+                >
+                  {teamsOAuth?.connected ? "Reconnect Teams" : "Connect Teams"}
+                </a>
+                {teamsOAuth?.connected ? (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void disconnectTeams()}
+                    className="rounded-full border border-red-400/35 px-4 py-2 text-[12px] font-semibold text-red-200 disabled:opacity-50"
+                  >
+                    Disconnect
+                  </button>
+                ) : null}
+              </div>
+              {teamsOAuth?.connected ? (
+                <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+                  {teamsOAuth.workspaceName ?? teamsOAuth.tenantId ?? "—"} · Monitored channels:{" "}
+                  {teamsOAuth.monitoredChannels} · Messages: {teamsOAuth.messagesCaptured} · Decisions:{" "}
+                  {teamsOAuth.decisionsCaptured}
+                </p>
+              ) : null}
+            </>
+          )}
+        </IntegrationCard>
         <IntegrationCard
           icon={Calendar}
-          name="Google Calendar"
-          description="Deadlines and reminders (roadmap)."
-          status="coming_soon"
-        />
+          name="Calendar deadlines"
+          description="Google Calendar (with Gmail) and Outlook (with Teams) events for commitment deadlines."
+          status={gmailOAuth?.connected || teamsOAuth?.connected ? "connected" : "disconnected"}
+        >
+          <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+            Connect Gmail and/or Teams — deadline events sync automatically when commitments change.
+          </p>
+        </IntegrationCard>
       </div>
     </div>
   );

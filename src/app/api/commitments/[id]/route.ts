@@ -97,6 +97,7 @@ export async function PATCH(
       patch.ownerId !== userId
     ) {
       void notifyOrgCommitmentAssignment({
+        orgId,
         ownerClerkId: patch.ownerId,
         title: row.title,
         deadline: row.deadline,

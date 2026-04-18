@@ -12,6 +12,11 @@ import {
 } from "@/components/workspace/WorkspaceExperience";
 import { WorkspaceDataProvider } from "@/components/workspace/WorkspaceData";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
+import {
+  BillingUpgradeProvider,
+  BillingLimitQueryListener,
+} from "@/components/billing/BillingUpgradeProvider";
+import WorkspaceBillingBanner from "@/components/billing/WorkspaceBillingBanner";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -30,6 +35,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <WorkspaceSidebar />
         <div className="agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
           <WorkspaceHeader />
+          <WorkspaceBillingBanner />
           <main className="min-h-0 flex-1 overflow-y-auto">
             <div className="workspace-page-inner mx-auto w-full max-w-[min(100%,1440px)] px-4 py-6 sm:px-8 sm:py-8">
               {children}
@@ -52,7 +58,10 @@ export default function WorkspaceLayout({
     <WorkspaceExperienceProvider>
       <I18nProvider>
         <WorkspaceDataProvider>
-          <WorkspaceShell>{children}</WorkspaceShell>
+          <BillingUpgradeProvider>
+            <BillingLimitQueryListener />
+            <WorkspaceShell>{children}</WorkspaceShell>
+          </BillingUpgradeProvider>
         </WorkspaceDataProvider>
       </I18nProvider>
     </WorkspaceExperienceProvider>
