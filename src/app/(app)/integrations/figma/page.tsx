@@ -97,7 +97,7 @@ export default function FigmaIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — layers and comments import here; Open in Desk runs the design template on the same extraction pipeline as Overview."
+                ? "Live — layers and comments import here; Open in Desk applies the design template on the same capture pipeline as Overview."
                 : "Set FIGMA_ACCESS_TOKEN for automatic pulls; until then, paste frames on Desk. Connectors always feed Desk first."}
             </p>
           ) : (
@@ -169,7 +169,7 @@ export default function FigmaIntegrationPage() {
         <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Manual capture</h2>
         <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           If a file is private to another org or you prefer not to use the API, you can still paste comments and notes
-          on Desk — same extraction pipeline.
+          on Desk — same capture pipeline.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <a

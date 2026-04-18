@@ -1,12 +1,5 @@
 import type { NotificationType } from "@/lib/notifications/types";
-
-function appBaseUrl(): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "http://localhost:3000";
-  return base.startsWith("http") ? base : `https://${base}`;
-}
+import { appBaseUrl } from "@/lib/app-base-url";
 
 function shell(inner: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width"/></head>

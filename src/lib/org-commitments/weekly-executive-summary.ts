@@ -11,6 +11,7 @@ function mapRow(r: Record<string, unknown>): OrgCommitmentRow {
     title: String(r.title),
     description: r.description == null ? null : String(r.description),
     ownerId: String(r.owner_id),
+    projectId: r.project_id == null ? null : String(r.project_id),
     deadline: String(r.deadline),
     priority: r.priority as OrgCommitmentRow["priority"],
     status: r.status as OrgCommitmentStatus,

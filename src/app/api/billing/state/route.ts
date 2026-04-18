@@ -74,6 +74,26 @@ export async function GET() {
     });
   } catch (e) {
     console.error("billing state", e);
-    return NextResponse.json({ error: "Could not load billing state" }, { status: 500 });
+    const limits = PLAN_LIMITS.free;
+    return NextResponse.json(
+      {
+        degraded: true,
+        orgId: null,
+        plan: "free" as const,
+        planLabel: planDisplayName("free"),
+        subscription: null,
+        paymentIssue: false,
+        usage: {
+          commitments: { used: 0, limit: limits.commitments },
+          integrations: { used: 0, limit: limits.integrations },
+          seats: { used: 1, limit: limits.seats },
+        },
+        limits: {
+          dashboardExport: limits.dashboardExport,
+        },
+        invoices: [],
+      },
+      { status: 200 }
+    );
   }
 }

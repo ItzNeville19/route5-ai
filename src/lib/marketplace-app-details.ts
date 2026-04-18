@@ -75,7 +75,7 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   "integrations-hub": {
     about:
-      "The integrations hub lists Desk, Linear, GitHub, Figma, and Google routes. Your workspace shows whether connectors are ready (API keys, tokens) without exposing secrets.",
+      "The Integrations directory lists Desk, Linear, GitHub, Figma, and Google routes. Your workspace shows whether connectors are ready (API keys, tokens) without exposing secrets.",
     highlights: [
       "Every wired connector from one place",
       "Status matches what you see on Overview and Desk",
@@ -90,7 +90,7 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
     about:
       "The Google Workspace integration lives at /integrations/google: paste mail or doc context into Desk or a project today. OAuth-backed sync is on the roadmap; the route is real now.",
     highlights: [
-      "Same hub as Linear and GitHub",
+      "Same Integrations directory as Linear and GitHub",
       "Honest about paste-first vs future connect",
     ],
   },

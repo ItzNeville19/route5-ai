@@ -23,7 +23,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json({ notifications });
   } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Failed to load notifications" }, { status: 500 });
+    console.error("[api/notifications] list failed", e);
+    return NextResponse.json({ notifications: [] });
   }
 }

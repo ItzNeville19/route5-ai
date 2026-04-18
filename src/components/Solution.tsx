@@ -44,7 +44,7 @@ const steps = [
   {
     num: "05",
     title: "Iterate",
-    description: "Re-run when context shifts.",
+    description: "Re-process when context shifts.",
     icon: Share2,
     detail: "APIs / MCP: roadmap.",
   },

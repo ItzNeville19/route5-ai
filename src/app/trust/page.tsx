@@ -22,7 +22,7 @@ const questionnaireSections = [
     title: "Security & access",
     items: [
       "Identity: how your team signs in today (e.g. SSO provider) and desired session expectations.",
-      "Administration: who approves integrations and extraction usage in your org.",
+      "Administration: who approves integrations and decision capture usage in your org.",
       "Incident expectations: preferred notification channel for security or availability events.",
     ],
   },
@@ -30,7 +30,7 @@ const questionnaireSections = [
     title: "Infrastructure & data handling",
     items: [
       "Deployment model: cloud workspace vs future VPC / dedicated region (we align on roadmap).",
-      "Retention: how long extracted artifacts should remain available in-product.",
+      "Retention: how long captured artifacts should remain available in-product.",
       "Export & exit: whether you need scheduled exports or API access for offboarding.",
     ],
   },

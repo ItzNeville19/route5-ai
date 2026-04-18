@@ -34,7 +34,7 @@ export default function DashboardMetricStrip({
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       <div className="rounded-2xl border border-white/10 bg-black/30 p-4 backdrop-blur-md">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-300">Total runs</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-300">Commitments</p>
         <div className="mt-2 flex items-end justify-between gap-2">
           <p className="text-[1.65rem] font-semibold tabular-nums tracking-[-0.04em] text-white">
             {loading ? "—" : extractionCount}
@@ -52,7 +52,7 @@ export default function DashboardMetricStrip({
           )}
         </div>
         <p className="mt-2 text-[10px] leading-snug text-zinc-400">
-          Extractions saved · week-over-week uses UTC windows
+          Captured decisions saved · week-over-week uses UTC windows
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export default function DashboardMetricStrip({
           )}
         </div>
         <p className="mt-2 text-[10px] leading-snug text-zinc-300">
-          Across all runs · open items appear in your project views
+          Across all commitments · open items appear in your project views
         </p>
       </div>
 
@@ -83,7 +83,7 @@ export default function DashboardMetricStrip({
           </p>
           {!loading && execution.staleOpenActions > 0 ? (
             <span className="text-[11px] font-medium text-amber-400/90">
-              {execution.staleOpenActions} on older runs
+              {execution.staleOpenActions} on older activity
             </span>
           ) : (
             <span className="text-[11px] text-zinc-400">—</span>

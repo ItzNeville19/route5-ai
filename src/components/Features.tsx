@@ -12,8 +12,8 @@ const liveFeatures = [
         <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
-    title: "Structured passes",
-    description: "Problem, path, decisions, and actions from every run — stored per client or program project.",
+    title: "Structured decision capture",
+    description: "Problem, path, decisions, and actions from every captured decision — stored per client or program project.",
   },
   {
     icon: (
@@ -31,7 +31,7 @@ const liveFeatures = [
       </svg>
     ),
     title: "Execution metrics",
-    description: "Completion rate, stale open actions, and trends — from saved runs, not demos.",
+    description: "Completion rate, stale open actions, and trends — from saved commitments, not demos.",
   },
   {
     icon: (
@@ -40,7 +40,7 @@ const liveFeatures = [
       </svg>
     ),
     title: "Projects & history",
-    description: "Per initiative. Timestamped runs you can duplicate and revisit.",
+    description: "Per initiative. Timestamped commitments you can duplicate and revisit.",
   },
   {
     icon: (

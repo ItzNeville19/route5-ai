@@ -10,7 +10,6 @@ import { Show, UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
-import { deskUrl } from "@/lib/desk-routes";
 
 export default function Navbar() {
   const { t } = useI18n();
@@ -188,7 +187,7 @@ export default function Navbar() {
               </Link>
             )}
             <Link
-              href={deskUrl()}
+              href="/feed"
               className={mobileLink}
               onClick={() => setMobileOpen(false)}
             >
@@ -314,8 +313,8 @@ export default function Navbar() {
               </Link>
             )}
             <Link
-              href={deskUrl()}
-              title="Signed-in workspace — Desk, projects, Overview"
+              href="/feed"
+              title="Signed-in workspace — Feed, projects, Overview"
               className={
                 isCommandHome
                   ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"

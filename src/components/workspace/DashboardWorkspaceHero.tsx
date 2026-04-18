@@ -33,6 +33,7 @@ import DashboardTodayPanel from "@/components/workspace/DashboardTodayPanel";
 import EnterpriseIntelChartModal from "@/components/workspace/EnterpriseIntelChartModal";
 import { deskUrl } from "@/lib/desk-routes";
 import { formatPlanCap } from "@/lib/plan-usage-display";
+import { PRODUCT_SURFACE_MINIMAL } from "@/lib/product-surface";
 
 type Props = {
   displayName: string;
@@ -145,7 +146,7 @@ export default function DashboardWorkspaceHero({
   const planUsageLine = useMemo(() => {
     if (loadingEntitlements || !entitlements?.limits || !entitlements.usage) return null;
     const { limits, usage } = entitlements;
-    return `${usage.extractionsThisMonth.toLocaleString()} / ${formatPlanCap(limits.maxExtractionsPerMonth)} runs this month · ${usage.projectCount.toLocaleString()} / ${formatPlanCap(limits.maxProjects)} projects`;
+    return `${usage.extractionsThisMonth.toLocaleString()} / ${formatPlanCap(limits.maxExtractionsPerMonth)} commitments this month · ${usage.projectCount.toLocaleString()} / ${formatPlanCap(limits.maxProjects)} projects`;
   }, [loadingEntitlements, entitlements]);
 
   return (
@@ -226,7 +227,7 @@ export default function DashboardWorkspaceHero({
 
           <div className="mt-8">
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
-              Total runs
+              Commitments
             </p>
             <div className="mt-2 flex flex-wrap items-baseline gap-3">
               {paidTierMotion && !summaryLoading ? (
@@ -259,6 +260,12 @@ export default function DashboardWorkspaceHero({
             <p className="mt-2 text-[13px] text-[var(--workspace-muted-fg)]">
               {summaryLoading ? (
                 "—"
+              ) : PRODUCT_SURFACE_MINIMAL ? (
+                <>
+                  <span className="text-[var(--workspace-fg)]">
+                    {projectCount} project{projectCount === 1 ? "" : "s"}
+                  </span>
+                </>
               ) : (
                 <>
                   <span className="text-[var(--workspace-fg)]">
@@ -288,6 +295,7 @@ export default function DashboardWorkspaceHero({
             </p>
           </div>
 
+          {PRODUCT_SURFACE_MINIMAL ? null : (
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -334,17 +342,23 @@ export default function DashboardWorkspaceHero({
               </kbd>
             </button>
           </div>
+          )}
 
-          {!summaryLoading && !latest && projectCount > 0 && extractionCount === 0 ? (
+          {!PRODUCT_SURFACE_MINIMAL &&
+          !summaryLoading &&
+          !latest &&
+          projectCount > 0 &&
+          extractionCount === 0 ? (
             <Link
               href={deskUrl()}
               className="mt-4 inline-flex items-center gap-1 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
             >
-              Run your first capture on Desk
+              Add your first decision on Desk
               <ChevronRight className="h-4 w-4" aria-hidden />
             </Link>
           ) : null}
 
+          {PRODUCT_SURFACE_MINIMAL ? null : (
           <div className="mt-8 space-y-6 border-t border-[var(--workspace-border)] pt-6">
             <DashboardTodayPanel
               projectCount={projectCount}
@@ -384,6 +398,7 @@ export default function DashboardWorkspaceHero({
               </div>
             </div>
           </div>
+          )}
         </div>
       </section>
     </div>

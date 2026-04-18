@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
+import { withSqliteFallback } from "@/lib/supabase/with-sqlite-fallback";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
 import { NOTIFICATION_TYPES, type NotificationPreferenceRow, type NotificationType, type OrgNotificationRow } from "@/lib/notifications/types";
 
@@ -60,30 +61,34 @@ export async function insertOrgNotification(params: {
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const metaJson = JSON.stringify(params.metadata);
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { error } = await supabase.from("org_notifications").insert({
-      id,
-      org_id: params.orgId,
-      user_id: params.userId,
-      type: params.type,
-      title: params.title,
-      body: params.body,
-      metadata: params.metadata,
-      read: false,
-      read_at: null,
-      deleted_at: null,
-      created_at: now,
-    });
-    if (error) throw error;
-    return id;
-  }
-  const d = getSqliteHandle();
-  d.prepare(
-    `INSERT INTO org_notifications (id, org_id, user_id, type, title, body, metadata, read, read_at, deleted_at, created_at)
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("org_notifications").insert({
+        id,
+        org_id: params.orgId,
+        user_id: params.userId,
+        type: params.type,
+        title: params.title,
+        body: params.body,
+        metadata: params.metadata,
+        read: false,
+        read_at: null,
+        deleted_at: null,
+        created_at: now,
+      });
+      if (error) throw error;
+      return id;
+    },
+    () => {
+      const d = getSqliteHandle();
+      d.prepare(
+        `INSERT INTO org_notifications (id, org_id, user_id, type, title, body, metadata, read, read_at, deleted_at, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?)`
-  ).run(id, params.orgId, params.userId, params.type, params.title, params.body, metaJson, now);
-  return id;
+      ).run(id, params.orgId, params.userId, params.type, params.title, params.body, metaJson, now);
+      return id;
+    }
+  );
 }
 
 export async function listOrgNotificationsForUser(params: {
@@ -93,20 +98,24 @@ export async function listOrgNotificationsForUser(params: {
   offset: number;
 }): Promise<OrgNotificationRow[]> {
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    let q = supabase
-      .from("org_notifications")
-      .select("*")
-      .eq("user_id", params.userId)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .range(params.offset, params.offset + params.limit - 1);
-    if (params.unreadOnly) {
-      q = q.eq("read", false);
+    try {
+      const supabase = getServiceClient();
+      let q = supabase
+        .from("org_notifications")
+        .select("*")
+        .eq("user_id", params.userId)
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .range(params.offset, params.offset + params.limit - 1);
+      if (params.unreadOnly) {
+        q = q.eq("read", false);
+      }
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []).map((r) => mapNotif(r as Record<string, unknown>));
+    } catch (e) {
+      console.error("[notifications] Supabase list failed, using SQLite", e);
     }
-    const { data, error } = await q;
-    if (error) throw error;
-    return (data ?? []).map((r) => mapNotif(r as Record<string, unknown>));
   }
   const d = getSqliteHandle();
   const extra = params.unreadOnly ? "AND read = 0" : "";
@@ -126,15 +135,19 @@ export async function listOrgNotificationsForUser(params: {
 
 export async function countUnreadNotifications(userId: string): Promise<number> {
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { count, error } = await supabase
-      .from("org_notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("read", false)
-      .is("deleted_at", null);
-    if (error) throw error;
-    return count ?? 0;
+    try {
+      const supabase = getServiceClient();
+      const { count, error } = await supabase
+        .from("org_notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("read", false)
+        .is("deleted_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    } catch (e) {
+      console.error("[notifications] Supabase unread count failed, using SQLite", e);
+    }
   }
   const d = getSqliteHandle();
   const row = d
@@ -148,17 +161,21 @@ export async function countUnreadNotifications(userId: string): Promise<number> 
 export async function markNotificationRead(id: string, userId: string): Promise<boolean> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_notifications")
-      .update({ read: true, read_at: now })
-      .eq("id", id)
-      .eq("user_id", userId)
-      .is("deleted_at", null)
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-    return Boolean(data);
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .update({ read: true, read_at: now })
+        .eq("id", id)
+        .eq("user_id", userId)
+        .is("deleted_at", null)
+        .select("id")
+        .maybeSingle();
+      if (error) throw error;
+      return Boolean(data);
+    } catch (e) {
+      console.error("[notifications] Supabase mark read failed, using SQLite", e);
+    }
   }
   const d = getSqliteHandle();
   const r = d
@@ -172,16 +189,20 @@ export async function markNotificationRead(id: string, userId: string): Promise<
 export async function markAllNotificationsRead(userId: string): Promise<number> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_notifications")
-      .update({ read: true, read_at: now })
-      .eq("user_id", userId)
-      .eq("read", false)
-      .is("deleted_at", null)
-      .select("id");
-    if (error) throw error;
-    return data?.length ?? 0;
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .update({ read: true, read_at: now })
+        .eq("user_id", userId)
+        .eq("read", false)
+        .is("deleted_at", null)
+        .select("id");
+      if (error) throw error;
+      return data?.length ?? 0;
+    } catch (e) {
+      console.error("[notifications] Supabase mark-all failed, using SQLite", e);
+    }
   }
   const d = getSqliteHandle();
   const r = d

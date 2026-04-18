@@ -217,12 +217,12 @@ export default function TeamInsightsContent() {
           <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
             Desk
           </Link>{" "}
-          — then duplicate any run inside a project when you need a clean copy to iterate on.
+          — then duplicate any captured decision inside a project when you need a clean copy to iterate on.
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          <span className="font-medium text-[var(--workspace-fg)]">Duplicate a run:</span> open a project →
-          saved runs → <span className="text-[var(--workspace-fg)]">Duplicate</span> on a card (same project,
-          new run id).
+          <span className="font-medium text-[var(--workspace-fg)]">Duplicate a commitment:</span> open a project →
+          captured decisions → <span className="text-[var(--workspace-fg)]">Duplicate</span> on a card (same project,
+          new capture).
         </p>
       </motion.div>
 
@@ -231,7 +231,7 @@ export default function TeamInsightsContent() {
         <Link href="/docs/roadmap" className="font-medium text-[var(--workspace-accent)] hover:underline">
           roadmap
         </Link>
-        . Today, each signed-in user has their own projects and runs; align in meetings with exports and the same UI
+        . Today, each signed-in user has their own projects and commitments; align in meetings with exports and the same UI
         vocabulary above.
       </p>
     </>

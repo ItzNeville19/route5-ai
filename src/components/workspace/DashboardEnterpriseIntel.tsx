@@ -96,13 +96,13 @@ export default function DashboardEnterpriseIntel({
           <p className="mt-2 text-[22px] font-semibold tabular-nums leading-none text-white">
             {loading ? "…" : projectCount}
           </p>
-          <p className="mt-1 text-[11px] text-zinc-300">Workspaces you run extractions in</p>
+          <p className="mt-1 text-[11px] text-zinc-300">Workspaces you capture decisions in</p>
         </div>
 
         <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3">
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-300">
             <BarChart3 className="h-4 w-4 text-zinc-300" strokeWidth={1.75} aria-hidden />
-            Runs (7 days)
+            Commitments (7 days)
           </div>
           <p className="mt-2 text-[22px] font-semibold tabular-nums leading-none text-white">
             {loading ? "…" : activity.last7DaysCount}

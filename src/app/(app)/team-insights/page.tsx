@@ -5,7 +5,7 @@ import TeamInsightsContent from "@/components/workspace/TeamInsightsContent";
 
 export const metadata: Metadata = {
   title: "Team insights — Route5",
-  description: "Shared visibility into projects, runs, and connectors — same live data as Overview.",
+  description: "Shared visibility into projects, commitments, and connectors — same live data as Overview.",
 };
 
 export default function TeamInsightsPage() {

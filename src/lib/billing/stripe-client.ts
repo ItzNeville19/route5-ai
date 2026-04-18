@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { appBaseUrl as resolveAppBaseUrl } from "@/lib/app-base-url";
 
 let stripe: Stripe | null = null;
 
@@ -15,10 +16,4 @@ export function getStripe(): Stripe {
   return stripe;
 }
 
-export function appBaseUrl(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "http://localhost:3000";
-  return raw.startsWith("http") ? raw : `https://${raw}`;
-}
+export const appBaseUrl = resolveAppBaseUrl;

@@ -21,7 +21,10 @@ export type PaletteRecentRun = {
 export type PaletteItem = {
   id: string;
   label: string;
-  href: string;
+  /** Navigation target; omit when `action` is set. */
+  href?: string;
+  /** Non-navigation palette actions. */
+  action?: "open-capture" | "open-new-project";
   description?: string;
   keywords?: string[];
   section: PaletteSection;
@@ -140,50 +143,46 @@ export function buildPaletteItems(params: {
       ? `${openActionsCount} open action${openActionsCount === 1 ? "" : "s"} — clear the queue on Desk (oldest first)`
       : "Capture operational text — structured passes & commitment queue";
 
+  /** Primary rail lives in the sidebar; these are the “everywhere else” shortcuts. */
   const agent: PaletteItem[] = [
     {
-      id: "desk",
-      label: "Desk",
-      href: deskUrl(),
-      description: deskDescription,
-      keywords: [
-        "desk",
-        "capture",
-        "paste",
-        "work",
-        "create",
-        "extract",
-        "actions",
-        "todo",
-        "checklist",
-        "queue",
-        "follow",
-        "commitment",
-      ],
+      id: "feed",
+      label: "Feed",
+      href: "/feed",
+      description: `${who} · every org commitment`,
+      keywords: ["feed", "home", "commitments", "tasks", "tracking", "workspace"],
       section: "agent",
     },
     {
-      id: "overview",
-      label: "Overview",
-      href: "/overview",
-      description: `${who} · commitments, risk & completion`,
-      keywords: ["home", "workspace", "overview", "dashboard", "projects", "tracking"],
+      id: "capture",
+      label: "Capture",
+      href: "/capture",
+      description: "Full-page capture — ⌘J opens the floating panel",
+      keywords: ["capture", "screen", "paste", "import", "meeting", "slack", "email", "note"],
       section: "agent",
     },
     {
-      id: "new-project",
-      label: "New project",
-      href: "/overview#new-project",
-      description: "Workspace for a thread of work · ⌘N",
-      keywords: ["create", "add", "project"],
+      id: "capture-quick",
+      label: "Quick capture panel",
+      action: "open-capture",
+      description: "Floating paste — same as ⌘J",
+      keywords: ["quick", "floating", "panel", "paste"],
       section: "agent",
     },
     {
-      id: "connections",
-      label: "Connections",
-      href: "/settings#connections",
-      description: "Optional API keys (Linear, GitHub, …)",
-      keywords: ["integrations", "linear", "github", "api", "connector"],
+      id: "projects-index",
+      label: "Projects",
+      href: "/projects",
+      description: "All projects in your workspace",
+      keywords: ["projects", "list", "hub", "programs"],
+      section: "agent",
+    },
+    {
+      id: "workspace-team",
+      label: "Team",
+      href: "/workspace/team",
+      description: "Org switcher & people who own commitments",
+      keywords: ["team", "collaborators", "people", "members", "clerk", "organization"],
       section: "agent",
     },
     {
@@ -201,6 +200,158 @@ export function buildPaletteItems(params: {
       description: "Profile & security",
       keywords: ["account", "profile", "clerk"],
       section: "agent",
+    },
+    {
+      id: "help-hub",
+      label: "Help & tutorials",
+      href: "/workspace/help",
+      description: "Onboarding replay, ⌘K tips, integrations, production checklist",
+      keywords: ["help", "tutorial", "onboarding", "replay", "support", "guide", "learn"],
+      section: "agent",
+    },
+  ];
+
+  /**
+   * Not in the slim sidebar — type ⌘K and search (Feed, Capture, Marketplace, themes…).
+   */
+  const workspaceHidden: PaletteItem[] = [
+    {
+      id: "desk",
+      label: "Desk",
+      href: deskUrl(),
+      description: deskDescription,
+      keywords: [
+        "desk",
+        "capture",
+        "paste",
+        "work",
+        "extract",
+        "actions",
+        "todo",
+        "checklist",
+        "queue",
+        "commitment",
+        "operational",
+        "pass",
+      ],
+      section: "workspace",
+    },
+    {
+      id: "leadership",
+      label: "Leadership / Overview",
+      href: "/overview",
+      description: `Execution health & team load — same “Overview” screen (${who})`,
+      keywords: [
+        "leadership",
+        "overview",
+        "dashboard",
+        "ceo",
+        "risk",
+        "metrics",
+        "morning",
+        "command",
+        "health",
+        "load",
+        "old",
+        "screen",
+      ],
+      section: "workspace",
+    },
+    {
+      id: "new-project",
+      label: "New project",
+      action: "open-new-project",
+      description: "Create a project — same as the sidebar New project button · ⌘N",
+      keywords: ["create", "add", "project", "new"],
+      section: "workspace",
+    },
+    {
+      id: "integrations-hub-public",
+      label: "Integrations",
+      href: "/integrations",
+      description: "Connectors — Linear, Google, Slack, GitHub, and more",
+      keywords: ["integrations", "linear", "github", "api", "connector", "connections", "hub"],
+      section: "workspace",
+    },
+    {
+      id: "customize-quick",
+      label: "Customize workspace",
+      href: "/workspace/customize",
+      description: "Themes, appearance, mesh & layout",
+      keywords: ["customize", "themes", "appearance", "layout", "palette", "dark", "light", "hidden"],
+      section: "workspace",
+    },
+    {
+      id: "marketplace-quick",
+      label: "Marketplace",
+      href: "/marketplace",
+      description: "Extensions, connectors, and catalog",
+      keywords: ["marketplace", "apps", "plugins", "catalog", "store", "library", "browse"],
+      section: "workspace",
+    },
+    {
+      id: "developer",
+      label: "Developer",
+      href: "/workspace/developer",
+      description: "Workspace developer tools",
+      keywords: ["developer", "dev", "debug", "api"],
+      section: "workspace",
+    },
+    {
+      id: "workspace-dashboard",
+      label: "Analytics dashboard",
+      href: "/workspace/dashboard",
+      description: "Charts and workspace analytics",
+      keywords: ["analytics", "dashboard", "charts", "reports"],
+      section: "workspace",
+    },
+    {
+      id: "escalations",
+      label: "Escalations",
+      href: "/workspace/escalations",
+      description: "Escalation queue",
+      keywords: ["escalations", "urgent", "queue"],
+      section: "workspace",
+    },
+    {
+      id: "workspace-commitments",
+      label: "Commitments",
+      href: "/workspace/commitments",
+      description: "Org commitments table",
+      keywords: ["commitments", "table", "tracker"],
+      section: "workspace",
+    },
+    {
+      id: "audit",
+      label: "Audit log",
+      href: "/workspace/audit",
+      description: "Workspace audit history",
+      keywords: ["audit", "log", "history", "compliance"],
+      section: "workspace",
+    },
+    {
+      id: "integrations-hub",
+      label: "Workspace connector status",
+      href: "/workspace/integrations",
+      description: "Org-level connector readiness vs. the public Integrations directory",
+      keywords: ["integrations", "connectors", "linear", "github", "slack"],
+      section: "workspace",
+    },
+    {
+      id: "notifications-prefs",
+      label: "Notifications",
+      href: "/workspace/notifications/preferences",
+      description: "Digest and notification preferences",
+      keywords: ["notifications", "digest", "email", "alerts"],
+      section: "workspace",
+    },
+    {
+      id: "billing",
+      label: "Billing",
+      href: "/workspace/billing",
+      description: "Invoices and payment method",
+      keywords: ["billing", "invoice", "payment"],
+      section: "workspace",
     },
   ];
 
@@ -294,5 +445,5 @@ export function buildPaletteItems(params: {
     },
   ];
 
-  return [...activity, ...agent, ...projectItems, ...site, ...legalSignedIn];
+  return [...activity, ...agent, ...workspaceHidden, ...projectItems, ...site, ...legalSignedIn];
 }

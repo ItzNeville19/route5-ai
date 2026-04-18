@@ -32,10 +32,10 @@ export default function WorkspaceAiSettingsCard() {
               id="ai-prefs-heading"
               className="text-[16px] font-semibold tracking-[-0.02em] text-neutral-900 dark:text-[var(--workspace-fg)]"
             >
-              AI &amp; passes
+              AI settings
             </h2>
             <p className="text-[12px] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Used for Desk and project runs. Defaults below apply to structured passes; optional connectors live under{" "}
+              Configure which AI model powers Route5 decision capture. Optional connectors live under{" "}
               <Link href="/settings#connections" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
                 Connections
               </Link>
@@ -51,7 +51,7 @@ export default function WorkspaceAiSettingsCard() {
             htmlFor="extraction-provider"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]"
           >
-            Pass provider
+            AI model
           </label>
           <select
             id="extraction-provider"
@@ -65,9 +65,11 @@ export default function WorkspaceAiSettingsCard() {
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-            {EXTRACTION_PROVIDER_OPTIONS.find((o) => o.id === extractionId)?.hint}
-          </p>
+          {EXTRACTION_PROVIDER_OPTIONS.find((o) => o.id === extractionId)?.hint ? (
+            <p className="mt-1.5 text-[12px] leading-relaxed text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
+              {EXTRACTION_PROVIDER_OPTIONS.find((o) => o.id === extractionId)?.hint}
+            </p>
+          ) : null}
         </div>
 
         <div>
@@ -75,7 +77,7 @@ export default function WorkspaceAiSettingsCard() {
             htmlFor="llm-provider"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]"
           >
-            Default LLM
+            Fallback model
           </label>
           <select
             id="llm-provider"
@@ -89,15 +91,17 @@ export default function WorkspaceAiSettingsCard() {
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-            {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint}
-          </p>
+          {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint ? (
+            <p className="mt-1.5 text-[12px] leading-relaxed text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
+              {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint}
+            </p>
+          ) : null}
         </div>
 
         {enabledFromMarketplace.length > 0 ? (
           <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-3 py-2.5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Enabled from Marketplace
+              Enabled add-ons
             </p>
             <ul className="mt-2 flex flex-wrap gap-2">
               {enabledFromMarketplace.map((a) =>
@@ -114,9 +118,7 @@ export default function WorkspaceAiSettingsCard() {
         ) : null}
 
         <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-[12px] leading-relaxed text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-100">
-          Hosted Route5 uses the platform <strong>OpenAI</strong> connection when configured by the deployment — you do{" "}
-          <strong>not</strong> need to paste an API key in settings. Use the dropdowns below to pick defaults; additional
-          providers become active as backends are enabled.
+          Route5 uses AI to identify and structure decisions from pasted text. Select your preferred model below.
         </p>
       </div>
     </section>

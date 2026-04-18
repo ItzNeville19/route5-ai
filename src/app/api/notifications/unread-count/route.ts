@@ -12,7 +12,8 @@ export async function GET() {
   try {
     const count = await countUnreadNotifications(userId);
     return NextResponse.json({ count });
-  } catch {
-    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  } catch (e) {
+    console.error("[api/notifications/unread-count]", e);
+    return NextResponse.json({ count: 0 });
   }
 }

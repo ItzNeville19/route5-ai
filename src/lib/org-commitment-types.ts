@@ -16,6 +16,8 @@ export type OrgCommitmentRow = {
   title: string;
   description: string | null;
   ownerId: string;
+  /** Optional workspace project this commitment belongs to. */
+  projectId: string | null;
   deadline: string;
   priority: OrgCommitmentPriority;
   status: OrgCommitmentStatus;
@@ -74,4 +76,5 @@ export type OrgCommitmentListSort =
   | "priority"
   | "status"
   | "created_at"
-  | "updated_at";
+  | "updated_at"
+  | "owner_id";

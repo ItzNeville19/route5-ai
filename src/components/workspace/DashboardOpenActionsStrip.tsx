@@ -12,7 +12,7 @@ type Props = {
 };
 
 /**
- * Overview reminder: execution loop — incomplete actions surface on Desk; mirror that here.
+ * Open actions strip — same execution loop as Desk: oldest incomplete work first.
  */
 export default function DashboardOpenActionsStrip({
   loading,

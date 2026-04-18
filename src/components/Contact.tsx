@@ -15,7 +15,7 @@ const proofPoints = [
 const teamSizes = ["1–10", "11–50", "51–200", "201–1,000", "1,000+"];
 
 const useCases = [
-  "Structured extraction from text",
+  "Structured decision capture from text",
   "Roadmap: legacy connectors",
   "Roadmap: generated APIs / MCP",
   "Roadmap: parity validation",

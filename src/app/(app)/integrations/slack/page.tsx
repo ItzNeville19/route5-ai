@@ -146,7 +146,7 @@ export default function SlackIntegrationPage() {
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           <li>Copy a thread or export from Slack.</li>
           <li>
-            Open <Link href={deskUrl()}>Desk</Link> and paste — run extraction to get decisions and checklists.
+            Open <Link href={deskUrl()}>Desk</Link> and paste — process the capture to get decisions and checklists.
           </li>
           <li>Pro+ enables this integration page, marketplace shortcuts, and optional server-side tokens.</li>
         </ol>

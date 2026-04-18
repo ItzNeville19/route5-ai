@@ -109,7 +109,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
         setTimeout(() => {
           exp.installMarketplaceApp(app.id);
           exp.pushToast(
-            `${app.name} enabled — opening Settings so you can confirm pass / LLM defaults.`,
+            `${app.name} enabled — opening Settings so you can confirm AI model defaults.`,
             "success"
           );
           setBusy(false);
@@ -355,7 +355,7 @@ export default function MarketplaceBrowse() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.35, ease: appleEase }}
-      className="pb-28"
+      className="pb-28 text-[var(--workspace-fg)]"
     >
       {/* ── Header ── */}
       <header className="mb-8">
@@ -365,7 +365,7 @@ export default function MarketplaceBrowse() {
               Marketplace
             </h1>
             <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-neutral-500 dark:text-[var(--ios-secondary)]">
-              Optional engines and provider shortcuts. Enable saves your choice in Settings (pass / LLM defaults) and opens the right section — roadmap entries stay browse-only until shipped.
+              Optional engines and provider shortcuts. Enable saves your choice in Settings (AI model defaults) and opens the right section — roadmap entries stay browse-only until shipped.
             </p>
           </div>
           <div className="hidden flex-wrap items-center justify-end gap-2 sm:flex">
@@ -454,7 +454,7 @@ export default function MarketplaceBrowse() {
             Live today vs planned next
           </p>
           <p className="mt-2 max-w-md text-[15px] leading-relaxed text-white/70">
-            Core product is Desk and Overview — structured runs and completion from your data. Listings below include optional connectors and roadmap ideas; live behavior depends on your setup.
+            Core product is Desk and Overview — tracked commitments and completion from your data. Listings below include optional connectors and roadmap ideas; live behavior depends on your setup.
           </p>
           <span className="mt-5 inline-flex items-center gap-1 text-[15px] font-semibold text-white">
             Read product scope
@@ -527,9 +527,9 @@ export default function MarketplaceBrowse() {
           <span className="text-neutral-300">·</span>
           <span>
             {health?.extractionMode === "ai"
-              ? "LLM extraction"
+              ? "AI decision capture"
               : health?.extractionMode === "offline"
-                ? "Heuristic extraction"
+                ? "Heuristic capture"
                 : "—"}
           </span>
           <Link

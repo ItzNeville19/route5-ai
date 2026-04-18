@@ -1,7 +1,7 @@
 import type { ExtractionModelResult } from "@/lib/ai/schema";
 
 const HEURISTIC_TAG =
-  "Heuristic run — enable AI extraction on your deployment for problem/path-quality output.\n\n";
+  "AI summary — enable AI decision capture on your deployment for clearer problem and path detail.\n\n";
 
 /**
  * Builds a structured extraction without calling an LLM — used when AI
@@ -13,10 +13,10 @@ export function buildOfflineExtraction(rawInput: string): ExtractionModelResult 
     return {
       summary: HEURISTIC_TAG + "No text was provided.",
       problem: "Nothing to analyze.",
-      solution: "Paste notes, a ticket, or a thread, then run extraction again.",
+      solution: "Paste notes, a ticket, or a thread, then capture again.",
       openQuestions: [],
       decisions: [],
-      actionItems: [{ text: "Paste content to generate a structured pass." }],
+      actionItems: [{ text: "Paste content to generate a structured process." }],
     };
   }
 
@@ -87,7 +87,7 @@ export function buildOfflineExtraction(rawInput: string): ExtractionModelResult 
       ? taskLines.slice(0, 15).map((l) => ({ text: l.slice(0, 500) }))
       : [
           {
-            text: "Tighten the problem statement in your notes, then re-run — or enable AI extraction for structured problem / path / actions.",
+            text: "Tighten the problem statement in your notes, then capture again — or enable AI decision capture for structured problem, path, and actions.",
           },
         ];
 

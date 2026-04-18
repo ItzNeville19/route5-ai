@@ -73,13 +73,16 @@ export type WorkspacePrefsV1 = {
   surfaceMaterial?: WorkspaceSurfaceMaterialId;
   /** After workspace onboarding completes, hide the checklist card in the sidebar. */
   onboardingChecklistDismissed?: boolean;
+  /** Legacy onboarding field; no longer surfaced in Settings. */
+  companyPresetId?: "startup" | "enterprise" | "agency" | "consulting" | "custom";
 };
 
 const defaultPrefs: WorkspacePrefsV1 = {
   extractionProviderId: "auto",
   llmProviderId: "auto",
   appearanceGradients: true,
-  appearanceTheme: "auto",
+  /** Default shell: violet & lime mesh (“classic” / labeled Default in theme picker). */
+  appearanceTheme: "classic",
 };
 
 export function loadWorkspacePrefs(): WorkspacePrefsV1 {
@@ -167,6 +170,15 @@ export function loadWorkspacePrefs(): WorkspacePrefsV1 {
       surfaceMaterial:
         typeof o.surfaceMaterial === "string" && isWorkspaceSurfaceMaterialId(o.surfaceMaterial)
           ? o.surfaceMaterial
+          : undefined,
+      companyPresetId:
+        typeof o.companyPresetId === "string" &&
+        (o.companyPresetId === "startup" ||
+          o.companyPresetId === "enterprise" ||
+          o.companyPresetId === "agency" ||
+          o.companyPresetId === "consulting" ||
+          o.companyPresetId === "custom")
+          ? o.companyPresetId
           : undefined,
     };
   } catch {

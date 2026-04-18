@@ -108,7 +108,7 @@ export default function ProductPage() {
             04 — What we built (live)
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-            Route5 is a signed-in workspace: projects, Desk passes, structured fields, and
+            Route5 is a signed-in workspace: projects, Desk processes, structured fields, and
             action checklists — backed by your tenant data store. {POSITIONING_WEDGE.qualityBar}
           </p>
           <ul className="mt-6 space-y-4 text-[15px] leading-relaxed text-[#1d1d1f]">
@@ -119,10 +119,10 @@ export default function ProductPage() {
               <span className="font-semibold">Projects.</span> {PRODUCT_LIVE.projects}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
-              <span className="font-semibold">Automation ingest.</span> {PRODUCT_LIVE.ingest}
+              <span className="font-semibold">Webhook input.</span> {PRODUCT_LIVE.ingest}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
-              <span className="font-semibold">Extraction.</span> {PRODUCT_LIVE.extract}
+              <span className="font-semibold">Decision capture.</span> {PRODUCT_LIVE.extract}
             </li>
             <li className="glass-surface rounded-2xl px-5 py-4">
               <span className="font-semibold">Linear.</span> {PRODUCT_LIVE.linear}
@@ -163,7 +163,7 @@ export default function ProductPage() {
             06 — Why teams talk to us
           </h2>
           <ul className="mt-6 space-y-3 text-[15px] leading-relaxed text-[#1d1d1f]">
-            <li>· Clarity: one workspace, one extraction flow, traceable history.</li>
+            <li>· Clarity: one workspace, one decision-capture flow, traceable history.</li>
             <li>· Honesty: we label roadmap vs live — no ambiguity in diligence.</li>
             <li>· Governance-friendly posture: human review before operational reliance on AI outputs.</li>
           </ul>

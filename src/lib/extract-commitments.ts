@@ -7,10 +7,14 @@ export type ExtractedCommitmentDraft = {
   description?: string | null;
   /** Tentative owner name from text (no Clerk id yet). */
   ownerName?: string | null;
+  /** Set in Desk review when assigning to a signed-in teammate (Clerk user id). */
+  ownerUserId?: string | null;
   source: CommitmentSource;
   sourceReference?: string;
   priority: CommitmentPriority;
   dueDate?: string | null;
+  /** Original line or span used as the commitment (for Capture source quote). */
+  sourceSnippet?: string | null;
 };
 
 const LINE_PATTERNS = [
@@ -93,6 +97,7 @@ export function extractCommitments(text: string): ExtractedCommitmentDraft[] {
       sourceReference: ref,
       priority: body.length > 120 ? "high" : "medium",
       dueDate: null,
+      sourceSnippet: line.slice(0, 600),
     });
   }
 
@@ -106,6 +111,7 @@ export function extractCommitments(text: string): ExtractedCommitmentDraft[] {
       sourceReference: ref,
       priority: "medium",
       dueDate: null,
+      sourceSnippet: trimmed.slice(0, 600),
     });
   }
 

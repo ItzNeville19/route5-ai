@@ -397,7 +397,7 @@ export default function OrgCommitmentTracker() {
                 Commitment tracker
               </h1>
               <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Owned commitments for your workspace (one org per account). Filters and search run on live data.
+                Owned commitments for your workspace (one org per account). Filters and search operate on live data.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

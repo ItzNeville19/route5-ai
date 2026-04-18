@@ -204,7 +204,7 @@ function StickyLaunchCta({ app }: { app: MarketplaceApp }) {
           window.setTimeout(() => {
             exp.installMarketplaceApp(app.id);
             exp.pushToast(
-              `${app.name} enabled — confirm pass / LLM defaults on the next screen.`,
+              `${app.name} enabled — confirm AI model defaults on the next screen.`,
               "success"
             );
             setInstalling(false);

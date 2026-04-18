@@ -85,7 +85,7 @@ export default function DashboardStartHereCard({
           </p>
           <p className="mt-3">
             <Link
-              href="/docs/ceo-brief"
+              href="/docs/product"
               className="text-[12px] font-semibold text-[var(--workspace-accent-hover)] underline-offset-2 hover:underline"
             >
               New here? Read the 2‑minute executive brief →
@@ -130,7 +130,7 @@ export default function DashboardStartHereCard({
             </div>
             <p className="mt-2 text-[13px] font-medium leading-snug text-zinc-200">Create a project</p>
             <p className="mt-1 text-[11px] leading-snug text-zinc-300">
-              Scope an initiative — every run and checklist lives here.
+              Scope an initiative — every commitment and checklist lives here.
             </p>
             {!hasProject ? (
               <button
@@ -169,7 +169,7 @@ export default function DashboardStartHereCard({
             </div>
             <p className="mt-2 text-[13px] font-medium leading-snug text-zinc-200">Capture on Desk</p>
             <p className="mt-1 text-[11px] leading-snug text-zinc-300">
-              Paste notes or tickets, then run one step to get next moves.
+              Paste notes or tickets, then process in one step to get next moves.
             </p>
             {!hasRun ? (
               <Link

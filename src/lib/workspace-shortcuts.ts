@@ -19,7 +19,7 @@ export type WorkspaceShortcut =
     };
 
 export const WORKSPACE_SHORTCUTS: WorkspaceShortcut[] = [
-  { id: "s1", label: "Overview", href: "/overview" },
+  { id: "s1", label: "Feed", href: "/feed" },
   { id: "s2", label: "Desk", href: deskUrl() },
   { id: "s3", label: "Settings", href: "/settings" },
   { id: "s4", label: "Connections", href: "/settings#connections" },

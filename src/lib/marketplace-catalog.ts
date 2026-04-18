@@ -92,7 +92,7 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   {
     id: "figma",
     name: "Figma",
-    subtitle: "Design links and feedback → structured runs on Desk.",
+    subtitle: "Design links and feedback → tracked commitments on Desk.",
     category: "collaboration",
     kind: "native",
     brandId: "figma",
@@ -111,12 +111,12 @@ export const MARKETPLACE_NATIVE: MarketplaceApp[] = [
   },
   {
     id: "integrations-hub",
-    name: "Connections",
-    subtitle: "All optional connectors — configure under Settings.",
+    name: "Integrations",
+    subtitle: "Linear, GitHub, Figma, Google, Slack — status and paste flows in one place.",
     category: "stack",
     kind: "native",
     brandId: "workspaceHub",
-    href: "/settings#connections",
+    href: "/integrations",
   },
   {
     id: "intelligence",

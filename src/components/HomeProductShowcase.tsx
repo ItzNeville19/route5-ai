@@ -3,9 +3,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { BarChart3, BookOpen, Inbox } from "lucide-react";
+import { BarChart3, BookOpen, LayoutList } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { deskUrl } from "@/lib/desk-routes";
 import { easeApple, staggerContainer, staggerItemTight } from "@/lib/motion";
 
 type Tile = {
@@ -16,17 +15,17 @@ type Tile = {
   className?: string;
 };
 
-/** Logged-out home: only execution tracking + positioning (Desk, Overview, story). */
+/** Logged-out home: primary workspace surfaces (Feed, Overview, product story). */
 export default function HomeProductShowcase() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
 
   const tiles: Tile[] = [
     {
-      href: deskUrl(),
-      icon: <Inbox className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
-      title: t("marketing.showcase.deskTitle"),
-      body: t("marketing.showcase.deskBody"),
+      href: "/feed",
+      icon: <LayoutList className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
+      title: t("marketing.showcase.feedTitle"),
+      body: t("marketing.showcase.feedBody"),
       className: "lg:col-span-2 min-h-[200px]",
     },
     {

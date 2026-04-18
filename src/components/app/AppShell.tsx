@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SignIn, useAuth } from "@clerk/nextjs";
@@ -9,6 +9,9 @@ import OnboardingShell from "@/components/app/OnboardingShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+
+/** Max time before Clerk client shows retry (session bootstrap). */
+const CLERK_READY_MS = 4500;
 
 const clerkSignInAppearance = {
   elements: {
@@ -49,32 +52,87 @@ function AppShellClerkMissing() {
   );
 }
 
+function ClerkConnectingSpinner() {
+  return (
+    <div
+      className="theme-glass-site relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6"
+      aria-busy="true"
+      aria-label="Loading account"
+    >
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(167,139,250,0.35),transparent_55%),radial-gradient(ellipse_60%_40%_at_100%_50%,rgba(244,114,182,0.12),transparent_50%)]"
+        aria-hidden
+      />
+      <div className="relative flex flex-col items-center">
+        <div className="relative h-14 w-14">
+          <div
+            className="absolute inset-0 animate-pulse rounded-[22px] bg-gradient-to-br from-[#a78bfa]/40 via-[#c4b5fd]/25 to-[#f472b6]/20 blur-sm"
+            aria-hidden
+          />
+          <div
+            className="relative flex h-14 w-14 items-center justify-center rounded-[22px] border border-black/[0.06] bg-white/80 shadow-[0_8px_32px_-12px_rgba(99,102,241,0.35)] backdrop-blur-xl"
+            aria-hidden
+          >
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0071e3]/20 border-t-[#0071e3]" />
+          </div>
+        </div>
+        <p className="mt-8 max-w-sm text-center text-[15px] font-medium tracking-[-0.02em] text-[#1d1d1f]">
+          Connecting your workspace…
+        </p>
+        <p className="mt-2 max-w-md text-center text-[13px] leading-relaxed text-[#6e6e73]">
+          Securing your session with Clerk. This usually takes a moment.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ClerkSessionLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+      <p className="max-w-md text-[16px] font-semibold text-[#1d1d1f]">Couldn&apos;t reach your session</p>
+      <p className="mt-3 max-w-md text-[14px] leading-relaxed text-[#6e6e73]">
+        The sign-in service didn&apos;t respond in time. Check your network, confirm Clerk keys in{" "}
+        <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">.env.local</code>, or try again.
+      </p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-full bg-[#0071e3] px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#0077ed]"
+        >
+          Retry
+        </button>
+        <Link
+          href="/"
+          className="rounded-full border border-black/[0.12] px-6 py-2.5 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-black/[0.04]"
+        >
+          Home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /** Must only render when `ClerkProvider` is present (keys configured). */
 function AppShellWithClerk({ children }: { children: React.ReactNode }) {
   const { isLoaded, userId } = useAuth();
+  const [clerkTimedOut, setClerkTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded) {
+      setClerkTimedOut(false);
+      return;
+    }
+    const t = window.setTimeout(() => setClerkTimedOut(true), CLERK_READY_MS);
+    return () => window.clearTimeout(t);
+  }, [isLoaded]);
 
   if (!isLoaded) {
-    return (
-      <div
-        className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6"
-        aria-busy="true"
-        aria-label="Loading account"
-      >
-        <div
-          className="h-10 w-10 animate-spin rounded-full border-2 border-[#0071e3] border-t-transparent"
-          aria-hidden
-        />
-        <p className="mt-5 max-w-sm text-center text-[14px] text-[#6e6e73]">
-          Connecting your workspace session…
-        </p>
-        <p className="mt-2 max-w-md text-center text-[12px] text-[#86868b]">
-          If this never finishes, check the browser console, confirm Clerk keys in{" "}
-          <code className="rounded bg-black/[0.06] px-1">.env.local</code>, and
-          restart <code className="rounded bg-black/[0.06] px-1">npm run dev</code>
-          after fixing compile errors.
-        </p>
-      </div>
-    );
+    if (clerkTimedOut) {
+      return <ClerkSessionLoadError onRetry={() => window.location.reload()} />;
+    }
+    return <ClerkConnectingSpinner />;
   }
 
   if (!userId) {
@@ -92,7 +150,7 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
               <SignIn
                 routing="hash"
                 signUpUrl="/sign-up"
-                fallbackRedirectUrl="/overview"
+                fallbackRedirectUrl="/feed"
                 signUpFallbackRedirectUrl="/onboarding"
                 appearance={clerkSignInAppearance}
               />
@@ -122,19 +180,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return <AppShellWithClerk>{children}</AppShellWithClerk>;
 }
 
-function GateSpinner() {
-  return (
-    <div
-      className="theme-agent-shell theme-route5-command flex min-h-dvh flex-col items-center justify-center bg-[var(--workspace-canvas)]"
-      aria-busy="true"
-      aria-label="Loading workspace"
-    >
-      <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--workspace-muted-fg)] border-t-[var(--workspace-accent)]" />
-      <p className="mt-5 text-[13px] text-[var(--workspace-muted-fg)]">Preparing your workspace…</p>
-    </div>
-  );
-}
-
 function SignedInAppShell({
   userId,
   children,
@@ -144,55 +189,76 @@ function SignedInAppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [gate, setGate] = useState<"check" | "ok" | "redirecting">("check");
 
+  /** Client onboarding route: bounce to Feed when already done (unless replaying tutorial). */
   useLayoutEffect(() => {
-    if (pathname === "/onboarding") {
-      const replay =
-        typeof window !== "undefined" &&
-        new URLSearchParams(window.location.search).get("replay") === "1";
-      if (isOnboardingComplete(userId) && !replay) {
-        router.replace("/overview");
-        setGate("redirecting");
-        return;
-      }
-      setGate("ok");
-      return;
+    if (pathname !== "/onboarding") return;
+    const replay =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("replay") === "1";
+    if (isOnboardingComplete(userId) && !replay) {
+      router.replace("/feed");
     }
+  }, [userId, pathname, router]);
+
+  /**
+   * Workspace wizard completion — never block the shell on this fetch.
+   * If the API is slow or stuck, users still see the app; we redirect when we learn they must finish setup.
+   */
+  useEffect(() => {
+    if (pathname === "/onboarding") return;
+
+    const skipWorkspaceOnboardingGate =
+      pathname === "/settings" ||
+      pathname === "/marketplace" ||
+      pathname?.startsWith("/marketplace/") ||
+      pathname === "/workspace/customize" ||
+      pathname === "/workspace/help" ||
+      pathname === "/workspace/billing" ||
+      pathname === "/workspace/team" ||
+      pathname === "/integrations" ||
+      pathname?.startsWith("/integrations/") ||
+      pathname?.startsWith("/account/");
+
+    if (skipWorkspaceOnboardingGate) return;
 
     const workspaceOnboarding =
+      pathname === "/feed" ||
+      pathname === "/capture" ||
       pathname === "/overview" ||
+      pathname === "/desk" ||
+      pathname === "/projects" ||
+      pathname?.startsWith("/projects/") ||
       (pathname?.startsWith("/workspace") && !pathname.startsWith("/workspace/onboarding"));
 
-    if (!workspaceOnboarding) {
-      setGate("ok");
-      return;
-    }
+    if (!workspaceOnboarding) return;
 
     let cancelled = false;
-    (async () => {
+    const controller = new AbortController();
+    const abortTimer = window.setTimeout(() => controller.abort(), 12_000);
+
+    void (async () => {
       try {
-        const res = await fetch("/api/workspace/onboarding", { credentials: "same-origin" });
-        const data = (await res.json()) as { complete?: boolean };
+        const res = await fetch("/api/workspace/onboarding", {
+          credentials: "same-origin",
+          signal: controller.signal,
+        });
+        const data = (await res.json().catch(() => ({}))) as { complete?: boolean };
         if (cancelled) return;
         if (data.complete === false) {
           router.replace("/workspace/onboarding");
-          setGate("redirecting");
-          return;
         }
       } catch {
-        /* offline / misconfigured — do not block */
+        /* offline / timeout — stay on current page */
       }
-      if (!cancelled) setGate("ok");
     })();
+
     return () => {
       cancelled = true;
+      window.clearTimeout(abortTimer);
+      controller.abort();
     };
   }, [userId, pathname, router]);
-
-  if (gate === "check" || gate === "redirecting") {
-    return <GateSpinner />;
-  }
 
   if (pathname === "/onboarding") {
     return <OnboardingShell>{children}</OnboardingShell>;

@@ -1,537 +1,283 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronRight,
-  ExternalLink,
-  Loader2,
-  RefreshCw,
-  Sparkles,
-} from "lucide-react";
-import { BrandSquircle } from "@/components/marketplace/brand-icons";
+import { Check, ChevronRight } from "lucide-react";
+import OnboardingProductTour from "@/components/onboarding/OnboardingProductTour";
+import { useOnboardingFlow } from "@/components/onboarding/OnboardingFlowContext";
+import WorkspaceThemeSection from "@/components/workspace/WorkspaceThemeSection";
 import { markOnboardingComplete } from "@/lib/onboarding-storage";
-import { deskUrl } from "@/lib/desk-routes";
-import { PRODUCT_HONEST, PRODUCT_INTEGRATIONS } from "@/lib/product-truth";
-import type { Project } from "@/lib/types";
+import {
+  loadWorkspacePrefs,
+  mergeWorkspacePrefsPatch,
+  saveWorkspacePrefs,
+} from "@/lib/workspace-prefs";
 
-/** Steps 0–5 inclusive */
-const STEP_TOTAL = 6;
+const STEP_LABELS = [
+  "Organization",
+  "Tour",
+  "Theme",
+  "Team invites",
+  "Integrations",
+  "First commitment",
+  "Done",
+] as const;
 
-type Health = {
-  ok?: boolean;
-  openaiConfigured?: boolean;
-  supabaseConfigured?: boolean;
-  storageBackend?: "supabase" | "sqlite";
-  storageReady?: boolean;
-  extractionMode?: "ai" | "offline";
-};
+const TOTAL = STEP_LABELS.length;
 
-const ease = [0.22, 1, 0.36, 1] as const;
+function saveOrgDashboardNote(orgName: string) {
+  const org = orgName.trim() || "Your organization";
+  saveWorkspacePrefs(
+    mergeWorkspacePrefsPatch(loadWorkspacePrefs(), {
+      dashboardCompanyNote: `${org} — commitments tracked in Feed.`,
+      companyPresetId: "custom",
+    })
+  );
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("route5:workspace-prefs-changed"));
+  }
+}
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
-  const userId = user?.id;
+  const searchParams = useSearchParams();
+  const { user } = useUser();
+  const { orgName, setOrgName } = useOnboardingFlow();
+  const replay = searchParams.get("replay") === "1";
 
   const [step, setStep] = useState(0);
-  const [health, setHealth] = useState<Health | null>(null);
-  const [healthLoading, setHealthLoading] = useState(false);
-  const [projectName, setProjectName] = useState("Client program — pilot");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createdProject, setCreatedProject] = useState<Project | null>(null);
-
-  const loadHealth = useCallback(async () => {
-    setHealthLoading(true);
-    try {
-      const res = await fetch("/api/health", { credentials: "same-origin" });
-      if (res.ok) setHealth((await res.json()) as Health);
-    } catch {
-      setHealth({});
-    } finally {
-      setHealthLoading(false);
-    }
-  }, []);
+  const [invites, setInvites] = useState("");
 
   useEffect(() => {
-    if (step === 1) void loadHealth();
-  }, [step, loadHealth]);
+    if (replay) setStep(0);
+  }, [replay]);
 
-  async function handleCreateProject() {
-    const name = projectName.trim();
-    if (!name) return;
-    setCreateError(null);
-    setCreating(true);
-    try {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ name }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        project?: Project;
-      };
-      if (!res.ok) {
-        setCreateError(
-          data.error ??
-            "We couldn’t create that project. Try again in a moment — if it keeps happening, open Health from the dashboard."
-        );
-        return;
-      }
-      if (data.project) setCreatedProject(data.project);
-      setStep(3);
-    } catch {
-      setCreateError("Something went wrong on our side. Check your connection and try again.");
-    } finally {
-      setCreating(false);
+  const firstName = useMemo(
+    () => user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "there",
+    [user]
+  );
+
+  function finishOnboarding() {
+    saveOrgDashboardNote(orgName);
+    if (user?.id) markOnboardingComplete(user.id);
+    router.push("/feed");
+  }
+
+  const canContinue = (() => {
+    if (step === 0) return orgName.trim().length > 1;
+    return true;
+  })();
+
+  function goNext() {
+    if (step === 0) {
+      saveOrgDashboardNote(orgName);
     }
-  }
-
-  function finish() {
-    if (!userId) return;
-    markOnboardingComplete(userId);
-    router.push("/overview");
-  }
-
-  function skip() {
-    finish();
-  }
-
-  const firstName =
-    user?.firstName ||
-    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
-    "there";
-
-  if (!isLoaded) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-400" aria-hidden />
-      </div>
-    );
+    setStep((s) => Math.min(TOTAL - 1, s + 1));
   }
 
   return (
-    <div>
-      <div className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex max-w-[280px] gap-1.5" aria-hidden>
-          {Array.from({ length: STEP_TOTAL }, (_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= step ? "bg-neutral-900" : "bg-neutral-200"
-              }`}
-              style={{ maxWidth: 48 }}
-            />
+    <div className="mx-auto w-full max-w-[800px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-8)]">
+      <header className="space-y-[var(--r5-space-3)]">
+        <div className="sticky top-0 z-10 -mx-4 border-b border-r5-border-subtle/70 bg-r5-surface-secondary/85 px-4 py-2.5 backdrop-blur-md sm:-mx-6 sm:px-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-r5-text-secondary">
+            Route5 workspace ·{" "}
+            <span className="text-r5-text-primary">
+              {orgName.trim() || "Your company"}
+            </span>
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-[length:var(--r5-font-subheading)] text-r5-text-primary">
+            Welcome, <span className="font-semibold">{firstName}</span>
+            {replay ? (
+              <span className="ml-2 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 py-0.5 text-[11px] font-medium text-r5-text-secondary">
+                Tutorial replay
+              </span>
+            ) : null}
+          </p>
+          <Link
+            href="/feed"
+            className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary"
+          >
+            Skip to Feed
+          </Link>
+        </div>
+        <div className="flex items-center gap-[var(--r5-space-2)] overflow-x-auto pb-1" aria-label="Onboarding progress">
+          {STEP_LABELS.map((label, idx) => (
+            <div key={label} className="min-w-[72px] flex-1">
+              <div
+                className={`h-1.5 rounded-[var(--r5-radius-pill)] transition-colors ${
+                  idx <= step ? "bg-r5-accent" : "bg-r5-border-subtle"
+                }`}
+              />
+              <p className="mt-[var(--r5-space-1)] truncate text-[length:var(--r5-font-kbd)] text-r5-text-secondary">
+                {idx + 1}. {label}
+              </p>
+            </div>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={skip}
-          className="shrink-0 text-[13px] font-medium text-neutral-500 transition hover:text-neutral-800"
-        >
-          Skip setup
-        </button>
-      </div>
+      </header>
 
-      <AnimatePresence mode="wait">
-        {step === 0 && (
-          <motion.section
-            key="s0"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease }}
-            className="space-y-6"
-          >
-            <div className="inline-flex items-center gap-2 rounded-full border border-black/[0.06] bg-white/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-600 shadow-sm">
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" aria-hidden />
-              Quick start
-            </div>
-            <h1 className="text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-[-0.04em] text-neutral-900">
-              Hi {firstName} — here&apos;s your map
-            </h1>
-            <p className="max-w-xl text-[16px] leading-relaxed text-neutral-600">
-              {PRODUCT_HONEST.oneLine} Use the sidebar: <strong className="text-neutral-900">Overview</strong>{" "}
-              shows execution health and risk; <strong className="text-neutral-900">Desk</strong> is where you paste
-              text and confirm commitments; <strong className="text-neutral-900">Settings</strong> holds connections
-              and your profile.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <Link
-                href="/overview"
-                className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
-              >
-                Overview
-              </Link>
-              <Link
-                href={deskUrl()}
-                className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
-              >
-                Desk
-              </Link>
-              <Link
-                href="/settings"
-                className="rounded-2xl border border-black/[0.08] bg-white px-4 py-4 text-center text-[14px] font-semibold text-neutral-900 shadow-sm transition hover:border-neutral-300"
-              >
-                Settings
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(1)}
-                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-[15px] font-medium text-white shadow-lg shadow-neutral-900/20 transition hover:bg-neutral-800"
-              >
-                Deep setup (optional)
-                <ChevronRight className="h-4 w-4" aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={skip}
-                className="inline-flex items-center gap-2 rounded-xl border border-black/[0.1] bg-white px-6 py-3 text-[15px] font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50"
-              >
-                Go to workspace
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </button>
-            </div>
-          </motion.section>
-        )}
-
-        {step === 1 && (
-          <motion.section
-            key="s1"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease }}
-            className="space-y-6"
-          >
-            <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">
-              Your stack
-            </h2>
-            <p className="text-[15px] leading-relaxed text-neutral-600">
-              Pulled from the same health check the dashboard uses — refresh if you just changed
-              environment variables.
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => void loadHealth()}
-                disabled={healthLoading}
-                className="inline-flex items-center gap-2 rounded-lg border border-black/[0.08] bg-white px-4 py-2 text-[13px] font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50 disabled:opacity-50"
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${healthLoading ? "animate-spin" : ""}`}
-                  aria-hidden
-                />
-                Refresh status
-              </button>
-              <a
-                href="/api/health"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-black/[0.08] bg-white px-4 py-2 text-[13px] font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50"
-              >
-                Raw JSON
-                <ExternalLink className="h-3.5 w-3.5 opacity-60" aria-hidden />
-              </a>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-black/[0.06] bg-white/90 p-4 shadow-sm">
-                <BrandSquircle id="supabase" sizeClass="h-11 w-11" className="mb-3" />
-                <div className="text-[13px] font-semibold text-neutral-900">Database</div>
-                <p className="mt-2 text-[13px] leading-snug text-neutral-600">
-                  {health === null && !healthLoading
-                    ? "Load status…"
-                    : health?.storageBackend === "supabase"
-                      ? "Cloud (Supabase) — projects and extractions sync to your workspace."
-                      : "Embedded SQLite — projects and extractions stay on this machine."}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-black/[0.06] bg-white/90 p-4 shadow-sm">
-                <BrandSquircle id="openai" sizeClass="h-11 w-11" className="mb-3" />
-                <div className="text-[13px] font-semibold text-neutral-900">Extraction</div>
-                <p className="mt-2 text-[13px] leading-snug text-neutral-600">
-                  {health === null && !healthLoading
-                    ? "Load status…"
-                    : health?.extractionMode === "ai"
-                      ? "AI extraction — structured output from your notes."
-                      : health?.extractionMode === "offline"
-                        ? "Built-in extraction — runs locally, no account steps."
-                        : "AI extraction when your workspace enables it; heuristic path otherwise."}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-black/[0.06] bg-white/90 p-4 shadow-sm">
-                <BrandSquircle id="clerk" sizeClass="h-11 w-11" className="mb-3" />
-                <div className="text-[13px] font-semibold text-neutral-900">Account</div>
-                <p className="mt-2 text-[13px] leading-snug text-neutral-600">
-                  You&apos;re signed in with Clerk — profile and security live under Settings.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-neutral-800"
-              >
-                Continue
-                <ChevronRight className="h-4 w-4" aria-hidden />
-              </button>
-              <Link
-                href="/settings"
-                className="inline-flex items-center rounded-xl border border-black/[0.08] bg-white px-5 py-3 text-[15px] font-medium text-neutral-800 shadow-sm transition hover:bg-neutral-50"
-              >
-                Open account settings
-              </Link>
-            </div>
-          </motion.section>
-        )}
-
-        {step === 2 && (
-          <motion.section
-            key="s2"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease }}
-            className="space-y-6"
-          >
-            <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">
-              Name your first program or account
-            </h2>
-            <p className="text-[15px] leading-relaxed text-neutral-600">
-              Projects scope every commitment and action — same as the dashboard. We&apos;ll open it
-              when it&apos;s ready so you can paste operational text and run a pass.
-            </p>
-            <label className="block">
-              <span className="text-[13px] font-medium text-neutral-700">
-                Project name
-              </span>
-              <input
-                type="text"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="mt-2 w-full rounded-xl border border-black/[0.1] bg-white px-4 py-3 text-[16px] text-neutral-900 shadow-inner outline-none ring-0 transition focus:border-neutral-400"
-                placeholder="e.g. Acme contract · Region North"
-                autoComplete="off"
-              />
-            </label>
-            {createError ? (
-              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] text-red-900">
-                {createError}
+      {step === 2 ? (
+        <WorkspaceThemeSection />
+      ) : (
+        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-5)] shadow-[var(--r5-shadow-elevated)]">
+          {step === 0 ? (
+            <div className="space-y-[var(--r5-space-4)]">
+              <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                Name your organization
+              </h1>
+              <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                We show this in greetings, Overview, and your dashboard note. You can change themes and layout anytime
+                under Customize — same controls as the next step.
               </p>
-            ) : null}
-            <div className="flex flex-wrap gap-3">
+              <input
+                value={orgName}
+                onChange={(e) => setOrgName(e.target.value)}
+                placeholder="Acme Leadership Team"
+                autoComplete="organization"
+                className="w-full rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-3)] py-[var(--r5-space-3)] text-[length:var(--r5-font-subheading)] text-r5-text-primary placeholder:text-r5-text-secondary"
+              />
+            </div>
+          ) : null}
+
+          {step === 1 ? (
+            <div className="space-y-[var(--r5-space-5)]">
+              <div>
+                <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                  See how Route5 fits your week
+                </h1>
+                <p className="mt-2 text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                  A quick, interactive tour — no video, no tab hopping.
+                </p>
+              </div>
+              <OnboardingProductTour />
+            </div>
+          ) : null}
+
+          {step === 3 ? (
+            <div className="space-y-[var(--r5-space-4)]">
+              <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                Invite team members
+              </h1>
+              <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                Optional — paste emails separated by commas. You can also send invites later from Team.
+              </p>
+              <textarea
+                value={invites}
+                onChange={(e) => setInvites(e.target.value)}
+                placeholder="alex@company.com, sam@company.com"
+                rows={4}
+                className="w-full rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-3)] py-[var(--r5-space-3)] text-[length:var(--r5-font-subheading)] text-r5-text-primary placeholder:text-r5-text-secondary"
+              />
+            </div>
+          ) : null}
+
+          {step === 4 ? (
+            <div className="space-y-[var(--r5-space-4)]">
+              <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                Connect your stack
+              </h1>
+              <p className="text-[length:var(--r5-font-subheading)] text-r5-text-secondary">
+                Open Integrations to see what&apos;s live, paste-based flows, and OAuth where available. Themes and
+                layout live under Customize.
+              </p>
+              <div className="flex flex-wrap gap-[var(--r5-space-2)]">
+                <button
+                  type="button"
+                  onClick={() => router.push("/integrations")}
+                  className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary transition hover:opacity-95"
+                >
+                  Open Integrations
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/workspace/customize")}
+                  className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-primary transition hover:bg-r5-surface-hover"
+                >
+                  Customize
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {step === 5 ? (
+            <div className="space-y-[var(--r5-space-4)]">
+              <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                Create your first commitment
+              </h1>
+              <p className="text-[length:var(--r5-font-subheading)] text-r5-text-secondary">
+                Open Capture and paste meeting notes, Slack, or email — we&apos;ll extract structured commitments.
+              </p>
+              <div className="flex flex-wrap gap-[var(--r5-space-2)]">
+                <button
+                  type="button"
+                  onClick={() => router.push("/feed")}
+                  className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary"
+                >
+                  Continue to Feed
+                  <ChevronRight className="h-4 w-4" aria-hidden />
+                </button>
+                <p className="w-full text-[length:var(--r5-font-body)] text-r5-text-tertiary">
+                  On Feed, press{" "}
+                  <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono text-[12px]">
+                    ⌘J
+                  </kbd>{" "}
+                  or tap Capture to paste your first note.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          {step === 6 ? (
+            <div className="space-y-[var(--r5-space-4)]">
+              <h1 className="text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">
+                You&apos;re ready
+              </h1>
+              <p className="text-[length:var(--r5-font-subheading)] text-r5-text-secondary">
+                Your theme and organization are saved. Use{" "}
+                <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono text-[12px]">
+                  ⌘K
+                </kbd>{" "}
+                to open Desk, Overview, Marketplace, and more any time — they don&apos;t clutter the sidebar.
+              </p>
               <button
                 type="button"
-                onClick={() => void handleCreateProject()}
-                disabled={creating || !projectName.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-neutral-800 disabled:opacity-40"
+                onClick={finishOnboarding}
+                className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary"
               >
-                {creating ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    Creating…
-                  </>
-                ) : (
-                  <>
-                    Create project
-                    <ChevronRight className="h-4 w-4" aria-hidden />
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setStep(3)}
-                className="rounded-xl px-4 py-3 text-[15px] font-medium text-neutral-600 transition hover:text-neutral-900"
-              >
-                Skip — I&apos;ll create later
+                <Check className="h-4 w-4" aria-hidden />
+                Go to Feed
               </button>
             </div>
-          </motion.section>
-        )}
+          ) : null}
+        </section>
+      )}
 
-        {step === 3 && (
-          <motion.section
-            key="s3"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease }}
-            className="space-y-6"
-          >
-            <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">
-              Integrations &amp; company
-            </h2>
-            <p className="text-[15px] leading-relaxed text-neutral-600">
-              These pages are live in the app — the marketplace separates what&apos;s wired today from
-              what&apos;s on the roadmap.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <BrandSquircle id="clerk" sizeClass="h-10 w-10" />
-              <BrandSquircle id="supabase" sizeClass="h-10 w-10" />
-              <BrandSquircle id="openai" sizeClass="h-10 w-10" />
-              <BrandSquircle id="linear" sizeClass="h-10 w-10" />
-              <BrandSquircle id="github" sizeClass="h-10 w-10" />
-              <BrandSquircle id="route5" sizeClass="h-10 w-10" />
-            </div>
-            <ul className="space-y-3 rounded-2xl border border-indigo-200/60 bg-indigo-50/40 p-5 text-[14px] leading-relaxed text-neutral-800">
-              <li>
-                <strong className="text-indigo-950">Shipped:</strong> {PRODUCT_INTEGRATIONS.clerk}
-              </li>
-              <li>{PRODUCT_INTEGRATIONS.data}</li>
-              <li>{PRODUCT_INTEGRATIONS.intelligence}</li>
-              <li>{PRODUCT_INTEGRATIONS.linear}</li>
-              <li>{PRODUCT_INTEGRATIONS.github}</li>
-            </ul>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Link
-                href="/marketplace"
-                className="group flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm transition hover:border-black/[0.12] hover:shadow-md"
-              >
-                <span className="font-medium text-neutral-900">Marketplace &amp; status</span>
-                <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/pricing"
-                className="group flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm transition hover:border-black/[0.12] hover:shadow-md"
-              >
-                <span className="font-medium text-neutral-900">Pricing</span>
-                <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/contact"
-                className="group flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm transition hover:border-black/[0.12] hover:shadow-md"
-              >
-                <span className="font-medium text-neutral-900">Contact sales</span>
-                <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-0.5" />
-              </Link>
-              <Link
-                href="/docs/product"
-                className="group flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm transition hover:border-black/[0.12] hover:shadow-md"
-              >
-                <span className="font-medium text-neutral-900">What we ship</span>
-                <ArrowRight className="h-4 w-4 text-neutral-400 transition group-hover:translate-x-0.5" />
-              </Link>
-            </div>
+      {step < TOTAL - 1 ? (
+        <div className="flex items-center justify-end gap-[var(--r5-space-2)]">
+          {step > 0 ? (
             <button
               type="button"
-              onClick={() => setStep(4)}
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-neutral-800"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-secondary"
             >
-              Continue
-              <ChevronRight className="h-4 w-4" aria-hidden />
+              Back
             </button>
-          </motion.section>
-        )}
-
-        {step === 4 && (
-          <motion.section
-            key="s4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.35, ease }}
-            className="space-y-6"
+          ) : null}
+          <button
+            type="button"
+            disabled={!canContinue}
+            onClick={goNext}
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary disabled:opacity-50"
           >
-            <h2 className="text-xl font-semibold tracking-[-0.03em] text-neutral-900">
-              Run an extraction
-            </h2>
-            <p className="text-[15px] leading-relaxed text-neutral-600">
-              Open a project, paste notes or tickets, then choose{" "}
-              <strong className="font-medium text-neutral-800">Run extraction</strong>.{" "}
-              When AI extraction is on you get structured output; otherwise the built-in heuristic runs.
-            </p>
-            {createdProject ? (
-              <Link
-                href={`/projects/${createdProject.id}`}
-                className="flex items-center justify-between rounded-2xl border border-[var(--workspace-accent)]/25 bg-[var(--workspace-accent)]/5 p-5 transition hover:border-[var(--workspace-accent)]/40"
-              >
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--workspace-accent)]">
-                    Your new project
-                  </p>
-                  <p className="mt-1 text-[17px] font-semibold text-neutral-900">
-                    {createdProject.name}
-                  </p>
-                  <p className="mt-1 text-[13px] text-neutral-600">
-                    Open it and use the input panel at the top.
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
-              </Link>
-            ) : (
-              <Link
-                href="/overview#new-project"
-                className="flex items-center justify-between rounded-2xl border border-black/[0.08] bg-white p-5 shadow-sm transition hover:border-black/[0.14]"
-              >
-                <div>
-                  <p className="text-[15px] font-semibold text-neutral-900">
-                    Create a project on the dashboard
-                  </p>
-                  <p className="mt-1 text-[13px] text-neutral-600">
-                    Name a project, open it, then paste text and extract.
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 shrink-0 text-neutral-400" aria-hidden />
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setStep(5)}
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-[15px] font-medium text-white transition hover:bg-neutral-800"
-            >
-              Finish setup
-              <ChevronRight className="h-4 w-4" aria-hidden />
-            </button>
-          </motion.section>
-        )}
-
-        {step === 5 && (
-          <motion.section
-            key="s5"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease }}
-            className="space-y-6 text-center"
-          >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100">
-              <CheckCircle2 className="h-9 w-9 text-emerald-600" aria-hidden />
-            </div>
-            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-neutral-900">
-              You&apos;re ready
-            </h2>
-            <p className="mx-auto max-w-md text-[15px] leading-relaxed text-neutral-600">
-              Your workspace uses the same production routes as the rest of Route5.
-              Use the command palette (⌘K) anytime, or revisit{" "}
-              <Link href="/marketplace" className="font-medium text-neutral-900 underline-offset-4 hover:underline">
-                Marketplace
-              </Link>{" "}
-              for live status.
-            </p>
-            <button
-              type="button"
-              onClick={finish}
-              className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-8 py-3.5 text-[16px] font-medium text-white shadow-lg shadow-neutral-900/15 transition hover:bg-neutral-800"
-            >
-              Go to dashboard
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </button>
-          </motion.section>
-        )}
-      </AnimatePresence>
+            Continue
+            <ChevronRight className="h-4 w-4" aria-hidden />
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

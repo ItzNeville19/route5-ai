@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
   "/projects(.*)",
   "/overview(.*)",
+  "/feed(.*)",
 ]);
 
 export const proxy = clerkMiddleware(async (auth, req) => {

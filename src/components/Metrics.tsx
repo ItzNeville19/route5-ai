@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
 const metrics = [
-  { value: "3", label: "Structured fields", sub: "Summary, decisions, and actions every run" },
+  { value: "3", label: "Structured fields", sub: "Summary, decisions, and actions every commitment" },
   { value: "100k", label: "Characters per request", sub: "Enough for long threads in one paste" },
   { value: "0", label: "Production touchpoints", sub: "This baseline is text-in, structured data out" },
 ];
@@ -15,10 +15,10 @@ const comparison = [
   {
     category: "Alignment",
     adhoc: "Different versions in different tools",
-    route5: "One saved summary + decision list per run (in your workspace)",
+    route5: "One saved summary + decision list per commitment (in your workspace)",
   },
   { category: "Follow-through", adhoc: "Action items live in side channels", route5: "Check items off in one place" },
-  { category: "Audit", adhoc: "Hard to reconstruct who agreed to what", route5: "Timestamped extractions per project" },
+  { category: "Audit", adhoc: "Hard to reconstruct who agreed to what", route5: "Timestamped captures per project" },
 ];
 
 export default function Metrics() {

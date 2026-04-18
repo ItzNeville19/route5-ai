@@ -200,7 +200,7 @@ export default function InputPanel({
             <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--workspace-accent)]" />
             <span>
               {success === "offline"
-                ? "Saved — heuristic digest. Full AI extraction when your workspace has intelligence enabled."
+                ? "Saved — heuristic digest. Full AI decision capture when your workspace has intelligence enabled."
                 : "Saved."}
             </span>
           </div>
@@ -218,7 +218,7 @@ export default function InputPanel({
                 Processing…
               </>
             ) : (
-              "Run extraction"
+              "Capture"
             )}
           </button>
           <button
@@ -230,7 +230,7 @@ export default function InputPanel({
             }}
             className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
           >
-            Jump to extractions
+            Jump to captured decisions
           </button>
           <Link
             href="/overview"

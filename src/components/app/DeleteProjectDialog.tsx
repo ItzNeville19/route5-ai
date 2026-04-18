@@ -101,7 +101,7 @@ export default function DeleteProjectDialog({
               </h2>
               <p className="mt-1 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
                 <span className="font-medium text-[var(--workspace-fg)]">{projectName}</span> and all
-                extractions will be removed permanently. This cannot be undone.
+                captured decisions will be removed permanently. This cannot be undone.
               </p>
             </div>
           </div>

@@ -12,7 +12,7 @@ const cards = [
   {
     href: deskUrl(),
     name: "Desk",
-    desc: "Capture and run extractions — your main working surface.",
+    desc: "Capture and process decisions — your main working surface.",
     badge: "Start",
   },
   {
@@ -24,7 +24,7 @@ const cards = [
   {
     href: "/integrations/linear",
     name: "Linear",
-    desc: "Import issue text into extractions when your server has a Linear API key; otherwise the hub shows a labeled preview.",
+    desc: "Import issue text into captured decisions when your server has a Linear API key; otherwise this page shows a labeled preview.",
     badge: "Open",
   },
   {
@@ -42,7 +42,7 @@ const cards = [
   {
     href: "/integrations/figma",
     name: "Figma",
-    desc: "Paste frames and feedback → structured extractions.",
+    desc: "Paste frames and feedback → structured captures.",
     badge: "Open",
   },
 ];
@@ -60,16 +60,16 @@ export default function IntegrationsHubPage() {
         <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
           Desk
         </Link>{" "}
-        is where you capture and run work: connectors pull Linear, GitHub, Figma, and Google context into the same
-        extraction pipeline that feeds Overview and project history. Status below reflects live configuration.
+        is where you capture and process work: connectors pull Linear, GitHub, Figma, and Google context into the same
+        capture pipeline that feeds Overview and project history. Status below reflects live configuration.
       </p>
       <IntegrationStatusStrip />
       <p className="mt-4">
         <Link
-          href="/marketplace"
+          href="/overview"
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35"
         >
-          Browse marketplace
+          Open Overview
         </Link>
       </p>
       <ul className="mt-10 grid gap-4 sm:grid-cols-2">

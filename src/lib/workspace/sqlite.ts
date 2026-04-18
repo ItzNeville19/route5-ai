@@ -4,19 +4,50 @@
  */
 import fs from "fs";
 import path from "path";
+import { randomUUID } from "crypto";
 import Database from "better-sqlite3";
 import type { ActionItemStored } from "@/lib/ai/schema";
 
 let db: Database.Database | null = null;
 
+/** True on Vercel / Lambda-style hosts: avoid WAL (extra -wal/-shm files) and prefer /tmp. */
+function isServerlessFilesystem(): boolean {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+/** Writable directory for the SQLite file. Serverless: only /tmp is reliably writable. */
+function sqliteDataDir(): string {
+  if (isServerlessFilesystem()) {
+    return path.join("/tmp", "route5-sqlite");
+  }
+  return path.join(process.cwd(), "data");
+}
+
 function getDb(): Database.Database {
   if (db) return db;
-  const dir = path.join(process.cwd(), "data");
-  fs.mkdirSync(dir, { recursive: true });
+  const dir = sqliteDataDir();
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (e) {
+    console.error("[sqlite] mkdir failed:", dir, e);
+    throw e;
+  }
   const file = path.join(dir, "route5.sqlite");
-  const database = new Database(file);
-  database.pragma("journal_mode = WAL");
+  let database: Database.Database;
+  try {
+    database = new Database(file);
+  } catch (e) {
+    console.error("[sqlite] Failed to open database file:", file, e);
+    throw e;
+  }
   database.pragma("foreign_keys = ON");
+  /** WAL can fail or behave poorly on ephemeral serverless disks; DELETE is safer there. */
+  if (isServerlessFilesystem()) {
+    database.pragma("journal_mode = DELETE");
+  } else {
+    database.pragma("journal_mode = WAL");
+  }
+  database.pragma("busy_timeout = 8000");
   database.exec(`
     CREATE TABLE IF NOT EXISTS projects (
       id TEXT PRIMARY KEY,
@@ -513,6 +544,13 @@ function getDb(): Database.Database {
       UNIQUE (org_id, user_id, step)
     );
     CREATE INDEX IF NOT EXISTS idx_onboarding_progress_user ON onboarding_progress(org_id, user_id);
+    CREATE TABLE IF NOT EXISTS integration_waitlist_email (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      clerk_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_integration_waitlist_email ON integration_waitlist_email(email);
   `);
   const orgCols = database.prepare(`PRAGMA table_info(organizations)`).all() as { name: string }[];
   if (!orgCols.some((c) => c.name === "primary_use_case")) {
@@ -529,6 +567,12 @@ function getDb(): Database.Database {
   if (!oaCols.includes("local_path")) {
     database.exec(`ALTER TABLE org_commitment_attachments ADD COLUMN local_path TEXT`);
   }
+  const ocCols = database.prepare(`PRAGMA table_info(org_commitments)`).all() as { name: string }[];
+  if (!ocCols.some((c) => c.name === "project_id")) {
+    database.exec(
+      `ALTER TABLE org_commitments ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE SET NULL`
+    );
+  }
   db = database;
   return database;
 }
@@ -536,6 +580,27 @@ function getDb(): Database.Database {
 /** @internal — org-commitments repo shares the same embedded DB. */
 export function getSqliteHandle(): Database.Database {
   return getDb();
+}
+
+/** Notify-me list on Integrations — one row per email (unique). */
+export function insertIntegrationWaitlistEmail(
+  email: string,
+  clerkUserId: string
+): { ok: true } | { ok: false; error: "duplicate" | "invalid" } {
+  const normalized = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
+    return { ok: false, error: "invalid" };
+  }
+  try {
+    getDb()
+      .prepare(
+        `INSERT INTO integration_waitlist_email (id, email, clerk_user_id, created_at) VALUES (?, ?, ?, ?)`
+      )
+      .run(randomUUID(), normalized, clerkUserId, new Date().toISOString());
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "duplicate" };
+  }
 }
 
 export type SqliteProjectRow = {

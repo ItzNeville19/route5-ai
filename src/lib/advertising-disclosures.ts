@@ -24,5 +24,5 @@ export const ADVERTISING_DISCLOSURES = {
 
   /** Product page strip */
   productFooter:
-    "Route5 does not run autonomous actions in Linear, GitHub, Slack, or other tools without your setup. The product means structured runs, stored projects, checklists, and metrics from your data — not guaranteed business outcomes.",
+    "Route5 does not run autonomous actions in Linear, GitHub, Slack, or other tools without your setup. The product means tracked commitments, stored projects, checklists, and metrics from your data — not guaranteed business outcomes.",
 } as const;

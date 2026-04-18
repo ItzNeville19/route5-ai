@@ -25,9 +25,13 @@ export default function SettingsClerkUserProfile() {
         scrollBox: "max-h-[min(72vh,720px)] overflow-y-auto text-[var(--workspace-fg)]",
         navbar:
           "border-b border-[var(--workspace-border)] bg-[var(--workspace-surface)] text-[var(--workspace-fg)] sm:border-b-0 sm:border-r",
-        navbarButton: "text-[14px] text-[var(--workspace-muted-fg)] data-[active=true]:text-[var(--workspace-accent)]",
+        navbarButton:
+          "text-[14px] text-[var(--workspace-muted-fg)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)] data-[active=true]:bg-[var(--workspace-accent)]/15 data-[active=true]:text-[var(--workspace-accent)]",
         pageScrollBox: "overflow-y-auto bg-[var(--workspace-canvas)] text-[var(--workspace-fg)]",
         page: "text-[var(--workspace-fg)]",
+        pageListItem: "text-[var(--workspace-fg)]",
+        pageListItemTitle: "text-[var(--workspace-fg)]",
+        pageListItemSubtitle: "text-[var(--workspace-muted-fg)]",
         profileSection: "text-[var(--workspace-fg)]",
         profileSectionTitle: "text-[var(--workspace-fg)]",
         profileSectionContent: "text-[var(--workspace-fg)]",
@@ -37,9 +41,11 @@ export default function SettingsClerkUserProfile() {
         headerTitle: "text-[var(--workspace-fg)]",
         headerSubtitle: "text-[var(--workspace-muted-fg)]",
         formFieldLabel: "text-[var(--workspace-fg)]",
-        formFieldInput: "text-[var(--workspace-fg)]",
+        formFieldInput:
+          "border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 text-[var(--workspace-fg)]",
         formFieldSuccessText: "text-[var(--workspace-muted-fg)]",
         formFieldErrorText: "text-[var(--workspace-danger-fg,#f87171)]",
+        alert: "border-[var(--workspace-border)] bg-[var(--workspace-surface)] text-[var(--workspace-fg)]",
         identityPreview: "text-[var(--workspace-fg)]",
         identityPreviewText: "text-[var(--workspace-fg)]",
         badge: "text-[var(--workspace-fg)]",

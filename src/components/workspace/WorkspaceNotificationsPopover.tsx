@@ -16,8 +16,6 @@ import {
   Hourglass,
   Info,
   Mail,
-  Maximize2,
-  Minimize2,
   UserPlus,
   X,
   XCircle,
@@ -87,6 +85,9 @@ function resolveNotificationHref(n: OrgNotificationRow): string | null {
       return "/workspace/billing";
     case "weekly_summary":
       return "/workspace/dashboard";
+    case "team_invited":
+      if (typeof m.signupUrl === "string" && m.signupUrl.length > 0) return m.signupUrl;
+      return "/settings";
     default:
       break;
   }
@@ -110,7 +111,6 @@ export default function WorkspaceNotificationsPopover() {
   const { user } = useUser();
   const userId = user?.id;
   const [open, setOpen] = useState(false);
-  const [fullscreen, setFullscreen] = useState(false);
   const [readEpoch, setReadEpoch] = useState(0);
   const [tab, setTab] = useState<PanelTab>("notifications");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -211,12 +211,11 @@ export default function WorkspaceNotificationsPopover() {
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (fullscreen) return;
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     }
-    if (open && !fullscreen) document.addEventListener("mousedown", onDoc);
+    if (open) document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
-  }, [open, fullscreen]);
+  }, [open]);
 
   useEffect(() => {
     function onOpen() {
@@ -225,24 +224,6 @@ export default function WorkspaceNotificationsPopover() {
     window.addEventListener("route5:notifications-open", onOpen);
     return () => window.removeEventListener("route5:notifications-open", onOpen);
   }, []);
-
-  useEffect(() => {
-    if (!fullscreen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [fullscreen]);
-
-  useEffect(() => {
-    if (!fullscreen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setFullscreen(false);
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [fullscreen]);
 
   const digestItems = useMemo(
     () =>
@@ -275,7 +256,6 @@ export default function WorkspaceNotificationsPopover() {
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) setFullscreen(false);
   }
 
   async function markAllRead() {
@@ -319,20 +299,45 @@ export default function WorkspaceNotificationsPopover() {
     await markOneRead(n.id);
     const href = resolveNotificationHref(n);
     handleOpenChange(false);
-    if (href) router.push(href);
+
+    if (n.type === "team_invited" && user && href && /sign-up/i.test(href)) {
+      pushToast(
+        "You're already signed in. Use the invitation link from your email to accept the org invite, or ask an admin to add you in Clerk Dashboard.",
+        "info"
+      );
+      router.push("/settings");
+      return;
+    }
+
+    if (!href) {
+      if (n.type === "team_invited") {
+        pushToast(
+          "Open the link in your invite email to join. Org membership is managed in Clerk (Settings → Profile).",
+          "info"
+        );
+        router.push("/settings");
+      }
+      return;
+    }
+
+    if (/^https?:\/\//i.test(href)) {
+      window.location.assign(href);
+      return;
+    }
+    router.push(href);
   }
 
   const panelHeader = (
-    <div className="border-b border-white/10 px-3 py-2">
+    <div className="border-b border-r5-border-subtle px-3 py-2">
       <div className="flex items-center justify-between gap-2 px-1 py-1">
-        <div className="flex rounded-xl border border-white/10 bg-black/20 p-0.5">
+        <div className="flex rounded-xl border border-r5-border-subtle bg-r5-surface-primary/50 p-0.5">
           <button
             type="button"
             onClick={() => setTab("notifications")}
-            className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold transition ${
+            className={`rounded-lg px-3 py-1.5 text-[length:var(--r5-font-body)] font-semibold transition ${
               tab === "notifications"
-                ? "bg-white/10 text-[var(--workspace-fg)]"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-r5-surface-hover text-r5-text-primary"
+                : "text-r5-text-secondary hover:text-r5-text-primary"
             }`}
           >
             Alerts
@@ -340,10 +345,10 @@ export default function WorkspaceNotificationsPopover() {
           <button
             type="button"
             onClick={() => setTab("digest")}
-            className={`rounded-lg px-3 py-1.5 text-[12px] font-semibold transition ${
+            className={`rounded-lg px-3 py-1.5 text-[length:var(--r5-font-body)] font-semibold transition ${
               tab === "digest"
-                ? "bg-white/10 text-[var(--workspace-fg)]"
-                : "text-zinc-500 hover:text-zinc-300"
+                ? "bg-r5-surface-hover text-r5-text-primary"
+                : "text-r5-text-secondary hover:text-r5-text-primary"
             }`}
           >
             Daily digest
@@ -352,17 +357,8 @@ export default function WorkspaceNotificationsPopover() {
         <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
-            onClick={() => setFullscreen((f) => !f)}
-            className="rounded-lg p-2 text-zinc-400 transition hover:bg-white/10 hover:text-zinc-200"
-            title={fullscreen ? "Exit full screen" : "Full screen"}
-            aria-label={fullscreen ? "Exit full screen" : "Open full screen"}
-          >
-            {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-          <button
-            type="button"
             onClick={() => handleOpenChange(false)}
-            className="rounded-lg p-2 text-zinc-300 transition hover:bg-white/10 hover:text-zinc-200"
+            className="rounded-lg p-2 text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -371,14 +367,14 @@ export default function WorkspaceNotificationsPopover() {
       </div>
       {tab === "notifications" ? (
         <div className="mt-2 flex items-center justify-between gap-2 px-1 pb-1">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+          <p className="text-[length:var(--r5-font-kbd)] font-semibold uppercase tracking-wide text-r5-text-secondary">
             Inbox
           </p>
           {unreadCount > 0 ? (
             <button
               type="button"
               onClick={() => void markAllRead()}
-              className="text-[11px] font-medium text-[var(--workspace-accent)] hover:underline"
+              className="text-[length:var(--r5-font-kbd)] font-medium text-r5-accent hover:underline"
             >
               Mark all as read
             </button>
@@ -386,10 +382,10 @@ export default function WorkspaceNotificationsPopover() {
         </div>
       ) : (
         <div className="mt-2 flex items-center gap-2 px-1 pb-1">
-          <p className="text-[13px] font-semibold text-[var(--workspace-fg)]">Daily digest</p>
+          <p className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Daily digest</p>
           {hasAlertContent ? (
             <span
-              className="inline-flex items-center gap-1 rounded-full border border-sky-500/35 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-300"
+              className="inline-flex items-center gap-1 rounded-full border border-r5-status-on-track/35 bg-r5-status-on-track/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-r5-status-on-track"
               title="Workspace digest"
             >
               <Info className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden />
@@ -403,12 +399,12 @@ export default function WorkspaceNotificationsPopover() {
 
   const notificationsBody = (
     <div
-      className={`overflow-y-auto px-2 py-2 ${fullscreen ? "min-h-0 flex-1" : "max-h-[min(70vh,420px)]"}`}
+      className={`overflow-y-auto px-2 py-2 min-h-0 flex-1`}
     >
       {notifLoading && notifList.length === 0 ? (
-        <p className="px-3 py-4 text-[13px] text-zinc-300">Loading…</p>
+        <p className="px-3 py-4 text-[length:var(--r5-font-subheading)] text-r5-text-secondary">Loading…</p>
       ) : notifList.length === 0 ? (
-        <p className="px-3 py-6 text-center text-[13px] text-zinc-400">No notifications yet.</p>
+        <p className="px-3 py-6 text-center text-[length:var(--r5-font-subheading)] text-r5-text-secondary">You are all caught up.</p>
       ) : (
         notifList.map((n) => {
           const Icon = iconForType(n.type);
@@ -418,21 +414,21 @@ export default function WorkspaceNotificationsPopover() {
               type="button"
               onClick={() => void onClickNotification(n)}
               className={`mb-1 flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-                n.read ? "hover:bg-white/[0.04]" : "bg-white/[0.06] hover:bg-white/[0.08]"
+                n.read ? "hover:bg-r5-surface-hover/40" : "bg-r5-surface-hover/60 hover:bg-r5-surface-hover"
               }`}
             >
               <div className="relative shrink-0 pt-0.5">
-                <Icon className="h-4 w-4 text-zinc-400" strokeWidth={2} aria-hidden />
+                <Icon className="h-4 w-4 text-r5-text-secondary" strokeWidth={2} aria-hidden />
                 {!n.read ? (
-                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-violet-500 shadow-[0_0_0_2px_rgba(9,9,11,0.95)]" />
+                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-r5-accent shadow-[0_0_0_2px_rgba(9,9,11,0.95)]" />
                 ) : null}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[13px] font-medium leading-snug text-zinc-100">{n.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-zinc-400">
+                <p className="text-[length:var(--r5-font-subheading)] font-medium leading-snug text-r5-text-primary">{n.title}</p>
+                <p className="mt-0.5 line-clamp-2 text-[length:var(--r5-font-body)] leading-snug text-r5-text-secondary">
                   {n.body}
                 </p>
-                <p className="mt-1 text-[11px] text-zinc-500">{formatTimeAgo(n.createdAt)}</p>
+                <p className="mt-1 text-[11px] text-r5-text-tertiary">{formatTimeAgo(n.createdAt)}</p>
               </div>
             </button>
           );
@@ -444,7 +440,7 @@ export default function WorkspaceNotificationsPopover() {
             type="button"
             disabled={notifLoading}
             onClick={() => void loadNotifications(false)}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] py-2 text-[12px] font-medium text-zinc-300 transition hover:bg-white/[0.06] disabled:opacity-50"
+            className="w-full rounded-xl border border-r5-border-subtle bg-white/[0.03] py-2 text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary transition hover:bg-r5-surface-hover/60 disabled:opacity-50"
           >
             {notifLoading ? "Loading…" : "Load more"}
           </button>
@@ -455,47 +451,47 @@ export default function WorkspaceNotificationsPopover() {
 
   const digestBody = (
     <div
-      className={`overflow-y-auto px-2 py-2 ${fullscreen ? "min-h-0 flex-1" : "max-h-[min(70vh,420px)]"}`}
+      className={`overflow-y-auto px-2 py-2 min-h-0 flex-1`}
     >
       {digestItems.map((item, i) => (
         <div
           key={i}
           className={`rounded-xl px-3 py-2.5 ${
-            item.tone === "warn" ? "bg-amber-500/10" : "hover:bg-white/[0.04]"
+            item.tone === "warn" ? "bg-r5-status-at-risk/10" : "hover:bg-r5-surface-hover/40"
           }`}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-300">{item.title}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">{item.title}</p>
           {item.href ? (
             <Link
               href={item.href}
               onClick={() => handleOpenChange(false)}
-              className="mt-1 block text-[13px] leading-snug text-zinc-200 transition hover:text-white"
+              className="mt-1 block text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-primary transition hover:text-r5-text-primary"
             >
               {item.body}
             </Link>
           ) : (
-            <p className="mt-1 text-[13px] leading-snug text-zinc-300">{item.body}</p>
+            <p className="mt-1 text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-secondary">{item.body}</p>
           )}
         </div>
       ))}
-      {loadingSummary ? <p className="px-3 py-4 text-[13px] text-zinc-300">Loading summary…</p> : null}
+      {loadingSummary ? <p className="px-3 py-4 text-[length:var(--r5-font-subheading)] text-r5-text-secondary">Loading summary…</p> : null}
     </div>
   );
 
   const panelFooter = (
-    <div className="border-t border-white/10 px-4 py-3">
+    <div className="border-t border-r5-border-subtle px-4 py-3">
       <Link
         href="/workspace/notifications/preferences"
         onClick={() => handleOpenChange(false)}
-        className="text-[12px] font-medium text-[var(--workspace-accent)] hover:underline"
+        className="text-[length:var(--r5-font-body)] font-medium text-r5-accent hover:underline"
       >
         Notification preferences
       </Link>
-      <span className="mx-2 text-zinc-500">·</span>
+      <span className="mx-2 text-r5-text-tertiary">·</span>
       <Link
         href="/overview"
         onClick={() => handleOpenChange(false)}
-        className="text-[12px] font-medium text-zinc-400 hover:text-zinc-200 hover:underline"
+        className="text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary hover:text-zinc-200 hover:underline"
       >
         Overview
       </Link>
@@ -518,7 +514,7 @@ export default function WorkspaceNotificationsPopover() {
       <button
         type="button"
         onClick={() => handleOpenChange(!open)}
-        className="relative inline-flex rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 p-2 text-[var(--workspace-muted-fg)] shadow-sm transition hover:bg-white/[0.1] hover:text-[var(--workspace-fg)]"
+        className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Notifications and daily digest"
@@ -526,40 +522,38 @@ export default function WorkspaceNotificationsPopover() {
         <Bell className="h-4 w-4" strokeWidth={2} aria-hidden />
         {showNumberBadge ? (
           <span
-            className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-[0_0_0_2px_rgba(9,9,11,0.95)]"
+            className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-[var(--r5-radius-pill)] bg-r5-status-overdue px-[var(--r5-space-1)] text-[length:var(--r5-font-kbd)] font-semibold text-r5-text-primary"
             title="Unread notifications"
           >
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         ) : showDigestDot ? (
           <span
-            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500 shadow-[0_0_0_2px_rgba(9,9,11,0.95)]"
+            className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-[var(--r5-radius-pill)] bg-r5-status-overdue"
             title="New digest updates"
             aria-hidden
           />
         ) : null}
       </button>
 
-      {open && !fullscreen ? (
-        <div
-          className="absolute right-0 top-[calc(100%+10px)] z-[80] w-[min(calc(100vw-2rem),380px)] rounded-2xl border border-white/12 bg-zinc-950/90 p-0 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.85),0_0_0_1px_rgba(139,92,246,0.15)_inset] backdrop-blur-2xl"
-          role="dialog"
-          aria-label="Notifications"
-        >
-          {panelContent}
-        </div>
-      ) : null}
-
-      {open && fullscreen
+      {open
         ? createPortal(
-            <div
-              className="fixed inset-0 z-[200] flex flex-col border border-white/10 bg-zinc-950/98 shadow-2xl backdrop-blur-2xl"
-              role="dialog"
-              aria-label="Notifications"
-              aria-modal="true"
-            >
-              {panelContent}
-            </div>,
+            <>
+              <button
+                type="button"
+                className="fixed inset-0 z-[199] bg-black/40"
+                aria-label="Close notifications"
+                onClick={() => handleOpenChange(false)}
+              />
+              <aside
+                className="fixed inset-y-0 right-0 z-[200] flex w-full max-w-[400px] flex-col border-l border-r5-border-subtle bg-r5-surface-primary/95 shadow-[var(--r5-shadow-elevated)] backdrop-blur-xl"
+                role="dialog"
+                aria-label="Notifications"
+                aria-modal="true"
+              >
+                {panelContent}
+              </aside>
+            </>,
             document.body
           )
         : null}

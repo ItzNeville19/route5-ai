@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
-import { deskUrl } from "@/lib/desk-routes";
+import { FEED_HREF } from "@/lib/app-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
-
-const DESK_HREF = deskUrl();
 
 function SignUpClerkMissing() {
   return (
@@ -34,7 +32,7 @@ function SignUpWithClerk() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? DESK_HREF : "/onboarding";
+    const next = isOnboardingComplete(userId) ? FEED_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -74,7 +72,7 @@ function SignUpWithClerk() {
             routing="hash"
             signInUrl="/login"
             fallbackRedirectUrl="/onboarding"
-            signInFallbackRedirectUrl={DESK_HREF}
+            signInFallbackRedirectUrl={FEED_HREF}
             appearance={{
               elements: {
                 rootBox: "w-full mx-auto max-w-[420px]",

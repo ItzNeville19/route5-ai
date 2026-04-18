@@ -114,13 +114,13 @@ export default function RelayCommandOrb() {
             </kbd>
           </button>
           <Link
-            href="/settings#connections"
+            href="/integrations"
             role="menuitem"
             className="flex items-center gap-3 px-3 py-2.5 text-[13px] text-zinc-200 transition hover:bg-white/[0.06]"
             onClick={() => setOpen(false)}
           >
             <Plug2 className="h-4 w-4 text-zinc-300" />
-            Integrations hub
+            Integrations
           </Link>
           <Link
             href={deskUrl()}

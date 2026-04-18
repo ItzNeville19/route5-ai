@@ -31,7 +31,7 @@ export const PLAN_TIERS: PlanTier[] = [
       "Try Route5 with tight limits — enough to evaluate Desk and projects; upgrade for real volume and connectors.",
     tagline: "Evaluation tier — small limits on purpose.",
     features: [
-      "3 projects · 60 extractions / month (UTC) — see Settings for live usage",
+      "3 projects · 60 captured decisions / month (UTC) — see Settings for live usage",
       "Desk, Overview, Reports — core execution loop",
       "Linear & GitHub: paste/import as documented (tokens optional for live API)",
       "Team insights: roll-up counts for your signed-in account — not multi-seat collaboration",
@@ -45,11 +45,11 @@ export const PLAN_TIERS: PlanTier[] = [
     price: "$29",
     valueNote:
       "Where daily execution work belongs: higher ceilings, Slack connector, full exports, and priority support.",
-    tagline: "Higher limits for people who run extractions every week (not a shared org database).",
+    tagline: "Higher limits for people who capture decisions every week (not a shared org database).",
     features: [
-      "30 projects · 4,000 extractions / month — room for real cadence",
+      "30 projects · 4,000 captured decisions / month — room for real cadence",
       "Slack: integration page + API as documented (host tokens may be required)",
-      "Reports exports (JSON, print, SVG charts) and analytics from your saved runs",
+      "Reports exports (JSON, print, SVG charts) and analytics from your saved commitments",
       "Priority support and early connector betas — subject to availability",
       "Team insights: Pro packaging (exports + messaging) — data stays per signed-in user",
     ],
@@ -64,7 +64,7 @@ export const PLAN_TIERS: PlanTier[] = [
       "Higher caps for heavy usage. SSO / deep org features may be roadmap — confirmed in sales.",
     tagline: "Heavy usage and roadmap enterprise features — confirm scope before buying.",
     features: [
-      "120 projects · 25,000 extractions / month (UTC)",
+      "120 projects · 25,000 captured decisions / month (UTC)",
       "Everything in Pro with substantially higher limits",
       "SSO / SAML and org controls — roadmap; timeline in your sales conversation",
       "Org-wide analytics — prioritized for Ultra where we ship them (not guaranteed dates)",

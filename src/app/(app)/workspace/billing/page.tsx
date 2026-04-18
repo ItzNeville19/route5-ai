@@ -44,6 +44,7 @@ export default function WorkspaceBillingPage() {
   const [checkoutPlan, setCheckoutPlan] = useState<"starter" | "growth">("starter");
   const [busy, setBusy] = useState<string | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -103,6 +104,7 @@ export default function WorkspaceBillingPage() {
 
   async function tryInvite() {
     setBusy("invite");
+    setNotice(null);
     try {
       const res = await fetch("/api/billing/invite", { method: "POST", credentials: "same-origin" });
       const data = (await res.json().catch(() => ({}))) as {
@@ -123,7 +125,7 @@ export default function WorkspaceBillingPage() {
         return;
       }
       setError(null);
-      alert(data.message ?? "OK");
+      setNotice(data.message ?? "Seat available.");
     } finally {
       setBusy(null);
     }
@@ -133,23 +135,35 @@ export default function WorkspaceBillingPage() {
 
   return (
     <div className="mx-auto w-full max-w-[min(100%,960px)] pb-24">
-      <div className="mb-6">
+      <div className="mb-8">
         <Link
-          href="/overview"
-          className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
+          href="/feed"
+          className="group inline-flex items-center gap-1 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
-          ← Overview
+          <span className="transition-transform group-hover:-translate-x-0.5">←</span>
+          Feed
         </Link>
-        <h1 className="sr-only">Billing</h1>
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
+          Workspace
+        </p>
+        <h1 className="mt-2 text-[clamp(1.5rem,3.5vw,1.85rem)] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
+          Billing & subscription
+        </h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
           Subscription, usage, and invoices. Payments are processed securely by Stripe.
         </p>
       </div>
 
       {loading ? (
-        <p className="text-[13px] text-[var(--workspace-muted-fg)]">Loading billing…</p>
+        <div className="space-y-4" aria-busy aria-label="Loading billing">
+          <div className="h-40 animate-pulse rounded-2xl border border-[var(--workspace-border)]/60 bg-[var(--workspace-surface)]/50" />
+          <div className="h-32 animate-pulse rounded-2xl border border-[var(--workspace-border)]/60 bg-[var(--workspace-surface)]/40" />
+          <div className="h-28 animate-pulse rounded-2xl border border-[var(--workspace-border)]/60 bg-[var(--workspace-surface)]/35" />
+        </div>
       ) : error && !state ? (
-        <p className="text-[13px] text-red-400">{error}</p>
+        <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.07] px-4 py-3 text-[13px] text-red-200">
+          {error}
+        </div>
       ) : state ? (
         <div className="space-y-6">
           {state.paymentIssue ? (
@@ -203,7 +217,7 @@ export default function WorkspaceBillingPage() {
                       type="button"
                       disabled={busy !== null}
                       onClick={() => void startCheckout()}
-                      className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2 text-[13px] font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[var(--workspace-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--workspace-on-accent)] shadow-[0_8px_28px_-12px_rgba(139,92,246,0.55)] transition hover:opacity-95 disabled:opacity-50"
                     >
                       <CreditCard className="h-4 w-4" aria-hidden />
                       {busy === "checkout" ? "Opening…" : "Upgrade / change plan"}
@@ -242,10 +256,10 @@ export default function WorkspaceBillingPage() {
                       key={p}
                       type="button"
                       onClick={() => setCheckoutPlan(p)}
-                      className={`rounded-xl border px-3 py-2 text-[13px] font-medium ${
+                      className={`rounded-xl border px-3 py-2 text-[13px] font-medium transition ${
                         checkoutPlan === p
-                          ? "border-violet-500/50 bg-violet-500/10 text-[var(--workspace-fg)]"
-                          : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)]"
+                          ? "border-[var(--workspace-accent)]/45 bg-[var(--workspace-accent)]/[0.12] text-[var(--workspace-fg)]"
+                          : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)] hover:border-[var(--workspace-accent)]/25"
                       }`}
                     >
                       {planDisplayName(p)}
@@ -290,8 +304,9 @@ export default function WorkspaceBillingPage() {
               onClick={() => void tryInvite()}
               className="mt-4 rounded-xl border border-dashed border-[var(--workspace-border)] px-4 py-2 text-[12px] font-medium text-[var(--workspace-muted-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:text-[var(--workspace-fg)] disabled:opacity-50"
             >
-              Check seat availability (invite flow)
+              Validate seat capacity
             </button>
+            {notice ? <p className="mt-2 text-[12px] text-[var(--workspace-muted-fg)]">{notice}</p> : null}
           </section>
 
           <section className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-5">
@@ -378,7 +393,7 @@ export default function WorkspaceBillingPage() {
                   setCancelOpen(false);
                   void openPortal();
                 }}
-                className="rounded-xl bg-violet-600 px-4 py-2 text-[13px] font-semibold text-white"
+                className="rounded-xl bg-[var(--workspace-accent)] px-4 py-2 text-[13px] font-semibold text-[var(--workspace-on-accent)]"
               >
                 Open Stripe portal
               </button>

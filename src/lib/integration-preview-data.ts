@@ -46,7 +46,7 @@ export const PREVIEW_GITHUB_ISSUES: GitHubIssueRow[] = [
   {
     id: 900_001,
     number: 42,
-    title: "Improve first-run extraction success",
+    title: "Improve first-capture success",
     body: "## Observed\nUsers paste once and stop.\n\n## Hypothesis\nTemplates + one-tap send increases completion.",
     htmlUrl: "https://github.com/route5-ai/platform/issues/42",
     state: "open",
@@ -122,7 +122,7 @@ export function previewGitHubImport(ref: string): {
       number: parsed.number,
       title: `Track work for ${repoFullName}#${parsed.number}`,
       body:
-        "This is a **local preview** (GitHub API not configured on the server). You can still run extraction on the text below.\n\nWhen `GITHUB_TOKEN` is set for your deployment, this flow fetches the real issue body from GitHub.",
+        "This is a **local preview** (GitHub API not configured on the server). You can still capture decisions from the text below.\n\nWhen `GITHUB_TOKEN` is set for your deployment, this flow fetches the real issue body from GitHub.",
       htmlUrl: `https://github.com/${parsed.owner}/${parsed.repo}/issues/${parsed.number}`,
       state: "open",
       repoFullName,

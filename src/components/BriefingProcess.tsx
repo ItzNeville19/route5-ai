@@ -15,7 +15,7 @@ const steps = [
   {
     num: "02",
     title: "Live workspace walkthrough",
-    description: "You sign in, create a project, and run a real extraction — the same path available in production.",
+    description: "You sign in, create a project, and capture real decisions — the same path available in production.",
     duration: "30–45 min",
   },
   {

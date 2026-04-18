@@ -83,12 +83,12 @@ const MAX_VISIBLE_SUGGESTIONS = 5;
 
 const IDLE_BY_TIME_LABELS: Record<"night" | "dawn" | "day" | "dusk", ReadonlySet<string>> = {
   night: new Set(["Onboarding replay", "Command palette ⌘K", "Privacy & data", "What should I do next?"]),
-  dawn: new Set(["Desk capture flow", "What should I do next?", "Duplicate a run", "Writing better prompts"]),
+  dawn: new Set(["Desk capture flow", "What should I do next?", "Duplicate a commitment", "Writing better prompts"]),
   day: new Set([
-    "Projects vs extractions",
+    "Projects vs captures",
     "Linear & GitHub",
     "Team alignment",
-    "Marketplace & installs",
+    "Library & installs",
     "Action items & completion",
   ]),
   dusk: new Set(["Plans & limits", "Team alignment", "Customize Overview", "What should I do next?"]),
@@ -110,10 +110,10 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
     keywords: ["next", "start", "priority", "workspace", "help", "begin", "first", "stuck"],
   },
   {
-    label: "Projects vs extractions",
-    prompt: "Explain projects vs extractions in one paragraph.",
+    label: "Projects vs captures",
+    prompt: "Explain projects vs captured decisions in one paragraph.",
     learnMoreHref: "/docs/product",
-    keywords: ["project", "extraction", "difference", "vs", "run", "container", "where", "save"],
+    keywords: ["project", "capture", "difference", "vs", "commitment", "container", "where", "save"],
   },
   {
     label: "Linear & GitHub",
@@ -128,26 +128,26 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
     keywords: ["team", "alignment", "standup", "insights", "reports", "overview", "same", "share", "org"],
   },
   {
-    label: "Duplicate a run",
-    prompt: "How do I duplicate an extraction run inside a project?",
+    label: "Duplicate a commitment",
+    prompt: "How do I duplicate a captured decision inside a project?",
     learnMoreHref: "/docs/product",
-    keywords: ["duplicate", "copy", "run", "extraction", "clone", "again", "branch", "fork", "variant"],
+    keywords: ["duplicate", "copy", "commitment", "capture", "clone", "again", "branch", "fork", "variant"],
   },
   {
-    label: "Marketplace & installs",
-    prompt: "What does installing from the marketplace do in my workspace?",
-    learnMoreHref: "/marketplace",
-    keywords: ["marketplace", "install", "app", "catalog", "store", "integration", "browse", "tile"],
+    label: "Library & installs",
+    prompt: "What does installing from the library do in my workspace?",
+    learnMoreHref: "/workspace/apps",
+    keywords: ["library", "install", "app", "catalog", "store", "integration", "browse", "tile"],
   },
   {
     label: "Plans & limits",
-    prompt: "How do project and monthly extraction limits work?",
+    prompt: "How do project and monthly commitment limits work?",
     learnMoreHref: "/account/plans",
     keywords: ["plan", "limit", "billing", "tier", "month", "quota", "usage", "upgrade", "price"],
   },
   {
     label: "Desk capture flow",
-    prompt: "Walk me through Desk: pick project, paste, run extraction.",
+    prompt: "Walk me through Desk: pick project, paste, process.",
     learnMoreHref: deskUrl(),
     keywords: ["desk", "paste", "capture", "inbox", "compose", "raw", "input", "template", "preset"],
   },
@@ -165,7 +165,7 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   },
   {
     label: "Markdown export",
-    prompt: "How do I copy an extraction as Markdown from a project?",
+    prompt: "How do I copy a capture as Markdown from a project?",
     learnMoreHref: "/docs/product",
     keywords: ["markdown", "export", "copy", "md", "share", "document"],
   },
@@ -195,7 +195,7 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   },
   {
     label: "Writing better prompts",
-    prompt: "Tips for pasting messy threads so extraction quality stays high.",
+    prompt: "Tips for pasting messy threads so decision capture quality stays high.",
     learnMoreHref: "/docs/product",
     keywords: ["write", "prompt", "paste", "thread", "slack", "email", "notes", "quality", "context"],
   },

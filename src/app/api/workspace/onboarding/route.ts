@@ -76,12 +76,13 @@ export async function POST(req: Request) {
     for (const raw of body.emails ?? []) {
       const email = raw.trim();
       if (!email.includes("@")) continue;
+      const redirectAfter = `${base}/feed`;
       await notifyTeamInvited({
         orgId,
         inviteeEmail: email,
         inviterName,
         orgName: org.name,
-        signupUrl: `${base}/sign-up`,
+        signupUrl: `${base}/sign-up?redirect_url=${encodeURIComponent(redirectAfter)}`,
       });
     }
     await markOnboardingStepComplete(orgId, userId, "invite_team");

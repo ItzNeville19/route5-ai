@@ -104,7 +104,7 @@ export default function AccountDangerZone() {
             <p className="font-semibold text-red-100">This cannot be undone</p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-[12px] text-red-200/95">
               <li>Your Clerk account is removed — you will be signed out everywhere.</li>
-              <li>Your Route5 projects and extractions for this account are deleted from our workspace.</li>
+              <li>Your Route5 projects and captured decisions for this account are deleted from our workspace.</li>
               <li>Billing and plan links go through Clerk; if you use a paid tier, resolve billing before deleting.</li>
             </ul>
           </div>

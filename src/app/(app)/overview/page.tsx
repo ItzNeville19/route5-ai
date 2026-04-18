@@ -1,282 +1,177 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import { ArrowRight } from "lucide-react";
-import DashboardOpenActionsStrip from "@/components/workspace/DashboardOpenActionsStrip";
-import DashboardPurposeCard from "@/components/workspace/DashboardPurposeCard";
-import DashboardRecentWork from "@/components/workspace/DashboardRecentWork";
-import DashboardPlanUsagePanel from "@/components/workspace/DashboardPlanUsagePanel";
-import DashboardCommitmentSnapshot from "@/components/workspace/DashboardCommitmentSnapshot";
-import DashboardExecutionTrend from "@/components/workspace/DashboardExecutionTrend";
-import DashboardWorkspaceHero from "@/components/workspace/DashboardWorkspaceHero";
-import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
-import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isOnboardingComplete } from "@/lib/onboarding-storage";
-import { deskUrl } from "@/lib/desk-routes";
-import { EXTRACTION_PRESETS } from "@/lib/extraction-presets";
-import type { Project } from "@/lib/types";
+import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
+import { isCompletedRow } from "@/lib/feed/group-commitments";
+import { ownerHoverLabelFromId } from "@/components/feed/feed-user-display";
 
-/** Overview — morning dashboard: execution health, risk signals, and team load. */
-export default function OverviewPage() {
-  const router = useRouter();
-  const { user, isLoaded: userLoaded } = useUser();
-  const exp = useWorkspaceExperience();
-  const { pushToast } = exp;
-  const { projects, summary, executionOverview, loadingProjects, loadingSummary, refreshAll } =
-    useWorkspaceData();
-  const [error, setError] = useState<string | null>(null);
-  const [templateLoading, setTemplateLoading] = useState<string | null>(null);
+type OwnerRollup = {
+  ownerId: string;
+  ownerLabel: string;
+  overdue: number;
+  atRisk: number;
+  onTrack: number;
+  totalOpen: number;
+};
 
-  const displayName =
-    user?.fullName?.trim() ||
-    [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
-    user?.firstName ||
-    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
-    "there";
-  const onboardingComplete = useMemo(
-    () => Boolean(user?.id && isOnboardingComplete(user.id)),
-    [user?.id]
-  );
+function executionHealthScore(rows: OrgCommitmentRow[]): number {
+  const open = rows.filter((r) => !isCompletedRow(r));
+  if (open.length === 0) return 100;
+  let score = 100;
+  for (const row of open) {
+    if (row.status === "overdue") score -= 10;
+    else if (row.status === "at_risk") score -= 5;
+    else score -= 1;
+  }
+  return Math.max(0, Math.round(score));
+}
+
+function scoreTone(score: number): string {
+  if (score < 60) return "text-r5-status-overdue";
+  if (score < 80) return "text-r5-status-at-risk";
+  return "text-r5-status-completed";
+}
+
+export default function LeadershipPage() {
+  const [rows, setRows] = useState<OrgCommitmentRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const onHash = () => {
-      if (window.location.hash === "#new-project") {
-        window.dispatchEvent(new Event("route5:new-project-open"));
-      }
-    };
-    onHash();
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-
-  async function openTemplate(presetId: string) {
-    setTemplateLoading(presetId);
-    setError(null);
-    try {
-      let pid = projects[0]?.id;
-      if (!pid) {
-        const res = await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/commitments?sort=deadline&order=asc", {
           credentials: "same-origin",
-          body: JSON.stringify({
-            name: `Workspace — ${new Date().toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-            })}`,
-            iconEmoji: "📁",
-          }),
         });
         const data = (await res.json().catch(() => ({}))) as {
-          error?: string;
-          project?: Project;
+          commitments?: OrgCommitmentRow[];
         };
-        if (!res.ok || !data.project?.id) {
-          setError(data.error ?? "Could not create a project for this template.");
-          pushToast("Could not create a project.", "error");
-          return;
+        if (!cancelled && res.ok) {
+          setRows(data.commitments ?? []);
         }
-        pid = data.project.id;
-        await refreshAll();
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      router.push(`/projects/${pid}?preset=${presetId}`);
-      pushToast("Opening template…", "success");
-    } finally {
-      setTemplateLoading(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const openRows = useMemo(() => rows.filter((r) => !isCompletedRow(r)), [rows]);
+  const onTrackCount = useMemo(
+    () => openRows.filter((r) => r.status === "on_track" || r.status === "in_progress").length,
+    [openRows]
+  );
+  const atRiskCount = useMemo(
+    () => openRows.filter((r) => r.status === "at_risk").length,
+    [openRows]
+  );
+  const overdueRows = useMemo(
+    () => openRows.filter((r) => r.status === "overdue"),
+    [openRows]
+  );
+  const health = useMemo(() => executionHealthScore(rows), [rows]);
+
+  const ownerBreakdown = useMemo<OwnerRollup[]>(() => {
+    const byOwner = new Map<string, OwnerRollup>();
+    for (const row of openRows) {
+      const ownerId = row.ownerId?.trim() || "unassigned";
+      const current = byOwner.get(ownerId) ?? {
+        ownerId,
+        ownerLabel: ownerHoverLabelFromId(ownerId, undefined, ""),
+        overdue: 0,
+        atRisk: 0,
+        onTrack: 0,
+        totalOpen: 0,
+      };
+      current.totalOpen += 1;
+      if (row.status === "overdue") current.overdue += 1;
+      else if (row.status === "at_risk") current.atRisk += 1;
+      else current.onTrack += 1;
+      byOwner.set(ownerId, current);
     }
-  }
+    return [...byOwner.values()].sort((a, b) => b.overdue - a.overdue || b.atRisk - a.atRisk || b.totalOpen - a.totalOpen);
+  }, [openRows]);
 
   return (
-    <div className="mx-auto max-w-[min(100%,1440px)] pb-24">
-      {error ? (
-        <div
-          className="mb-6 rounded-2xl border border-red-500/30 bg-red-950/35 px-5 py-3 text-[13px] text-red-100 shadow-sm"
-          role="status"
-        >
-          {error}
-        </div>
-      ) : null}
-
-      {userLoaded ? (
-        <div className="space-y-6">
-          <DashboardWorkspaceHero
-            displayName={displayName}
-            userId={user?.id}
-            workspaceTimezone={exp.prefs.workspaceTimezone}
-            workspaceRegionKey={exp.prefs.workspaceRegionKey}
-            summaryLoading={loadingSummary}
-            projectCount={summary.projectCount}
-            extractionCount={summary.extractionCount}
-            readiness={summary.readiness}
-            onboardingComplete={onboardingComplete}
-            recent={summary.recent}
-            activity={summary.activity}
-            activitySeries={summary.activitySeries}
-            execution={summary.execution}
-          />
-
-          <DashboardCommitmentSnapshot overview={executionOverview} loading={loadingSummary} />
-
-          <DashboardExecutionTrend />
-
-          <DashboardOpenActionsStrip
-            loading={loadingSummary}
-            extractionCount={summary.extractionCount}
-            openActionCount={summary.openActions.length}
-          />
-
-          <DashboardPurposeCard
-            projectCount={summary.projectCount}
-            extractionCount={summary.extractionCount}
-            openaiReady={summary.readiness?.openai ?? false}
-            linearReady={summary.readiness?.linear ?? false}
-            githubReady={summary.readiness?.github ?? false}
-            figmaReady={summary.readiness?.figma ?? false}
-          />
-        </div>
-      ) : (
-        <div
-          className="dashboard-pro-skeleton h-[min(18rem,38vh)] animate-pulse"
-          aria-hidden
-        />
-      )}
-
-      <section
-        id="new-project"
-        className="dashboard-home-card scroll-mt-24 mt-6 rounded-[28px] px-5 py-5 sm:px-6 sm:py-6"
-        aria-label="Projects, Desk, and capture templates"
-      >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--workspace-muted-fg)]">
-              Workspaces &amp; Desk
-            </p>
-            <h2 className="mt-2 text-[22px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
-              Create a workspace, capture input, or use a template
-            </h2>
-            <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              Projects group commitments and history. Desk is where you paste notes and meeting text so the system can
-              extract structured commitments — then you confirm owners and track them here until they are done.
-            </p>
+    <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] space-y-[var(--r5-space-5)]">
+      <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-[var(--r5-space-5)]">
+        <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">Execution health</p>
+        {loading ? (
+          <div className="mt-[var(--r5-space-3)] h-10 w-28 animate-pulse rounded-[var(--r5-radius-md)] bg-r5-border-subtle/35" />
+        ) : (
+          <div className="mt-[var(--r5-space-3)] flex items-end gap-[var(--r5-space-2)]">
+            <p className={`text-[length:var(--r5-font-display)] font-semibold leading-none ${scoreTone(health)}`}>{health}</p>
+            <p className="pb-[var(--r5-space-1)] text-[length:var(--r5-font-subheading)] text-r5-text-secondary">/ 100</p>
           </div>
-          <Link
-            href={deskUrl()}
-            className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
-          >
-            Open Desk
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </Link>
+        )}
+      </section>
+
+      <section className="grid gap-[var(--r5-space-3)] sm:grid-cols-3">
+        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+          <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">On track</p>
+          <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-completed">{onTrackCount}</p>
         </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-            className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-fg)] px-5 py-5 text-left text-[var(--workspace-canvas)] shadow-sm transition hover:opacity-95"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-canvas)]/70">
-              Create
-            </p>
-            <p className="mt-2 text-[18px] font-semibold tracking-[-0.03em]">New project</p>
-            <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-canvas)]/78">
-              Name, icon, template, and where you land after create.
-            </p>
-          </button>
-
-          <Link
-            href={projects[0] ? `/projects/${projects[0].id}` : deskUrl()}
-            className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/72 px-5 py-5 transition hover:bg-[var(--workspace-nav-hover)]"
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
-              Continue
-            </p>
-            <p className="mt-2 text-[18px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
-              {projects[0]?.name ?? "Open Desk"}
-            </p>
-            <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              {projects[0]
-                ? "Jump back into this workspace’s commitments and activity."
-                : "Paste capture on Desk first if you are not ready to create a project."}
-            </p>
-          </Link>
+        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+          <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">At risk</p>
+          <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-at-risk">{atRiskCount}</p>
         </div>
-
-        <div className="mt-8 border-t border-[var(--workspace-border)] pt-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--workspace-muted-fg)]">
-            Templates
-          </p>
-          <p className="mt-1 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Each template starts a project with a shape suited to the kind of execution you are tracking.
-          </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {EXTRACTION_PRESETS.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                title={p.use}
-                disabled={Boolean(templateLoading)}
-                onClick={() => void openTemplate(p.id)}
-                className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-4 text-left transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] disabled:opacity-50"
-              >
-                <p className="text-[15px] font-semibold text-[var(--workspace-fg)]">
-                  {templateLoading === p.id ? "Opening…" : p.label}
-                </p>
-                <p className="mt-1 text-[13px] leading-snug text-[var(--workspace-muted-fg)]">{p.use}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 border-t border-[var(--workspace-border)] pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Prefer the guided flow? The builder copies your link when the project is created.
-          </p>
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-            className="inline-flex shrink-0 items-center justify-center rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-5 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
-          >
-            Open project builder
-          </button>
+        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+          <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">Overdue</p>
+          <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-overdue">{overdueRows.length}</p>
         </div>
       </section>
 
-      <div className="mt-6">
-        <DashboardRecentWork
-          projects={projects}
-          recent={summary.recent}
-          loading={loadingProjects || loadingSummary}
-        />
-      </div>
-
-      {userLoaded ? (
-        <div className="mt-6">
-          <DashboardPlanUsagePanel />
+      <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Owner breakdown</h2>
+        <div className="mt-[var(--r5-space-3)] overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left text-[length:var(--r5-font-body)]">
+            <thead>
+              <tr className="border-b border-r5-border-subtle/70 text-r5-text-secondary">
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Owner</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Overdue</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">At risk</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">On track</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Open</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ownerBreakdown.map((owner) => (
+                <tr key={owner.ownerId} className="border-b border-r5-border-subtle/40 text-r5-text-primary">
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.ownerLabel}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-overdue">{owner.overdue}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-at-risk">{owner.atRisk}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-completed">{owner.onTrack}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.totalOpen}</td>
+                </tr>
+              ))}
+              {ownerBreakdown.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-[var(--r5-space-2)] py-[var(--r5-space-4)] text-r5-text-secondary">No open commitments.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
         </div>
-      ) : null}
+      </section>
 
-      <div className="mt-14 border-t border-[var(--workspace-border)] pt-8 text-center">
-        <p className="text-[11px] text-[var(--workspace-muted-fg)]">
-          <Link href="/" className="hover:text-[var(--workspace-fg)]">
-            route5.ai
-          </Link>
-          {" · "}
-          <Link href="/product" className="hover:text-[var(--workspace-fg)]">
-            Product
-          </Link>
-          {" · "}
-          <Link href="/privacy" className="hover:text-[var(--workspace-fg)]">
-            Privacy
-          </Link>
-          {" · "}
-          <Link href="/terms" className="hover:text-[var(--workspace-fg)]">
-            Terms
-          </Link>
-        </p>
-      </div>
+      <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Overdue commitments</h2>
+        {overdueRows.length === 0 ? (
+          <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary">No overdue commitments.</p>
+        ) : (
+          <ul className="mt-[var(--r5-space-3)] space-y-[var(--r5-space-2)]">
+            {overdueRows.map((row) => (
+              <li key={row.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)]">
+                <p className="text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
+                <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{ownerHoverLabelFromId(row.ownerId, undefined, "")}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

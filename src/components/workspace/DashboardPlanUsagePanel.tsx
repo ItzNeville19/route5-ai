@@ -176,7 +176,7 @@ export default function DashboardPlanUsagePanel() {
             {loadingEntitlements
               ? "Fetching limits and usage…"
               : entitlements?.tierTagline ??
-                "Plans set monthly extraction and project ceilings — numbers below match enforcement."}
+                "Plans set monthly capture and project ceilings — numbers below match enforcement."}
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:items-end">
@@ -215,10 +215,10 @@ export default function DashboardPlanUsagePanel() {
           ) : (
             <>
               <UsageBar
-                label="Extractions this month (UTC)"
+                label="Captures this month (UTC)"
                 used={usage.extractionsThisMonth}
                 cap={limits.maxExtractionsPerMonth}
-                suffix="runs"
+                suffix="commitments"
               />
               <UsageBar
                 label="Projects"
@@ -227,7 +227,7 @@ export default function DashboardPlanUsagePanel() {
                 suffix="workspaces"
               />
               <p className="text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Total runs (all time):{" "}
+                Total commitments (all time):{" "}
                 <span className="font-medium text-[var(--workspace-fg)] tabular-nums">
                   {usage.extractionCount.toLocaleString()}
                 </span>
@@ -237,7 +237,7 @@ export default function DashboardPlanUsagePanel() {
               </p>
               {!paid && isNearOrOverLimit(usage.extractionsThisMonth, limits.maxExtractionsPerMonth) ? (
                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-[13px] leading-relaxed text-amber-950 dark:text-amber-100">
-                  You&apos;re close to this month&apos;s extraction cap on Free.{" "}
+                  You&apos;re close to this month&apos;s capture cap on Free.{" "}
                   <Link href={upgradeHref} className="font-semibold text-[var(--workspace-accent)] hover:underline">
                     Upgrade
                   </Link>{" "}

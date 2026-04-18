@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import LandingHero from "@/components/marketing/LandingHero";
 import { outfitLanding } from "@/lib/fonts-landing";
 
-/** Command canvas + mesh — copy aligns to live product (Desk, Overview, audit); no fabricated metrics. */
+/** Marketing home — Feed, Capture, Overview, and product scope; no fabricated metrics. */
 export default function Home() {
   return (
     <main

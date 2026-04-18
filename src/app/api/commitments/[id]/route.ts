@@ -16,6 +16,7 @@ import {
   parseJsonBody,
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
+import { verifyProjectOwned } from "@/lib/workspace/store";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,7 @@ const patchSchema = z
     title: z.string().min(1).max(2000).optional(),
     description: z.string().max(20_000).optional().nullable(),
     ownerId: z.string().min(1).max(128).optional(),
+    projectId: z.string().uuid().nullable().optional(),
     deadline: z.string().min(1).max(48).optional(),
     priority: z.enum(["critical", "high", "medium", "low"]).optional(),
     completed: z.boolean().optional(),
@@ -82,10 +84,17 @@ export async function PATCH(
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);
     const patch = parsed.data;
+    if (patch.projectId) {
+      const owned = await verifyProjectOwned(userId, patch.projectId);
+      if (!owned) {
+        return NextResponse.json({ error: "Invalid project" }, { status: 400 });
+      }
+    }
     const { row, previousOwnerId } = await updateOrgCommitment(userId, id, {
       title: patch.title,
       description: patch.description,
       ownerId: patch.ownerId,
+      projectId: patch.projectId,
       deadline: patch.deadline ? new Date(patch.deadline).toISOString() : undefined,
       priority: patch.priority,
       completed: patch.completed,

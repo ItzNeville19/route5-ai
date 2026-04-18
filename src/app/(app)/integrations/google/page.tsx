@@ -37,7 +37,7 @@ export default function GoogleIntegrationPage() {
             <Link href={deskUrl()} className="font-semibold text-[var(--workspace-accent)] hover:underline">
               Desk
             </Link>{" "}
-            or a project and run extraction — same structured output you already use. Native Google OAuth and file
+            or a project and capture decisions — same structured output you already use. Native Google OAuth and file
             pickers are on the roadmap; when live, you&apos;ll connect once under Connections.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">

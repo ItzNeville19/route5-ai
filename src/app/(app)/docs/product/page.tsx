@@ -52,11 +52,11 @@ export default function DocsProductPage() {
             {PRODUCT_LIVE.projects}
           </li>
           <li className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3">
-            <span className="font-medium text-[var(--workspace-fg)]">Automation ingest.</span>{" "}
+            <span className="font-medium text-[var(--workspace-fg)]">Webhook input.</span>{" "}
             {PRODUCT_LIVE.ingest}
           </li>
           <li className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3">
-            <span className="font-medium text-[var(--workspace-fg)]">Extraction.</span>{" "}
+            <span className="font-medium text-[var(--workspace-fg)]">Decision capture.</span>{" "}
             {PRODUCT_LIVE.extract}
           </li>
           <li className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3">
@@ -85,7 +85,7 @@ export default function DocsProductPage() {
         <p className="mt-3">
           These are directions we may pursue. They are{" "}
           <strong className="font-medium text-[var(--workspace-fg)]">not</strong> part of the
-          live extraction product until they appear in the app.
+          live decision-capture product until they appear in the app.
         </p>
         <ul className="mt-4 space-y-2">
           {PRODUCT_ROADMAP.map((line) => (

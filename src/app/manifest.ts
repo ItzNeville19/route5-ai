@@ -1,19 +1,18 @@
 import type { MetadataRoute } from "next";
-import { deskUrl } from "@/lib/desk-routes";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Route5 — Project workspace",
+    name: "Route5 — execution workspace",
     short_name: "Route5",
     description:
-      "Projects, structured extractions, decisions and actions — workspace intelligence from your data.",
+      "Execution you can see — owned commitments, Feed, Desk, and integrations from your data.",
     id: "/",
-    start_url: deskUrl(),
+    start_url: "/feed",
     scope: "/",
     display: "standalone",
     orientation: "any",
     background_color: "#0c0c0e",
-    theme_color: "#121214",
+    theme_color: "#6366f1",
     categories: ["productivity", "business"],
     icons: [
       {
@@ -36,9 +35,12 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     shortcuts: [
-      { name: "Overview", short_name: "Home", url: "/overview", description: "Execution & commitments" },
-      { name: "Desk", short_name: "Desk", url: deskUrl(), description: "Capture & track" },
+      { name: "Feed", short_name: "Feed", url: "/feed", description: "Org commitments" },
+      { name: "Capture", short_name: "Capture", url: "/capture", description: "Capture workspace" },
+      { name: "Leadership", short_name: "Lead", url: "/overview", description: "Execution health" },
+      { name: "Projects", short_name: "Projects", url: "/projects", description: "All projects" },
       { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & connections" },
+      { name: "Team", short_name: "Team", url: "/workspace/team", description: "People & organization" },
     ],
   };
 }

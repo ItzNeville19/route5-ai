@@ -53,8 +53,8 @@ const roadmapControls = [
     description: "Automated comparison against live systems, rate limits, and policy checks before any agent acts.",
   },
   {
-    title: "On-prem & BYO LLM",
-    description: "Run extraction and storage entirely inside your perimeter with your approved models.",
+    title: "On-prem & your own models",
+    description: "Run decision capture and storage entirely inside your perimeter with your approved models.",
   },
   {
     title: "Enterprise compliance pack",

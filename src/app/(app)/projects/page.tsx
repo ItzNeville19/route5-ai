@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import ProjectsHub from "@/components/app/ProjectsHub";
 
-/** Legacy index — Overview dashboard lives at /overview. */
-export default function ProjectsIndexRedirect() {
-  redirect("/overview");
+export default function ProjectsIndexPage() {
+  return <ProjectsHub />;
 }

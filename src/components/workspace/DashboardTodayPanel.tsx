@@ -121,6 +121,7 @@ export default function DashboardTodayPanel({
     () => allCards.filter((c) => !dismissed.has(c.id)).slice(0, 4),
     [allCards, dismissed]
   );
+  const dismissedAllForToday = allCards.length > 0 && visibleCards.length === 0;
 
   const dismissAll = useCallback(() => {
     if (!userId) return;
@@ -136,6 +137,16 @@ export default function DashboardTodayPanel({
     });
   }, [userId, visibleCards]);
 
+  const restoreAll = useCallback(() => {
+    if (!userId) return;
+    setDismissed(new Set());
+    try {
+      localStorage.removeItem(storageKey(userId));
+    } catch {
+      /* ignore */
+    }
+  }, [userId]);
+
   const handleCta = (card: TodayCardDef) => {
     if (card.ctaHref === "#new-project") {
       openNewProjectModal();
@@ -147,6 +158,23 @@ export default function DashboardTodayPanel({
 
   if (!hydrated) {
     return null;
+  }
+
+  if (dismissedAllForToday) {
+    return (
+      <div className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/55 px-4 py-3">
+        <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+          Today cards were dismissed for now.
+        </p>
+        <button
+          type="button"
+          onClick={restoreAll}
+          className="mt-2 text-[12px] font-semibold text-[var(--workspace-accent)] underline-offset-2 hover:underline"
+        >
+          Show today cards again
+        </button>
+      </div>
+    );
   }
 
   if (visibleCards.length === 0) {

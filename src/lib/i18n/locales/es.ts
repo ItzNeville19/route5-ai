@@ -6,6 +6,8 @@ export const es: Record<string, string> = {
   "lang.autoBrowser": "Igual que el navegador",
   "sidebar.getStarted": "Empezar",
   "sidebar.overview": "Resumen",
+  "sidebar.feed": "Feed",
+  "sidebar.leadership": "Liderazgo",
   "sidebar.marketplace": "Marketplace",
   "sidebar.themes": "Temas",
   "sidebar.desk": "Escritorio",
@@ -18,8 +20,9 @@ export const es: Record<string, string> = {
   "sidebar.settings": "Ajustes",
   "sidebar.newProject": "Nuevo proyecto",
   "sidebar.projects": "Proyectos",
+  "sidebar.team": "Equipo",
   "sidebar.pinned": "Fijados",
-  "sidebar.projectsEmpty": "Aún no hay proyectos — usa {newProject} arriba.",
+  "sidebar.projectsEmpty": "Aún no hay proyectos — usa {newProject} abajo.",
   "sidebar.projectsEmptyNew": "Nuevo proyecto",
   "sidebar.loading": "Cargando…",
   "sidebar.runs": "{projects} · {runs} ejecuciones",
@@ -74,10 +77,10 @@ export const es: Record<string, string> = {
   "overview.openActionsStrip.caughtUp":
     "No hay acciones abiertas en la cola — listas al día. Captura el siguiente hilo en el Escritorio cuando quieras.",
 
-  "desk.llmOffTitle": "Sin LLM en este despliegue.",
+  "desk.llmOffTitle": "Proceso estructurado sin IA completa",
   "desk.llmOffLead":
-    "Las ejecuciones usan un resumen heurístico rápido (marcado en cada ejecución como «Heurístico»), no análisis semántico completo. Añade",
-  "desk.llmOffTail": "para extracciones con IA estructuradas.",
+    "Las capturas usan un resumen heurístico rápido (marcado en cada captura como «Heurístico»), no análisis semántico completo. Añade",
+  "desk.llmOffTail": "para campos estructurados con IA.",
   "desk.llmOffRead": "Lee qué estás contratando →",
 
   "desk.badge": "Escritorio",

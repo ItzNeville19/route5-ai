@@ -6,7 +6,6 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
-import { deskUrl } from "@/lib/desk-routes";
 import { easeApple } from "@/lib/motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -108,10 +107,10 @@ export default function LandingHero() {
               <>
                 <Show when="signed-in">
                   <Link
-                    href={deskUrl()}
+                    href="/feed"
                     className="inline-flex rounded-full border border-violet-500/35 bg-violet-500/10 px-5 py-2.5 text-[13px] font-semibold text-violet-200 transition hover:border-violet-400/50 hover:bg-violet-500/20"
                   >
-                    {t("marketing.hero.openDesk")}
+                    {t("marketing.hero.openFeed")}
                   </Link>
                 </Show>
                 <Show when="signed-out">

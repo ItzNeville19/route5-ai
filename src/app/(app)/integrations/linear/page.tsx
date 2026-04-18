@@ -171,7 +171,7 @@ export default function LinearIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — issues land here; send to Desk for extraction (same runs as Overview)."
+                ? "Live — issues land here; send to Desk for decision capture (same commitments as Overview)."
                 : "Ready — samples and URL import work now; add an API key for your workspace. Desk is the capture surface."}
             </p>
           ) : (
@@ -216,7 +216,7 @@ export default function LinearIntegrationPage() {
         <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Import by URL or id</h2>
         <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">
           Paste a Linear issue link, UUID, or <span className="font-mono">TEAM-123</span>. Then{" "}
-          <span className="font-medium text-[var(--workspace-fg)]">Open in Desk</span> to run extraction.
+          <span className="font-medium text-[var(--workspace-fg)]">Open in Desk</span> to capture decisions.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input

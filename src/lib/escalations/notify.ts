@@ -3,14 +3,7 @@ import type { OrgEscalationRow, OrgEscalationSeverity } from "@/lib/escalations/
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { postSlackEscalationBlockKit } from "@/lib/integrations/slack-escalation-blocks";
 import { sendNotification, sendNotificationToEmail } from "@/lib/notifications/service";
-
-function appBaseUrl(): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "http://localhost:3000";
-  return base.startsWith("http") ? base : `https://${base}`;
-}
+import { appBaseUrl } from "@/lib/app-base-url";
 
 function commitmentLink(commitmentId: string): string {
   return `${appBaseUrl()}/workspace/commitments?id=${encodeURIComponent(commitmentId)}`;

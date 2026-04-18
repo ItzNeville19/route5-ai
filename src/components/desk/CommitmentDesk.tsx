@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { nanoid } from "nanoid";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Activity,
@@ -32,6 +33,7 @@ import type {
   CommitmentStatus,
   ExecutionOverview,
 } from "@/lib/commitment-types";
+import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { deskUrl } from "@/lib/desk-routes";
@@ -78,8 +80,10 @@ export default function CommitmentDesk() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [inputOpen, setInputOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const [assignToMe, setAssignToMe] = useState(false);
-  const [extracting, setExtracting] = useState(false);
+  const [captureStep, setCaptureStep] = useState<"paste" | "review">("paste");
+  type ProposedRow = ExtractedCommitmentDraft & { key: string };
+  const [proposedRows, setProposedRows] = useState<ProposedRow[]>([]);
+  const [captureBusy, setCaptureBusy] = useState(false);
   const [intel, setIntel] = useState<ExecutionOverview | null>(null);
   const [loadingIntel, setLoadingIntel] = useState(true);
 
@@ -151,14 +155,21 @@ export default function CommitmentDesk() {
     setDetailNote("");
   }, [selectedId]);
 
-  async function runExtract(e: React.FormEvent) {
+  useEffect(() => {
+    if (inputOpen) {
+      setCaptureStep("paste");
+      setProposedRows([]);
+    }
+  }, [inputOpen]);
+
+  async function runPropose(e: React.FormEvent) {
     e.preventDefault();
     const raw = inputText.trim();
     if (!projectId || !raw) {
       pushToast("Choose a project and paste text.", "error");
       return;
     }
-    setExtracting(true);
+    setCaptureBusy(true);
     try {
       const res = await fetch(`/api/projects/${projectId}/commitments`, {
         method: "POST",
@@ -166,27 +177,99 @@ export default function CommitmentDesk() {
         credentials: "same-origin",
         body: JSON.stringify({
           extractFrom: raw,
-          assignOwnerUserId: assignToMe && user?.id ? user.id : null,
+          preview: true,
         }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        drafts?: ExtractedCommitmentDraft[];
+        error?: string;
+      };
+      if (!res.ok) {
+        pushToast(data.error ?? "Could not propose commitments.", "error");
+        return;
+      }
+      const drafts = data.drafts ?? [];
+      if (drafts.length === 0) {
+        pushToast("No commitments found — try bullets, numbered lines, or TODO: items.", "error");
+        return;
+      }
+      setProposedRows(
+        drafts.map((d) => ({
+          ...d,
+          key: nanoid(),
+          ownerUserId: d.ownerUserId ?? null,
+        }))
+      );
+      setCaptureStep("review");
+      pushToast(`${drafts.length} commitment(s) ready — assign owners and commit.`, "success");
+    } finally {
+      setCaptureBusy(false);
+    }
+  }
+
+  async function runCommit() {
+    if (!projectId || proposedRows.length === 0) return;
+    const commitDrafts = proposedRows.map(({ key: _k, ...d }) => ({
+      title: d.title.trim(),
+      description: d.description ?? null,
+      ownerName: d.ownerName?.trim() || null,
+      ownerUserId: d.ownerUserId?.trim() || null,
+      source: d.source,
+      sourceReference: d.sourceReference,
+      priority: d.priority,
+      dueDate: d.dueDate?.trim() || null,
+    }));
+    if (commitDrafts.some((r) => !r.title)) {
+      pushToast("Every row needs a title.", "error");
+      return;
+    }
+    setCaptureBusy(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/commitments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ commitDrafts }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         commitments?: Commitment[];
         error?: string;
       };
       if (!res.ok) {
-        pushToast(data.error ?? "Could not extract commitments.", "error");
+        pushToast(data.error ?? "Could not save commitments.", "error");
         return;
       }
       const n = data.commitments?.length ?? 0;
-      pushToast(n ? `Created ${n} commitment(s).` : "No commitments extracted.", "success");
+      pushToast(n ? `Committed ${n} — owners are notified when assigned.` : "Nothing saved.", "success");
       setInputText("");
       setInputOpen(false);
+      setCaptureStep("paste");
+      setProposedRows([]);
       await loadCommitments();
       await refreshAll();
       if (data.commitments?.[0]) setSelectedId(data.commitments[0].id);
     } finally {
-      setExtracting(false);
+      setCaptureBusy(false);
     }
+  }
+
+  function updateProposedRow(key: string, patch: Partial<ExtractedCommitmentDraft>) {
+    setProposedRows((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
+  function removeProposedRow(key: string) {
+    setProposedRows((rows) => rows.filter((r) => r.key !== key));
+  }
+
+  function assignRowToMe(key: string) {
+    if (!user?.id) {
+      pushToast("Sign in to assign to yourself.", "error");
+      return;
+    }
+    updateProposedRow(key, {
+      ownerUserId: user.id,
+      ownerName: user.fullName ?? user.firstName ?? user.primaryEmailAddress?.emailAddress ?? "You",
+    });
   }
 
   async function patchCommitment(partial: Record<string, unknown>) {
@@ -258,8 +341,8 @@ export default function CommitmentDesk() {
                 Own commitments, not chat logs
               </h1>
               <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Capture from meetings, Slack, or email; reconcile owners and status here. Counts below are
-                workspace-wide.
+                Paste notes, propose owned commitments, commit once — accountability, not summaries. Counts below
+                are workspace-wide.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -269,7 +352,7 @@ export default function CommitmentDesk() {
                 className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg shadow-black/20 transition hover:opacity-95"
               >
                 <Sparkles className="h-4 w-4" aria-hidden />
-                Capture text
+                Add decision
               </button>
               <Link
                 href="/overview"
@@ -447,7 +530,7 @@ export default function CommitmentDesk() {
                 ) : commitments.length === 0 ? (
                   <EmptyState
                     title="Nothing in this filter"
-                    body="Try another view or capture meeting notes — we turn action items into commitments."
+                    body="Try another view or add a decision from Desk — propose commitments from notes, then commit."
                     action={
                       <button
                         type="button"
@@ -455,7 +538,7 @@ export default function CommitmentDesk() {
                         className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
                       >
                         <Plus className="h-3.5 w-3.5" />
-                        Capture text
+                        Add decision
                       </button>
                     }
                   />
@@ -798,86 +881,196 @@ export default function CommitmentDesk() {
             exit={{ opacity: 0 }}
             onClick={() => setInputOpen(false)}
           >
-            <motion.form
-              onSubmit={runExtract}
+            <motion.div
               onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.98 }}
               transition={{ type: "spring", stiffness: 320, damping: 28 }}
-              className="w-full max-w-xl overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] shadow-2xl"
+              className="max-h-[min(90vh,880px)] w-full max-w-lg overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] shadow-2xl sm:max-w-xl"
             >
               <div className="border-b border-[var(--workspace-border)]/80 bg-gradient-to-r from-sky-500/10 to-transparent px-5 py-4">
-                <h3 className="text-[17px] font-semibold text-[var(--workspace-fg)]">Capture commitments</h3>
+                <h3 className="text-[17px] font-semibold text-[var(--workspace-fg)]">
+                  {captureStep === "paste" ? "Paste notes" : "Review commitments"}
+                </h3>
                 <p className="mt-1 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                  Paste meeting notes, a Slack thread, or email. We extract owned commitments (same pipeline as
-                  project extract).
+                  {captureStep === "paste"
+                    ? "We turn bullets and action lines into a list you own — nothing is saved until you commit."
+                    : "Assign owners and due dates, then commit. Assignees get an in-app notification."}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {(
-                    [
-                      ["Meeting", Video],
-                      ["Slack", MessageSquare],
-                      ["Email", Mail],
-                    ] as const
-                  ).map(([label, Icon]) => (
-                    <span
-                      key={label}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]"
-                    >
-                      <Icon className="h-3 w-3" aria-hidden />
-                      {label}
-                    </span>
-                  ))}
-                </div>
+                {captureStep === "paste" ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(
+                      [
+                        ["Meeting", Video],
+                        ["Slack", MessageSquare],
+                        ["Email", Mail],
+                      ] as const
+                    ).map(([label, Icon]) => (
+                      <span
+                        key={label}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]"
+                      >
+                        <Icon className="h-3 w-3" aria-hidden />
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-              <div className="p-5">
-                <textarea
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  rows={10}
-                  className="w-full rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)] shadow-inner outline-none ring-0 transition focus:border-[var(--workspace-accent)]/50"
-                  placeholder="Paste transcript or thread…"
-                  autoFocus
-                />
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--workspace-muted-fg)]">
-                  <span>
-                    {wordCount} word{wordCount === 1 ? "" : "s"}
-                  </span>
-                  {currentProject ? (
-                    <span className="rounded-full bg-[var(--workspace-border)]/40 px-2 py-0.5 font-medium text-[var(--workspace-fg)]">
-                      → {currentProject.name}
-                    </span>
-                  ) : null}
-                </div>
-                <label className="mt-4 flex cursor-pointer items-center gap-2.5 rounded-xl border border-[var(--workspace-border)]/60 bg-[var(--workspace-surface)]/40 px-3 py-2.5 text-[12px] text-[var(--workspace-muted-fg)]">
-                  <input
-                    type="checkbox"
-                    checked={assignToMe}
-                    onChange={(e) => setAssignToMe(e.target.checked)}
-                    className="rounded border-[var(--workspace-border)]"
+
+              {captureStep === "paste" ? (
+                <form onSubmit={runPropose} className="flex max-h-[calc(min(90vh,880px)-8rem)] flex-col p-5">
+                  <textarea
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    rows={10}
+                    className="min-h-[200px] w-full flex-1 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)] shadow-inner outline-none ring-0 transition focus:border-[var(--workspace-accent)]/50"
+                    placeholder="Paste transcript, thread, or notes…"
+                    autoFocus
                   />
-                  Assign extracted items to me (Clerk)
-                </label>
-                <div className="mt-5 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setInputOpen(false)}
-                    className="rounded-full px-4 py-2 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={extracting}
-                    className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-5 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg disabled:opacity-50"
-                  >
-                    {extracting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Sparkles className="h-4 w-4" aria-hidden />}
-                    Extract
-                  </button>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--workspace-muted-fg)]">
+                    <span>
+                      {wordCount} word{wordCount === 1 ? "" : "s"}
+                    </span>
+                    {currentProject ? (
+                      <span className="rounded-full bg-[var(--workspace-border)]/40 px-2 py-0.5 font-medium text-[var(--workspace-fg)]">
+                        → {currentProject.name}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setInputOpen(false)}
+                      className="rounded-full px-4 py-2 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={captureBusy}
+                      className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-5 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg disabled:opacity-50"
+                    >
+                      {captureBusy ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      ) : (
+                        <Sparkles className="h-4 w-4" aria-hidden />
+                      )}
+                      Propose commitments
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex max-h-[calc(min(90vh,880px)-8rem)] flex-col">
+                  <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
+                    {proposedRows.map((row) => (
+                      <div
+                        key={row.key}
+                        className="rounded-2xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/50 p-3.5"
+                      >
+                        <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+                          Commitment
+                          <textarea
+                            value={row.title}
+                            onChange={(e) => updateProposedRow(row.key, { title: e.target.value })}
+                            rows={2}
+                            className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
+                          />
+                        </label>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+                            Owner name
+                            <input
+                              type="text"
+                              value={row.ownerName ?? ""}
+                              onChange={(e) => updateProposedRow(row.key, { ownerName: e.target.value || null })}
+                              placeholder="Who owns this"
+                              className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
+                            />
+                          </label>
+                          <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+                            Due
+                            <input
+                              type="date"
+                              value={row.dueDate ? row.dueDate.slice(0, 10) : ""}
+                              onChange={(e) =>
+                                updateProposedRow(row.key, {
+                                  dueDate: e.target.value ? `${e.target.value}T00:00:00.000Z` : null,
+                                })
+                              }
+                              className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
+                            />
+                          </label>
+                        </div>
+                        <label className="mt-3 block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+                          Assignee Clerk user ID (optional)
+                          <input
+                            type="text"
+                            value={row.ownerUserId ?? ""}
+                            onChange={(e) =>
+                              updateProposedRow(row.key, {
+                                ownerUserId: e.target.value.trim() || null,
+                              })
+                            }
+                            placeholder="user_… — required for notifications to someone else"
+                            className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 font-mono text-[11px] text-[var(--workspace-fg)]"
+                          />
+                        </label>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => assignRowToMe(row.key)}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-nav-hover)] px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)]"
+                          >
+                            <User className="h-3.5 w-3.5" aria-hidden />
+                            Assign to me
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeProposedRow(row.key)}
+                            className="rounded-full px-3 py-1.5 text-[11px] font-medium text-[var(--workspace-muted-fg)] hover:bg-[var(--workspace-border)]/30"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[var(--workspace-border)]/80 px-5 py-4">
+                    <button
+                      type="button"
+                      onClick={() => setCaptureStep("paste")}
+                      className="rounded-full px-4 py-2 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                    >
+                      ← Back
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setInputOpen(false)}
+                        className="rounded-full px-4 py-2 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={captureBusy || proposedRows.length === 0}
+                        onClick={() => void runCommit()}
+                        className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-5 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg disabled:opacity-50"
+                      >
+                        {captureBusy ? (
+                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        ) : (
+                          <Target className="h-4 w-4" aria-hidden />
+                        )}
+                        Commit
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.form>
+              )}
+            </motion.div>
           </motion.div>
         ) : null}
       </AnimatePresence>

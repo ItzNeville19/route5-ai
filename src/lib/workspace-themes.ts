@@ -113,7 +113,7 @@ export const WORKSPACE_THEME_LABELS: Record<Exclude<WorkspaceThemeId, "auto">, s
   night: "Night — calm dark (readable)",
   light: "Light — soft neutral workspace",
   dark: "Dark — neutral charcoal (no mesh)",
-  classic: "Classic Route5 — violet & lime mesh",
+  classic: "Default — violet & lime mesh (Route5 signature)",
 };
 
 export const WORKSPACE_THEME_DESCRIPTIONS: Record<Exclude<WorkspaceThemeId, "auto">, string> = {

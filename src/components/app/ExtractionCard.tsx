@@ -144,19 +144,19 @@ export default function ExtractionCard({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--workspace-border)] pb-3">
         <div className="flex flex-wrap items-baseline gap-2">
           <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-            Saved run
+            Captured decision
           </span>
           {heuristicRun ? (
             <span
               className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200"
-              title="No LLM on this deployment — pattern-based digest. Configure OPENAI_API_KEY for AI structuring."
+              title="No AI on this deployment — pattern-based summary. Configure OPENAI_API_KEY on the server for AI structuring."
             >
               Heuristic
             </span>
           ) : (
             <span
               className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200"
-              title="Structured extraction returned by the configured model"
+              title="Structured decision capture from your configured model"
             >
               AI
             </span>
@@ -176,7 +176,7 @@ export default function ExtractionCard({
             <button
               type="button"
               disabled={duping}
-              title="Create a new extraction with the same content and structure in this project"
+              title="Create another captured decision with the same content in this project"
               onClick={(e) => {
                 e.stopPropagation();
                 void duplicateRun();
@@ -208,7 +208,7 @@ export default function ExtractionCard({
           </button>
           <button
             type="button"
-            title="Download run as a .md file for email or contract files"
+            title="Download as Markdown for email or contract files"
             onClick={(e) => {
               e.stopPropagation();
               downloadMarkdown();

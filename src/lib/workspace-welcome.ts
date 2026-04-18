@@ -8,11 +8,11 @@ import { seededShuffle, stableHash } from "@/lib/stable-hash";
 
 const TAGLINES = [
   "Commitments with owners — not lost between meetings.",
-  "Program delivery: capture, pass, complete.",
+  "Program delivery: capture, process, complete.",
   "Audit-friendly history from what you actually saved.",
   "Named next steps per client or program.",
   "Less scrollback. More proof of follow-through.",
-  "Structured runs. Honest completion metrics.",
+  "Tracked commitments. Honest completion metrics.",
   "The handoff layer: messy text → checklists.",
   "Where operational notes become owned work.",
 ] as const;
@@ -21,7 +21,7 @@ const TAGLINES = [
 const WHATS_NEXT = [
   "Pin active programs or accounts in the sidebar.",
   "⌘K searches routes and projects.",
-  "Desk is the fastest place to paste and run.",
+  "Desk is the fastest place to paste and capture decisions.",
 ] as const;
 
 export type WelcomePack = {
@@ -48,18 +48,18 @@ export type WorkspaceInsightContext = {
  * when you haven’t set a custom Overview subtitle.
  */
 const FIRST_PROJECT_LINES = [
-  "Name a client, program, or account first — every run and action stays scoped there.",
+  "Name a client, program, or account first — every commitment and action stays scoped there.",
   "Route5 tracks commitments from your text — start by naming the program or contract thread.",
 ] as const;
 
 const FIRST_RUN_LINES = [
-  "Open Desk, paste QBR notes or an escalation thread, and run one pass to unlock metrics here.",
-  "One run is enough — you’ll see completion rate, aging actions, and activity on this Overview.",
+  "Open Desk, paste QBR notes or an escalation thread, and capture once to unlock metrics here.",
+  "One captured decision set is enough — you’ll see completion rate, aging actions, and activity on this Overview.",
 ] as const;
 
 const OPENAI_HINTS = [
-  "Tune AI under Settings → AI & passes — hosted Route5 uses the platform model when your deployment configures it.",
-  "Prefer structured runs? Set AI defaults in Settings; no API key needed in the app for hosted workspaces.",
+  "Tune AI under Settings → AI settings — your deployment controls which model powers decision capture.",
+  "Prefer structured commitments? Set AI defaults in Settings.",
 ] as const;
 
 /**
@@ -88,14 +88,14 @@ export function getOverviewSubline(
 
 const HEALTHY_ROTATIONS = [
   (c: WorkspaceInsightContext) =>
-    `${c.extractionCount} run${c.extractionCount === 1 ? "" : "s"} across ${c.projectCount} project${c.projectCount === 1 ? "" : "s"}.`,
+    `${c.extractionCount} commitment${c.extractionCount === 1 ? "" : "s"} captured across ${c.projectCount} project${c.projectCount === 1 ? "" : "s"}.`,
   (c: WorkspaceInsightContext) =>
-    `Workspace: ${c.projectCount} project${c.projectCount === 1 ? "" : "s"}, ${c.extractionCount} saved run${c.extractionCount === 1 ? "" : "s"}.`,
+    `Workspace: ${c.projectCount} project${c.projectCount === 1 ? "" : "s"}, ${c.extractionCount} captured decision${c.extractionCount === 1 ? "" : "s"}.`,
   (c: WorkspaceInsightContext) =>
-    c.extractionCount > 0 ? `${c.extractionCount} structured runs in your history.` : null,
+    c.extractionCount > 0 ? `${c.extractionCount} tracked commitments in your history.` : null,
   () => "Pin active delivery work in the sidebar.",
   () => "⌘K jumps to projects and routes.",
-  () => "Desk is the fastest place to capture and run.",
+  () => "Desk is the fastest place to capture decisions.",
 ] as const;
 
 /**
@@ -228,7 +228,7 @@ export function getHeroHeadline(
     `Almost there — ${f}`,
     `Golden hour — ${f}`,
     `Evening stretch — ${f}`,
-    `${f}, one more pass?`,
+    `${f}, one more round?`,
     `Night shift — ${f}`,
     `Easy does it — ${f}`,
   ];
@@ -283,17 +283,17 @@ export function getOverviewPersonalSubline(
   if (ctx.extractionCount > 0 && latest) {
     const runSeed = stableHash(`${userId ?? "anon"}:${dayKey()}:lastrun`);
     const lastRunLines = [
-      `Last run: ${latest.projectName}.`,
+      `Last activity: ${latest.projectName}.`,
       `Most recent capture: ${latest.projectName}.`,
-      `Latest run is in ${latest.projectName}.`,
-      `Your newest run lives in ${latest.projectName}.`,
+      `Latest activity is in ${latest.projectName}.`,
+      `Your newest capture lives in ${latest.projectName}.`,
       `Picked up where you left off — ${latest.projectName}.`,
     ] as const;
     const tail = lastRunLines[runSeed % lastRunLines.length]!;
     return `${timePart} ${tail}`;
   }
   if (ctx.extractionCount > 0) {
-    return `${timePart} ${ctx.extractionCount} run${ctx.extractionCount === 1 ? "" : "s"} in your history — same numbers as Reports.`;
+    return `${timePart} ${ctx.extractionCount} commitment${ctx.extractionCount === 1 ? "" : "s"} in your history — same numbers as Reports.`;
   }
   return `${timePart} Capture operational text on Desk to light up activity here.`;
 }
@@ -347,7 +347,7 @@ export function getTodayCardsForWorkspace(
     if (ctx.extractionCount === 0) {
       body += "Your log is quiet — paste a client or program thread on Desk when you’re ready.";
     } else {
-      body += `${ctx.extractionCount} run${ctx.extractionCount === 1 ? "" : "s"} across ${ctx.projectCount} project${ctx.projectCount === 1 ? "" : "s"}.`;
+      body += `${ctx.extractionCount} commitment${ctx.extractionCount === 1 ? "" : "s"} captured across ${ctx.projectCount} project${ctx.projectCount === 1 ? "" : "s"}.`;
       if (ctx.latestExtraction) {
         body += ` Newest: ${ctx.latestExtraction.projectName}.`;
       }
@@ -357,7 +357,7 @@ export function getTodayCardsForWorkspace(
       title: beforeFive ? "Early hours — your snapshot" : "Good morning — your snapshot",
       body,
       ctaLabel:
-        ctx.latestExtraction && ctx.extractionCount > 0 ? "Jump to latest run" : "Open Desk",
+        ctx.latestExtraction && ctx.extractionCount > 0 ? "Jump to latest activity" : "Open Desk",
       ctaHref:
         ctx.latestExtraction && ctx.extractionCount > 0
           ? `/projects/${ctx.latestExtraction.projectId}#ex-${ctx.latestExtraction.id}`
@@ -380,7 +380,7 @@ export function getTodayCardsForWorkspace(
   } else if (ctx.extractionCount === 0) {
     out.push({
       id: "today-need-run",
-      title: "Run your first pass",
+      title: "Capture your first decisions",
       body: "Open Desk, choose that project, paste notes or an escalation — that seeds Overview metrics and your audit trail.",
       ctaLabel: "Open Desk",
       ctaHref: deskUrl(),
@@ -409,11 +409,11 @@ export function getTodayCardsForWorkspace(
         : snippet;
     out.push({
       id: "today-dup-latest",
-      title: "Duplicate a run",
+      title: "Duplicate a commitment",
       body: clip
-        ? `Open your latest run in “${latest.projectName}” — use Duplicate on the card to branch without losing the original. (${clip})`
-        : `Open your latest run in “${latest.projectName}” — use Duplicate on the card to branch without losing the original.`,
-      ctaLabel: "Open latest run",
+        ? `Open your latest captured decision in “${latest.projectName}” — use Duplicate on the card to branch without losing the original. (${clip})`
+        : `Open your latest captured decision in “${latest.projectName}” — use Duplicate on the card to branch without losing the original.`,
+      ctaLabel: "Open latest activity",
       ctaHref: `/projects/${latest.projectId}#ex-${latest.id}`,
       learnMoreLabel: "Product scope",
       learnMoreHref: "/docs/product",
@@ -422,8 +422,8 @@ export function getTodayCardsForWorkspace(
   } else if (ctx.projectCount > 0) {
     out.push({
       id: "today-dup-howto",
-      title: "Duplicate a run",
-      body: "Inside any project, open a past run and tap Duplicate — same inputs and structure, new run you can edit.",
+      title: "Duplicate a commitment",
+      body: "Inside any project, open a past captured decision and tap Duplicate — same inputs and structure, new commitment you can edit.",
       ctaLabel: "Open projects",
       ctaHref: "/overview",
       learnMoreLabel: "Desk & projects",
@@ -478,7 +478,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-linear",
       title: "Linear import",
-      body: "Pull issue bodies into a project run from the Linear integration page.",
+      body: "Pull issue bodies into a project capture from the Linear integration page.",
       ctaLabel: "Linear",
       ctaHref: "/integrations/linear",
       learnMoreHref: "/docs/product",
@@ -501,8 +501,8 @@ export function getTodayCardsForWorkspace(
     },
     {
       id: "today-tip-settings",
-      title: "AI vs offline pass",
-      body: "Choose AI vs offline defaults under Settings — affects every new run.",
+      title: "AI vs offline",
+      body: "Choose AI vs offline defaults under Settings — affects every new decision capture.",
       ctaLabel: "Settings",
       ctaHref: "/settings",
       learnMoreHref: "/docs/product",
@@ -510,7 +510,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-customize",
       title: "Workspace prefs",
-      body: "Timezone, locale, and pass defaults live in Settings — they drive how Overview and Desk label “today.”",
+      body: "Timezone, locale, and model defaults live in Settings — they drive how Overview and Desk label “today.”",
       ctaLabel: "Settings",
       ctaHref: "/settings",
       learnMoreHref: "/docs/product",
@@ -518,7 +518,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-library",
       title: "Execution health",
-      body: "Overview shows open actions and completion from saved runs — the same numbers everywhere in the app.",
+      body: "Overview shows open actions and completion from saved captures — the same numbers everywhere in the app.",
       ctaLabel: "Overview",
       ctaHref: "/overview",
       learnMoreHref: "/docs/product",
@@ -526,7 +526,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-plans",
       title: "Plans & limits",
-      body: "See run quotas and tier features under Account → Plans.",
+      body: "See commitment quotas and tier features under Account → Plans.",
       ctaLabel: "Plans",
       ctaHref: "/account/plans",
       learnMoreHref: "/docs/product",
@@ -542,7 +542,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-docs",
       title: "Guides",
-      body: "Executive brief, what we ship, roadmap, and privacy — all under Guides.",
+      body: "What we ship, roadmap, and privacy — all under Guides.",
       ctaLabel: "Guides",
       ctaHref: "/docs",
       learnMoreHref: "/docs/product",
@@ -582,7 +582,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-reports-export",
       title: "Track completion",
-      body: "Check off commitments on each run — Overview rolls completion and stale items from what you saved.",
+      body: "Check off commitments on each capture — Overview rolls completion and stale items from what you saved.",
       ctaLabel: "Overview",
       ctaHref: "/overview",
       learnMoreHref: "/docs/product",
@@ -590,7 +590,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-scratch",
       title: "Per-project scratch",
-      body: "Inside a project workspace, scratch notes persist locally for drafts before you run a pass.",
+      body: "Inside a project workspace, scratch notes persist locally for drafts before you capture.",
       ctaLabel: "Open a project",
       ctaHref: "/overview",
       learnMoreHref: "/docs/product",
@@ -598,7 +598,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-actions",
       title: "Action checklists",
-      body: "Check off action items on a run — completion feeds workspace metrics.",
+      body: "Check off action items on a capture — completion feeds workspace metrics.",
       ctaLabel: "Open a project",
       ctaHref: "/overview",
       learnMoreHref: "/docs/product",
@@ -606,7 +606,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-onboarding",
       title: "Guided setup",
-      body: "Replay onboarding anytime to walk connectors and your first Desk pass.",
+      body: "Replay onboarding anytime to walk connectors and your first Desk capture.",
       ctaLabel: "Onboarding",
       ctaHref: "/onboarding?replay=1",
       learnMoreHref: "/docs/product",

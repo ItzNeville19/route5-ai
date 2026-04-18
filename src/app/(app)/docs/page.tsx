@@ -8,17 +8,12 @@ export const metadata: Metadata = {
 };
 
 const featured = {
-  href: "/docs/ceo-brief",
-  title: "Executive brief",
-  desc: "Read this first — two minutes, no jargon: what Route5 does, what it does not do, and how to run a pilot.",
+  href: "/docs/product",
+  title: "What we ship",
+  desc: "Read this first — what works in the app today versus ideas on the roadmap.",
 };
 
 const guides: { href: string; title: string; desc: string }[] = [
-  {
-    href: "/docs/product",
-    title: "What we ship",
-    desc: "Clear list of what works in the app today versus ideas on the roadmap.",
-  },
   {
     href: "/docs/boundaries",
     title: "What we do not do (yet)",
@@ -28,11 +23,6 @@ const guides: { href: string; title: string; desc: string }[] = [
     href: "/docs/roadmap",
     title: "Roadmap",
     desc: "Directions we may build next. Nothing here is sold as finished until it ships.",
-  },
-  {
-    href: "/docs/sales-playbook",
-    title: "Pilot & discovery",
-    desc: "Eight discovery questions, validation gates, warm-intro language, example pilot metrics, and how to counter the “AI wrapper” objection.",
   },
 ];
 
@@ -75,7 +65,7 @@ export default function DocsIndexPage() {
         </p>
         <p className="mt-3 text-[18px] font-semibold text-[var(--workspace-fg)]">{featured.title}</p>
         <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">{featured.desc}</p>
-        <p className="mt-4 text-[13px] font-semibold text-[var(--workspace-accent)]">Open brief →</p>
+        <p className="mt-4 text-[13px] font-semibold text-[var(--workspace-accent)]">Open guide →</p>
       </Link>
 
       <h2 className="mt-14 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">

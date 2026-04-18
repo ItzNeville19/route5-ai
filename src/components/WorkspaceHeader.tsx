@@ -2,114 +2,105 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeft, Search } from "lucide-react";
+import { PanelLeft, Plus, Search } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { deskUrl } from "@/lib/desk-routes";
-
-const DESK_HREF = deskUrl();
-
-const NAV: readonly {
-  href: string;
-  label: string;
-  match: (p: string) => boolean;
-}[] = [
-  {
-    href: "/overview",
-    label: "Overview",
-    match: (p) => p === "/overview" || p.startsWith("/projects/"),
-  },
-  { href: DESK_HREF, label: "Desk", match: (p) => p === "/desk" },
-  { href: "/settings", label: "Settings", match: (p) => p === "/settings" },
-];
-
-function NavPill({
-  href,
-  label,
-  active,
-}: {
-  href: string;
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`shrink-0 rounded-full px-3.5 py-2 text-[13px] font-medium transition sm:px-4 ${
-        active
-          ? "bg-white text-zinc-950 shadow-sm shadow-black/20"
-          : "bg-white/[0.06] text-[var(--workspace-muted-fg)] hover:bg-white/[0.1] hover:text-[var(--workspace-fg)]"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-}
+import { useCapture } from "@/components/capture/CaptureProvider";
+import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
+import WorkspaceHeaderGreeting from "@/components/app/WorkspaceHeaderGreeting";
+import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 
 export default function WorkspaceHeader() {
   const pathname = usePathname() ?? "";
   const { open: openPalette } = useCommandPalette();
   const exp = useWorkspaceExperience();
   const { getProjectById } = useWorkspaceData();
+  const { open: openCapture } = useCapture();
 
   const projectIdFromPath = pathname.match(/^\/projects\/([^/]+)$/)?.[1] ?? null;
   const projectTitle = projectIdFromPath ? getProjectById(projectIdFromPath)?.name ?? null : null;
 
   const sidebarHidden = exp.prefs.sidebarHidden === true;
+  const pageTitle = getWorkspacePageTitle(pathname);
 
   return (
-    <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-[var(--workspace-border)]">
-      <div className="mx-auto flex min-h-[52px] max-w-[min(100%,1440px)] items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => exp.setPrefs({ sidebarHidden: !sidebarHidden })}
-          className="shrink-0 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-2 text-[var(--workspace-muted-fg)] shadow-sm transition hover:bg-white/[0.08] hover:text-[var(--workspace-fg)] md:inline-flex md:items-center md:justify-center"
-          title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
-          aria-pressed={!sidebarHidden}
-          aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
-        >
-          <PanelLeft className="h-4 w-4" strokeWidth={2} aria-hidden />
-        </button>
-
-        <Link
-          href="/overview"
-          className="workspace-brand-wordmark shrink-0 py-1 text-[var(--workspace-fg)] transition hover:opacity-90"
-        >
-          Route5
-        </Link>
-
-        <nav
-          className="hidden min-w-0 flex-1 justify-center gap-1 overflow-x-auto pb-0.5 md:flex md:px-2"
-          aria-label="Primary"
-        >
-          {NAV.map((item) => (
-            <NavPill
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              active={item.match(pathname)}
+    <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
+      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] flex-col gap-2 px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-2)] sm:px-[var(--r5-content-padding-x)] lg:flex-row lg:items-center lg:justify-between lg:gap-[var(--r5-space-4)]">
+        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)] lg:max-w-[min(100%,420px)]">
+          <button
+            type="button"
+            onClick={() => exp.setPrefs({ sidebarHidden: !sidebarHidden })}
+            className="hidden shrink-0 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary md:inline-flex md:items-center md:justify-center"
+            title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
+            aria-pressed={!sidebarHidden}
+            aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
+          >
+            <PanelLeft
+              className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)]"
+              strokeWidth={2}
+              aria-hidden
             />
-          ))}
-        </nav>
+          </button>
+          {sidebarHidden ? (
+            <Link
+              href="/feed"
+              className="mr-1 inline-flex shrink-0"
+              title="Route5 — Feed"
+              aria-label="Route5 home"
+            >
+              <Route5WordmarkInline className="text-[length:var(--r5-font-subheading)]" />
+            </Link>
+          ) : null}
+          <h1 className="min-w-0 truncate text-[length:var(--r5-font-heading)] font-[var(--r5-font-weight-semibold)] leading-[var(--r5-leading-heading)] tracking-[-0.03em] text-r5-text-primary">
+            {pageTitle}
+          </h1>
+        </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="hidden min-w-0 flex-[1.1] justify-center px-[var(--r5-space-2)] lg:flex">
+          <WorkspaceHeaderGreeting />
+        </div>
+
+        <div className="flex shrink-0 items-center justify-end gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 px-2.5 py-1.5 text-[12px] font-medium text-[var(--workspace-fg)] shadow-sm transition hover:bg-white/[0.1] sm:px-3 sm:text-[13px]"
+            className="inline-flex items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-[var(--r5-space-3)] py-[var(--r5-space-2)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
             aria-label="Search"
           >
-            <Search className="h-3.5 w-3.5 text-[var(--workspace-muted-fg)]" strokeWidth={2} aria-hidden />
-            <span className="hidden lg:inline">Search</span>
-            <kbd className="hidden rounded-md border border-[var(--workspace-border)] bg-black/30 px-1.5 py-0.5 font-mono text-[10px] text-[var(--workspace-muted-fg)] xl:inline">
+            <Search
+              className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)] text-r5-text-secondary"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span className="hidden sm:inline">Search</span>
+            <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-secondary xl:inline">
               ⌘K
             </kbd>
           </button>
+
           <WorkspaceNotificationsPopover />
-          <div className="pl-0.5">
+
+          <button
+            type="button"
+            onClick={() => openCapture()}
+            className="group inline-flex items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-button)] border border-r5-border-subtle bg-r5-surface-secondary px-[var(--r5-space-3)] py-[var(--r5-space-2)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
+            aria-label="Open Capture"
+          >
+            <Plus
+              className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)]"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span className="hidden sm:inline">Capture</span>
+            <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-tertiary group-hover:inline sm:group-hover:inline">
+              ⌘J
+            </kbd>
+          </button>
+
+          <div className="pl-[var(--r5-space-1)]">
             <UserButton
               appearance={{
                 elements: {
@@ -122,31 +113,18 @@ export default function WorkspaceHeader() {
         </div>
       </div>
 
-      <div className="border-t border-[var(--workspace-border)]/80 px-3 pb-2.5 pt-0 md:hidden">
-        <nav
-          className="flex gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Primary mobile"
-        >
-          {NAV.map((item) => (
-            <NavPill
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              active={item.match(pathname)}
-            />
-          ))}
-        </nav>
-      </div>
-
       {projectIdFromPath && projectTitle ? (
-        <div className="border-t border-[var(--workspace-border)]/80 bg-black/25 px-4 py-2.5 text-[13px] text-[var(--workspace-muted-fg)] sm:px-8">
-          <Link href="/overview" className="font-medium transition hover:text-[var(--workspace-fg)]">
-            Overview
+        <div className="border-t border-r5-border-subtle bg-r5-surface-primary/40 px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary sm:px-[var(--r5-content-padding-x)]">
+          <Link
+            href="/feed"
+            className="font-[var(--r5-font-weight-medium)] text-r5-text-primary transition-colors duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:text-r5-text-primary"
+          >
+            Feed
           </Link>
-          <span className="mx-2 text-[var(--workspace-muted-fg)]/70" aria-hidden>
+          <span className="mx-[var(--r5-space-2)] text-r5-text-tertiary" aria-hidden>
             /
           </span>
-          <span className="font-semibold text-[var(--workspace-fg)]">{projectTitle}</span>
+          <span className="font-[var(--r5-font-weight-semibold)] text-r5-text-primary">{projectTitle}</span>
         </div>
       ) : null}
     </header>

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import type { Commitment } from "@/lib/commitment-types";
+import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { extractCommitments } from "@/lib/extract-commitments";
+import { notifyProjectDeskAssignment } from "@/lib/org-commitments/notify-assignment";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import {
   insertCommitmentsFromDrafts,
   listCommitmentsForProject,
   verifyProjectOwned,
 } from "@/lib/workspace/store";
+import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import {
   cleanText,
   enforceRateLimits,
@@ -22,9 +26,27 @@ export const runtime = "nodejs";
 const sourceSchema = z.enum(["meeting", "slack", "email", "manual"]);
 const prioritySchema = z.enum(["low", "medium", "high"]);
 
+const commitDraftSchema = z
+  .object({
+    title: z
+      .string()
+      .transform((s) => s.trim())
+      .pipe(z.string().min(1).max(2000)),
+    description: z.string().max(20_000).optional().nullable(),
+    ownerName: z.string().max(200).optional().nullable(),
+    ownerUserId: z.string().max(128).optional().nullable(),
+    source: sourceSchema.optional(),
+    sourceReference: z.string().max(2000).optional(),
+    priority: prioritySchema.optional(),
+    dueDate: z.string().max(48).optional().nullable(),
+  })
+  .strict();
+
 const postBodySchema = z
   .object({
     extractFrom: z.string().transform(cleanText).pipe(z.string().min(1).max(100_000)).optional(),
+    /** When true with extractFrom, returns proposed drafts only — nothing is persisted. */
+    preview: z.boolean().optional(),
     assignOwnerUserId: z.string().min(1).max(128).optional().nullable(),
     manual: z
       .object({
@@ -39,6 +61,7 @@ const postBodySchema = z
       })
       .strict()
       .optional(),
+    commitDrafts: z.array(commitDraftSchema).min(1).max(40).optional(),
   })
   .strict();
 
@@ -123,9 +146,9 @@ export async function POST(
   if (!parsed.ok) return parsed.response;
 
   const body = parsed.data;
-  if (!body.extractFrom && !body.manual) {
+  if (!body.extractFrom && !body.manual && !body.commitDrafts?.length) {
     return NextResponse.json(
-      { error: "Provide extractFrom or manual" },
+      { error: "Provide extractFrom (with preview), commitDrafts, or manual" },
       { status: 400 }
     );
   }
@@ -136,18 +159,58 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (body.extractFrom) {
+    if (body.preview === true) {
+      if (!body.extractFrom) {
+        return NextResponse.json(
+          { error: "preview requires extractFrom" },
+          { status: 400 }
+        );
+      }
       const drafts = extractCommitments(body.extractFrom);
-      const assign =
-        body.assignOwnerUserId === undefined
-          ? undefined
-          : body.assignOwnerUserId === null
-            ? null
-            : body.assignOwnerUserId;
+      return NextResponse.json({ drafts });
+    }
+
+    if (body.commitDrafts?.length) {
+      const drafts: ExtractedCommitmentDraft[] = body.commitDrafts.map((d) => ({
+        title: d.title,
+        description: d.description ?? null,
+        ownerName: d.ownerName?.trim() || null,
+        ownerUserId: d.ownerUserId?.trim() || null,
+        source: d.source ?? "meeting",
+        sourceReference: d.sourceReference?.trim() || `desk:${nanoid(10)}`,
+        priority: d.priority ?? "medium",
+        dueDate: d.dueDate?.trim() || null,
+      }));
       const commitments = await insertCommitmentsFromDrafts(userId, projectId, drafts, {
-        assignOwnerUserId: assign ?? undefined,
+        createdLogBody: "Committed from Desk",
       });
+      const orgId = await ensureOrganizationForClerkUser(userId);
+      await Promise.all(
+        commitments
+          .filter((c) => c.ownerUserId && c.ownerUserId !== userId)
+          .map((c) =>
+            notifyProjectDeskAssignment({
+              orgId,
+              ownerClerkId: c.ownerUserId!,
+              title: c.title,
+              projectId,
+              commitmentId: c.id,
+              dueLabel: c.dueDate ? c.dueDate.slice(0, 10) : "Not set",
+              priority: c.priority,
+            })
+          )
+      );
       return NextResponse.json({ commitments });
+    }
+
+    if (body.extractFrom) {
+      return NextResponse.json(
+        {
+          error:
+            "To capture from text, call with preview: true to review proposals, then commit with commitDrafts.",
+        },
+        { status: 400 }
+      );
     }
 
     const m = body.manual!;

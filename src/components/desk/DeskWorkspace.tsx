@@ -665,7 +665,7 @@ export default function DeskWorkspace() {
               <ul className="mt-3 space-y-2">
                 <li>
                   <Link
-                    href="/docs/ceo-brief"
+                    href="/docs/product"
                     className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
                   >
                     <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />
@@ -674,7 +674,7 @@ export default function DeskWorkspace() {
                 </li>
                 <li>
                   <Link
-                    href="/docs/sales-playbook"
+                    href="/docs/product"
                     className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/60"
                   >
                     <ListTodo className="h-3.5 w-3.5 shrink-0 text-[var(--workspace-accent)]" aria-hidden />

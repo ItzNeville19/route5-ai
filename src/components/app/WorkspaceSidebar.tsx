@@ -2,102 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
-import { motion } from "framer-motion";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle,
-  BarChart3,
-  Plug,
-  LayoutDashboard,
-  PanelTop,
-  Pin,
-  PinOff,
-  Plus,
-  Rocket,
-  ScrollText,
-  Settings,
-  Target,
-  CreditCard,
   Bell,
-  Code2,
+  CreditCard,
+  FolderOpen,
+  Keyboard,
+  LifeBuoy,
+  ListChecks,
+  Palette,
+  Plus,
+  Settings,
+  Users,
 } from "lucide-react";
-import WorkspaceInstallControls from "@/components/workspace/WorkspaceInstallControls";
-import OnboardingChecklistCard from "@/components/workspace/OnboardingChecklistCard";
+import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isOnboardingComplete } from "@/lib/onboarding-storage";
-import { deskUrl } from "@/lib/desk-routes";
-import { POSITIONING_WEDGE, PRODUCT_MISSION } from "@/lib/product-truth";
-import type { Project } from "@/lib/types";
+import { ROUTE5_SIGNATURE } from "@/lib/brand-signature";
 
 const tierLabel =
   process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
 
-type Exp = ReturnType<typeof useWorkspaceExperience>;
-
-function SidebarProjectRow({
-  p,
-  active,
-  exp,
-}: {
-  p: Project;
-  active: boolean;
-  exp: Exp;
-}) {
-  const pinned = exp.isProjectPinned(p.id);
-  return (
-    <li>
-      <div
-        className={`flex items-center gap-0.5 rounded-lg ${
-          active ? "bg-[var(--workspace-nav-active)]" : "hover:bg-[var(--workspace-nav-hover)]"
-        }`}
-      >
-        <button
-          type="button"
-          onClick={() => exp.togglePinProject(p.id)}
-          className="shrink-0 rounded-md p-1.5 text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-accent)]"
-          title={pinned ? "Unpin" : "Pin to top"}
-          aria-label={pinned ? "Unpin project" : "Pin project"}
-        >
-          {pinned ? (
-            <Pin className="h-3.5 w-3.5 text-[var(--workspace-accent)]" strokeWidth={2} />
-          ) : (
-            <PinOff className="h-3.5 w-3.5 opacity-50" strokeWidth={2} />
-          )}
-        </button>
-        <Link
-          href={`/projects/${p.id}`}
-          className={`min-w-0 flex-1 truncate py-1.5 pr-2 text-[13px] ${
-            active ? "font-medium text-[var(--workspace-fg)]" : "text-[var(--workspace-muted-fg)]"
-          }`}
-        >
-          <span className="inline-flex min-w-0 items-center gap-2">
-            <span
-              className="flex h-5 w-5 shrink-0 items-center justify-center text-[13px] leading-none"
-              aria-hidden
-            >
-              {p.iconEmoji?.trim() ? (
-                <span title="Project icon">{p.iconEmoji.trim()}</span>
-              ) : (
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    active ? "bg-[var(--workspace-accent)]" : "bg-[var(--workspace-muted-fg)] opacity-40"
-                  }`}
-                />
-              )}
-            </span>
-            <span className="truncate">{p.name}</span>
-          </span>
-        </Link>
-      </div>
-    </li>
-  );
-}
-
-function NavLink({
+function NavRow({
   href,
   active,
   icon: Icon,
@@ -110,32 +37,33 @@ function NavLink({
   label: string;
   onClick?: () => void;
 }) {
-  const className = `group relative flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-medium transition ${
-    active
-      ? "bg-[var(--workspace-nav-active)] text-[var(--workspace-fg)] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)]"
-      : "text-[var(--workspace-muted-fg)] hover:bg-[var(--workspace-nav-hover)] hover:text-[var(--workspace-fg)]"
-  }`;
+  const base =
+    "flex w-full min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] leading-none transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
+  const state = active
+    ? "bg-r5-surface-secondary text-r5-text-primary"
+    : "text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary";
 
   const inner = (
     <>
       <Icon
-        className={`h-[18px] w-[18px] shrink-0 transition ${active ? "text-[var(--workspace-accent)]" : "opacity-85 group-hover:opacity-100"}`}
+        className="shrink-0 text-r5-text-secondary"
+        style={{ width: "var(--r5-icon-nav)", height: "var(--r5-icon-nav)" }}
         strokeWidth={1.75}
         aria-hidden
       />
-      <span>{label}</span>
+      <span className="truncate">{label}</span>
     </>
   );
 
   if (onClick) {
     return (
-      <button type="button" title={label} onClick={onClick} className={className}>
+      <button type="button" title={label} onClick={onClick} className={`${base} ${state}`}>
         {inner}
       </button>
     );
   }
   return (
-    <Link href={href!} title={label} className={className}>
+    <Link href={href!} title={label} className={`${base} ${state}`}>
       {inner}
     </Link>
   );
@@ -144,286 +72,140 @@ function NavLink({
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const exp = useWorkspaceExperience();
-  const { projects, summary, loadingProjects, entitlements } = useWorkspaceData();
+  const { entitlements } = useWorkspaceData();
   const { t } = useI18n();
-
-  const { pinnedProjects, otherProjects } = useMemo(() => {
-    const pins = new Set(exp.prefs.pinnedProjectIds ?? []);
-    const pinned: Project[] = [];
-    const other: Project[] = [];
-    for (const p of projects) {
-      if (pins.has(p.id)) pinned.push(p);
-      else other.push(p);
-    }
-    pinned.sort((a, b) => a.name.localeCompare(b.name));
-    other.sort((a, b) => a.name.localeCompare(b.name));
-    return { pinnedProjects: pinned, otherProjects: other };
-  }, [projects, exp.prefs.pinnedProjectIds]);
-
-  const allSorted = useMemo(
-    () => [...projects].sort((a, b) => a.name.localeCompare(b.name)),
-    [projects]
-  );
-
-  const activeProjectId = pathname?.startsWith("/projects/")
-    ? pathname.split("/")[2]
-    : null;
-
+  const path = pathname ?? "";
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
-  const onboardingDone = user?.id ? isOnboardingComplete(user.id) : false;
-  const path = pathname ?? "";
-  const mobileOpen = exp.prefs.sidebarHidden !== true;
-
   return (
-    <motion.aside
-      initial={false}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className={`agent-sidebar fixed inset-y-0 left-0 z-40 flex w-[272px] shrink-0 flex-col overflow-hidden border-r border-[var(--workspace-border)] bg-[var(--workspace-sidebar)]/90 backdrop-blur-2xl transition-transform duration-300 md:static md:z-20 md:translate-x-0 ${
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+    <aside
+      className="agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/95 backdrop-blur-2xl md:sticky md:top-0 md:flex md:self-start"
+      aria-label={t("sidebar.navAria")}
     >
-      {/* Brand — minimal */}
-      <div className="shrink-0 px-4 pt-5 pb-3">
-        <Link
-          href="/overview"
-          className="workspace-brand-wordmark block truncate text-[var(--workspace-fg)] transition hover:opacity-90"
-          title="Overview — execution health"
-        >
-          {PRODUCT_MISSION.name}
-        </Link>
-        <p className="mt-1.5 line-clamp-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
-          {POSITIONING_WEDGE.label}
-        </p>
+      <div className="shrink-0 px-[var(--r5-space-3)] pb-[var(--r5-space-2)] pt-[var(--r5-space-4)]">
+        <div className="flex items-start justify-between gap-[var(--r5-space-2)]">
+          <div className="min-w-0 flex-1">
+            <Route5WordmarkLink className="truncate" />
+            <p className="mt-[var(--r5-space-2)] line-clamp-2 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.12em] text-r5-text-tertiary">
+              {ROUTE5_SIGNATURE.tagline}
+            </p>
+            <p className="mt-[var(--r5-space-2)] text-[10px] leading-snug text-r5-text-tertiary">
+              More commands: press{" "}
+              <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono text-[9px]">
+                ⌘K
+              </kbd>{" "}
+              — Desk & Overview aren&apos;t duplicated here.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Account — compact strip */}
-      <div className="shrink-0 px-3 pb-3">
-        <div className="flex items-center gap-3 rounded-2xl border border-[var(--workspace-border)]/90 bg-[var(--workspace-surface)]/55 p-2.5 shadow-[0_1px_0_rgba(255,255,255,0.04)_inset]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <nav
+          className="min-h-0 flex-1 space-y-[var(--r5-space-1)] overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)] [scrollbar-gutter:stable]"
+          aria-label={t("sidebar.navAria")}
+        >
+          <NavRow
+            href="/feed"
+            active={path === "/feed"}
+            icon={ListChecks}
+            label={t("sidebar.feed")}
+          />
+          <NavRow
+            href="/projects"
+            active={path === "/projects" || path.startsWith("/projects/")}
+            icon={FolderOpen}
+            label={t("sidebar.projects")}
+          />
+          <NavRow
+            href="/workspace/team"
+            active={path === "/workspace/team"}
+            icon={Users}
+            label={t("sidebar.team")}
+          />
+
+          <button
+            type="button"
+            title="Create a new project"
+            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+            className="mt-[var(--r5-space-2)] flex w-full min-h-[var(--r5-nav-item-height)] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] border border-dashed border-r5-border-subtle bg-transparent px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary transition-[background-color,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:border-r5-text-tertiary hover:bg-r5-surface-hover"
+          >
+            <Plus
+              className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)] shrink-0 opacity-90"
+              strokeWidth={2}
+              aria-hidden
+            />
+            <span>{t("sidebar.newProject")}</span>
+          </button>
+
+          <div
+            className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"
+            role="separator"
+            aria-hidden
+          />
+
+          <NavRow
+            href="/workspace/customize"
+            active={path === "/workspace/customize"}
+            icon={Palette}
+            label={t("sidebar.customize")}
+          />
+          <NavRow
+            href="/workspace/help"
+            active={path === "/workspace/help"}
+            icon={LifeBuoy}
+            label="Help"
+          />
+          <NavRow
+            href="/settings"
+            active={path === "/settings"}
+            icon={Settings}
+            label={t("sidebar.settings")}
+          />
+          <NavRow
+            href="/workspace/billing"
+            active={path.startsWith("/workspace/billing")}
+            icon={CreditCard}
+            label="Billing"
+          />
+          <NavRow
+            active={false}
+            icon={Keyboard}
+            label="Shortcuts"
+            onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
+          />
+          <NavRow
+            active={false}
+            icon={Bell}
+            label="Notifications"
+            onClick={() => window.dispatchEvent(new Event("route5:notifications-open"))}
+          />
+        </nav>
+      </div>
+
+      <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-[var(--r5-space-3)] py-[var(--r5-space-3)] backdrop-blur-xl">
+        <div className="flex items-center gap-[var(--r5-space-3)] rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-[var(--r5-space-3)] shadow-[var(--r5-shadow-elevated)]">
           <UserButton
             userProfileMode="navigation"
             userProfileUrl="/settings"
             appearance={{
               elements: {
-                avatarBox: "h-9 w-9 ring-1 ring-[var(--workspace-border)]",
+                avatarBox: "h-9 w-9 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
+                userButtonAvatarImage: "h-full w-full object-cover",
               },
             }}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[13px] font-semibold leading-tight text-[var(--workspace-fg)]">
+            <p className="truncate text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
               {displayName}
             </p>
-            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-              <span
-                className={`text-[10px] font-medium ${
-                  entitlements?.isPaidTier
-                    ? "bg-gradient-to-r from-violet-300 to-[#d9f99d] bg-clip-text text-transparent"
-                    : "text-[var(--workspace-muted-fg)]"
-                }`}
-              >
-                {entitlements?.tierLabel ?? tierLabel}
-              </span>
-              <span className="text-[var(--workspace-border)]" aria-hidden>
-                ·
-              </span>
-              <Link
-                href="/account/plans"
-                className="text-[10px] font-semibold text-[var(--workspace-accent)] hover:underline"
-              >
-                {t("sidebar.plans")}
-              </Link>
-            </div>
+            <p className="mt-[var(--r5-space-1)] text-[10px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
+              {entitlements?.tierLabel ?? tierLabel}
+            </p>
           </div>
         </div>
       </div>
-
-      <nav className="shrink-0 space-y-0.5 px-3" aria-label="Primary">
-        {!onboardingDone ? (
-          <Link
-            href="/onboarding"
-            title="Guided setup"
-            className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[13px] font-semibold text-[var(--workspace-accent)] transition hover:bg-[var(--workspace-accent)]/10 ${
-              path === "/onboarding" ? "bg-[var(--workspace-accent)]/12" : ""
-            }`}
-          >
-            <Rocket className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} aria-hidden />
-            <span>{t("sidebar.getStarted")}</span>
-          </Link>
-        ) : null}
-
-        <NavLink
-          href="/overview"
-          active={path === "/overview" || path.startsWith("/projects/")}
-          icon={LayoutDashboard}
-          label={t("sidebar.overview")}
-        />
-        <NavLink
-          href={deskUrl()}
-          active={path === "/desk"}
-          icon={PanelTop}
-          label={t("sidebar.desk")}
-        />
-        <NavLink
-          href="/workspace/dashboard"
-          active={path === "/workspace/dashboard"}
-          icon={BarChart3}
-          label={t("sidebar.dashboard")}
-        />
-        <NavLink
-          href="/workspace/escalations"
-          active={path === "/workspace/escalations"}
-          icon={AlertTriangle}
-          label={t("sidebar.escalations")}
-        />
-        <NavLink
-          href="/workspace/integrations"
-          active={path === "/workspace/integrations"}
-          icon={Plug}
-          label={t("sidebar.integrations")}
-        />
-        <NavLink
-          href="/workspace/commitments"
-          active={path === "/workspace/commitments"}
-          icon={Target}
-          label={t("sidebar.commitments")}
-        />
-        <NavLink
-          href="/workspace/audit"
-          active={path === "/workspace/audit"}
-          icon={ScrollText}
-          label={t("sidebar.audit")}
-        />
-        <NavLink
-          href="/workspace/notifications/preferences"
-          active={path.startsWith("/workspace/notifications")}
-          icon={Bell}
-          label="Notifications"
-        />
-        <NavLink
-          href="/settings"
-          active={path === "/settings"}
-          icon={Settings}
-          label={t("sidebar.settings")}
-        />
-      </nav>
-
-      <OnboardingChecklistCard />
-
-      <div className="mt-3 shrink-0 px-3">
-        <button
-          type="button"
-          title="Create a new project"
-          onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[var(--workspace-border)] bg-transparent px-3 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)]"
-        >
-          <Plus className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
-          <span>{t("sidebar.newProject")}</span>
-        </button>
-      </div>
-
-      <div className="mt-5 min-h-0 flex-1 overflow-y-auto px-3 pb-2">
-        <div className="border-t border-[var(--workspace-border)]/80 pt-4">
-          <div className="flex items-baseline justify-between gap-2 px-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
-              {t("sidebar.projects")}
-            </p>
-            {!loadingProjects && projects.length > 0 ? (
-              <span className="tabular-nums text-[10px] font-medium text-[var(--workspace-muted-fg)]">
-                {t("sidebar.runs", {
-                  projects: summary.projectCount,
-                  runs: summary.extractionCount,
-                })}
-              </span>
-            ) : null}
-          </div>
-          {loadingProjects ? (
-            <p className="mt-3 px-1 text-[12px] text-[var(--workspace-muted-fg)]">{t("sidebar.loading")}</p>
-          ) : projects.length === 0 ? (
-            <p className="mt-3 rounded-lg border border-[var(--workspace-border)]/60 bg-[var(--workspace-canvas)]/30 px-3 py-2.5 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              {t("sidebar.projectsEmpty", { newProject: t("sidebar.projectsEmptyNew") })}
-            </p>
-          ) : (
-            <>
-              {pinnedProjects.length > 0 ? (
-                <>
-                  <p className="mt-3 px-1 text-[10px] font-medium uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-                    {t("sidebar.pinned")}
-                  </p>
-                  <ul className="mt-1.5 space-y-0.5">
-                    {pinnedProjects.map((p) => (
-                      <SidebarProjectRow
-                        key={p.id}
-                        p={p}
-                        active={activeProjectId === p.id}
-                        exp={exp}
-                      />
-                    ))}
-                  </ul>
-                </>
-              ) : null}
-              <ul className={`space-y-0.5 ${pinnedProjects.length > 0 ? "mt-2" : "mt-3"}`}>
-                {(pinnedProjects.length > 0 ? otherProjects : allSorted).map((p) => (
-                  <SidebarProjectRow
-                    key={p.id}
-                    p={p}
-                    active={activeProjectId === p.id}
-                    exp={exp}
-                  />
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-auto shrink-0 space-y-3 border-t border-[var(--workspace-border)]/70 bg-[var(--workspace-sidebar)]/80 px-3 py-3 backdrop-blur-xl">
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10px] font-medium text-[var(--workspace-muted-fg)]">
-          <Link
-            href="/workspace/developer"
-            className={`inline-flex items-center gap-1.5 transition hover:text-[var(--workspace-fg)] ${
-              path === "/workspace/developer" ? "text-[var(--workspace-fg)]" : ""
-            }`}
-          >
-            <Code2 className="h-3.5 w-3.5 opacity-80" aria-hidden />
-            Developer
-          </Link>
-          <span aria-hidden className="text-[var(--workspace-border)]">
-            ·
-          </span>
-          <Link
-            href="/workspace/billing"
-            className={`inline-flex items-center gap-1.5 transition hover:text-[var(--workspace-fg)] ${
-              path === "/workspace/billing" ? "text-[var(--workspace-fg)]" : ""
-            }`}
-          >
-            <CreditCard className="h-3.5 w-3.5 opacity-80" aria-hidden />
-            Billing
-          </Link>
-          <span aria-hidden className="text-[var(--workspace-border)]">
-            ·
-          </span>
-          <Link href="/product" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.product")}
-          </Link>
-        </div>
-        <WorkspaceInstallControls />
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-1 text-[10px] text-[var(--workspace-muted-fg)]">
-          <Link href="/docs/privacy" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.privacy")}
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/docs/terms" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.terms")}
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/contact" className="transition hover:text-[var(--workspace-fg)]">
-            {t("sidebar.contact")}
-          </Link>
-        </div>
-      </div>
-    </motion.aside>
+    </aside>
   );
 }

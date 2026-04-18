@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Sparkles, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, FolderKanban, X } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -11,7 +11,8 @@ import { deskUrl, DEFAULT_DESK_PRESET_ID } from "@/lib/desk-routes";
 import { EXTRACTION_PRESETS } from "@/lib/extraction-presets";
 import type { Project } from "@/lib/types";
 
-const EMOJI_PRESETS = ["📁", "🚀", "📊", "🛠️", "✨", "🎯", "📝", "🔒"] as const;
+/** Single-character markers (no emoji) — API stores first grapheme as project icon. */
+const ICON_MARKERS = ["", "◆", "◇", "●", "■", "▸"] as const;
 
 const STEPS = 3 as const;
 
@@ -27,9 +28,9 @@ export default function NewProjectModal() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState("");
-  const [iconEmoji, setIconEmoji] = useState("");
+  const [iconMarker, setIconMarker] = useState("");
   const [presetId, setPresetId] = useState<string | null>(DEFAULT_DESK_PRESET_ID);
-  const [openDeskAfter, setOpenDeskAfter] = useState(true);
+  const [openCaptureAfter, setOpenCaptureAfter] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,9 +41,9 @@ export default function NewProjectModal() {
   const reset = useCallback(() => {
     setStep(1);
     setName("");
-    setIconEmoji("");
+    setIconMarker("");
     setPresetId(DEFAULT_DESK_PRESET_ID);
-    setOpenDeskAfter(true);
+    setOpenCaptureAfter(false);
     setError(null);
     setCreating(false);
   }, []);
@@ -79,7 +80,7 @@ export default function NewProjectModal() {
     setError(null);
     setCreating(true);
     try {
-      const icon = iconEmoji.trim();
+      const icon = iconMarker.trim();
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +118,7 @@ export default function NewProjectModal() {
         }
         await refreshAll();
         close();
-        if (openDeskAfter) {
+        if (openCaptureAfter) {
           router.push(
             deskUrl({
               projectId: pid,
@@ -161,7 +162,7 @@ export default function NewProjectModal() {
             <header className="flex shrink-0 items-center justify-between border-b border-[var(--workspace-border)] px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--workspace-accent)]/15">
-                  <Sparkles className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
+                  <FolderKanban className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
                 </span>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
@@ -195,22 +196,25 @@ export default function NewProjectModal() {
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <input
                         type="text"
-                        value={iconEmoji}
-                        onChange={(e) => setIconEmoji([...e.target.value].slice(0, 1).join(""))}
-                        className="flex h-11 w-11 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-center text-[20px] text-[var(--workspace-fg)]"
+                        value={iconMarker}
+                        onChange={(e) => setIconMarker([...e.target.value].slice(0, 1).join(""))}
+                        className="flex h-11 w-11 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-center font-mono text-[18px] text-[var(--workspace-fg)]"
                         maxLength={8}
                         aria-label={t("modal.newProject.projectIconAria")}
+                        placeholder="—"
                       />
-                      {EMOJI_PRESETS.map((em) => (
+                      {ICON_MARKERS.filter(Boolean).map((m) => (
                         <button
-                          key={em}
+                          key={m}
                           type="button"
-                          onClick={() => setIconEmoji(em)}
-                          className={`flex h-9 w-9 items-center justify-center rounded-lg border text-[16px] ${
-                            iconEmoji === em ? "border-[var(--workspace-accent)]/50 bg-[var(--workspace-accent)]/10" : "border-[var(--workspace-border)]"
+                          onClick={() => setIconMarker(m)}
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg border font-mono text-[15px] ${
+                            iconMarker === m
+                              ? "border-[var(--workspace-accent)]/50 bg-[var(--workspace-accent)]/10 text-[var(--workspace-fg)]"
+                              : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)]"
                           }`}
                         >
-                          {em}
+                          {m}
                         </button>
                       ))}
                     </div>
@@ -287,7 +291,7 @@ export default function NewProjectModal() {
                       <span className="font-semibold text-[var(--workspace-fg)]">
                         {name.trim() || t("modal.newProject.untitled")}
                       </span>
-                      {iconEmoji ? <span className="ml-2">{iconEmoji}</span> : null}
+                      {iconMarker ? <span className="ml-2 font-mono text-[var(--workspace-muted-fg)]">{iconMarker}</span> : null}
                     </p>
                     <p className="mt-1 text-[var(--workspace-muted-fg)]">
                       {t("modal.newProject.templateLabel")}{" "}
@@ -299,16 +303,16 @@ export default function NewProjectModal() {
                   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--workspace-border)] px-3 py-3">
                     <input
                       type="checkbox"
-                      checked={openDeskAfter}
-                      onChange={(e) => setOpenDeskAfter(e.target.checked)}
+                      checked={openCaptureAfter}
+                      onChange={(e) => setOpenCaptureAfter(e.target.checked)}
                       className="mt-1"
                     />
                     <span>
                       <span className="block text-[14px] font-medium text-[var(--workspace-fg)]">
-                        {t("modal.newProject.openDeskAfter")}
+                        {t("modal.newProject.openCaptureAfter")}
                       </span>
                       <span className="block text-[12px] text-[var(--workspace-muted-fg)]">
-                        {t("modal.newProject.openDeskAfterHint")}
+                        {t("modal.newProject.openCaptureAfterHint")}
                       </span>
                     </span>
                   </label>

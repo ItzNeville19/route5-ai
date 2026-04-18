@@ -13,11 +13,11 @@ export const metadata: Metadata = {
 export default function AccountPlansPage() {
   return (
     <WorkspaceArticle
-      backHref="/overview"
-      backLabel="Overview"
+      backHref="/feed"
+      backLabel="Feed"
       kicker="Account"
       title="Plans & billing"
-      intro="Plans set your workspace limits — projects and monthly extractions match your tier. Upgrade when you need more headroom."
+      intro="Plans set your workspace limits — projects and monthly captures match your tier. Upgrade when you need more headroom."
     >
       {!BILLING_LIVE ? (
         <p className="mb-6 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">

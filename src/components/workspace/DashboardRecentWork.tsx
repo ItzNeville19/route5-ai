@@ -33,10 +33,10 @@ export default function DashboardRecentWork({
               Live activity
             </p>
             <h2 className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">
-              Recent runs
+              Recent activity
             </h2>
             <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">
-              Newest extractions from your workspace. All timestamps in your locale.
+              Newest captures from your workspace. All timestamps in your locale.
             </p>
           </div>
           <Link
@@ -51,7 +51,7 @@ export default function DashboardRecentWork({
           <p className="mt-5 text-[14px] text-[var(--workspace-muted-fg)]">Loading…</p>
         ) : recent.length === 0 ? (
           <p className="mt-5 rounded-2xl border border-dashed border-[var(--workspace-border)] px-4 py-5 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            No runs yet. Capture on Desk or open a project and paste your first thread, note, or
+            No commitments yet. Capture on Desk or open a project and paste your first thread, note, or
             ticket.
           </p>
         ) : (
@@ -130,7 +130,7 @@ export default function DashboardRecentWork({
 
         {projects.length === 0 ? (
           <p className="mt-5 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            No projects yet. Create one from Overview — every run stays scoped there.
+            No projects yet. Create one from Overview — every commitment stays scoped there.
           </p>
         ) : (
           <ul className="mt-5 space-y-2">

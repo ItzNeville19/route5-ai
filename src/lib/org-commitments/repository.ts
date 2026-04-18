@@ -19,14 +19,10 @@ import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
 import { computeAutomaticOrgCommitmentStatus } from "@/lib/org-commitments/status";
 import { sendNotification } from "@/lib/notifications/service";
+import { appBaseUrl } from "@/lib/app-base-url";
 
 function workspaceCommitmentLink(commitmentId: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "http://localhost:3000";
-  const b = base.startsWith("http") ? base : `https://${base}`;
-  return `${b}/workspace/commitments?id=${encodeURIComponent(commitmentId)}`;
+  return `${appBaseUrl()}/workspace/commitments?id=${encodeURIComponent(commitmentId)}`;
 }
 
 function formatDeadlineLine(iso: string): string {
@@ -52,6 +48,7 @@ function mapRow(r: Record<string, unknown>): OrgCommitmentRow {
     title: String(r.title),
     description: r.description == null ? null : String(r.description),
     ownerId: String(r.owner_id),
+    projectId: r.project_id == null ? null : String(r.project_id),
     deadline: String(r.deadline),
     priority: r.priority as OrgCommitmentPriority,
     status: r.status as OrgCommitmentStatus,
@@ -65,6 +62,33 @@ function mapRow(r: Record<string, unknown>): OrgCommitmentRow {
 
 async function resolveOrgId(userId: string): Promise<string> {
   return ensureOrganizationForClerkUser(userId);
+}
+
+/** Distinct commitment owner user ids in this workspace (Clerk user ids). */
+export async function listDistinctOwnerIdsForOrg(userId: string): Promise<string[]> {
+  const orgId = await resolveOrgId(userId);
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_commitments")
+      .select("owner_id")
+      .eq("org_id", orgId)
+      .is("deleted_at", null);
+    if (error) throw error;
+    const set = new Set<string>();
+    for (const row of data ?? []) {
+      const id = String((row as { owner_id: string }).owner_id ?? "").trim();
+      if (id) set.add(id);
+    }
+    return [...set];
+  }
+  const d = getSqliteHandle();
+  const raw = d
+    .prepare(
+      `SELECT DISTINCT owner_id FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL AND trim(owner_id) != ''`
+    )
+    .all(orgId) as { owner_id: string }[];
+  return raw.map((r) => String(r.owner_id));
 }
 
 export async function listOrgCommitments(
@@ -100,9 +124,17 @@ export async function listOrgCommitments(
     if (sort === "priority") {
       q = q.order("priority", { ascending: order === "asc" });
     } else {
-      q = q.order(sort === "created_at" ? "created_at" : sort === "updated_at" ? "updated_at" : sort === "status" ? "status" : "deadline", {
-        ascending: order === "asc",
-      });
+      const col =
+        sort === "created_at"
+          ? "created_at"
+          : sort === "updated_at"
+            ? "updated_at"
+            : sort === "status"
+              ? "status"
+              : sort === "owner_id"
+                ? "owner_id"
+                : "deadline";
+      q = q.order(col, { ascending: order === "asc" });
     }
     const { data, error } = await q;
     if (error) throw error;
@@ -162,7 +194,9 @@ export async function listOrgCommitments(
           ? "created_at"
           : sort === "updated_at"
             ? "updated_at"
-            : "deadline";
+            : sort === "owner_id"
+              ? "owner_id"
+              : "deadline";
   sql += ` ORDER BY ${orderCol} ${order === "asc" ? "ASC" : "DESC"}`;
   const raw = d.prepare(sql).all(...params) as Record<string, unknown>[];
   let rows = raw.map((x) => mapRow(x));
@@ -543,6 +577,7 @@ export async function createOrgCommitment(
     title: string;
     description: string | null;
     ownerId: string;
+    projectId?: string | null;
     deadline: string;
     priority: OrgCommitmentPriority;
   }
@@ -568,6 +603,7 @@ export async function createOrgCommitment(
         title: input.title,
         description: input.description,
         owner_id: input.ownerId,
+        project_id: input.projectId ?? null,
         deadline: input.deadline,
         priority: input.priority,
         status,
@@ -600,15 +636,16 @@ export async function createOrgCommitment(
   const d = getSqliteHandle();
   d.prepare(
     `INSERT INTO org_commitments (
-      id, org_id, title, description, owner_id, deadline, priority, status,
+      id, org_id, title, description, owner_id, project_id, deadline, priority, status,
       created_at, updated_at, completed_at, last_activity_at, deleted_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     orgId,
     input.title,
     input.description,
     input.ownerId,
+    input.projectId ?? null,
     input.deadline,
     input.priority,
     status,
@@ -642,6 +679,7 @@ export async function updateOrgCommitment(
     title: string;
     description: string | null;
     ownerId: string;
+    projectId: string | null;
     deadline: string;
     priority: OrgCommitmentPriority;
     completed: boolean;
@@ -656,6 +694,8 @@ export async function updateOrgCommitment(
   const title = patch.title !== undefined ? patch.title : existing.title;
   const description = patch.description !== undefined ? patch.description : existing.description;
   const ownerId = patch.ownerId !== undefined ? patch.ownerId : existing.ownerId;
+  const projectId =
+    patch.projectId !== undefined ? patch.projectId : existing.projectId ?? null;
   const deadline = patch.deadline !== undefined ? patch.deadline : existing.deadline;
   const priority = patch.priority !== undefined ? patch.priority : existing.priority;
 
@@ -680,6 +720,7 @@ export async function updateOrgCommitment(
     title,
     description,
     owner_id: ownerId,
+    project_id: projectId,
     deadline,
     priority,
     updated_at: now,
@@ -744,6 +785,15 @@ export async function updateOrgCommitment(
         newValue: patch.priority,
       });
     }
+    if (patch.projectId !== undefined && patch.projectId !== (existing.projectId ?? null)) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "project_id",
+        oldValue: existing.projectId,
+        newValue: patch.projectId,
+      });
+    }
     await recomputeOrgCommitmentStatusById(commitmentId);
     const { data: fin } = await supabase.from("org_commitments").select("*").eq("id", commitmentId).single();
     if (patch.completed === true && !existing.completedAt) {
@@ -774,6 +824,7 @@ export async function updateOrgCommitment(
       title = ?,
       description = ?,
       owner_id = ?,
+      project_id = ?,
       deadline = ?,
       priority = ?,
       updated_at = ?,
@@ -785,6 +836,7 @@ export async function updateOrgCommitment(
     title,
     description,
     ownerId,
+    projectId,
     deadline,
     priority,
     now,
@@ -837,6 +889,15 @@ export async function updateOrgCommitment(
       fieldChanged: "priority",
       oldValue: existing.priority,
       newValue: patch.priority,
+    });
+  }
+  if (patch.projectId !== undefined && patch.projectId !== (existing.projectId ?? null)) {
+    await appendHistory(null, d, {
+      commitmentId,
+      changedBy: userId,
+      fieldChanged: "project_id",
+      oldValue: existing.projectId,
+      newValue: patch.projectId,
     });
   }
   await recomputeOrgCommitmentStatusById(commitmentId);
@@ -1158,16 +1219,17 @@ export async function listOrgCommitmentsForOrgId(
     if (sort === "priority") {
       q = q.order("priority", { ascending: order === "asc" });
     } else {
-      q = q.order(
+      const col =
         sort === "created_at"
           ? "created_at"
           : sort === "updated_at"
             ? "updated_at"
             : sort === "status"
               ? "status"
-              : "deadline",
-        { ascending: order === "asc" }
-      );
+              : sort === "owner_id"
+                ? "owner_id"
+                : "deadline";
+      q = q.order(col, { ascending: order === "asc" });
     }
     const { data, error } = await q;
     if (error) throw error;
@@ -1229,7 +1291,9 @@ export async function listOrgCommitmentsForOrgId(
           ? "created_at"
           : sort === "updated_at"
             ? "updated_at"
-            : "deadline";
+            : sort === "owner_id"
+              ? "owner_id"
+              : "deadline";
   sql += ` ORDER BY ${orderCol} ${order === "asc" ? "ASC" : "DESC"}`;
   const raw = d.prepare(sql).all(...params) as Record<string, unknown>[];
   let rows = raw.map((x) => mapRow(x));
@@ -1475,6 +1539,7 @@ export async function createOrgCommitmentForPublicApi(
         title: input.title,
         description: input.description,
         owner_id: input.ownerId,
+        project_id: null,
         deadline: input.deadline,
         priority: input.priority,
         status,
@@ -1507,15 +1572,16 @@ export async function createOrgCommitmentForPublicApi(
   const d = getSqliteHandle();
   d.prepare(
     `INSERT INTO org_commitments (
-      id, org_id, title, description, owner_id, deadline, priority, status,
+      id, org_id, title, description, owner_id, project_id, deadline, priority, status,
       created_at, updated_at, completed_at, last_activity_at, deleted_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     id,
     orgId,
     input.title,
     input.description,
     input.ownerId,
+    null,
     input.deadline,
     input.priority,
     status,

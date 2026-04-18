@@ -7,6 +7,8 @@ export const pt: Record<string, string> = {
   "lang.autoBrowser": "Igual ao navegador",
   "sidebar.getStarted": "Começar",
   "sidebar.overview": "Visão geral",
+  "sidebar.feed": "Feed",
+  "sidebar.leadership": "Liderança",
   "sidebar.marketplace": "Marketplace",
   "sidebar.themes": "Temas",
   "sidebar.desk": "Mesa",
@@ -19,8 +21,9 @@ export const pt: Record<string, string> = {
   "sidebar.settings": "Configurações",
   "sidebar.newProject": "Novo projeto",
   "sidebar.projects": "Projetos",
+  "sidebar.team": "Equipe",
   "sidebar.pinned": "Fixados",
-  "sidebar.projectsEmpty": "Ainda não há projetos — use {newProject} acima.",
+  "sidebar.projectsEmpty": "Ainda não há projetos — use {newProject} abaixo.",
   "sidebar.projectsEmptyNew": "Novo projeto",
   "sidebar.loading": "Carregando…",
   "sidebar.runs": "{projects} · {runs} execuções",
@@ -75,10 +78,10 @@ export const pt: Record<string, string> = {
   "overview.openActionsStrip.caughtUp":
     "Nenhuma ação aberta na fila — listas em dia. Capture o próximo fio na Mesa quando quiser.",
 
-  "desk.llmOffTitle": "Sem LLM neste deploy.",
+  "desk.llmOffTitle": "Processo estruturado sem IA completa",
   "desk.llmOffLead":
-    "As execuções usam um resumo heurístico rápido (marcado em cada execução como «Heurístico»), não análise semântica completa. Adicione",
-  "desk.llmOffTail": "para extrações estruturadas com IA.",
+    "As capturas usam um resumo heurístico rápido (marcado em cada captura como «Heurístico»), não análise semântica completa. Adicione",
+  "desk.llmOffTail": "para campos estruturados com IA.",
   "desk.llmOffRead": "Leia o que você está contratando →",
 
   "desk.badge": "Desk",
@@ -96,7 +99,7 @@ export const pt: Record<string, string> = {
   "desk.stepExtract": "Extrair",
   "desk.stepProject": "Projeto",
   "desk.stepOverview": "Visão geral",
-  "desk.aiExtraction": "IA e extração",
+  "desk.aiExtraction": "Configurações de IA",
   "desk.store": "Loja",
   "desk.cmdK": "Paleta de comandos",
 
@@ -129,7 +132,7 @@ export const pt: Record<string, string> = {
   "desk.ready": "Pronto",
   "desk.off": "Desligado",
 
-  "desk.inbox": "Executar extração",
+  "desk.inbox": "Material de origem",
   "desk.captureTagline": "Cole material bruto para o projeto selecionado",
   "desk.captureHelper":
     "Até 100k caracteres. A saída aparece na aba Extrações do projeto com decisões e ações que você pode concluir.",

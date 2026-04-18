@@ -9,6 +9,7 @@ function commitmentPayload(row: OrgCommitmentRow) {
     title: row.title,
     description: row.description,
     owner_id: row.ownerId,
+    project_id: row.projectId,
     deadline: row.deadline,
     priority: row.priority,
     status: row.status,

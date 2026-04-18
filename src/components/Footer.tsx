@@ -5,7 +5,7 @@ const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
   { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },
-  { href: "/overview", label: "Overview", title: "Signed-in app — execution dashboard and Desk" },
+  { href: "/overview", label: "Overview", title: "Signed-in app — leadership health and load" },
   { href: "/login", label: "Log in", title: "Sign in with Clerk" },
 ];
 

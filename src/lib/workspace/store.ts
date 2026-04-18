@@ -30,6 +30,7 @@ import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import * as sqlite from "@/lib/workspace/sqlite";
+import { appBaseUrl } from "@/lib/app-base-url";
 
 export type StorageBackend = "supabase" | "sqlite";
 
@@ -843,7 +844,12 @@ export async function insertCommitmentsFromDrafts(
   const out: Commitment[] = [];
   const logBody = opts?.createdLogBody?.trim() || "Created from captured input";
   for (const d of drafts) {
-    const assign = opts?.assignOwnerUserId ?? null;
+    const fromDraft =
+      d.ownerUserId !== undefined && d.ownerUserId !== null && String(d.ownerUserId).trim() !== ""
+        ? String(d.ownerUserId).trim()
+        : null;
+    const assign =
+      fromDraft !== null ? fromDraft : opts?.assignOwnerUserId !== undefined ? opts.assignOwnerUserId ?? null : null;
     const ownerDisplayName = d.ownerName?.trim() || null;
     const log = initialActivityLog(userId, logBody);
     const logJson = serializeActivityLog(log);
@@ -1097,12 +1103,7 @@ async function recordEscalationForReconcile(
   const reason =
     newStatus === "overdue" ? "DUE_DATE_PASSED" : "STALE_INACTIVITY_OR_FLAGGED";
   const n = new Date().toISOString();
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "http://localhost:3000";
-  const appBase = base.startsWith("http") ? base : `https://${base}`;
-  const deskLink = `${appBase}/desk?projectId=${encodeURIComponent(projectId)}`;
+  const deskLink = `${appBaseUrl()}/desk?projectId=${encodeURIComponent(projectId)}`;
 
   let notifiedAt: string | null = null;
   try {

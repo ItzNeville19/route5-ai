@@ -9,7 +9,7 @@ type Props = {
   loading: boolean;
 };
 
-/** Loud-style three spark bars: projects, 7d runs, checklist completion. */
+/** Loud-style three spark bars: projects, 7d commitments, checklist completion. */
 export default function DashboardOverviewSparkRow({
   projectCount,
   activity,
@@ -27,7 +27,7 @@ export default function DashboardOverviewSparkRow({
 
   const items = [
     { label: "Projects", value: loading ? "—" : String(projectCount), pct: projPct, tone: "violet" as const },
-    { label: "Runs (7d)", value: loading ? "—" : String(runs7), pct: runsPct, tone: "violet" as const },
+    { label: "Commitments (7d)", value: loading ? "—" : String(runs7), pct: runsPct, tone: "violet" as const },
     {
       label: "Checklist",
       value: loading ? "—" : ac === null ? "—" : `${checkPct}%`,

@@ -1,10 +1,21 @@
 "use client";
 
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowUpRight, CircleDot, Target, UserX } from "lucide-react";
-import type { ExecutionOverview } from "@/lib/commitment-types";
+import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
 import { deskUrl } from "@/lib/desk-routes";
+
+function assigneeLabel(r: CommitmentRiskItem, currentUserId: string | undefined): string {
+  const name = r.ownerDisplayName?.trim();
+  if (name) return name;
+  if (r.ownerUserId) {
+    if (currentUserId && r.ownerUserId === currentUserId) return "You";
+    return "Assigned teammate";
+  }
+  return "Unassigned";
+}
 
 type Props = {
   overview: ExecutionOverview | null;
@@ -13,9 +24,11 @@ type Props = {
 
 /**
  * Commitment-based execution intel (same source as Desk /api/workspace/execution).
- * Shows what is tracked, at risk, and unowned — not extraction-only metrics.
+ * Shows what is tracked, at risk, and unowned — not capture-only metrics.
  */
 export default function DashboardCommitmentSnapshot({ overview, loading }: Props) {
+  const { user } = useUser();
+
   if (loading) {
     return (
       <div
@@ -31,6 +44,8 @@ export default function DashboardCommitmentSnapshot({ overview, loading }: Props
 
   const { summary, riskFeed } = overview;
   const hasWork = summary.activeTotal > 0 || summary.overdueCount > 0;
+  const overdueItems = riskFeed.filter((r) => r.riskReason === "overdue");
+  const otherRiskItems = riskFeed.filter((r) => r.riskReason !== "overdue");
 
   /** Status buckets are mutually exclusive among non-done commitments (see execution-overview). */
   const onTrackCount = Math.max(0, summary.activeTotal - summary.atRiskCount - summary.overdueCount);
@@ -51,7 +66,7 @@ export default function DashboardCommitmentSnapshot({ overview, loading }: Props
             What we are holding the line on
           </h2>
           <p className="mt-1 max-w-2xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Counts come from saved commitments (from Desk capture and from every extraction run). Assign owners on
+            Counts come from saved commitments (from Desk and from every decision capture). Assign owners on
             Desk; stale items surface as at risk after seven days without an update.
           </p>
         </div>
@@ -124,46 +139,86 @@ export default function DashboardCommitmentSnapshot({ overview, loading }: Props
 
       {!hasWork ? (
         <p className="mt-4 rounded-xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-canvas)]/40 px-4 py-3 text-[13px] text-[var(--workspace-muted-fg)]">
-          No open commitments yet. Run an extraction in a project or paste text on Desk — we create commitments from
-          action items so you can own and track them here.
+          No open commitments yet. On Desk, paste notes, review proposed commitments, and commit — they show up
+          here with owners and due dates.
         </p>
       ) : riskFeed.length > 0 ? (
-        <div className="mt-5 border-t border-[var(--workspace-border)]/80 pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
-            Needs attention
-          </p>
-          <ul className="mt-3 grid gap-2 sm:grid-cols-1 lg:grid-cols-2">
-            {riskFeed.slice(0, 6).map((r, i) => (
-              <motion.li
-                key={r.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-              >
-                <Link
-                  href={deskUrl({ projectId: r.projectId })}
-                  className="group flex h-full flex-col rounded-2xl border border-[var(--workspace-border)]/70 bg-[var(--workspace-surface)]/45 p-3 transition hover:border-[var(--workspace-accent)]/45 hover:bg-[var(--workspace-nav-hover)] sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-                >
-                  <span className="min-w-0 font-medium leading-snug text-[var(--workspace-fg)] group-hover:text-[var(--workspace-fg)]">
-                    {r.title}
-                  </span>
-                  <span className="mt-2 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--workspace-border)]/80 px-2 py-0.5 text-[11px] text-[var(--workspace-muted-fg)] sm:mt-0">
-                    {r.projectName}
-                    <span className="text-[var(--workspace-fg)]/90">·</span>
-                    {r.riskReason === "overdue"
-                      ? "Overdue"
-                      : r.riskReason === "unassigned"
-                        ? "No owner"
-                        : "Stalled"}
-                    <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-70" aria-hidden />
-                  </span>
-                </Link>
-              </motion.li>
-            ))}
-          </ul>
+        <div className="mt-5 space-y-5 border-t border-[var(--workspace-border)]/80 pt-4">
+          {overdueItems.length > 0 ? (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-red-200/90">
+                Overdue — who owns it
+              </p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-1 lg:grid-cols-2">
+                {overdueItems.slice(0, 10).map((r, i) => (
+                  <RiskRow key={r.id} r={r} i={i} currentUserId={user?.id} />
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {otherRiskItems.length > 0 ? (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
+                {overdueItems.length > 0 ? "Also needs attention" : "Needs attention"}
+              </p>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-1 lg:grid-cols-2">
+                {otherRiskItems.slice(0, 8).map((r, i) => (
+                  <RiskRow key={r.id} r={r} i={i} currentUserId={user?.id} />
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
+  );
+}
+
+function RiskRow({
+  r,
+  i,
+  currentUserId,
+}: {
+  r: CommitmentRiskItem;
+  i: number;
+  currentUserId: string | undefined;
+}) {
+  const owner = assigneeLabel(r, currentUserId);
+  const badge =
+    r.riskReason === "overdue"
+      ? "Overdue"
+      : r.riskReason === "unassigned"
+        ? "No owner"
+        : "Stalled";
+
+  return (
+    <motion.li
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.04 }}
+    >
+      <Link
+        href={deskUrl({ projectId: r.projectId })}
+        className="group flex h-full flex-col rounded-2xl border border-[var(--workspace-border)]/70 bg-[var(--workspace-surface)]/45 p-3 transition hover:border-[var(--workspace-accent)]/45 hover:bg-[var(--workspace-nav-hover)]"
+      >
+        <span className="min-w-0 font-medium leading-snug text-[var(--workspace-fg)]">{r.title}</span>
+        <p className="mt-2 text-[12px] leading-snug text-[var(--workspace-muted-fg)]">
+          <span className="font-semibold text-[var(--workspace-fg)]">{owner}</span>
+          <span className="text-[var(--workspace-fg)]/50"> · </span>
+          {r.projectName}
+          {r.dueDate ? (
+            <>
+              <span className="text-[var(--workspace-fg)]/50"> · </span>
+              Due {r.dueDate.slice(0, 10)}
+            </>
+          ) : null}
+        </p>
+        <span className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-[var(--workspace-border)]/80 px-2 py-0.5 text-[11px] text-[var(--workspace-muted-fg)]">
+          {badge}
+          <ArrowUpRight className="h-3 w-3 opacity-0 transition group-hover:opacity-70" aria-hidden />
+        </span>
+      </Link>
+    </motion.li>
   );
 }
 

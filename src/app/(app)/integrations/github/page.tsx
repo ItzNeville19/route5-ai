@@ -164,7 +164,7 @@ export default function GitHubIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — assigned issues sync here; send everything to Desk for extraction (same pipeline as Overview)."
+                ? "Live — assigned issues sync here; send everything to Desk for decision capture (same pipeline as Overview)."
                 : "Ready — sample issues and URL import work now; add a token for live assigned issues. Desk is always the capture surface."}
             </p>
           ) : (
@@ -200,7 +200,7 @@ export default function GitHubIntegrationPage() {
       {previewMode && !loading ? (
         <div className="mt-6 rounded-2xl border border-[var(--workspace-accent)]/25 bg-[var(--workspace-accent)]/8 px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
           <span className="font-semibold">Preview mode</span> — Sample issues only (GitHub token not set on this
-          server). Fetch and copy still produces real extraction text; configure GitHub in your deployment to list and
+          server). Fetch and copy still produces real capture text; configure GitHub in your deployment to list and
           import assigned issues from your org.
         </div>
       ) : null}
@@ -209,7 +209,7 @@ export default function GitHubIntegrationPage() {
         <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Import by URL or ref</h2>
         <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">
           Paste a GitHub issue link or <span className="font-mono">owner/repo#123</span>. Then use{" "}
-          <span className="font-medium text-[var(--workspace-fg)]">Open in Desk</span> — runs file to the project you
+          <span className="font-medium text-[var(--workspace-fg)]">Open in Desk</span> — routes to the project you
           choose on Desk.
         </p>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">

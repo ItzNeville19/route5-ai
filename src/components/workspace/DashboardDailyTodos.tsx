@@ -36,7 +36,7 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
   } else {
     candidates.push(
       {
-        text: "Open a project and review the latest extraction",
+        text: "Open a project and review the latest capture",
         href: "/overview",
         learnMoreHref: DOCS_PRODUCT,
       },
@@ -55,7 +55,7 @@ function suggestTasks(projectCount: number, extractionCount: number): SuggestTas
 
   if (extractionCount === 0) {
     candidates.push({
-      text: "Run an extraction from Desk (paste notes, then extract)",
+      text: "Capture decisions from Desk (paste notes, then process)",
       href: deskUrl(),
       learnMoreHref: DOCS_PRODUCT,
     });
@@ -155,7 +155,7 @@ export default function DashboardDailyTodos({ projectCount, extractionCount }: P
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          companyContext: `Team workspace snapshot: ${projectCount} projects, ${extractionCount} extractions completed. Suggest three concrete next tasks for an operator (each under 72 characters).`,
+          companyContext: `Team workspace snapshot: ${projectCount} projects, ${extractionCount} captured decisions completed. Suggest three concrete next tasks for an operator (each under 72 characters).`,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {

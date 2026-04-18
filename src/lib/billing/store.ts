@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
+import { withSqliteFallback } from "@/lib/supabase/with-sqlite-fallback";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
 import type {
   BillingPlanId,
@@ -50,96 +51,115 @@ function mapInvoice(r: Record<string, unknown>): OrgInvoiceRow {
 }
 
 export async function getOrganizationPlanColumn(orgId: string): Promise<string> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("organizations")
-      .select("plan")
-      .eq("id", orgId)
-      .maybeSingle();
-    if (error) throw error;
-    return String((data as { plan?: string } | null)?.plan ?? "free");
-  }
-  const d = getSqliteHandle();
-  const row = d.prepare(`SELECT plan FROM organizations WHERE id = ?`).get(orgId) as
-    | { plan: string }
-    | undefined;
-  return row?.plan ?? "free";
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("plan")
+        .eq("id", orgId)
+        .maybeSingle();
+      if (error) throw error;
+      return String((data as { plan?: string } | null)?.plan ?? "free");
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d.prepare(`SELECT plan FROM organizations WHERE id = ?`).get(orgId) as
+        | { plan: string }
+        | undefined;
+      return row?.plan ?? "free";
+    }
+  );
 }
 
 export async function updateOrganizationPlan(orgId: string, plan: string): Promise<void> {
   const now = new Date().toISOString();
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { error } = await supabase
-      .from("organizations")
-      .update({ plan, updated_at: now })
-      .eq("id", orgId);
-    if (error) throw error;
-    return;
-  }
-  const d = getSqliteHandle();
-  d.prepare(`UPDATE organizations SET plan = ?, updated_at = ? WHERE id = ?`).run(plan, now, orgId);
+  await withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { error } = await supabase
+        .from("organizations")
+        .update({ plan, updated_at: now })
+        .eq("id", orgId);
+      if (error) throw error;
+    },
+    () => {
+      const d = getSqliteHandle();
+      d.prepare(`UPDATE organizations SET plan = ?, updated_at = ? WHERE id = ?`).run(plan, now, orgId);
+    }
+  );
 }
 
 export async function findOrgIdByStripeCustomerId(customerId: string): Promise<string | null> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_subscriptions")
-      .select("org_id")
-      .eq("stripe_customer_id", customerId)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? String((data as { org_id: string }).org_id) : null;
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(`SELECT org_id FROM org_subscriptions WHERE stripe_customer_id = ?`)
-    .get(customerId) as { org_id: string } | undefined;
-  return row?.org_id ?? null;
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_subscriptions")
+        .select("org_id")
+        .eq("stripe_customer_id", customerId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? String((data as { org_id: string }).org_id) : null;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(`SELECT org_id FROM org_subscriptions WHERE stripe_customer_id = ?`)
+        .get(customerId) as { org_id: string } | undefined;
+      return row?.org_id ?? null;
+    }
+  );
 }
 
 export async function findOrgIdByStripeSubscriptionId(subscriptionId: string): Promise<string | null> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_subscriptions")
-      .select("org_id")
-      .eq("stripe_subscription_id", subscriptionId)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? String((data as { org_id: string }).org_id) : null;
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(`SELECT org_id FROM org_subscriptions WHERE stripe_subscription_id = ?`)
-    .get(subscriptionId) as { org_id: string } | undefined;
-  return row?.org_id ?? null;
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_subscriptions")
+        .select("org_id")
+        .eq("stripe_subscription_id", subscriptionId)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? String((data as { org_id: string }).org_id) : null;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(`SELECT org_id FROM org_subscriptions WHERE stripe_subscription_id = ?`)
+        .get(subscriptionId) as { org_id: string } | undefined;
+      return row?.org_id ?? null;
+    }
+  );
 }
 
 export async function getOrgSubscription(orgId: string): Promise<OrgSubscriptionRow | null> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_subscriptions")
-      .select("*")
-      .eq("org_id", orgId)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) return null;
-    return mapSub(data as Record<string, unknown>);
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(`SELECT * FROM org_subscriptions WHERE org_id = ?`)
-    .get(orgId) as Record<string, unknown> | undefined;
-  if (!row) return null;
-  const r = row;
-  return mapSub({
-    ...r,
-    cancel_at_period_end: Boolean(r.cancel_at_period_end),
-  });
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_subscriptions")
+        .select("*")
+        .eq("org_id", orgId)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return mapSub(data as Record<string, unknown>);
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(`SELECT * FROM org_subscriptions WHERE org_id = ?`)
+        .get(orgId) as Record<string, unknown> | undefined;
+      if (!row) return null;
+      const r = row;
+      return mapSub({
+        ...r,
+        cancel_at_period_end: Boolean(r.cancel_at_period_end),
+      });
+    }
+  );
 }
 
 export async function upsertOrgSubscriptionPartial(params: {
@@ -183,26 +203,30 @@ export async function upsertOrgSubscriptionPartial(params: {
   };
 
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const payload = {
-      org_id: params.orgId,
-      stripe_customer_id: merged.stripe_customer_id,
-      stripe_subscription_id: merged.stripe_subscription_id,
-      plan: merged.plan,
-      status: merged.status,
-      current_period_start: merged.current_period_start,
-      current_period_end: merged.current_period_end,
-      cancel_at_period_end: merged.cancel_at_period_end,
-      cancelled_at: merged.cancelled_at,
-      trial_end: merged.trial_end,
-      seat_count: merged.seat_count,
-      payment_failed_at: merged.payment_failed_at,
-      updated_at: now,
-      ...(existing ? {} : { created_at: now }),
-    };
-    const { error } = await supabase.from("org_subscriptions").upsert(payload, { onConflict: "org_id" });
-    if (error) throw error;
-    return;
+    try {
+      const supabase = getServiceClient();
+      const payload = {
+        org_id: params.orgId,
+        stripe_customer_id: merged.stripe_customer_id,
+        stripe_subscription_id: merged.stripe_subscription_id,
+        plan: merged.plan,
+        status: merged.status,
+        current_period_start: merged.current_period_start,
+        current_period_end: merged.current_period_end,
+        cancel_at_period_end: merged.cancel_at_period_end,
+        cancelled_at: merged.cancelled_at,
+        trial_end: merged.trial_end,
+        seat_count: merged.seat_count,
+        payment_failed_at: merged.payment_failed_at,
+        updated_at: now,
+        ...(existing ? {} : { created_at: now }),
+      };
+      const { error } = await supabase.from("org_subscriptions").upsert(payload, { onConflict: "org_id" });
+      if (error) throw error;
+      return;
+    } catch (e) {
+      console.error("[billing] upsertOrgSubscriptionPartial Supabase failed; writing SQLite.", e);
+    }
   }
 
   const d = getSqliteHandle();
@@ -258,18 +282,22 @@ export async function upsertOrgSubscriptionPartial(params: {
 export async function tryClaimStripeWebhookEvent(stripeEventId: string): Promise<boolean> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { error } = await supabase.from("stripe_webhook_events").insert({
-      stripe_event_id: stripeEventId,
-      created_at: now,
-    });
-    if (error) {
-      if (error.code === "23505") return false;
-      const msg = error.message?.toLowerCase() ?? "";
-      if (msg.includes("duplicate") || msg.includes("unique")) return false;
-      throw error;
+    try {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("stripe_webhook_events").insert({
+        stripe_event_id: stripeEventId,
+        created_at: now,
+      });
+      if (error) {
+        if (error.code === "23505") return false;
+        const msg = error.message?.toLowerCase() ?? "";
+        if (msg.includes("duplicate") || msg.includes("unique")) return false;
+        throw error;
+      }
+      return true;
+    } catch (e) {
+      console.error("[billing] tryClaimStripeWebhookEvent Supabase failed; SQLite.", e);
     }
-    return true;
   }
   const d = getSqliteHandle();
   const id = crypto.randomUUID();
@@ -299,25 +327,29 @@ export async function insertOrgInvoiceIfNew(row: {
 }): Promise<boolean> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { error } = await supabase.from("org_invoices").insert({
-      org_id: row.orgId,
-      stripe_invoice_id: row.stripeInvoiceId,
-      stripe_payment_intent_id: row.stripePaymentIntentId,
-      amount_cents: row.amountCents,
-      currency: row.currency,
-      status: row.status,
-      invoice_url: row.invoiceUrl,
-      invoice_pdf_url: row.invoicePdfUrl,
-      period_start: row.periodStart,
-      period_end: row.periodEnd,
-      created_at: now,
-    });
-    if (error) {
-      if (error.message?.toLowerCase().includes("duplicate")) return false;
-      throw error;
+    try {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("org_invoices").insert({
+        org_id: row.orgId,
+        stripe_invoice_id: row.stripeInvoiceId,
+        stripe_payment_intent_id: row.stripePaymentIntentId,
+        amount_cents: row.amountCents,
+        currency: row.currency,
+        status: row.status,
+        invoice_url: row.invoiceUrl,
+        invoice_pdf_url: row.invoicePdfUrl,
+        period_start: row.periodStart,
+        period_end: row.periodEnd,
+        created_at: now,
+      });
+      if (error) {
+        if (error.message?.toLowerCase().includes("duplicate")) return false;
+        throw error;
+      }
+      return true;
+    } catch (e) {
+      console.error("[billing] insertOrgInvoiceIfNew Supabase failed; SQLite.", e);
     }
-    return true;
   }
   const d = getSqliteHandle();
   const id = crypto.randomUUID();
@@ -348,87 +380,102 @@ export async function insertOrgInvoiceIfNew(row: {
 }
 
 export async function countActiveCommitments(orgId: string): Promise<number> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { count, error } = await supabase
-      .from("org_commitments")
-      .select("id", { count: "exact", head: true })
-      .eq("org_id", orgId)
-      .is("deleted_at", null);
-    if (error) throw error;
-    return count ?? 0;
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(
-      `SELECT COUNT(*) as c FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL`
-    )
-    .get(orgId) as { c: number };
-  return row?.c ?? 0;
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { count, error } = await supabase
+        .from("org_commitments")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId)
+        .is("deleted_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(
+          `SELECT COUNT(*) as c FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL`
+        )
+        .get(orgId) as { c: number };
+      return row?.c ?? 0;
+    }
+  );
 }
 
 export async function countConnectedIntegrations(orgId: string): Promise<number> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { count, error } = await supabase
-      .from("org_integrations")
-      .select("id", { count: "exact", head: true })
-      .eq("org_id", orgId)
-      .eq("status", "connected");
-    if (error) throw error;
-    return count ?? 0;
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(
-      `SELECT COUNT(*) as c FROM org_integrations WHERE org_id = ? AND status = 'connected'`
-    )
-    .get(orgId) as { c: number };
-  return row?.c ?? 0;
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { count, error } = await supabase
+        .from("org_integrations")
+        .select("id", { count: "exact", head: true })
+        .eq("org_id", orgId)
+        .eq("status", "connected");
+      if (error) throw error;
+      return count ?? 0;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(
+          `SELECT COUNT(*) as c FROM org_integrations WHERE org_id = ? AND status = 'connected'`
+        )
+        .get(orgId) as { c: number };
+      return row?.c ?? 0;
+    }
+  );
 }
 
 export async function getLatestUsageValue(orgId: string, metric: UsageMetric): Promise<number | null> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_usage")
-      .select("value")
-      .eq("org_id", orgId)
-      .eq("metric", metric)
-      .order("recorded_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) return null;
-    return Number((data as { value: number }).value);
-  }
-  const d = getSqliteHandle();
-  const row = d
-    .prepare(
-      `SELECT value FROM org_usage WHERE org_id = ? AND metric = ? ORDER BY recorded_at DESC LIMIT 1`
-    )
-    .get(orgId, metric) as { value: number } | undefined;
-  return row ? Number(row.value) : null;
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_usage")
+        .select("value")
+        .eq("org_id", orgId)
+        .eq("metric", metric)
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return Number((data as { value: number }).value);
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d
+        .prepare(
+          `SELECT value FROM org_usage WHERE org_id = ? AND metric = ? ORDER BY recorded_at DESC LIMIT 1`
+        )
+        .get(orgId, metric) as { value: number } | undefined;
+      return row ? Number(row.value) : null;
+    }
+  );
 }
 
 export async function recordUsage(orgId: string, metric: UsageMetric, value: number): Promise<void> {
   const now = new Date().toISOString();
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { error } = await supabase.from("org_usage").insert({
-      org_id: orgId,
-      metric,
-      value,
-      recorded_at: now,
-    });
-    if (error) throw error;
-    return;
-  }
-  const d = getSqliteHandle();
-  const id = crypto.randomUUID();
-  d.prepare(
-    `INSERT INTO org_usage (id, org_id, metric, value, recorded_at) VALUES (?, ?, ?, ?, ?)`
-  ).run(id, orgId, metric, value, now);
+  await withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("org_usage").insert({
+        org_id: orgId,
+        metric,
+        value,
+        recorded_at: now,
+      });
+      if (error) throw error;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const id = crypto.randomUUID();
+      d.prepare(
+        `INSERT INTO org_usage (id, org_id, metric, value, recorded_at) VALUES (?, ?, ?, ?, ?)`
+      ).run(id, orgId, metric, value, now);
+    }
+  );
 }
 
 export async function ensureSeatUsageInitialized(orgId: string, seatCount: number): Promise<void> {
@@ -439,22 +486,26 @@ export async function ensureSeatUsageInitialized(orgId: string, seatCount: numbe
 }
 
 export async function listOrgInvoices(orgId: string, limit = 50): Promise<OrgInvoiceRow[]> {
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_invoices")
-      .select("*")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    return (data ?? []).map((r) => mapInvoice(r as Record<string, unknown>));
-  }
-  const d = getSqliteHandle();
-  const rows = d
-    .prepare(
-      `SELECT * FROM org_invoices WHERE org_id = ? ORDER BY created_at DESC LIMIT ?`
-    )
-    .all(orgId, limit) as Record<string, unknown>[];
-  return rows.map(mapInvoice);
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_invoices")
+        .select("*")
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return (data ?? []).map((r) => mapInvoice(r as Record<string, unknown>));
+    },
+    () => {
+      const d = getSqliteHandle();
+      const rows = d
+        .prepare(
+          `SELECT * FROM org_invoices WHERE org_id = ? ORDER BY created_at DESC LIMIT ?`
+        )
+        .all(orgId, limit) as Record<string, unknown>[];
+      return rows.map(mapInvoice);
+    }
+  );
 }

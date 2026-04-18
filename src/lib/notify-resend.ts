@@ -3,6 +3,8 @@
  * Set RESEND_API_KEY and ESCALATION_NOTIFY_TO (recipient) for escalation emails.
  */
 
+import { appBaseUrl } from "@/lib/app-base-url";
+
 export type SendResult = { sent: boolean; reason?: string };
 
 export async function sendOperationalEmail(params: {
@@ -50,11 +52,7 @@ export async function notifyEscalationEmail(payload: {
   if (!to) {
     return { sent: false, reason: "ESCALATION_NOTIFY_TO not set" };
   }
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.VERCEL_URL?.trim() ||
-    "https://route5.ai";
-  const desk = `${base.startsWith("http") ? base : `https://${base}`}/desk?projectId=${encodeURIComponent(payload.projectId)}`;
+  const desk = `${appBaseUrl()}/desk?projectId=${encodeURIComponent(payload.projectId)}`;
   return sendOperationalEmail({
     to,
     subject: `[Route5] Escalation: ${payload.commitmentTitle.slice(0, 80)}`,

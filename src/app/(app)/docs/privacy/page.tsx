@@ -17,8 +17,8 @@ export default function DocsPrivacyWorkspacePage() {
     >
       <ul className="list-disc space-y-2 pl-5 text-[14px]">
         <li>Authentication and profile data are handled by Clerk.</li>
-        <li>Projects and extractions are stored per signed-in user (Supabase or embedded SQLite).</li>
-        <li>Extraction may call OpenAI when configured; otherwise a heuristic runs on the server.</li>
+        <li>Projects and captured decisions are stored per signed-in user (Supabase or embedded SQLite).</li>
+        <li>Decision capture may call OpenAI when configured; otherwise a heuristic process executes on the server.</li>
       </ul>
       <p>
         <a

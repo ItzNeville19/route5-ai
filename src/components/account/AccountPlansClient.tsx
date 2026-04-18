@@ -95,7 +95,7 @@ export default function AccountPlansClient() {
               Unlock Pro capacity, Slack, and full exports
             </p>
             <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              Your Overview stats already reflect plan limits. Upgrade for higher monthly runs, advanced analytics, and
+              Your Overview stats already reflect plan limits. Upgrade for higher monthly capture volume, advanced analytics, and
               connector depth — same product, more headroom.
             </p>
           </div>
@@ -134,7 +134,7 @@ export default function AccountPlansClient() {
             </p>
           </div>
           <p className="mt-2 text-[14px] font-medium text-[var(--workspace-fg)]">{tier.tagline}</p>
-          <p className="mt-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-[12px] leading-relaxed text-zinc-400">
+          <p className="mt-2 rounded-lg border border-[var(--workspace-border)]/80 bg-[var(--workspace-canvas)]/50 px-3 py-2 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
             {tier.valueNote}
           </p>
           <ul className="mt-4 flex-1 space-y-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">

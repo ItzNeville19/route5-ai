@@ -2,14 +2,7 @@ import { slackApi } from "@/lib/integrations/slack-api";
 import { getSlackBotAccessToken } from "@/lib/integrations/slack-token";
 import { getSlackIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import type { OrgEscalationSeverity } from "@/lib/escalations/types";
-
-function appBase(): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-    "http://localhost:3000";
-  return base.startsWith("http") ? base : `https://${base}`;
-}
+import { appBaseUrl } from "@/lib/app-base-url";
 
 function severityEmoji(s: OrgEscalationSeverity): string {
   switch (s) {
@@ -42,7 +35,7 @@ export async function postSlackEscalationBlockKit(params: {
   const token = getSlackBotAccessToken(integ);
   if (!token) return false;
 
-  const link = `${appBase()}/workspace/commitments?id=${encodeURIComponent(params.commitmentId)}`;
+  const link = `${appBaseUrl()}/workspace/commitments?id=${encodeURIComponent(params.commitmentId)}`;
   const value = JSON.stringify({
     escalationId: params.escalationId,
     orgId: params.orgId,

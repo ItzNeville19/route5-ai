@@ -55,7 +55,7 @@ export default function DashboardStatusCard({
               id="execution-health-heading"
               className="mt-2 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[22px]"
             >
-              Connectors, runs, and project scores
+              Connectors, commitments, and project scores
             </h2>
             <p className="mt-1 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
               Live from your workspace. Optional API connectors are configured in{" "}
@@ -84,7 +84,7 @@ export default function DashboardStatusCard({
             <p className="mt-2 text-[15px] font-medium text-[var(--workspace-fg)]">
               {loading
                 ? "—"
-                : `${projectCount} project${projectCount === 1 ? "" : "s"} · ${extractionCount} run${extractionCount === 1 ? "" : "s"}`}
+                : `${projectCount} project${projectCount === 1 ? "" : "s"} · ${extractionCount} commitment${extractionCount === 1 ? "" : "s"}`}
             </p>
             <Link
               href="/overview#new-project"
@@ -97,7 +97,7 @@ export default function DashboardStatusCard({
           <div className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/72 p-4">
             <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">Desk</p>
             <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              Capture → extract → actions land in projects and feed these scores.
+              Capture → process → actions land in projects and feed these scores.
             </p>
             <Link
               href={deskUrl()}
@@ -117,7 +117,7 @@ export default function DashboardStatusCard({
             <p className="mt-2 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
           ) : top.length === 0 ? (
             <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              Scores appear after you create projects and runs.
+              Scores appear after you create projects and captured decisions.
             </p>
           ) : (
             <ul className="mt-3 space-y-2">
@@ -166,7 +166,7 @@ export default function DashboardStatusCard({
             >
               <span className="text-[13px] font-medium text-[var(--workspace-fg)]">AI & keys</span>
               <p className="mt-0.5 line-clamp-2 text-[11px] text-[var(--workspace-muted-fg)]">
-                {readiness?.openai ? "OpenAI path live" : "Configure extraction provider"}
+                {readiness?.openai ? "OpenAI path live" : "Configure decision capture"}
               </p>
             </Link>
             <Link

@@ -271,6 +271,21 @@ export function WorkspaceExperienceProvider({
     workspacePaletteLight,
   ]);
 
+  /** Portals (Capture, command palette, etc.) render under `body` — inherit the same `--workspace-*` / `--r5-*` tokens as the shell. */
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const body = document.body;
+    const tokens = [
+      "theme-route5-command",
+      "theme-agent-shell",
+      ...shellModifierClass.split(/\s+/).filter(Boolean),
+    ];
+    tokens.forEach((c) => body.classList.add(c));
+    return () => {
+      tokens.forEach((c) => body.classList.remove(c));
+    };
+  }, [shellModifierClass]);
+
   const value = useMemo(
     () => ({
       prefs,

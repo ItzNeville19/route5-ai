@@ -21,7 +21,7 @@ Optional or roadmap capabilities (such as legacy system connectors, generated AP
   },
   {
     title: "3. Enterprise License",
-    content: `Subject to your compliance with these Terms and payment of applicable fees, Route5 grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Route5 web application for your internal business purposes, including creating projects and using extraction and related features available in your workspace.
+    content: `Subject to your compliance with these Terms and payment of applicable fees, Route5 grants you a limited, non-exclusive, non-transferable, revocable license to access and use the Route5 web application for your internal business purposes, including creating projects and using decision capture and related features available in your workspace.
 
 You may not: sublicense, sell, resell, or transfer the Route5 platform itself; reverse engineer the Route5 platform except as permitted by applicable law; or use the Services to build a competing product.`,
   },

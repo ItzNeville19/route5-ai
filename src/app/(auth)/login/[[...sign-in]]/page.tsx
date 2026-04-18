@@ -6,10 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { hasClerkPublishableKey } from "@/lib/clerk-env";
-import { deskUrl } from "@/lib/desk-routes";
+import { FEED_HREF } from "@/lib/app-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
-
-const DESK_HREF = deskUrl();
 
 function closeMobileNavFromLogin() {
   window.dispatchEvent(new CustomEvent("close-site-mobile-nav"));
@@ -73,7 +71,7 @@ function LoginWithClerk() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? DESK_HREF : "/onboarding";
+    const next = isOnboardingComplete(userId) ? FEED_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -131,8 +129,8 @@ function LoginWithClerk() {
           <SignIn
             routing="hash"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl={DESK_HREF}
-            signUpFallbackRedirectUrl={DESK_HREF}
+            fallbackRedirectUrl={FEED_HREF}
+            signUpFallbackRedirectUrl={FEED_HREF}
             appearance={{
               elements: {
                 rootBox: "w-full mx-auto max-w-[420px]",

@@ -14,7 +14,7 @@ export default function IntegrationConnectionsStrip({ readiness }: Props) {
     {
       href: "/settings",
       title: "OpenAI",
-      subtitle: readiness?.openai ? "Configured for extraction" : "Add an API key to enable AI runs",
+      subtitle: readiness?.openai ? "Configured for decision capture" : "Add an API key to enable AI capture",
       badge: readiness?.openai ? "On" : "Set up",
       badgeTone: readiness?.openai ? ("on" as const) : ("warn" as const),
     },

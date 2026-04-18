@@ -5,7 +5,7 @@ import CommitmentDesk from "@/components/desk/CommitmentDesk";
 export const metadata: Metadata = {
   title: "Desk — Route5",
   description:
-    "Turn emails, notes, and threads into owned next steps: pick a project, paste source material, run one structured pass — saved per program with checklists and audit-friendly history.",
+    "Turn emails, notes, and threads into owned next steps: pick a project, paste source material, run one structured decision capture — saved per program with checklists and audit-friendly history.",
 };
 
 function DeskFallback() {

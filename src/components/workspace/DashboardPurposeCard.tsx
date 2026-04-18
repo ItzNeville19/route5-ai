@@ -31,12 +31,12 @@ export default function DashboardPurposeCard({
   const [dismissed, setDismissed] = useState<boolean | null>(null);
 
   const steps = [
-    { id: "project", label: "Create a program or client project", done: projectCount > 0 },
-    { id: "run", label: "Run a Desk pass on real operational text", done: extractionCount > 0 },
-    { id: "ai", label: "Enable AI extraction (optional)", done: openaiReady },
+    { id: "project", label: "Create a project for a program or account", done: projectCount > 0 },
+    { id: "run", label: "Paste a meeting note, Slack message, or email to capture commitments", done: extractionCount > 0 },
+    { id: "ai", label: "Configure AI capture in Settings (optional)", done: openaiReady },
     {
       id: "conn",
-      label: "Open Linear, GitHub, or Figma hub (optional)",
+      label: "Open Integrations to connect Slack, calendar, or dev tools (optional)",
       done: linearReady || githubReady || figmaReady,
     },
   ] as const;
@@ -90,7 +90,7 @@ export default function DashboardPurposeCard({
         id="getting-started-heading"
         className="mt-2 pr-8 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]"
       >
-        Commitment operations
+        Execution layer
       </h2>
       <div className="mt-4 h-2 overflow-hidden rounded-full bg-[var(--workspace-canvas)]/80">
         <div
@@ -120,7 +120,14 @@ export default function DashboardPurposeCard({
         ))}
       </ul>
       <p className="mt-5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-        Route5 stores commitments and named actions from every run — Overview reads your saved data, not a chat.{" "}
+        Metrics here come from saved captures and commitments in your workspace — not a chat session.{" "}
+        <Link
+          href="/workspace/integrations"
+          className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"
+        >
+          Integrations
+        </Link>
+        {" · "}
         <Link
           href="/docs/product"
           className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"

@@ -39,7 +39,7 @@ We do not collect or store the contents of your production databases, source cod
 
 **Hybrid Deployments**: Where the AI analysis engine runs in Route5 cloud infrastructure, all data in transit is encrypted using TLS 1.3. Sensitive fields identified as PII, PCI, or PHI are masked before transmission and are never stored in Route5 systems.
 
-**Bring Your Own LLM**: You may configure Route5 to use your own Azure OpenAI, AWS Bedrock, or self-hosted language model endpoint. In this configuration, no AI inference requests are sent to Route5 or third-party AI providers.`,
+**Bring your own model**: You may configure Route5 to use your own Azure OpenAI, AWS Bedrock, or self-hosted language model endpoint. In this configuration, no AI inference requests are sent to Route5 or third-party AI providers.`,
   },
   {
     title: "4. Data Sharing and Disclosure",

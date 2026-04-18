@@ -14,7 +14,7 @@ export default function IntegrationStatusStrip() {
   }
 
   const items = [
-    { label: "OpenAI extraction", ok: r.openai },
+    { label: "OpenAI decision capture", ok: r.openai },
     { label: "Linear API", ok: r.linear },
     { label: "GitHub API", ok: r.github },
     { label: "Figma API", ok: r.figma },

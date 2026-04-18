@@ -236,7 +236,7 @@ export default function ReportsPage() {
         <div className="workspace-liquid-glass relative overflow-hidden rounded-2xl p-5 shadow-sm">
           <div className="relative z-[1] flex items-center gap-2 text-[12px] font-medium text-[var(--workspace-muted-fg)]">
             <BarChart3 className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
-            Extractions
+            Captured decisions
           </div>
           <p className="relative z-[1] mt-2 text-[clamp(1.5rem,4vw,1.75rem)] font-semibold tabular-nums tracking-tight text-[var(--workspace-fg)]">
             {loading ? "—" : extractionCount}
@@ -245,7 +245,7 @@ export default function ReportsPage() {
         <div className="workspace-liquid-glass relative overflow-hidden rounded-2xl p-5 shadow-sm">
           <div className="relative z-[1] flex items-center gap-2 text-[12px] font-medium text-[var(--workspace-muted-fg)]">
             <Download className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
-            WoW runs
+            WoW activity
           </div>
           <p className="relative z-[1] mt-2 text-[clamp(1.5rem,4vw,1.75rem)] font-semibold tabular-nums tracking-tight text-[var(--workspace-fg)]">
             {loading || !data ? "—" : data.activity.weekOverWeekPercent == null ? "—" : `${data.activity.weekOverWeekPercent >= 0 ? "+" : ""}${data.activity.weekOverWeekPercent.toFixed(0)}%`}
@@ -261,7 +261,7 @@ export default function ReportsPage() {
       >
         <SectionHead
           eyebrow="Trends"
-          title="Runs vs decisions"
+          title="Commitments vs decisions"
           subtitle="Pick a time range, full screen, or export SVG (Pro). Data is UTC."
         />
         <div className="relative z-[1] mt-5">
@@ -305,13 +305,13 @@ export default function ReportsPage() {
             </div>
             <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
-                Follow-ups on older runs
+                Follow-ups on older activity
               </p>
               <p className="mt-1 text-xl font-semibold tabular-nums text-[var(--workspace-fg)]">
                 {data.execution.staleOpenActions}
               </p>
               <p className="mt-1 text-[10px] text-[var(--workspace-muted-fg)]">
-                Open items on runs older than 7 days (UTC)
+                Open items on activity older than 7 days (UTC)
               </p>
             </div>
           </motion.div>
@@ -335,7 +335,7 @@ export default function ReportsPage() {
         <SectionHead
           eyebrow="Patterns"
           title="Activity by time"
-          subtitle="Last 14 days of extractions — UTC hours × weekday. Hover cells for counts."
+          subtitle="Last 14 days of captures — UTC hours × weekday. Hover cells for counts."
         />
         <div className="relative z-[1]">
           {data ? (
@@ -355,12 +355,12 @@ export default function ReportsPage() {
         {...sectionMotion}
         transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.12, ease: [0.22, 1, 0.36, 1] }}
       >
-        <SectionHead eyebrow="Log" title="Recent extractions" subtitle="Newest first — open a row to jump to the run." />
+        <SectionHead eyebrow="Log" title="Recent captures" subtitle="Newest first — open a row to jump to the capture." />
         {loading ? (
           <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
         ) : recent.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-5 py-10 text-center text-[13px] text-[var(--workspace-muted-fg)]">
-            No runs yet — open{" "}
+            No captures yet — open{" "}
             <Link href={deskUrl()} className="font-medium text-[var(--workspace-accent)] hover:underline">
               Desk
             </Link>{" "}

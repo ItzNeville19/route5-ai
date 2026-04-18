@@ -40,10 +40,10 @@ export function useCommandPalette(): PaletteContextValue {
 }
 
 const SECTION_LABEL: Record<PaletteSection, string> = {
-  agent: "Workspace",
+  agent: "Go to",
   activity: "Recent",
   projects: "Projects",
-  workspace: "Workspace",
+  workspace: "More screens — search here",
   site: "Website",
   account: "Account",
   legal: "Legal",
@@ -136,16 +136,34 @@ export function CommandPaletteProvider({
     return () => window.removeEventListener("route5:project-updated", onRefresh);
   }, [open, loadPalette]);
 
+  /** App shell routes imply a signed-in session; palette API may lag — avoids wrong marketing-only routes on first ⌘K. */
+  const likelyWorkspaceSession =
+    !!pathname &&
+    (pathname.startsWith("/feed") ||
+      pathname.startsWith("/projects") ||
+      pathname === "/desk" ||
+      pathname.startsWith("/desk") ||
+      pathname.startsWith("/workspace") ||
+      pathname.startsWith("/onboarding") ||
+      pathname.startsWith("/marketplace") ||
+      pathname.startsWith("/integrations") ||
+      pathname.startsWith("/docs") ||
+      pathname === "/settings" ||
+      pathname === "/overview" ||
+      pathname === "/capture" ||
+      pathname.startsWith("/account"));
+  const signedInEffective = signedIn || likelyWorkspaceSession;
+
   const directory = useMemo(
     () =>
       buildPaletteItems({
-        signedIn,
+        signedIn: signedInEffective,
         displayName,
         projects,
         recentRuns,
         openActionsCount,
       }),
-    [signedIn, displayName, projects, recentRuns, openActionsCount]
+    [signedInEffective, displayName, projects, recentRuns, openActionsCount]
   );
 
   const filtered = useMemo(() => {
@@ -229,21 +247,38 @@ export function CommandPaletteProvider({
   }, [open, close]);
 
   const onPick = useCallback(
-    (href: string) => {
+    (item: PaletteItem) => {
+      if (item.action === "open-capture") {
+        close();
+        window.setTimeout(() => {
+          window.dispatchEvent(new Event("route5:capture-open"));
+        }, 0);
+        return;
+      }
+      if (item.action === "open-new-project") {
+        close();
+        window.setTimeout(() => {
+          window.dispatchEvent(new Event("route5:new-project-open"));
+        }, 0);
+        return;
+      }
+      const href = item.href ?? "/feed";
       close();
       const hashIdx = href.indexOf("#");
-      if (hashIdx !== -1) {
-        const path = href.slice(0, hashIdx);
-        const hash = href.slice(hashIdx + 1);
-        router.push(`${path}#${hash}`);
-        if (path === "/overview") {
-          window.setTimeout(() => {
-            document.getElementById("new-project-name")?.focus();
-          }, 0);
+      window.requestAnimationFrame(() => {
+        if (hashIdx !== -1) {
+          const path = href.slice(0, hashIdx);
+          const hash = href.slice(hashIdx + 1);
+          router.push(`${path}#${hash}`);
+          if (path === "/overview") {
+            window.setTimeout(() => {
+              document.getElementById("new-project-name")?.focus();
+            }, 120);
+          }
+        } else {
+          router.push(href);
         }
-      } else {
-        router.push(href);
-      }
+      });
     },
     [close, router]
   );
@@ -271,7 +306,7 @@ export function CommandPaletteProvider({
         const item = flatForNav[selectedIndex];
         if (item) {
           e.preventDefault();
-          onPick(item.href);
+          onPick(item);
         }
       }
     };
@@ -289,17 +324,22 @@ export function CommandPaletteProvider({
   const inAppShell =
     !!pathname &&
     (pathname.startsWith("/projects") ||
+      pathname === "/feed" ||
+      pathname === "/capture" ||
       pathname === "/overview" ||
       pathname === "/desk" ||
       pathname === "/settings" ||
+      pathname.startsWith("/onboarding") ||
+      pathname.startsWith("/marketplace") ||
+      pathname.startsWith("/workspace") ||
       pathname.startsWith("/integrations") ||
       pathname.startsWith("/docs") ||
       pathname === "/support" ||
       pathname.startsWith("/account"));
-  const agentShell = signedIn && inAppShell;
+  const agentShell = signedInEffective && inAppShell;
 
   const placeholder = agentShell
-    ? `Search workspace${displayName ? ` (${displayName})` : ""} — Desk, Overview, settings…`
+    ? `Search — Feed, Capture, Marketplace, Team, Settings${displayName ? ` · ${displayName}` : ""}…`
     : "Search Route5 — pages, workspace, legal…";
 
   const overlay = (
@@ -389,8 +429,8 @@ export function CommandPaletteProvider({
                 aria-live="polite"
               >
                 {query.trim()
-                  ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · real routes & workspace actions`
-                  : `${flatForNav.length} destinations · type to filter`}
+                  ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · opens the real page`
+                  : `${flatForNav.length} destinations · hidden screens are in “More screens”`}
               </p>
             </div>
             <ul
@@ -431,7 +471,7 @@ export function CommandPaletteProvider({
                                   ? `${item.label} — ${item.description}`
                                   : item.label
                               }
-                              onClick={() => onPick(item.href)}
+                              onClick={() => onPick(item)}
                               onMouseEnter={() => setSelectedIndex(idx)}
                               className={`flex w-full flex-col gap-0.5 rounded-lg px-3 py-2.5 text-left transition sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
                                 active

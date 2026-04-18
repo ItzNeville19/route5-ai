@@ -44,17 +44,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/pitch", destination: "/product", permanent: true },
-      { source: "/integrations", destination: "/settings#connections", permanent: false },
-      /** Product is execution tracking only — retired surfaces forward to Overview. */
-      { source: "/marketplace", destination: "/overview", permanent: false },
-      { source: "/marketplace/:path*", destination: "/overview", permanent: false },
-      { source: "/workspace/apps", destination: "/overview", permanent: false },
-      { source: "/workspace/customize", destination: "/overview", permanent: false },
-      { source: "/workspace/customize/:path*", destination: "/overview", permanent: false },
-      { source: "/reports", destination: "/overview", permanent: false },
-      { source: "/reports/:path*", destination: "/overview", permanent: false },
-      { source: "/team-insights", destination: "/overview", permanent: false },
-      { source: "/workspace/digest", destination: "/overview", permanent: false },
+      { source: "/docs/ceo-brief", destination: "/docs", permanent: false },
+      { source: "/docs/sales-playbook", destination: "/docs", permanent: false },
     ];
   },
   /** Dev: allow 127.0.0.1 so HMR / error overlay work when not using localhost hostname */

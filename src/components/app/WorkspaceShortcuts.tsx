@@ -2,16 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
 /**
- * Workspace-wide keyboard shortcuts + ? help overlay.
+ * Workspace keyboard shortcuts — toggle with ? outside inputs, or open via
+ * window.dispatchEvent(new Event("route5:shortcuts-open")) from sidebar / header.
  */
 export default function WorkspaceShortcuts() {
   const pathname = usePathname();
-  const router = useRouter();
   const [helpOpen, setHelpOpen] = useState(false);
+
+  useEffect(() => {
+    const open = () => setHelpOpen(true);
+    const close = () => setHelpOpen(false);
+    window.addEventListener("route5:shortcuts-open", open);
+    window.addEventListener("route5:shortcuts-close", close);
+    return () => {
+      window.removeEventListener("route5:shortcuts-open", open);
+      window.removeEventListener("route5:shortcuts-close", close);
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,6 +56,21 @@ export default function WorkspaceShortcuts() {
         return;
       }
 
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        const t = e.target as HTMLElement | null;
+        if (
+          t?.tagName === "INPUT" ||
+          t?.tagName === "TEXTAREA" ||
+          t?.tagName === "SELECT" ||
+          t?.isContentEditable
+        ) {
+          return;
+        }
+        e.preventDefault();
+        window.dispatchEvent(new Event("route5:capture-open"));
+        return;
+      }
+
       if (!(e.metaKey || e.ctrlKey)) return;
       if (e.key.toLowerCase() !== "n") return;
       const t = e.target as HTMLElement | null;
@@ -54,124 +80,147 @@ export default function WorkspaceShortcuts() {
 
       e.preventDefault();
       if (pathname === "/overview") {
-        document.getElementById("new-project-name")?.focus();
-        return;
+        const el = document.getElementById("new-project-name");
+        if (el) {
+          el.focus();
+          return;
+        }
       }
-      if (pathname?.startsWith("/projects/")) {
-        router.push("/overview#new-project");
-        window.setTimeout(() => {
-          document.getElementById("new-project-name")?.focus();
-        }, 0);
-      }
+      window.dispatchEvent(new Event("route5:new-project-open"));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [pathname, router]);
+  }, [pathname]);
 
   const help =
     helpOpen && typeof document !== "undefined"
       ? createPortal(
           <div
-            className="fixed inset-0 z-[100010] flex items-start justify-center overflow-y-auto bg-black/55 px-4 py-[min(10vh,80px)] backdrop-blur-md"
+            className="fixed inset-0 z-[100010] flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-[min(8vh,64px)] backdrop-blur-md"
             role="dialog"
             aria-modal="true"
-            aria-label="Keyboard shortcuts"
+            aria-labelledby="workspace-shortcuts-title"
             onClick={() => setHelpOpen(false)}
           >
             <div
-              className="relative w-full max-w-lg rounded-2xl border border-white/12 bg-zinc-950/88 p-6 shadow-2xl ring-1 ring-white/[0.07] backdrop-blur-2xl backdrop-saturate-150 [box-shadow:inset_0_1px_0_rgba(255,255,255,0.06)]"
+              className="relative w-full max-w-[min(100%,440px)] rounded-[22px] border border-white/[0.12] bg-zinc-950/[0.94] p-6 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.65)] ring-1 ring-white/[0.06] backdrop-blur-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setHelpOpen(false)}
-                className="absolute right-3 top-3 rounded-lg p-2 text-zinc-400 transition hover:bg-white/10 hover:text-zinc-100"
-                aria-label="Close"
+                className="absolute right-3 top-3 rounded-xl p-2 text-zinc-400 transition hover:bg-white/10 hover:text-zinc-100"
+                aria-label="Close shortcuts"
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4" strokeWidth={2} aria-hidden />
               </button>
+
               <div className="pr-10">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-300/90">
-                  Keyboard-first
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-violet-300/90">
+                  Route5
                 </p>
-                <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-zinc-50">Shortcuts</h2>
+                <h2 id="workspace-shortcuts-title" className="mt-1.5 text-[22px] font-semibold tracking-[-0.03em] text-zinc-50">
+                  Keyboard shortcuts
+                </h2>
                 <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
                   Press{" "}
-                  <kbd className="rounded-md border border-white/15 bg-white/10 px-1.5 py-0.5 font-mono text-[11px] text-zinc-100 shadow-sm">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.08] px-2 py-0.5 font-mono text-[11px] text-zinc-100">
                     ?
                   </kbd>{" "}
-                  anytime outside a text field                   to toggle this panel. Open the command palette (⌘K) for routes.
+                  anytime (outside a text field) to open or close this sheet.
                 </p>
               </div>
 
-              <div className="mt-4 rounded-xl border border-violet-500/25 bg-violet-500/[0.12] px-3 py-2.5">
-                <p className="text-[12px] font-semibold text-zinc-100">Command palette holds most shortcuts</p>
-                <p className="mt-1 text-[12px] leading-snug text-zinc-300">
-                  Press{" "}
-                  <kbd className="rounded-md border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[11px] text-amber-100">
+              <div className="mt-5 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.14] to-transparent px-4 py-3.5">
+                <p className="text-[12px] font-semibold text-zinc-100">Search everything</p>
+                <p className="mt-1.5 text-[12px] leading-snug text-zinc-300">
+                  <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[11px] text-amber-100">
                     ⌘K
                   </kbd>{" "}
-                  — then type to filter Desk, Overview, Settings, projects, privacy, plans. Use{" "}
-                  <kbd className="rounded-md border border-white/20 bg-black/30 px-1 py-0.5 font-mono text-[10px]">
+                  opens the command palette — jump to Feed, Capture, Marketplace, Team, Settings, and more. Use{" "}
+                  <kbd className="rounded border border-white/20 bg-black/35 px-1 py-0.5 font-mono text-[10px]">
                     ↑
                   </kbd>{" "}
-                  <kbd className="rounded-md border border-white/20 bg-black/30 px-1 py-0.5 font-mono text-[10px]">
+                  <kbd className="rounded border border-white/20 bg-black/35 px-1 py-0.5 font-mono text-[10px]">
                     ↓
                   </kbd>{" "}
                   and{" "}
-                  <kbd className="rounded-md border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px]">
+                  <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[10px]">
                     Enter
-                  </kbd>{" "}
-                  to jump.
+                  </kbd>
+                  .
                 </p>
               </div>
 
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-300">
-                Global hotkeys
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                On Feed
               </p>
-              <ul className="mt-2 space-y-0 text-[14px]">
-                <li className="flex justify-between gap-4 border-b border-white/[0.08] py-3">
-                  <span className="font-medium text-zinc-200">Command palette</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[12px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    ⌘K
-                  </kbd>
-                </li>
-                <li className="flex flex-col gap-2 border-b border-white/[0.08] py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                  <span className="font-medium text-zinc-200">Updates &amp; digest</span>
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    <kbd className="rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[11px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                      ⌘⇧U
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[11px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                      Ctrl+Shift+U
-                    </kbd>
-                  </div>
-                </li>
-                <li className="flex justify-between gap-4 border-b border-white/[0.08] py-3">
-                  <span className="font-medium text-zinc-200">New project</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[12px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    ⌘N
-                  </kbd>
-                </li>
-                <li className="flex justify-between gap-4 border-b border-white/[0.08] py-3">
-                  <span className="font-medium text-zinc-200">Open palette (alt)</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[12px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    ⌘Space
-                  </kbd>
-                </li>
-                <li className="flex justify-between gap-4 py-3">
-                  <span className="font-medium text-zinc-200">This help panel</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/20 bg-white/[0.08] px-2 py-1 font-mono text-[12px] font-medium text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
-                    ?
+              <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
+                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">Filter commitments</span>
+                  <kbd className="shrink-0 rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    /
                   </kbd>
                 </li>
               </ul>
-              <p className="mt-2 text-center text-[12px] text-zinc-300">
-                Tip:{" "}
-                <kbd className="rounded border border-white/15 bg-white/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-zinc-200">
+
+              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                Everywhere
+              </p>
+              <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">Command palette</span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    ⌘K
+                  </kbd>
+                </li>
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">Capture panel</span>
+                  <span className="flex gap-1.5">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                      ⌘J
+                    </kbd>
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                      Ctrl+J
+                    </kbd>
+                  </span>
+                </li>
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">Updates &amp; digest</span>
+                  <span className="flex gap-1.5">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                      ⌘⇧U
+                    </kbd>
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                      Ctrl+Shift+U
+                    </kbd>
+                  </span>
+                </li>
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">New project</span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    ⌘N
+                  </kbd>
+                </li>
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">This shortcuts sheet</span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    ?
+                  </kbd>
+                </li>
+                <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <span className="text-[13px] font-medium text-zinc-200">Palette (alternate)</span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    ⌘Space
+                  </kbd>
+                </li>
+              </ul>
+
+              <p className="mt-4 text-center text-[12px] leading-relaxed text-zinc-500">
+                <kbd className="rounded-md border border-white/12 bg-white/[0.05] px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">
                   Esc
                 </kbd>{" "}
-                closes palettes and dialogs when focus allows.
+                closes dialogs when focus allows.
               </p>
             </div>
           </div>,

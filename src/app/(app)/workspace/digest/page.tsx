@@ -85,7 +85,7 @@ export default function WorkspaceDailyDigestPage() {
           the app.
         </p>
         {!loadingSummary && wow ? (
-          <p className="text-[13px] font-medium text-[var(--workspace-success-fg)]">{wow} · rolling 7-day run activity</p>
+          <p className="text-[13px] font-medium text-[var(--workspace-success-fg)]">{wow} · rolling 7-day commitment activity</p>
         ) : null}
       </header>
 

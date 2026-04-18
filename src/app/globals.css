@@ -58,6 +58,71 @@
   --liquid-saturate-workspace: 215%;
   --liquid-edge: rgba(255, 255, 255, 0.72);
   --liquid-bloom: rgba(99, 102, 241, 0.2);
+
+  /*
+   * Route5 design system — default CSS variables (Step 1).
+   * Canonical values: src/lib/design-tokens.ts
+   * Signed-in shell overrides in .theme-route5-command.theme-agent-shell when needed.
+   */
+  --r5-status-overdue: #ef4444;
+  --r5-status-at-risk: #f59e0b;
+  --r5-status-on-track: #3b82f6;
+  --r5-status-completed: #10b981;
+  --r5-status-unassigned: #6b7280;
+  --r5-surface-primary: #0a0a0a;
+  --r5-surface-secondary: #171717;
+  --r5-surface-hover: rgba(255, 255, 255, 0.06);
+  --r5-border-subtle: rgba(255, 255, 255, 0.08);
+  --r5-text-primary: #ffffff;
+  --r5-text-secondary: #9ca3af;
+  --r5-text-tertiary: #6b7280;
+  --r5-accent: #a78bfa;
+  --r5-font-body: 13px;
+  --r5-font-subheading: 15px;
+  --r5-font-heading: 20px;
+  --r5-font-display: 32px;
+  --r5-font-metric: 2.35rem;
+  --r5-font-stat: 20px;
+  --r5-font-caption: 11px;
+  --r5-font-kbd: 10px;
+  --r5-font-hero: clamp(1.75rem, 4vw, 2rem);
+  --r5-font-weight-regular: 400;
+  --r5-font-weight-semibold: 600;
+  --r5-leading-body: 1.5;
+  --r5-leading-heading: 1.2;
+  --r5-space-1: 4px;
+  --r5-space-2: 8px;
+  --r5-space-3: 12px;
+  --r5-space-4: 16px;
+  --r5-space-5: 24px;
+  --r5-space-6: 32px;
+  --r5-space-7: 48px;
+  --r5-space-8: 64px;
+  --r5-content-padding-x: 24px;
+  --r5-content-padding-x-mobile: 16px;
+  /* Shell layout (Step 2) — sync with src/lib/design-tokens.ts R5_LAYOUT */
+  --r5-sidebar-width: 220px;
+  --r5-header-height: 52px;
+  --r5-nav-item-height: 36px;
+  --r5-mobile-nav-height: 64px;
+  --r5-icon-nav: 16px;
+  --r5-gap-icon-label: 4px;
+  --r5-feed-max-width: 896px;
+  --r5-layout-chrome-vertical: 96px;
+  --r5-popover-min-width: 140px;
+  --r5-popover-max-width: 280px;
+  --r5-radius-card: 8px;
+  --r5-radius-button: 6px;
+  --r5-radius-badge: 4px;
+  --r5-radius-pill: 999px;
+  --r5-radius-md: 12px;
+  --r5-radius-lg: 16px;
+  --r5-radius-pulse: 28px;
+  --r5-shadow-elevated: 0 4px 24px -8px rgba(0, 0, 0, 0.45);
+  --r5-duration-fast: 120ms;
+  --r5-duration-normal: 200ms;
+  --r5-duration-slow: 350ms;
+  --r5-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -71,6 +136,21 @@
   --color-text-secondary: var(--text-muted-light);
   --font-sans:    var(--font-geist-sans);
   --font-mono:    var(--font-geist-mono);
+
+  /* Route5 design system — semantic colors (Step 1, sync with src/lib/design-tokens.ts) */
+  --color-r5-status-overdue: var(--r5-status-overdue);
+  --color-r5-status-at-risk: var(--r5-status-at-risk);
+  --color-r5-status-on-track: var(--r5-status-on-track);
+  --color-r5-status-completed: var(--r5-status-completed);
+  --color-r5-status-unassigned: var(--r5-status-unassigned);
+  --color-r5-surface-primary: var(--r5-surface-primary);
+  --color-r5-surface-secondary: var(--r5-surface-secondary);
+  --color-r5-surface-hover: var(--r5-surface-hover);
+  --color-r5-border-subtle: var(--r5-border-subtle);
+  --color-r5-text-primary: var(--r5-text-primary);
+  --color-r5-text-secondary: var(--r5-text-secondary);
+  --color-r5-text-tertiary: var(--r5-text-tertiary);
+  --color-r5-accent: var(--r5-accent);
 }
 
 /* ── Reset & base ── */
@@ -1173,7 +1253,24 @@ body {
   --ios-secondary: #c4c4cc;
   --ios-separator: rgba(255, 255, 255, 0.1);
   --ios-group-bg: rgba(28, 28, 36, 0.75);
+  /*
+   * Bridge workspace appearance → Tailwind `r5-*` utilities.
+   * Without this, :root keeps dark-only --r5-text-primary/#fff etc., so light themes render white-on-white.
+   */
+  --r5-text-primary: var(--workspace-fg);
+  --r5-text-secondary: var(--workspace-muted-fg);
+  --r5-text-tertiary: color-mix(in srgb, var(--workspace-muted-fg) 72%, var(--workspace-fg) 28%);
+  --r5-surface-primary: var(--workspace-canvas);
+  --r5-surface-secondary: var(--workspace-surface);
+  --r5-surface-hover: var(--workspace-nav-hover);
+  --r5-border-subtle: var(--workspace-border);
+  --r5-accent: var(--workspace-accent);
   transition: color 1.05s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* Softer elevation on light palettes (still readable on pale meshes). */
+.theme-route5-command.theme-agent-shell.workspace-palette-light {
+  --r5-shadow-elevated: 0 4px 24px -10px rgba(15, 23, 42, 0.14);
 }
 
 .theme-route5-command.theme-agent-shell .agent-canvas {
@@ -2581,6 +2678,48 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .landing-aurora-blob {
     animation: none;
+  }
+}
+
+/* Clerk OrganizationSwitcher — prevent light popover + inherited white text (Team page). */
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] {
+  background-color: rgb(2 6 23) !important;
+  color: rgb(241 245 249) !important;
+}
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] button,
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] a,
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] span {
+  color: inherit;
+}
+.clerk-org-switcher-host [class*="cl-organizationPreview"] [class*="identifier"] {
+  color: rgb(241 245 249) !important;
+}
+.clerk-org-switcher-host [class*="cl-organizationPreview"] [class*="subtitle"] {
+  color: rgb(148 163 184) !important;
+}
+
+/* Team / settings cards — subtle 3D lift on hover (respect reduced motion). */
+.r5-float-card {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.35s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .r5-float-card:hover {
+    transform: perspective(920px) rotateX(1.25deg) translateY(-3px);
+    box-shadow:
+      0 18px 50px -24px rgba(0, 0, 0, 0.65),
+      0 0 0 1px rgba(167, 139, 250, 0.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .r5-float-card {
+    transition: none;
+  }
+  .r5-float-card:hover {
+    transform: none;
   }
 }
 

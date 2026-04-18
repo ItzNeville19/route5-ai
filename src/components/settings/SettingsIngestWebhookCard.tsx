@@ -26,7 +26,7 @@ export default function SettingsIngestWebhookCard() {
         if (!cancelled) setInfo(data);
       })
       .catch(() => {
-        if (!cancelled) setErr("Could not load automation settings.");
+        if (!cancelled) setErr("Could not load webhook settings.");
       });
     return () => {
       cancelled = true;
@@ -44,10 +44,10 @@ export default function SettingsIngestWebhookCard() {
         </span>
         <div className="min-w-0 flex-1">
           <h2 id="ingest-heading" className="text-[15px] font-semibold text-[var(--workspace-fg)]">
-            Automation ingest
+            Webhook input
           </h2>
           <p className="mt-1 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Send decisions into a project from Zapier, Make, Slack outgoing webhooks, or curl. Creates the same
+            Send decisions into Route5 automatically from external tools like Zapier, Make, or Slack. Creates the same
             commitment rows as Desk — no browser session required.
           </p>
         </div>
