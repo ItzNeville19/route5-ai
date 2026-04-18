@@ -5,19 +5,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import { hasClerkPublishableKey } from "@/lib/clerk-env";
 import { deskUrl } from "@/lib/desk-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
 const DESK_HREF = deskUrl();
 
-function hasClerkKey() {
-  return Boolean(
-    typeof process !== "undefined" &&
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()
+function SignUpClerkMissing() {
+  return (
+    <div className="theme-glass-site min-h-dvh">
+      <Navbar />
+      <div className="mx-auto flex max-w-lg flex-col items-center px-6 pb-24 pt-32 text-center">
+        <p className="text-[15px] font-medium text-[#1d1d1f]">
+          Clerk is not configured — add keys in{" "}
+          <code className="rounded bg-black/[0.06] px-1">.env.local</code>
+        </p>
+        <Link href="/login" className="mt-6 text-[14px] font-medium text-[#0071e3] hover:underline">
+          Go to sign in
+        </Link>
+      </div>
+    </div>
   );
 }
 
-export default function SignUpPage() {
+function SignUpWithClerk() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
 
@@ -26,23 +37,6 @@ export default function SignUpPage() {
     const next = isOnboardingComplete(userId) ? DESK_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
-
-  if (!hasClerkKey()) {
-    return (
-      <div className="theme-glass-site min-h-dvh">
-        <Navbar />
-        <div className="mx-auto flex max-w-lg flex-col items-center px-6 pb-24 pt-32 text-center">
-          <p className="text-[15px] font-medium text-[#1d1d1f]">
-            Clerk is not configured — add keys in{" "}
-            <code className="rounded bg-black/[0.06] px-1">.env.local</code>
-          </p>
-          <Link href="/login" className="mt-6 text-[14px] font-medium text-[#0071e3] hover:underline">
-            Go to sign in
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (userId && isLoaded) {
     return null;
@@ -97,4 +91,11 @@ export default function SignUpPage() {
       </div>
     </div>
   );
+}
+
+export default function SignUpPage() {
+  if (!hasClerkPublishableKey()) {
+    return <SignUpClerkMissing />;
+  }
+  return <SignUpWithClerk />;
 }

@@ -9,7 +9,7 @@
   },
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --webpack -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

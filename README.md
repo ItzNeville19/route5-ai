@@ -48,6 +48,23 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 5. Deploy to Vercel (or your host) and add the same env vars in project settings (never commit secrets).
 6. Signed-in workspace docs live under `/docs` (e.g. **Executive brief**, **Sales playbook**, **What we ship**).
 
+### Local development
+
+```bash
+npm install
+cp .env.example .env.local   # add Clerk, Supabase, etc.
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). Without Clerk keys, marketing pages work; signed-in routes show a clear “configure Clerk” message instead of crashing the build.
+
+If the browser shows **connection refused**, the dev server is not listening—run `npm run dev` from the repo root and wait for “Ready”, or free port 3000 if another process is using it (`lsof -i :3000`).
+
+### Vercel: Hobby vs scheduled crons
+
+- The committed **`vercel.json`** uses **`"crons": []`** so deploys work on the **Vercel Hobby** plan (Hobby does not allow multi-day / high-frequency cron expressions).
+- After upgrading to **Pro**, restore full schedules by replacing the `crons` array with the contents of [`vercel.crons.pro.json`](vercel.crons.pro.json), or run external schedulers (e.g. GitHub Actions) that `GET` your `/api/cron/*` routes with the `CRON_SECRET` header.
+
 ## Slack app setup (Phase 4)
 
 Configure a Slack app at [api.slack.com/apps](https://api.slack.com/apps) for OAuth, Events, slash commands, and interactivity.

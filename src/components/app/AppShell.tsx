@@ -17,40 +17,41 @@ const clerkSignInAppearance = {
   },
 } as const;
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
-  const { isLoaded, userId } = useAuth();
-
-  if (!hasClerkPublishableKey()) {
-    return (
-      <div className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-        <p className="max-w-md text-[15px] font-medium text-[#1d1d1f]">
-          Authentication isn&apos;t configured for this deployment.
-        </p>
-        <p className="mt-3 max-w-md text-[14px] leading-relaxed text-[#6e6e73]">
-          Add{" "}
-          <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">
-            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-          </code>{" "}
-          and{" "}
-          <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">
-            CLERK_SECRET_KEY
-          </code>{" "}
-          to your environment, restart the dev server, and try again.
-        </p>
-        <div className="mt-10 flex flex-wrap justify-center gap-4 text-[14px] font-medium">
-          <Link href="/" className="text-[#0071e3] hover:underline">
-            Website
-          </Link>
-          <Link href="/product" className="text-[#0071e3] hover:underline">
-            What we ship
-          </Link>
-          <Link href="/contact" className="text-[#0071e3] hover:underline">
-            Contact
-          </Link>
-        </div>
+function AppShellClerkMissing() {
+  return (
+    <div className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6 text-center">
+      <p className="max-w-md text-[15px] font-medium text-[#1d1d1f]">
+        Authentication isn&apos;t configured for this deployment.
+      </p>
+      <p className="mt-3 max-w-md text-[14px] leading-relaxed text-[#6e6e73]">
+        Add{" "}
+        <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+        </code>{" "}
+        and{" "}
+        <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">
+          CLERK_SECRET_KEY
+        </code>{" "}
+        to your environment, restart the dev server, and try again.
+      </p>
+      <div className="mt-10 flex flex-wrap justify-center gap-4 text-[14px] font-medium">
+        <Link href="/" className="text-[#0071e3] hover:underline">
+          Website
+        </Link>
+        <Link href="/product" className="text-[#0071e3] hover:underline">
+          What we ship
+        </Link>
+        <Link href="/contact" className="text-[#0071e3] hover:underline">
+          Contact
+        </Link>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
+/** Must only render when `ClerkProvider` is present (keys configured). */
+function AppShellWithClerk({ children }: { children: React.ReactNode }) {
+  const { isLoaded, userId } = useAuth();
 
   if (!isLoaded) {
     return (
@@ -111,9 +112,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return (
-    <SignedInAppShell userId={userId}>{children}</SignedInAppShell>
-  );
+  return <SignedInAppShell userId={userId}>{children}</SignedInAppShell>;
+}
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
+  if (!hasClerkPublishableKey()) {
+    return <AppShellClerkMissing />;
+  }
+  return <AppShellWithClerk>{children}</AppShellWithClerk>;
 }
 
 function GateSpinner() {

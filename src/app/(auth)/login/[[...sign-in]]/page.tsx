@@ -5,23 +5,62 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
+import { hasClerkPublishableKey } from "@/lib/clerk-env";
 import { deskUrl } from "@/lib/desk-routes";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
 const DESK_HREF = deskUrl();
 
-function hasClerkKey() {
-  return Boolean(
-    typeof process !== "undefined" &&
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()
-  );
-}
-
 function closeMobileNavFromLogin() {
   window.dispatchEvent(new CustomEvent("close-site-mobile-nav"));
 }
 
-export default function LoginPage() {
+function LoginClerkMissing() {
+  return (
+    <div className="theme-glass-site min-h-dvh">
+      <Navbar />
+      <div className="mx-auto flex max-w-lg flex-col items-center px-6 pb-24 pt-32 text-center">
+        <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
+          Environment
+        </p>
+        <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#1d1d1f]">
+          Sign-in isn&apos;t configured on this deployment
+        </h1>
+        <p className="mt-4 text-[15px] leading-relaxed text-[#6e6e73]">
+          This is not a product bug — add Clerk keys and restart the dev server.
+          Your team uses the same shell as production once keys are present.
+        </p>
+        <div className="glass-surface mt-8 w-full rounded-2xl px-5 py-4 text-left text-[13px] leading-relaxed text-[#1d1d1f]">
+          <p className="font-mono text-[11px] text-[#86868b]">.env.local</p>
+          <p className="mt-2">
+            <code className="rounded bg-black/[0.05] px-1.5 py-0.5">
+              NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+            </code>
+          </p>
+          <p className="mt-2">
+            <code className="rounded bg-black/[0.05] px-1.5 py-0.5">
+              CLERK_SECRET_KEY
+            </code>
+          </p>
+        </div>
+        <div className="mt-10 flex flex-wrap justify-center gap-4 text-[14px]">
+          <Link href="/" className="font-medium text-[#0071e3] hover:underline">
+            ← Website
+          </Link>
+          <Link href="/product" className="font-medium text-[#0071e3] hover:underline">
+            What we ship
+          </Link>
+          <Link href="/contact" className="font-medium text-[#0071e3] hover:underline">
+            Contact
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Only mount when ClerkProvider is present (publishable key set). */
+function LoginWithClerk() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
   const [signedOutBanner, setSignedOutBanner] = useState(false);
@@ -37,59 +76,6 @@ export default function LoginPage() {
     const next = isOnboardingComplete(userId) ? DESK_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
-
-  if (!hasClerkKey()) {
-    return (
-      <div className="theme-glass-site min-h-dvh">
-        <Navbar />
-        <div className="mx-auto flex max-w-lg flex-col items-center px-6 pb-24 pt-32 text-center">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            Environment
-          </p>
-          <h1 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[#1d1d1f]">
-            Sign-in isn&apos;t configured on this deployment
-          </h1>
-          <p className="mt-4 text-[15px] leading-relaxed text-[#6e6e73]">
-            This is not a product bug — add Clerk keys and restart the dev server.
-            Your team uses the same shell as production once keys are present.
-          </p>
-          <div className="glass-surface mt-8 w-full rounded-2xl px-5 py-4 text-left text-[13px] leading-relaxed text-[#1d1d1f]">
-            <p className="font-mono text-[11px] text-[#86868b]">.env.local</p>
-            <p className="mt-2">
-              <code className="rounded bg-black/[0.05] px-1.5 py-0.5">
-                NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-              </code>
-            </p>
-            <p className="mt-2">
-              <code className="rounded bg-black/[0.05] px-1.5 py-0.5">
-                CLERK_SECRET_KEY
-              </code>
-            </p>
-          </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-4 text-[14px]">
-            <Link
-              href="/"
-              className="font-medium text-[#0071e3] hover:underline"
-            >
-              ← Website
-            </Link>
-            <Link
-              href="/product"
-              className="font-medium text-[#0071e3] hover:underline"
-            >
-              What we ship
-            </Link>
-            <Link
-              href="/contact"
-              className="font-medium text-[#0071e3] hover:underline"
-            >
-              Contact
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (userId && isLoaded) {
     return null;
@@ -176,4 +162,11 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  if (!hasClerkPublishableKey()) {
+    return <LoginClerkMissing />;
+  }
+  return <LoginWithClerk />;
 }
