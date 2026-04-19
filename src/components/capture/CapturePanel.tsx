@@ -7,8 +7,10 @@ import { useUser } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Calendar,
+  CheckSquare,
   ChevronDown,
   ChevronUp,
+  Clock3,
   ListChecks,
   Paperclip,
   User,
@@ -29,10 +31,15 @@ type CaptureCard = {
   title: string;
   ownerUserId: string | null;
   ownerNameHint: string | null;
+  projectId: string | null;
   deadlineIso: string | null;
+  deadlineOriginalPhrase: string | null;
   priority: OrgCommitmentPriority;
   source: CommitmentSource;
   sourceSnippet: string;
+  confidence: "high" | "medium" | "low";
+  isImplied: boolean;
+  impliedReason: string | null;
 };
 
 type CaptureHistoryItem = {
@@ -41,6 +48,11 @@ type CaptureHistoryItem = {
   commitmentCount: number;
   createdAtIso: string;
   completedCount: number;
+};
+
+type ProjectOption = {
+  id: string;
+  name: string;
 };
 
 const CAPTURE_HISTORY_KEY = "route5:capture-history-v1";
@@ -69,20 +81,80 @@ Hi team — quick commitments from the thread:
 - HR: confirm policy edits with counsel — due April 1.`,
 };
 
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => {
-      continuous: boolean;
-      interimResults: boolean;
-      lang: string;
-      onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>>; resultIndex?: number }) => void) | null;
-      onerror: ((event: { error: string }) => void) | null;
-      onend: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-    };
-    webkitSpeechRecognition?: Window["SpeechRecognition"];
+const TEMPLATE_EXAMPLES: Record<string, { label: string; text: string }> = {
+  product_launch: {
+    label: "Product Launch",
+    text: `Launch readiness
+- Product team will finalize release notes by Friday.
+- Marketing will publish launch email and social copy by Thursday EOD.
+- Support will prepare customer FAQ update by Monday morning.`,
+  },
+  client_onboarding: {
+    label: "Client Onboarding",
+    text: `New client onboarding
+- CSM will schedule kickoff and onboarding checklist review by Tuesday.
+- Solutions engineer will configure integrations before end of week.
+- Finance will send invoicing setup details by tomorrow.`,
+  },
+  weekly_sprint: {
+    label: "Weekly Sprint",
+    text: `Sprint commitments
+- Engineering lead will lock sprint scope by Monday.
+- QA owner will complete regression checks by Thursday.
+- PM will share sprint review summary by Friday.`,
+  },
+  hiring_process: {
+    label: "Hiring Process",
+    text: `Hiring loop
+- Recruiter will schedule panel interviews by Wednesday.
+- Hiring manager will submit scorecard feedback same day.
+- Ops will prepare offer packet by end of week.`,
+  },
+  sales_deal: {
+    label: "Sales Deal",
+    text: `Deal progression
+- AE will send revised proposal by tomorrow.
+- Solutions consultant will complete security questionnaire by Thursday.
+- Legal owner will return redlines by next Monday.`,
+  },
+  board_meeting_prep: {
+    label: "Board Meeting Prep",
+    text: `Board prep
+- CEO will draft meeting narrative by next Friday.
+- Finance lead will finalize KPI and cash runway numbers by Wednesday.
+- Chief of staff will distribute pre-read packet by Monday morning.`,
+  },
+};
+
+function detectCaptureFormat(text: string): "Meeting notes" | "Email thread" | "Slack conversation" | "Document" {
+  const t = text.toLowerCase();
+  if (!t.trim()) return "Document";
+  if (t.includes("subject:") || (t.includes("from:") && t.includes("to:"))) return "Email thread";
+  if (t.includes("#") || t.includes("@") || t.includes("slack") || t.includes("thread")) {
+    return "Slack conversation";
   }
+  if (t.includes("attendees:") || t.includes("agenda") || t.includes("meeting")) return "Meeting notes";
+  return "Document";
+}
+
+function estimateCommitmentCount(text: string): number {
+  if (!text.trim()) return 0;
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const sentenceLike = text
+    .replace(/\r/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const regexes = [
+    /^[-*•]\s+/,
+    /\b[A-Z][a-z]+\s+(will|needs to|must|has to|committed to|said (he|she) would)\b/,
+    /\b(todo|action item|follow up)\b/i,
+  ];
+  const buckets = new Set<string>();
+  for (const line of [...lines, ...sentenceLike]) {
+    if (regexes.some((re) => re.test(line))) buckets.add(line.toLowerCase().slice(0, 180));
+  }
+  return buckets.size;
 }
 
 function toYmd(iso: string | null): string {
@@ -164,20 +236,17 @@ export default function CapturePanel({
   const [openDueKey, setOpenDueKey] = useState<string | null>(null);
   const [expandedSnippets, setExpandedSnippets] = useState<Record<string, boolean>>({});
   const [pastePulse, setPastePulse] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceBlocked, setVoiceBlocked] = useState(false);
   const [fileBusy, setFileBusy] = useState(false);
   const [captureHistory, setCaptureHistory] = useState<CaptureHistoryItem[]>([]);
+  const [scanCount, setScanCount] = useState(0);
+  const [isScanning, setIsScanning] = useState(false);
+  const [projects, setProjects] = useState<ProjectOption[]>([]);
+  const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
+  const [showRecent, setShowRecent] = useState(false);
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const speechRef = useRef<{
-    start: () => void;
-    stop: () => void;
-    onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>>; resultIndex?: number }) => void) | null;
-    onerror: ((event: { error: string }) => void) | null;
-    onend: (() => void) | null;
-  } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -191,10 +260,14 @@ export default function CapturePanel({
     setOpenDueKey(null);
     setExpandedSnippets({});
     setPastePulse(false);
-    setIsListening(false);
-    setVoiceBlocked(false);
     setFileBusy(false);
+    setScanCount(0);
+    setIsScanning(false);
     setCaptureHistory(loadCaptureHistory());
+    setProjects([]);
+    setSelectedCardKeys([]);
+    setShowRecent(false);
+    setSelectedTemplateKey("");
     if (selfId) {
       const me =
         user?.fullName?.trim() ||
@@ -206,6 +279,41 @@ export default function CapturePanel({
     const t = window.requestAnimationFrame(() => textareaRef.current?.focus());
     return () => window.cancelAnimationFrame(t);
   }, [open, selfId, user]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/projects", { credentials: "same-origin" });
+        const data = (await res.json().catch(() => ({}))) as {
+          projects?: { id: string; name: string }[];
+        };
+        if (!res.ok || cancelled) return;
+        setProjects((data.projects ?? []).map((p) => ({ id: p.id, name: p.name })));
+      } catch {
+        if (!cancelled) setProjects([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || phase !== "input") return;
+    if (!text.trim()) {
+      setScanCount(0);
+      setIsScanning(false);
+      return;
+    }
+    setIsScanning(true);
+    const id = window.setTimeout(() => {
+      setScanCount(estimateCommitmentCount(text));
+      setIsScanning(false);
+    }, 220);
+    return () => window.clearTimeout(id);
+  }, [open, phase, text]);
 
   useEffect(() => {
     if (!open || !selfId) return;
@@ -281,12 +389,6 @@ export default function CapturePanel({
     };
   }, [open, selfId, user]);
 
-  useEffect(() => {
-    if (open) return;
-    speechRef.current?.stop();
-    setIsListening(false);
-  }, [open]);
-
   const runProcess = useCallback(async () => {
     const raw = text.trim();
     if (!raw || phase === "processing") return;
@@ -310,10 +412,15 @@ export default function CapturePanel({
         commitments?: {
           title: string;
           ownerName: string | null;
+          ownerUserId?: string | null;
           dueDateIso: string | null;
+          deadlineOriginalPhrase?: string | null;
           priority: OrgCommitmentPriority;
           source: CommitmentSource;
           sourceSnippet: string;
+          confidence?: "high" | "medium" | "low";
+          isImplied?: boolean;
+          impliedReason?: string | null;
         }[];
         mode?: string;
         error?: string;
@@ -335,12 +442,17 @@ export default function CapturePanel({
       const mapped: CaptureCard[] = list.map((c) => ({
         key: nanoid(),
         title: c.title,
-        ownerUserId: null,
+        ownerUserId: c.ownerUserId?.trim() || null,
         ownerNameHint: c.ownerName,
+        projectId: null,
         deadlineIso: c.dueDateIso,
+        deadlineOriginalPhrase: c.deadlineOriginalPhrase ?? null,
         priority: c.priority,
         source: c.source,
         sourceSnippet: c.sourceSnippet || c.title,
+        confidence: c.confidence ?? "medium",
+        isImplied: Boolean(c.isImplied),
+        impliedReason: c.impliedReason ?? null,
       }));
 
       setCards([]);
@@ -387,26 +499,50 @@ export default function CapturePanel({
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "review") {
         e.preventDefault();
+        const unresolved = cards.filter((c) => !c.ownerUserId?.trim() || !c.deadlineIso).length;
+        if (unresolved === 0) {
+          document.querySelector<HTMLButtonElement>("[data-capture-commit='true']")?.click();
+          return;
+        }
         const emptyTargets = Array.from(
           document.querySelectorAll<HTMLElement>("[data-capture-empty='true']")
         );
-        const active = document.activeElement as HTMLElement | null;
+        emptyTargets[0]?.focus();
+      }
+      if (e.key === "Tab" && phase === "review") {
+        const emptyTargets = Array.from(
+          document.querySelectorAll<HTMLElement>("[data-capture-empty='true']")
+        );
         if (emptyTargets.length === 0) return;
-        if (!active) {
+        const active = document.activeElement as HTMLElement | null;
+        if (!active || !emptyTargets.includes(active)) {
+          e.preventDefault();
           emptyTargets[0]?.focus();
           return;
         }
+        e.preventDefault();
         const idx = emptyTargets.indexOf(active);
-        const next = idx === -1 ? emptyTargets[0] : emptyTargets[(idx + 1) % emptyTargets.length];
-        next?.focus();
+        const nextIndex = e.shiftKey
+          ? (idx - 1 + emptyTargets.length) % emptyTargets.length
+          : (idx + 1) % emptyTargets.length;
+        emptyTargets[nextIndex]?.focus();
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && phase === "review") {
+        const active = document.activeElement as HTMLElement | null;
+        const key = active?.closest<HTMLElement>("[data-card-key]")?.dataset.cardKey;
+        if (key) {
+          e.preventDefault();
+          removeCard(key);
+        }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, phase, runProcess]);
+  }, [open, onClose, phase, runProcess, cards]);
 
   const removeCard = (key: string) => {
     setCards((c) => c.filter((x) => x.key !== key));
+    setSelectedCardKeys((prev) => prev.filter((k) => k !== key));
   };
 
   const updateCard = (key: string, patch: Partial<CaptureCard>) => {
@@ -420,77 +556,16 @@ export default function CapturePanel({
   const needsDueCount = useMemo(() => cards.filter((c) => !c.deadlineIso).length, [cards]);
   const readyCount = Math.max(0, cards.length - needsOwnerCount - needsDueCount);
   const impliedCount = useMemo(
-    () => cards.filter((c) => /implied/i.test(c.sourceSnippet)).length,
+    () => cards.filter((c) => c.isImplied).length,
     [cards]
   );
   const charCount = text.length;
+  const detectedFormat = useMemo(() => detectCaptureFormat(text), [text]);
 
   const triggerPastePulse = useCallback(() => {
     setPastePulse(true);
     window.setTimeout(() => setPastePulse(false), 320);
   }, []);
-
-  const appendVoiceTranscript = useCallback((chunk: string) => {
-    const clean = chunk.trim();
-    if (!clean) return;
-    setText((prev) => {
-      const next = prev.trim() ? `${prev}\n${clean}` : clean;
-      return next.slice(0, MAX_CAPTURE_CHARS);
-    });
-  }, []);
-
-  const startVoiceInput = useCallback(() => {
-    if (voiceBlocked || isListening) return;
-    const SpeechCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechCtor) {
-      setVoiceBlocked(true);
-      setProcessNote("Voice input is not supported in this browser.");
-      return;
-    }
-
-    if (!speechRef.current) {
-      const rec = new SpeechCtor();
-      rec.continuous = true;
-      rec.interimResults = false;
-      rec.lang = "en-US";
-      rec.onresult = (event) => {
-        let transcript = "";
-        const start = event.resultIndex ?? 0;
-        for (let i = start; i < event.results.length; i++) {
-          transcript += event.results[i]?.[0]?.transcript ?? "";
-        }
-        appendVoiceTranscript(transcript);
-      };
-      rec.onerror = (event) => {
-        setIsListening(false);
-        const err = event.error || "unknown";
-        if (err === "not-allowed" || err === "service-not-allowed") {
-          setVoiceBlocked(true);
-          setProcessNote("Microphone access is blocked. Enable it in browser settings.");
-          return;
-        }
-        setProcessNote(`Voice input error: ${err}`);
-      };
-      rec.onend = () => {
-        setIsListening(false);
-      };
-      speechRef.current = rec;
-    }
-
-    try {
-      speechRef.current.start();
-      setIsListening(true);
-      setProcessNote("Listening for voice input.");
-    } catch {
-      setIsListening(false);
-    }
-  }, [appendVoiceTranscript, isListening, voiceBlocked]);
-
-  useEffect(() => {
-    if (!open || phase !== "input" || voiceBlocked || isListening) return;
-    const t = window.setTimeout(() => startVoiceInput(), 250);
-    return () => window.clearTimeout(t);
-  }, [open, phase, voiceBlocked, isListening, startVoiceInput]);
 
   const importFileText = useCallback(async (file: File) => {
     setFileBusy(true);
@@ -534,6 +609,7 @@ export default function CapturePanel({
       title: c.title.trim(),
       description: buildDescription(c.sourceSnippet, c.source),
       ownerId: c.ownerUserId!.trim(),
+      projectId: c.projectId ?? null,
       deadline: c.deadlineIso!,
       priority: c.priority,
     }));
@@ -583,6 +659,35 @@ export default function CapturePanel({
       setCommitError("Network error — try again.");
     }
   }, [cards, selfId, phase, onClose, showUpgrade]);
+
+  const selectedSet = useMemo(() => new Set(selectedCardKeys), [selectedCardKeys]);
+  const selectedCount = selectedCardKeys.length;
+
+  const applyBulkToSelected = useCallback(
+    (patch: Partial<CaptureCard>) => {
+      if (selectedCardKeys.length === 0) return;
+      setCards((prev) => prev.map((card) => (selectedSet.has(card.key) ? { ...card, ...patch } : card)));
+    },
+    [selectedCardKeys.length, selectedSet]
+  );
+
+  const quickDueIso = useCallback(
+    (kind: "today" | "tomorrow" | "this_friday" | "next_week" | "end_of_month") => {
+      const d = new Date();
+      if (kind === "tomorrow") d.setDate(d.getDate() + 1);
+      if (kind === "this_friday") {
+        const current = d.getDay();
+        const toFriday = (5 - current + 7) % 7;
+        d.setDate(d.getDate() + toFriday);
+      }
+      if (kind === "next_week") d.setDate(d.getDate() + 7);
+      if (kind === "end_of_month") {
+        return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 17, 0, 0, 0)).toISOString();
+      }
+      return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 17, 0, 0, 0)).toISOString();
+    },
+    []
+  );
 
   if (typeof document === "undefined") return null;
 
@@ -656,11 +761,27 @@ export default function CapturePanel({
                       onChange={(e) => setText(e.target.value)}
                       onPaste={() => triggerPastePulse()}
                       disabled={phase === "processing"}
-                      placeholder="Paste a meeting note, Slack message, email, or any text with decisions in it…"
+                      placeholder="Paste meeting notes, a Slack thread, an email chain, or any text containing decisions..."
                       rows={10}
                       maxLength={MAX_CAPTURE_CHARS}
                       className="min-h-[220px] w-full resize-y rounded-[14px] bg-transparent px-4 py-3.5 text-[15px] leading-relaxed text-r5-text-primary placeholder:text-r5-text-secondary/75 focus:outline-none focus:ring-2 focus:ring-r5-accent/25 disabled:opacity-60"
                     />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setText("");
+                        setCards([]);
+                        setSelectedCardKeys([]);
+                        setProcessNote(null);
+                        setOpenDueKey(null);
+                        setOpenOwnerKey(null);
+                      }}
+                      disabled={!text.length || phase === "processing"}
+                      className="absolute right-3 top-3 rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 p-1.5 text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                      aria-label="Clear"
+                    >
+                      <X className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
                     {phase === "processing" ? (
                       <div className="pointer-events-none absolute inset-x-4 bottom-3 h-0.5 overflow-hidden rounded-full bg-r5-border-subtle">
                         <motion.div
@@ -675,16 +796,27 @@ export default function CapturePanel({
                       </div>
                     ) : null}
                   </div>
+                  {text.trim() ? (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/40 px-2 py-0.5 text-r5-text-primary">
+                        {detectedFormat}
+                      </span>
+                      <span className="text-r5-text-secondary">
+                        {isScanning ? "Scanning..." : "Scanning complete"} {scanCount} commitment
+                        {scanCount === 1 ? "" : "s"} detected
+                      </span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between text-[11px] text-r5-text-secondary">
                     <span>{charCount.toLocaleString()} / {MAX_CAPTURE_CHARS.toLocaleString()} characters</span>
-                    <span>{isListening ? "Voice ready" : voiceBlocked ? "Voice unavailable" : "Voice starting..."}</span>
+                    <span>Cmd+Enter to process</span>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
                     {(
                       [
-                        ["Meeting notes", "meeting"],
-                        ["Slack thread", "slack"],
+                        ["Weekly team sync", "meeting"],
+                        ["Client call recap", "slack"],
                         ["Email chain", "email"],
                       ] as const
                     ).map(([label, key]) => (
@@ -715,6 +847,24 @@ export default function CapturePanel({
                         }}
                       />
                     </label>
+                    <select
+                      value={selectedTemplateKey}
+                      onChange={(e) => {
+                        const key = e.target.value;
+                        setSelectedTemplateKey(key);
+                        if (!key) return;
+                        const template = TEMPLATE_EXAMPLES[key];
+                        if (template) setText(template.text);
+                      }}
+                      className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary"
+                    >
+                      <option value="">Templates</option>
+                      {Object.entries(TEMPLATE_EXAMPLES).map(([key, template]) => (
+                        <option key={key} value={key}>
+                          {template.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <p className="text-[11px] text-r5-text-secondary">
@@ -729,7 +879,9 @@ export default function CapturePanel({
                   </p>
 
                   {processNote ? (
-                    <p className="text-[13px] text-r5-status-at-risk">{processNote}</p>
+                    <p className="rounded-lg border border-r5-status-at-risk/35 bg-r5-status-at-risk/10 px-3 py-2 text-[13px] text-r5-text-primary">
+                      {processNote}
+                    </p>
                   ) : null}
 
                   <button
@@ -741,26 +893,36 @@ export default function CapturePanel({
                     {phase === "processing" ? "Processing…" : "Process text"}
                   </button>
 
-                  {text.trim().length === 0 && captureHistory.length > 0 ? (
+                  {captureHistory.length > 0 ? (
                     <div className="rounded-xl border border-r5-border-subtle/70 bg-r5-surface-secondary/35 p-2">
-                      <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
-                        Recent captures
-                      </p>
-                      <div className="max-h-40 space-y-1 overflow-y-auto">
-                        {captureHistory.map((h) => (
-                          <button
-                            key={h.id}
-                            type="button"
-                            onClick={() => setText(h.text)}
-                            className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-r5-surface-hover/60"
-                          >
-                            <p className="line-clamp-1 text-[12px] font-medium text-r5-text-primary">{capturePreview(h.text)}</p>
-                            <p className="mt-0.5 text-[11px] text-r5-text-secondary">
-                              {h.commitmentCount} commitments · {new Date(h.createdAtIso).toLocaleString()} · {h.completedCount} committed
-                            </p>
-                          </button>
-                        ))}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowRecent((s) => !s)}
+                        className="flex w-full items-center justify-between px-2 py-1 text-left text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary"
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          Recent
+                        </span>
+                        {showRecent ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                      {showRecent ? (
+                        <div className="max-h-40 space-y-1 overflow-y-auto">
+                          {captureHistory.slice(0, 8).map((h) => (
+                            <button
+                              key={h.id}
+                              type="button"
+                              onClick={() => setText(h.text)}
+                              className="w-full rounded-lg px-2 py-2 text-left transition hover:bg-r5-surface-hover/60"
+                            >
+                              <p className="line-clamp-1 text-[12px] font-medium text-r5-text-primary">{capturePreview(h.text)}</p>
+                              <p className="mt-0.5 text-[11px] text-r5-text-secondary">
+                                {h.commitmentCount} commitments · {new Date(h.createdAtIso).toLocaleString()} · {h.completedCount} committed
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
@@ -784,12 +946,112 @@ export default function CapturePanel({
                   ) : (
                     <>
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <p className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/40 px-3 py-1 text-[12px] text-r5-text-secondary">
-                          {readyCount} ready · {needsOwnerCount} need owner · {Math.max(needsDueCount, 0)} need due · {impliedCount} implied
+                        <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/45 px-3 py-1 text-[12px] text-r5-text-primary">
+                          <span className="inline-flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-r5-status-completed" aria-hidden />
+                            {readyCount} ready
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-r5-status-at-risk" aria-hidden />
+                            {needsOwnerCount} need owner
+                          </span>
+                          <span className="inline-flex items-center gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-r5-status-at-risk" aria-hidden />
+                            {Math.max(needsDueCount, 0)} need due
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-r5-text-secondary">
+                            {impliedCount} implied
+                          </span>
                         </p>
                       </div>
 
                       <div className="space-y-3">
+                        {cards.length > 1 ? (
+                          <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/35 p-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-md border border-r5-border-subtle px-2 py-1 text-[11px] text-r5-text-primary hover:bg-r5-surface-hover"
+                                onClick={() =>
+                                  setSelectedCardKeys(
+                                    selectedCardKeys.length === cards.length ? [] : cards.map((card) => card.key)
+                                  )
+                                }
+                              >
+                                <CheckSquare className="h-3.5 w-3.5" />
+                                {selectedCardKeys.length === cards.length ? "Unselect all" : "Select all"}
+                              </button>
+                              <span className="text-[11px] text-r5-text-secondary">{selectedCount} selected</span>
+                              <select
+                                className="rounded-md border border-r5-border-subtle bg-r5-surface-primary px-2 py-1 text-[11px] text-r5-text-primary"
+                                defaultValue=""
+                                onChange={(e) => {
+                                  if (!e.target.value) return;
+                                  applyBulkToSelected({ ownerUserId: e.target.value });
+                                  e.currentTarget.value = "";
+                                }}
+                              >
+                                <option value="">Bulk owner</option>
+                                {assignees.map((a) => (
+                                  <option key={a.id} value={a.id}>
+                                    {a.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <select
+                                className="rounded-md border border-r5-border-subtle bg-r5-surface-primary px-2 py-1 text-[11px] text-r5-text-primary"
+                                defaultValue=""
+                                onChange={(e) => {
+                                  const value = e.target.value as
+                                    | ""
+                                    | "today"
+                                    | "tomorrow"
+                                    | "this_friday"
+                                    | "next_week"
+                                    | "end_of_month";
+                                  if (!value) return;
+                                  applyBulkToSelected({ deadlineIso: quickDueIso(value) });
+                                  e.currentTarget.value = "";
+                                }}
+                              >
+                                <option value="">Bulk deadline</option>
+                                <option value="today">Today</option>
+                                <option value="tomorrow">Tomorrow</option>
+                                <option value="this_friday">This Friday</option>
+                                <option value="next_week">Next Week</option>
+                                <option value="end_of_month">End of Month</option>
+                              </select>
+                              <select
+                                className="rounded-md border border-r5-border-subtle bg-r5-surface-primary px-2 py-1 text-[11px] text-r5-text-primary"
+                                defaultValue=""
+                                onChange={(e) => {
+                                  const value = e.target.value as "" | OrgCommitmentPriority;
+                                  if (!value) return;
+                                  applyBulkToSelected({ priority: value });
+                                  e.currentTarget.value = "";
+                                }}
+                              >
+                                <option value="">Bulk priority</option>
+                                {PRIORITIES.map((p) => (
+                                  <option key={p} value={p}>
+                                    {priorityUiLabel(p)}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                className="rounded-md border border-r5-status-overdue/40 bg-r5-status-overdue/10 px-2 py-1 text-[11px] text-r5-text-primary hover:bg-r5-status-overdue/15"
+                                onClick={() => {
+                                  if (selectedCardKeys.length === 0) return;
+                                  setCards((prev) => prev.filter((card) => !selectedSet.has(card.key)));
+                                  setSelectedCardKeys([]);
+                                }}
+                              >
+                                Dismiss selected
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                         <AnimatePresence mode="popLayout">
                           {cards.map((c) => (
                             <motion.div
@@ -798,10 +1060,25 @@ export default function CapturePanel({
                               initial={{ opacity: 0, y: 8 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, x: 24, transition: { duration: 0.22 } }}
+                              data-card-key={c.key}
+                              tabIndex={-1}
                               className={`relative rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/70 p-4 shadow-sm ${
                                 !c.ownerUserId ? "ring-1 ring-r5-status-at-risk/20" : ""
                               } ${!c.deadlineIso ? "ring-1 ring-r5-status-at-risk/15" : ""}`}
                             >
+                              <label className="absolute left-3 top-3 inline-flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSet.has(c.key)}
+                                  onChange={(e) => {
+                                    setSelectedCardKeys((prev) =>
+                                      e.target.checked ? [...new Set([...prev, c.key])] : prev.filter((k) => k !== c.key)
+                                    );
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-r5-border-subtle bg-r5-surface-secondary"
+                                  aria-label="Select card"
+                                />
+                              </label>
                               <button
                                 type="button"
                                 onClick={() => removeCard(c.key)}
@@ -819,7 +1096,7 @@ export default function CapturePanel({
                                 value={c.title}
                                 onChange={(e) => updateCard(c.key, { title: e.target.value })}
                                 disabled={phase === "committing"}
-                                className="w-full border-0 bg-transparent pr-8 text-[15px] font-medium leading-snug text-r5-text-primary placeholder:text-r5-text-secondary focus:outline-none focus:ring-0"
+                                className="w-full border-0 bg-transparent pl-5 pr-8 text-[15px] font-medium leading-snug text-r5-text-primary placeholder:text-r5-text-secondary focus:outline-none focus:ring-0"
                               />
 
                               <div className="mt-3 flex flex-wrap gap-2">
@@ -835,7 +1112,7 @@ export default function CapturePanel({
                                     className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition ${
                                       c.ownerUserId
                                         ? "border-r5-border-subtle text-r5-text-primary"
-                                        : "border-r5-status-at-risk/40 bg-r5-status-at-risk/10 text-r5-status-at-risk"
+                                        : "border-r5-status-at-risk/45 bg-r5-status-at-risk/10 text-r5-text-primary"
                                     }`}
                                   >
                                     {c.ownerUserId ? (
@@ -909,7 +1186,7 @@ export default function CapturePanel({
                                     className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition ${
                                       c.deadlineIso
                                         ? "border-r5-border-subtle text-r5-text-primary"
-                                        : "border-r5-status-at-risk/35 bg-r5-status-at-risk/10 text-r5-status-at-risk"
+                                        : "border-r5-status-at-risk/45 bg-r5-status-at-risk/10 text-r5-text-primary"
                                     }`}
                                   >
                                     <Calendar className="h-3.5 w-3.5 opacity-80" aria-hidden />
@@ -925,6 +1202,26 @@ export default function CapturePanel({
                                       className="absolute left-0 top-full z-10 mt-1 rounded-xl border border-r5-border-subtle bg-r5-surface-primary/95 p-3 shadow-xl"
                                       onClick={(e) => e.stopPropagation()}
                                     >
+                                      <div className="mb-2 grid grid-cols-2 gap-1">
+                                        {(
+                                          [
+                                            ["Today", "today"],
+                                            ["Tomorrow", "tomorrow"],
+                                            ["This Friday", "this_friday"],
+                                            ["Next Week", "next_week"],
+                                            ["End of Month", "end_of_month"],
+                                          ] as const
+                                        ).map(([label, key]) => (
+                                          <button
+                                            key={key}
+                                            type="button"
+                                            className="rounded-md border border-r5-border-subtle px-2 py-1 text-[11px] text-r5-text-primary hover:bg-r5-surface-hover"
+                                            onClick={() => updateCard(c.key, { deadlineIso: quickDueIso(key) })}
+                                          >
+                                            {label}
+                                          </button>
+                                        ))}
+                                      </div>
                                       <input
                                         type="date"
                                         value={toYmd(c.deadlineIso)}
@@ -944,12 +1241,51 @@ export default function CapturePanel({
                                     </div>
                                   ) : null}
                                 </div>
+                                <select
+                                  value={c.projectId ?? ""}
+                                  onChange={(e) => updateCard(c.key, { projectId: e.target.value || null })}
+                                  className="rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary"
+                                >
+                                  <option value="">Project</option>
+                                  {projects.map((project) => (
+                                    <option key={project.id} value={project.id}>
+                                      {project.name}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
 
                               {c.ownerNameHint ? (
                                 <p className="mt-2 text-[11px] text-r5-text-secondary">
                                   Detected owner hint:{" "}
                                   <span className="text-r5-text-primary">{c.ownerNameHint}</span>
+                                </p>
+                              ) : null}
+                              {c.deadlineOriginalPhrase ? (
+                                <p className="mt-1 text-[11px] text-r5-text-secondary">
+                                  Detected date phrase:{" "}
+                                  <span className="text-r5-text-primary">{c.deadlineOriginalPhrase}</span>
+                                </p>
+                              ) : null}
+                              {c.confidence !== "high" ? (
+                                <p
+                                  className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                                    c.confidence === "low"
+                                      ? "border-r5-status-overdue/40 text-r5-text-primary"
+                                      : "border-r5-status-at-risk/40 text-r5-text-primary"
+                                  }`}
+                                >
+                                  {c.confidence === "low" ? "Review carefully" : "Needs review"}
+                                </p>
+                              ) : null}
+                              {c.isImplied ? (
+                                <p className="mt-1 text-[11px] text-r5-text-secondary">
+                                  Implied commitment
+                                  {c.impliedReason ? (
+                                    <>
+                                      : <span className="text-r5-text-primary">{c.impliedReason}</span>
+                                    </>
+                                  ) : null}
                                 </p>
                               ) : null}
 
@@ -1012,21 +1348,26 @@ export default function CapturePanel({
                       </div>
 
                       {commitError ? (
-                        <p className="text-[13px] text-r5-status-overdue">{commitError}</p>
+                        <p className="rounded-lg border border-r5-status-overdue/35 bg-r5-status-overdue/10 px-3 py-2 text-[13px] text-r5-text-primary">
+                          {commitError}
+                        </p>
                       ) : null}
 
-                      <button
-                        type="button"
-                        disabled={phase === "committing" || cards.length === 0}
-                        onClick={() => void commitAll()}
-                        className="w-full rounded-xl bg-r5-text-primary py-3.5 text-[15px] font-semibold text-r5-surface-primary shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {phase === "committing"
-                          ? "Committing…"
-                          : needsOwnerCount + needsDueCount > 0
-                            ? `Resolve ${needsOwnerCount + needsDueCount} issue${needsOwnerCount + needsDueCount === 1 ? "" : "s"} first`
-                            : `Commit ${cards.length} commitment${cards.length === 1 ? "" : "s"}`}
-                      </button>
+                      <div className="sticky bottom-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 py-3 backdrop-blur">
+                        <button
+                          type="button"
+                          data-capture-commit="true"
+                          disabled={phase === "committing" || cards.length === 0}
+                          onClick={() => void commitAll()}
+                          className="w-full rounded-xl bg-r5-accent py-3.5 text-[15px] font-semibold text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {phase === "committing"
+                            ? "Committing…"
+                            : needsOwnerCount + needsDueCount > 0
+                              ? `Resolve ${needsOwnerCount + needsDueCount} issue${needsOwnerCount + needsDueCount === 1 ? "" : "s"} first`
+                              : `Commit ${cards.length} commitment${cards.length === 1 ? "" : "s"}`}
+                        </button>
+                      </div>
 
                       <button
                         type="button"
@@ -1034,6 +1375,7 @@ export default function CapturePanel({
                         onClick={() => {
                           setPhase("input");
                           setCards([]);
+                          setSelectedCardKeys([]);
                         }}
                         className="w-full py-2 text-[13px] font-medium text-r5-text-secondary hover:text-r5-text-primary"
                       >

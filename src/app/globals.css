@@ -163,6 +163,10 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  background: #000;
 }
 
 body {
@@ -172,6 +176,9 @@ body {
   font-size: 17px;
   line-height: 1.47059;
   letter-spacing: -0.022em;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 /* App default shell — lavender / pink mesh (restores purple glass look site-wide) */
@@ -186,6 +193,42 @@ body {
     rgba(255, 255, 255, 0.06),
     transparent 55%
   );
+}
+
+/* Clerk v7 theme tokens — fallback so sign-in/up stay readable if SDK variable mapping shifts */
+.auth-route5-shell .cl-rootBox {
+  --clerk-color-primary: #fafafa;
+  --clerk-color-primary-foreground: #0a0a0a;
+  --clerk-color-foreground: #fafafa;
+  --clerk-color-muted-foreground: #a3a3a3;
+  --clerk-color-background: #0a0a0a;
+  --clerk-color-input: #141414;
+  --clerk-color-input-foreground: #fafafa;
+  --clerk-color-border: rgba(255, 255, 255, 0.12);
+}
+
+/* Hard readability guardrails for auth flows (prevents dark-on-dark regressions). */
+.auth-route5-shell .cl-card,
+.auth-route5-shell .cl-cardBox,
+.auth-route5-shell .cl-main {
+  color: #fafafa !important;
+}
+.auth-route5-shell .cl-headerTitle,
+.auth-route5-shell .cl-headerSubtitle,
+.auth-route5-shell .cl-formFieldLabel,
+.auth-route5-shell .cl-dividerText,
+.auth-route5-shell .cl-footerActionText {
+  color: #d4d4d8 !important;
+}
+.auth-route5-shell .cl-headerTitle,
+.auth-route5-shell .cl-footerActionLink,
+.auth-route5-shell .cl-socialButtonsBlockButtonText {
+  color: #fafafa !important;
+}
+.auth-route5-shell .cl-formFieldInput {
+  color: #fafafa !important;
+  background: #141414 !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
 }
 
 .theme-glass-site {
@@ -2251,7 +2294,88 @@ body {
   color: var(--workspace-fg);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 18px 48px -28px rgba(0, 0, 0, 0.52);
+    0 18px 48px -28px rgba(0, 0, 0, 0.52),
+    0 0 72px -42px rgba(167, 139, 250, 0.24);
+}
+
+/*
+ * Reusable "preview scene" panel used across onboarding/feed/home for
+ * the same polished visual language.
+ */
+.workspace-preview-panel {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 45%, rgba(167, 139, 250, 0.08) 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 14px 42px -24px rgba(0, 0, 0, 0.54),
+    0 0 80px -50px rgba(167, 139, 250, 0.28);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+}
+
+.workspace-preview-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 75% 48% at 20% 0%, rgba(168, 85, 247, 0.18), transparent 62%),
+    radial-gradient(ellipse 85% 50% at 100% 100%, rgba(59, 130, 246, 0.14), transparent 62%);
+  opacity: 0.9;
+  z-index: 0;
+}
+
+.workspace-preview-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Light palette override so premium surfaces remain highly readable in all themes. */
+.theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-preview-panel {
+  border-color: rgba(15, 23, 42, 0.1);
+  background:
+    linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(248, 250, 252, 0.82) 45%,
+      rgba(241, 245, 249, 0.9) 100%
+    );
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 14px 42px -24px rgba(15, 23, 42, 0.2),
+    0 0 80px -54px rgba(99, 102, 241, 0.22);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .workspace-preview-panel::before {
+  background:
+    radial-gradient(ellipse 75% 48% at 20% 0%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(ellipse 85% 50% at 100% 100%, rgba(14, 165, 233, 0.1), transparent 62%);
+}
+
+/* Large hero stage utility for premium onboarding/feed/home sections. */
+.r5-immersive-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.r5-immersive-stage::before {
+  content: "";
+  position: absolute;
+  inset: -8% -10% auto -10%;
+  height: 58%;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 88% 70% at 50% 0%, rgba(167, 139, 250, 0.2), transparent 68%);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .r5-immersive-stage::before {
+  background: radial-gradient(ellipse 88% 70% at 50% 0%, rgba(99, 102, 241, 0.14), transparent 68%);
 }
 
 /* Surface material — liquid (max glass) | standard (default) | flat (no backdrop blur) */
@@ -2639,6 +2763,32 @@ body {
 /* ── Marketing home: premium void (grid + grain) over command canvas ── */
 .theme-route5-command.theme-agent-shell.landing-premium .agent-canvas {
   position: relative;
+  overflow-x: clip;
+}
+
+.theme-route5-command.theme-agent-shell.landing-premium {
+  min-height: 100svh;
+  overflow-x: clip;
+}
+
+.theme-route5-command.theme-agent-shell.landing-premium .agent-canvas {
+  min-height: 100svh;
+}
+
+/* Ensure iOS safe areas are filled by the landing canvas (no white gutters while bouncing). */
+body.theme-glass-site:has(main.landing-premium) {
+  background-color: #000;
+  background-image: none;
+}
+
+@supports (padding: max(0px)) {
+  .landing-premium {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .site-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
 .theme-route5-command.theme-agent-shell.landing-premium .agent-canvas::before {
@@ -2695,6 +2845,11 @@ body {
 }
 
 /* Clerk OrganizationSwitcher — prevent light popover + inherited white text (Team page). */
+.clerk-org-switcher-host [class*="cl-organizationSwitcherTrigger"] {
+  color: var(--workspace-fg) !important;
+  background: color-mix(in srgb, var(--workspace-surface) 82%, transparent) !important;
+  border-color: var(--workspace-border) !important;
+}
 .clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] {
   background-color: rgb(2 6 23) !important;
   color: rgb(241 245 249) !important;
@@ -2705,9 +2860,15 @@ body {
   color: inherit;
 }
 .clerk-org-switcher-host [class*="cl-organizationPreview"] [class*="identifier"] {
-  color: rgb(241 245 249) !important;
+  color: var(--workspace-fg) !important;
 }
 .clerk-org-switcher-host [class*="cl-organizationPreview"] [class*="subtitle"] {
+  color: var(--workspace-fg-muted) !important;
+}
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] [class*="cl-organizationPreview"] [class*="identifier"] {
+  color: rgb(241 245 249) !important;
+}
+.clerk-org-switcher-host [class*="cl-organizationSwitcherPopoverCard"] [class*="cl-organizationPreview"] [class*="subtitle"] {
   color: rgb(148 163 184) !important;
 }
 

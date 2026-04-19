@@ -204,7 +204,7 @@ export default function ProjectsHub() {
             <li key={project.id}>
               <Link
                 href={`/projects/${project.id}`}
-                className="grid grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(120px,1fr)] items-center gap-[var(--r5-space-3)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover"
+                className="grid grid-cols-1 gap-[var(--r5-space-2)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover sm:grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(120px,1fr)] sm:items-center sm:gap-[var(--r5-space-3)]"
               >
                 <span className="min-w-0 flex items-center gap-[var(--r5-space-2)]">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
@@ -223,8 +223,8 @@ export default function ProjectsHub() {
                   <span className="text-r5-status-completed">{rollup.onTrack} on track</span>
                 </span>
 
-                <span className="text-right text-[length:var(--r5-font-body)] text-r5-text-secondary">{fmtDate(rollup.lastUpdated)}</span>
-                <span className={`text-right text-[12px] font-semibold ${healthToneClass(project.health)}`}>Health {project.health}%</span>
+                <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary sm:text-right">{fmtDate(rollup.lastUpdated)}</span>
+                <span className={`text-[12px] font-semibold sm:text-right ${healthToneClass(project.health)}`}>Health {project.health}%</span>
               </Link>
             </li>
           );

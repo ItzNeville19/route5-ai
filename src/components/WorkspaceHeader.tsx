@@ -1,26 +1,25 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PanelLeft, Plus, Search } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
+import WorkspaceProjectSwitcher from "@/components/workspace/WorkspaceProjectSwitcher";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 
-export default function WorkspaceHeader() {
+export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?: () => void }) {
   const pathname = usePathname() ?? "";
   const { open: openPalette } = useCommandPalette();
   const exp = useWorkspaceExperience();
-  const { getProjectById } = useWorkspaceData();
+  useWorkspaceData();
   const { open: openCapture } = useCapture();
-
-  const projectIdFromPath = pathname.match(/^\/projects\/([^/]+)$/)?.[1] ?? null;
-  const projectTitle = projectIdFromPath ? getProjectById(projectIdFromPath)?.name ?? null : null;
 
   const sidebarHidden = exp.prefs.sidebarHidden === true;
   const pageTitle = getWorkspacePageTitle(pathname);
@@ -31,7 +30,13 @@ export default function WorkspaceHeader() {
         <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)]">
           <button
             type="button"
-            onClick={() => exp.setPrefs({ sidebarHidden: !sidebarHidden })}
+            onClick={() => {
+              if (onSidebarToggle) {
+                onSidebarToggle();
+                return;
+              }
+              exp.setPrefs({ sidebarHidden: !sidebarHidden });
+            }}
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
@@ -51,7 +56,17 @@ export default function WorkspaceHeader() {
           >
             <Route5WordmarkInline className="text-[13px]" />
           </Link>
-          <h1 className="min-w-0 truncate text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
+          <Suspense
+            fallback={
+              <div
+                className="hidden h-8 w-[min(100%,140px)] animate-pulse rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/60 md:block"
+                aria-hidden
+              />
+            }
+          >
+            <WorkspaceProjectSwitcher />
+          </Suspense>
+          <h1 className="min-w-0 flex-1 truncate text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary max-sm:max-w-[min(100%,120px)] sm:max-w-[min(100%,320px)]">
             {pageTitle}
           </h1>
         </div>
@@ -106,20 +121,6 @@ export default function WorkspaceHeader() {
         </div>
       </div>
 
-      {projectIdFromPath && projectTitle ? (
-        <div className="border-t border-r5-border-subtle bg-r5-surface-primary/40 px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary sm:px-[var(--r5-content-padding-x)]">
-          <Link
-            href="/feed"
-            className="font-[var(--r5-font-weight-medium)] text-r5-text-primary transition-colors duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:text-r5-text-primary"
-          >
-            Feed
-          </Link>
-          <span className="mx-[var(--r5-space-2)] text-r5-text-tertiary" aria-hidden>
-            /
-          </span>
-          <span className="font-[var(--r5-font-weight-semibold)] text-r5-text-primary">{projectTitle}</span>
-        </div>
-      ) : null}
     </header>
   );
 }

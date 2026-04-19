@@ -8,6 +8,7 @@ export const NOTIFICATION_TYPES = [
   "subscription_cancelled",
   "trial_ending",
   "team_invited",
+  "daily_morning_digest",
   "weekly_summary",
 ] as const;
 

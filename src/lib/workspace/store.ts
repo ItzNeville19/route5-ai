@@ -31,6 +31,7 @@ import { getServiceClient } from "@/lib/supabase/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import * as sqlite from "@/lib/workspace/sqlite";
 import { appBaseUrl } from "@/lib/app-base-url";
+import type { ProjectBackupItem } from "@/lib/workspace/project-backup";
 
 export type StorageBackend = "supabase" | "sqlite";
 
@@ -208,6 +209,45 @@ export async function createProjectForUser(
   }
   const row = sqlite.insertProject(userId, name, icon, orgId);
   return rowToProject(row);
+}
+
+/**
+ * Restores projects from a backup snapshot while preserving IDs where possible.
+ * Used when a read unexpectedly returns empty but we still have a trusted user backup.
+ */
+export async function restoreProjectsFromBackupForUser(
+  userId: string,
+  backup: ProjectBackupItem[]
+): Promise<Project[]> {
+  if (backup.length === 0) return listProjectsForUser(userId);
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const rows = backup.map((item) => ({
+      id: item.id,
+      clerk_user_id: userId,
+      name: item.name,
+      icon_emoji: item.iconEmoji ?? null,
+      org_id: orgId,
+      created_at: item.createdAt,
+      updated_at: item.updatedAt,
+    }));
+    const { error } = await supabase.from("projects").upsert(rows, { onConflict: "id" });
+    if (error) throw error;
+    return listProjectsForUser(userId);
+  }
+
+  for (const item of backup) {
+    const existing = sqlite.getProjectById(userId, item.id);
+    if (!existing) {
+      try {
+        sqlite.insertProject(userId, item.name, item.iconEmoji ?? null, orgId);
+      } catch {
+        /* best-effort restore in sqlite fallback */
+      }
+    }
+  }
+  return listProjectsForUser(userId);
 }
 
 export async function getProjectDetailForUser(
@@ -518,7 +558,8 @@ function buildExecutionInputsFromRows(
 }
 
 export async function getWorkspaceSummaryForUser(
-  userId: string
+  userId: string,
+  projectId?: string
 ): Promise<{
   projectCount: number;
   extractionCount: number;
@@ -537,21 +578,26 @@ export async function getWorkspaceSummaryForUser(
     const { count: projectCount, error: pcErr } = await supabase
       .from("projects")
       .select("*", { count: "exact", head: true })
-      .eq("clerk_user_id", userId);
+      .eq("clerk_user_id", userId)
+      .eq(projectId ? "id" : "clerk_user_id", projectId ?? userId);
     if (pcErr) throw pcErr;
 
-    const { count: extractionCount, error: ecErr } = await supabase
+    let extractionCountQuery = supabase
       .from("extractions")
       .select("*", { count: "exact", head: true })
       .eq("clerk_user_id", userId);
+    if (projectId) extractionCountQuery = extractionCountQuery.eq("project_id", projectId);
+    const { count: extractionCount, error: ecErr } = await extractionCountQuery;
     if (ecErr) throw ecErr;
 
-    const { data: recentRows, error: rErr } = await supabase
+    let recentQuery = supabase
       .from("extractions")
       .select("id, project_id, summary, created_at, action_items")
       .eq("clerk_user_id", userId)
       .order("created_at", { ascending: false })
       .limit(6);
+    if (projectId) recentQuery = recentQuery.eq("project_id", projectId);
+    const { data: recentRows, error: rErr } = await recentQuery;
     if (rErr) throw rErr;
 
     const rows = recentRows ?? [];
@@ -580,12 +626,14 @@ export async function getWorkspaceSummaryForUser(
       };
     });
 
-    const { data: queueRows, error: qErr } = await supabase
+    let queueQuery = supabase
       .from("extractions")
       .select("id, project_id, created_at, action_items")
       .eq("clerk_user_id", userId)
       .order("created_at", { ascending: true })
       .limit(400);
+    if (projectId) queueQuery = queueQuery.eq("project_id", projectId);
+    const { data: queueRows, error: qErr } = await queueQuery;
     const openActions =
       qErr || !queueRows
         ? []
@@ -600,12 +648,14 @@ export async function getWorkspaceSummaryForUser(
             OPEN_ACTION_QUEUE_MAX
           );
 
-    const { data: tsData, error: tsErr } = await supabase
+    let tsQuery = supabase
       .from("extractions")
       .select("created_at, decisions")
       .eq("clerk_user_id", userId)
       .gte("created_at", chartPointsSince)
       .limit(100000);
+    if (projectId) tsQuery = tsQuery.eq("project_id", projectId);
+    const { data: tsData, error: tsErr } = await tsQuery;
     const activityPoints: ExtractionActivityPoint[] =
       !tsErr && tsData
         ? (tsData as { created_at: string; decisions: unknown }[]).map((r) => ({
@@ -616,12 +666,14 @@ export async function getWorkspaceSummaryForUser(
     const activity = computeActivityStats(activityPoints);
     const activitySeries = computeAllActivitySeries(activityPoints);
 
-    const { data: execRows, error: exErr } = await supabase
+    let execQuery = supabase
       .from("extractions")
       .select("project_id, decisions, action_items, created_at")
       .eq("clerk_user_id", userId)
       .order("created_at", { ascending: false })
       .limit(8000);
+    if (projectId) execQuery = execQuery.eq("project_id", projectId);
+    const { data: execRows, error: exErr } = await execQuery;
     const execution =
       exErr || !execRows
         ? emptyExecutionMetrics()
@@ -649,7 +701,8 @@ export async function getWorkspaceSummaryForUser(
   }
 
   const s = sqlite.getWorkspaceSummary(userId);
-  const recent: RecentExtractionRow[] = s.recent.map((r) => {
+  const recentFiltered = projectId ? s.recent.filter((r) => r.project_id === projectId) : s.recent;
+  const recent: RecentExtractionRow[] = recentFiltered.map((r) => {
     const summary = typeof r.summary === "string" ? r.summary : "";
     const snippet = recentRowSnippet(summary) || "(No summary yet)";
     const openActionsCount = parseActionItemsFromDbJson(r.action_items ?? "[]").filter(
@@ -675,7 +728,9 @@ export async function getWorkspaceSummaryForUser(
 
   const projects = sqlite.listProjects(userId);
   const nameByProject = new Map(projects.map((p) => [p.id, p.name]));
-  const queueRows = sqlite.listExtractionsForOpenActionQueue(userId);
+  const queueRows = sqlite
+    .listExtractionsForOpenActionQueue(userId)
+    .filter((r) => (projectId ? r.project_id === projectId : true));
   const openActions = buildOpenActionQueue(
     queueRows.map((r) => ({
       id: r.id,
@@ -686,14 +741,16 @@ export async function getWorkspaceSummaryForUser(
     nameByProject,
     OPEN_ACTION_QUEUE_MAX
   );
-  const execRows = sqlite.listExtractionsForExecutionMetrics(userId);
+  const execRows = sqlite
+    .listExtractionsForExecutionMetrics(userId)
+    .filter((r) => (projectId ? r.project_id === projectId : true));
   const execution = computeExecutionMetrics(
     buildExecutionInputsFromRows(execRows, nameByProject)
   );
 
   return {
-    projectCount: s.projectCount,
-    extractionCount: s.extractionCount,
+    projectCount: projectId ? projects.filter((p) => p.id === projectId).length : s.projectCount,
+    extractionCount: projectId ? execRows.length : s.extractionCount,
     recent,
     openActions,
     activity,
@@ -1274,7 +1331,10 @@ export async function getProjectOwnerClerkId(projectId: string): Promise<string 
   return sqlite.getProjectOwnerClerkId(projectId);
 }
 
-export async function getExecutionOverviewForUser(userId: string): Promise<ExecutionOverview> {
+export async function getExecutionOverviewForUser(
+  userId: string,
+  projectId?: string
+): Promise<ExecutionOverview> {
   await reconcileCommitmentStatesForUser(userId);
 
   const projects = await listProjectsForUser(userId);
@@ -1286,6 +1346,7 @@ export async function getExecutionOverviewForUser(userId: string): Promise<Execu
       .from("commitments")
       .select("*")
       .eq("clerk_user_id", userId)
+      .eq(projectId ? "project_id" : "clerk_user_id", projectId ?? userId)
       .is("archived_at", null)
       .order("last_updated_at", { ascending: false })
       .limit(5000);
@@ -1296,7 +1357,9 @@ export async function getExecutionOverviewForUser(userId: string): Promise<Execu
     return buildExecutionOverview(commitments, nameById);
   }
 
-  const rows = sqlite.listCommitmentsForUser(userId);
+  const rows = sqlite
+    .listCommitmentsForUser(userId)
+    .filter((r) => (projectId ? r.project_id === projectId : true));
   const commitments = rows.map(mapRowToCommitment);
   return buildExecutionOverview(commitments, nameById);
 }

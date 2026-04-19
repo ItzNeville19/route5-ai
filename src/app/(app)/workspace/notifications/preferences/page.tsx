@@ -47,6 +47,10 @@ const COPY: Record<NotificationType, { title: string; description: string }> = {
     title: "Team invited",
     description: "When someone invites you to a workspace.",
   },
+  daily_morning_digest: {
+    title: "Morning digest",
+    description: "Personalized 8:00 AM daily digest for due today, overdue, and at-risk work.",
+  },
   weekly_summary: {
     title: "Weekly summary",
     description: "Executive summary of commitments and execution.",

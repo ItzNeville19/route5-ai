@@ -20,7 +20,9 @@ import { paletteOverlay, palettePanel } from "@/lib/motion";
 import {
   buildPaletteItems,
   type PaletteItem,
+  type PalettePerson,
   type PaletteRecentRun,
+  type PaletteSearchCommitment,
   type PaletteSection,
 } from "@/lib/command-palette-items";
 
@@ -38,6 +40,8 @@ type PaletteApiPayload = {
   primaryEmail?: string | null;
   projects?: { id: string; name: string }[];
   recentRuns?: PaletteRecentRun[];
+  searchCommitments?: PaletteSearchCommitment[];
+  people?: PalettePerson[];
   openActionsCount?: number;
   workspaceDbOk?: boolean;
 };
@@ -54,37 +58,37 @@ export function useCommandPalette(): PaletteContextValue {
   return ctx;
 }
 
-const SECTION_LABEL: Record<PaletteSection, string> = {
-  agent: "Navigation",
-  activity: "Recent",
-  projects: "Commitments",
-  workspace: "Actions",
-  site: "Navigation",
-  account: "Navigation",
-  legal: "Navigation",
+type UiGroupKey = "jump" | "commitments" | "projects" | "people" | "actions";
+const UI_GROUP_LABEL: Record<UiGroupKey, string> = {
+  jump: "Jump to",
+  commitments: "Commitments",
+  projects: "Projects",
+  people: "People",
+  actions: "Actions",
 };
 
+function groupKeyForSection(section: PaletteSection): UiGroupKey {
+  if (section === "activity") return "commitments";
+  if (section === "projects") return "projects";
+  if (section === "account") return "people";
+  if (section === "workspace") return "actions";
+  return "jump";
+}
+
 function groupFiltered(items: PaletteItem[]) {
-  const order: PaletteSection[] = [
-    "agent",
-    "activity",
-    "workspace",
-    "projects",
-    "site",
-    "account",
-    "legal",
-  ];
-  const map = new Map<PaletteSection, PaletteItem[]>();
+  const order: UiGroupKey[] = ["jump", "commitments", "projects", "people", "actions"];
+  const map = new Map<UiGroupKey, PaletteItem[]>();
   for (const item of items) {
-    const list = map.get(item.section) ?? [];
+    const key = groupKeyForSection(item.section);
+    const list = map.get(key) ?? [];
     list.push(item);
-    map.set(item.section, list);
+    map.set(key, list);
   }
   return order
-    .map((section) => ({
-      section,
-      label: SECTION_LABEL[section],
-      items: map.get(section) ?? [],
+    .map((key) => ({
+      section: key,
+      label: UI_GROUP_LABEL[key],
+      items: map.get(key) ?? [],
     }))
     .filter((g) => g.items.length > 0);
 }
@@ -97,6 +101,8 @@ function applyPalettePayload(
     setUserEmail: (v: string | null) => void;
     setProjects: (v: { id: string; name: string }[]) => void;
     setRecentRuns: (v: PaletteRecentRun[]) => void;
+    setSearchCommitments: (v: PaletteSearchCommitment[]) => void;
+    setPeople: (v: PalettePerson[]) => void;
     setOpenActionsCount: (v: number) => void;
   }
 ) {
@@ -109,6 +115,10 @@ function applyPalettePayload(
   );
   setters.setProjects(Array.isArray(payload.projects) ? payload.projects : []);
   setters.setRecentRuns(Array.isArray(payload.recentRuns) ? payload.recentRuns : []);
+  setters.setSearchCommitments(
+    Array.isArray(payload.searchCommitments) ? payload.searchCommitments : []
+  );
+  setters.setPeople(Array.isArray(payload.people) ? payload.people : []);
   setters.setOpenActionsCount(
     typeof payload.openActionsCount === "number" && payload.openActionsCount >= 0
       ? payload.openActionsCount
@@ -153,6 +163,8 @@ export function CommandPaletteProvider({
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [recentRuns, setRecentRuns] = useState<PaletteRecentRun[]>([]);
+  const [searchCommitments, setSearchCommitments] = useState<PaletteSearchCommitment[]>([]);
+  const [people, setPeople] = useState<PalettePerson[]>([]);
   const [openActionsCount, setOpenActionsCount] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [loadingPalette, setLoadingPalette] = useState(false);
@@ -171,6 +183,8 @@ export function CommandPaletteProvider({
         setUserEmail,
         setProjects,
         setRecentRuns,
+        setSearchCommitments,
+        setPeople,
         setOpenActionsCount,
       });
       return;
@@ -193,6 +207,8 @@ export function CommandPaletteProvider({
         setUserEmail,
         setProjects,
         setRecentRuns,
+        setSearchCommitments,
+        setPeople,
         setOpenActionsCount,
       });
     } catch {
@@ -202,6 +218,8 @@ export function CommandPaletteProvider({
       setUserEmail(null);
       setProjects([]);
       setRecentRuns([]);
+      setSearchCommitments([]);
+      setPeople([]);
       setOpenActionsCount(0);
     } finally {
       if (!ctrl.signal.aborted) setLoadingPalette(false);
@@ -254,9 +272,20 @@ export function CommandPaletteProvider({
         userEmail,
         projects,
         recentRuns,
+        searchCommitments,
+        people,
         openActionsCount,
       }),
-    [signedInEffective, displayName, userEmail, projects, recentRuns, openActionsCount]
+    [
+      signedInEffective,
+      displayName,
+      userEmail,
+      projects,
+      recentRuns,
+      searchCommitments,
+      people,
+      openActionsCount,
+    ]
   );
 
   const filtered = useMemo(() => {

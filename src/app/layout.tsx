@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import MotionConfigProvider from "@/components/providers/MotionConfigProvider";
 import { ClerkRuntimeProvider } from "@/components/providers/ClerkRuntimeProvider";
 import ClerkProviderWrapper from "@/components/providers/ClerkProviderWrapper";
+import ChunkLoadRecovery from "@/components/providers/ChunkLoadRecovery";
 import { CommandPaletteProvider } from "@/components/CommandPalette";
 import { PublicI18nProvider } from "@/components/i18n/I18nProvider";
 import { isClerkFullyConfigured } from "@/lib/clerk-env";
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)", color: "#0c0c0e" },
-    { media: "(prefers-color-scheme: light)", color: "#ececee" },
+    { media: "(prefers-color-scheme: light)", color: "#0c0c0e" },
   ],
 };
 
@@ -59,6 +60,7 @@ export default function RootLayout({
         <ClerkRuntimeProvider enabled={clerkRuntimeOk}>
           <MotionConfigProvider>
             <ClerkProviderWrapper>
+              <ChunkLoadRecovery />
               <CommandPaletteProvider>
                 <PublicI18nProvider>{children}</PublicI18nProvider>
               </CommandPaletteProvider>

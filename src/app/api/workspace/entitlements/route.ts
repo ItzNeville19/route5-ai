@@ -5,11 +5,11 @@ import {
   getFeaturesForTier,
   getLimitsForTier,
   isPaidTier,
-  resolveTierForUser,
   tierDisplayName,
   tierTaglineForTier,
   type EntitlementsPayload,
 } from "@/lib/entitlements";
+import { resolveEffectiveTierForUser } from "@/lib/entitlements-effective";
 import {
   countExtractionsThisUtcMonthForUser,
   getWorkspaceSummaryForUser,
@@ -34,7 +34,7 @@ export async function GET() {
     email = undefined;
   }
 
-  const tier = resolveTierForUser(userId, email);
+  const tier = await resolveEffectiveTierForUser(userId, email);
   const limits = getLimitsForTier(tier);
   const features = getFeaturesForTier(tier);
 

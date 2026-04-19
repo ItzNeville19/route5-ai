@@ -41,7 +41,8 @@ export async function POST(req: Request) {
   try {
     const result = await processCaptureText(
       parsed.data.text,
-      parsed.data.extractionProviderId
+      parsed.data.extractionProviderId,
+      { userId }
     );
     return NextResponse.json(result);
   } catch (e) {

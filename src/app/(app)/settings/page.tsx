@@ -1,13 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
 import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebhookCard";
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
-import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
-import { canAccessDeveloperTools } from "@/lib/feature-flags";
 
 function SettingsSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
@@ -20,9 +17,6 @@ function SettingsSection({ title, description, children }: { title: string; desc
 }
 
 export default function WorkspaceSettingsPage() {
-  const { user } = useUser();
-  const showDeveloperTools = canAccessDeveloperTools(user?.primaryEmailAddress?.emailAddress);
-
   return (
     <div className="mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
       <div>
@@ -30,27 +24,6 @@ export default function WorkspaceSettingsPage() {
           ← Feed
         </Link>
       </div>
-
-      <SettingsSection
-        title="Appearance & workspace"
-        description="Themes, mesh gradients, and layout — open the full customize page for previews, or adjust time zone and locale below."
-      >
-        <div className="flex flex-wrap gap-[var(--r5-space-2)]">
-          <Link
-            href="/workspace/customize"
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-primary transition hover:bg-r5-surface-hover"
-          >
-            Open customization & themes
-          </Link>
-        </div>
-      </SettingsSection>
-
-      <SettingsSection
-        title="Time zone, locale & surfaces"
-        description="Applies to greetings, digests, and auto theme boundaries. Same card as Customize — saved to your account when signed in."
-      >
-        <WorkspacePreferencesCard />
-      </SettingsSection>
 
       <SettingsSection
         title="Account"
@@ -64,7 +37,7 @@ export default function WorkspaceSettingsPage() {
 
       <SettingsSection
         title="Notifications"
-        description="Choose when you want reminders and updates."
+        description="Choose delivery channels for updates, follow-ups, and digests."
       >
         <Link
           href="/workspace/notifications/preferences"
@@ -76,19 +49,35 @@ export default function WorkspaceSettingsPage() {
 
       <SettingsSection
         title="AI Settings"
-        description="Control how commitments are generated and reviewed."
+        description="Control model behavior and capture sensitivity."
       >
         <WorkspaceAiSettingsCard />
       </SettingsSection>
 
-      {showDeveloperTools ? (
-        <SettingsSection
-          title="Webhook Input"
-          description="Connect external systems to send updates into Route5."
-        >
+      <SettingsSection
+        title="Integrations"
+        description="Webhook and email forwarding are live. Connect Slack, Gmail, and Notion from Integrations."
+      >
+        <div className="space-y-[var(--r5-space-3)]">
           <SettingsIngestWebhookCard />
-        </SettingsSection>
-      ) : null}
+          <div className="grid gap-[var(--r5-space-2)] sm:grid-cols-3">
+            {[
+              { name: "Slack", href: "/integrations/slack" },
+              { name: "Gmail", href: "/integrations/google" },
+              { name: "Notion", href: "/integrations" },
+            ].map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
+              >
+                <p className="text-[length:var(--r5-font-body)] font-medium text-r5-text-primary">{item.name}</p>
+                <p className="mt-[var(--r5-space-1)] text-[12px] text-r5-text-secondary">Open integration</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </SettingsSection>
     </div>
   );
 }

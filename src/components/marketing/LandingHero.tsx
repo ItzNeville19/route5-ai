@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
+import HomeHeroInteractiveDemo from "@/components/marketing/HomeHeroInteractiveDemo";
 
 const LandingHeroClerkCtasLazy = dynamic(
   () => import("@/components/LandingHeroClerkCtas").then((m) => m.LandingHeroClerkCtas),
@@ -21,7 +22,7 @@ export default function LandingHero() {
   const clerkRuntimeOk = useClerkRuntimeEnabled();
 
   return (
-    <section className="relative flex min-h-[min(88dvh,820px)] flex-col justify-center overflow-hidden pt-20">
+    <section className="relative flex min-h-[min(90dvh,860px)] flex-col justify-center overflow-hidden pt-20">
       {/* Animated aurora layer */}
       <div
         className="landing-aurora-blob pointer-events-none absolute -left-[20%] top-[8%] h-[min(520px,70vw)] w-[min(520px,70vw)] rounded-full bg-gradient-to-br from-cyan-500/25 via-violet-600/20 to-transparent blur-3xl"
@@ -119,6 +120,14 @@ export default function LandingHero() {
                 {t("marketing.hero.logIn")}
               </Link>
             )}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.55, ease }}
+          >
+            <HomeHeroInteractiveDemo />
           </motion.div>
         </motion.div>
       </div>

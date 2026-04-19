@@ -43,6 +43,8 @@ export async function POST(req: Request) {
     primaryUseCase?: string;
     emails?: string[];
     skipIntegration?: boolean;
+    /** Completes the former "integrations" onboarding step after the live Desk extraction demo. */
+    completedDeskDemo?: boolean;
   };
   try {
     body = (await req.json()) as typeof body;
@@ -92,7 +94,7 @@ export async function POST(req: Request) {
   }
 
   if (body.action === "connect_integration") {
-    if (body.skipIntegration) {
+    if (body.skipIntegration || body.completedDeskDemo) {
       await markOnboardingStepComplete(orgId, userId, "connect_integration");
       return NextResponse.json({ ok: true });
     }

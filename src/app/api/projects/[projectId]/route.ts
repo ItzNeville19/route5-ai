@@ -3,11 +3,14 @@ import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
 import {
   deleteProjectForUser,
   getProjectDetailForUser,
+  listProjectsForUser,
   updateProjectForUser,
 } from "@/lib/workspace/store";
+import { saveProjectBackupForUser } from "@/lib/workspace/project-backup";
 import {
   enforceRateLimits,
   iconEmojiSchema,
@@ -40,6 +43,15 @@ export async function GET(
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before loading projects.",
+      },
+      { status: 503 }
+    );
+  }
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "project:get", userId, {
@@ -78,6 +90,15 @@ export async function PATCH(
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before editing projects.",
+      },
+      { status: 503 }
+    );
+  }
 
   const rateLimited = enforceRateLimits(
     req,
@@ -108,6 +129,8 @@ export async function PATCH(
     if (!project) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const latest = await listProjectsForUser(userId);
+    await saveProjectBackupForUser(userId, latest);
     return NextResponse.json({ project });
   } catch (e) {
     if (e instanceof Error && e.message === "INVALID_NAME") {
@@ -127,6 +150,15 @@ export async function DELETE(
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before deleting projects.",
+      },
+      { status: 503 }
+    );
+  }
 
   const rateLimited = enforceRateLimits(
     req,
@@ -179,6 +211,8 @@ export async function DELETE(
     if (!removed) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    const latest = await listProjectsForUser(userId);
+    await saveProjectBackupForUser(userId, latest);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

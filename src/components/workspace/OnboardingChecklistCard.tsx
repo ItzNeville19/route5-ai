@@ -18,7 +18,7 @@ const LABELS: Record<Exclude<OnboardingStep, "complete">, string> = {
 const STEP_HREF: Record<Exclude<OnboardingStep, "complete">, string> = {
   org_setup: "/workspace/onboarding",
   invite_team: "/workspace/onboarding",
-  connect_integration: "/workspace/integrations",
+  connect_integration: "/workspace/onboarding",
   first_commitment: "/workspace/commitments",
 };
 

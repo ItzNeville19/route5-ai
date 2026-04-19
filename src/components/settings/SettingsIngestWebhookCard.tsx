@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Webhook } from "lucide-react";
+import { Mail, Webhook } from "lucide-react";
 
 type IngestInfo = {
   enabled: boolean;
@@ -15,9 +15,27 @@ type IngestInfo = {
   body: Record<string, string>;
 };
 
+type ForwardingInfo = {
+  enabled: boolean;
+  forwardingAddress: string;
+  forwardingDomain: string;
+};
+
 export default function SettingsIngestWebhookCard() {
   const [info, setInfo] = useState<IngestInfo | null>(null);
+  const [forwarding, setForwarding] = useState<ForwardingInfo | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"url" | "curl" | "forwarding" | null>(null);
+
+  const copyText = async (value: string, kind: "url" | "curl" | "forwarding") => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      window.setTimeout(() => setCopied(null), 1200);
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +49,18 @@ export default function SettingsIngestWebhookCard() {
       })
       .catch(() => {
         if (!cancelled) setErr("Could not load webhook settings.");
+      });
+
+    void fetch("/api/ingest/forwarding", { credentials: "same-origin" })
+      .then(async (r) => {
+        if (!r.ok) throw new Error("Could not load forwarding settings");
+        return r.json() as Promise<ForwardingInfo>;
+      })
+      .then((data) => {
+        if (!cancelled) setForwarding(data);
+      })
+      .catch(() => {
+        if (!cancelled) setErr((prev) => prev ?? "Could not load email forwarding settings.");
       });
     return () => {
       cancelled = true;
@@ -63,6 +93,38 @@ export default function SettingsIngestWebhookCard() {
         </p>
       ) : null}
 
+      <div className="mt-4 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/70 p-4">
+        <div className="flex items-start gap-2">
+          <Mail className="mt-0.5 h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+              Email forwarding
+            </p>
+            {!forwarding ? (
+              <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
+            ) : (
+              <>
+                <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">
+                  Forward any email thread containing decisions to this address.
+                </p>
+                <div className="mt-2 flex items-start gap-2">
+                  <code className="block min-w-0 flex-1 break-all rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 font-mono text-[12px] text-[var(--workspace-fg)]">
+                    {forwarding.forwardingAddress}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => void copyText(forwarding.forwardingAddress, "forwarding")}
+                    className="rounded-lg border border-[var(--workspace-border)] px-2.5 py-2 text-[12px] text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+                  >
+                    {copied === "forwarding" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       {!info ? (
         <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
       ) : !info.enabled ? (
@@ -91,9 +153,18 @@ export default function SettingsIngestWebhookCard() {
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
               Webhook URL
             </p>
-            <code className="mt-1 block break-all rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 font-mono text-[12px] text-[var(--workspace-fg)]">
-              {info.webhookUrl}
-            </code>
+            <div className="mt-1 flex items-start gap-2">
+              <code className="block min-w-0 flex-1 break-all rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 font-mono text-[12px] text-[var(--workspace-fg)]">
+                {info.webhookUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => void copyText(info.webhookUrl, "url")}
+                className="rounded-lg border border-[var(--workspace-border)] px-2.5 py-2 text-[12px] text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+              >
+                {copied === "url" ? "Copied" : "Copy"}
+              </button>
+            </div>
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
@@ -105,11 +176,37 @@ export default function SettingsIngestWebhookCard() {
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
-              Body (JSON)
+              Formats
             </p>
             <pre className="mt-1 overflow-x-auto rounded-lg border border-[var(--workspace-border)] bg-black/25 p-3 font-mono text-[11px] text-zinc-200">
-              {`{\n  "projectId": "<uuid from your project URL>",\n  "text": "Paste thread or meeting notes here",\n  "source": "slack"\n}`}
+              {`JSON: { "projectId": "<uuid>", "text": "...", "source": "slack" }\nPlain text: send body text + ?projectId=<uuid>\nMultipart/form-data: projectId=<uuid>, text=..., source=email`}
             </pre>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
+              Example curl
+            </p>
+            <div className="mt-1 flex items-start gap-2">
+              <pre className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[var(--workspace-border)] bg-black/25 p-3 font-mono text-[11px] text-zinc-200">
+                {`curl -X POST "${info.webhookUrl}" \\\n  -H "Authorization: Bearer <ROUTE5_INGEST_SECRET>" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "projectId":"<uuid>",\n    "text":"Neville will send proposal by Friday",\n    "source":"slack"\n  }'`}
+              </pre>
+              <button
+                type="button"
+                onClick={() =>
+                  void copyText(
+                    `curl -X POST "${info.webhookUrl}" -H "Authorization: Bearer <ROUTE5_INGEST_SECRET>" -H "Content-Type: application/json" -d '{"projectId":"<uuid>","text":"Neville will send proposal by Friday","source":"slack"}'`,
+                    "curl"
+                  )
+                }
+                className="rounded-lg border border-[var(--workspace-border)] px-2.5 py-2 text-[12px] text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+              >
+                {copied === "curl" ? "Copied" : "Copy"}
+              </button>
+            </div>
+          </div>
+          <div className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2 text-[12px] text-[var(--workspace-muted-fg)]">
+            Zapier and Make setup: trigger on new Slack/email event, map message body into <code>text</code>, set
+            <code>projectId</code> to your target Route5 project, then POST to this webhook URL with the secret header.
           </div>
         </div>
       )}

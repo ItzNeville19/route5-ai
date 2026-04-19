@@ -52,7 +52,7 @@ export function buildDailyDigestListItems(input: {
   const items: DailyDigestListItem[] = [
     {
       title: `Daily digest · ${today}`,
-      body: "Counts and activity below come from your workspace database — refreshed when you load the app.",
+      body: "Live workspace accountability snapshot.",
     },
   ];
 
@@ -69,15 +69,53 @@ export function buildDailyDigestListItems(input: {
 
   if (executionOverview) {
     const s = executionOverview.summary;
+    const now = new Date();
+    const dueTodayCount = executionOverview.riskFeed.filter((row) => {
+      if (!row.dueDate) return false;
+      const d = new Date(row.dueDate);
+      return (
+        Number.isFinite(d.getTime()) &&
+        d.getFullYear() === now.getFullYear() &&
+        d.getMonth() === now.getMonth() &&
+        d.getDate() === now.getDate()
+      );
+    }).length;
+    const overdueNames = executionOverview.riskFeed
+      .filter((row) => row.status === "overdue")
+      .map((row) => row.title.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    const topAttention = [...executionOverview.riskFeed]
+      .sort((a, b) => b.urgencyScore - a.urgencyScore)
+      .slice(0, 3);
+
     items.push({
-      title: "Commitment accountability",
-      body: `${s.activeTotal} open commitments · ${s.overdueCount} overdue · ${s.atRiskCount} at risk · ${s.unassignedCount} without owner`,
+      title: "Due today",
+      body: `${dueTodayCount} commitment${dueTodayCount === 1 ? "" : "s"} due today`,
       href: "/overview",
+      tone: dueTodayCount > 0 ? "warn" : undefined,
     });
-    if (s.overdueCount > 0 || s.atRiskCount > 0 || s.unassignedCount > 0) {
+    items.push({
+      title: "Overdue commitments",
+      body:
+        overdueNames.length > 0
+          ? `${s.overdueCount} overdue: ${overdueNames.join(" · ")}`
+          : `${s.overdueCount} overdue commitments`,
+      href: "/overview",
+      tone: s.overdueCount > 0 ? "warn" : undefined,
+    });
+    items.push({
+      title: "At risk this week",
+      body: `${s.atRiskCount} commitment${s.atRiskCount === 1 ? "" : "s"} at risk`,
+      href: "/overview",
+      tone: s.atRiskCount > 0 ? "warn" : undefined,
+    });
+    if (topAttention.length > 0) {
       items.push({
-        title: "Escalation signals",
-        body: "Review commitments on Desk — statuses reconcile from due dates and seven-day inactivity.",
+        title: "Top priorities",
+        body: topAttention
+          .map((row) => `${row.title} (${row.projectName})`)
+          .join(" · "),
         href: "/desk",
         tone: "warn",
       });

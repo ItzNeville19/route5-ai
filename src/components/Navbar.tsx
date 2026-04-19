@@ -186,8 +186,8 @@ export default function Navbar() {
             )}
             <Link
               href="/feed"
-              className={mobileLink}
               onClick={() => setMobileOpen(false)}
+              className={mobileLink}
             >
               {t("marketing.nav.workspace")}
             </Link>
@@ -205,7 +205,7 @@ export default function Navbar() {
   );
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-[1000]">
+    <header className="site-safe-top fixed left-0 right-0 top-0 z-[1000]">
       <motion.nav
         className={`relative z-[20] border-b transition-[background,box-shadow,border-color] duration-500 ease-out ${
           navUsesDarkChrome

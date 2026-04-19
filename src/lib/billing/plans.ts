@@ -68,6 +68,11 @@ export const CHECKOUT_PRICES: Record<
   },
 };
 
+export const PLAN_MIN_SEATS: Record<"starter" | "growth", number> = {
+  starter: 3,
+  growth: 10,
+};
+
 export function planFromStripePriceId(priceId: string | null | undefined): BillingPlanId | null {
   const p = priceId?.trim();
   if (!p) return null;

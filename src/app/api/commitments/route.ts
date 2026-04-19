@@ -16,6 +16,7 @@ import {
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
 import { checkPlanLimit, planLimitResponse } from "@/lib/billing/gate";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
 
 export const runtime = "nodejs";
 
@@ -59,6 +60,7 @@ export async function GET(req: Request) {
       status: url.searchParams.get("status") ?? undefined,
       priority: url.searchParams.get("priority") ?? undefined,
       owner: url.searchParams.get("owner") ?? undefined,
+      projectId: url.searchParams.get("projectId") ?? undefined,
       dateFrom: url.searchParams.get("dateFrom") ?? undefined,
       dateTo: url.searchParams.get("dateTo") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
@@ -75,6 +77,15 @@ export async function POST(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before creating commitments.",
+      },
+      { status: 503 }
+    );
+  }
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "org-commitments:post", userId, {

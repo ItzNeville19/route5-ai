@@ -17,14 +17,16 @@ export const runtime = "nodejs";
 /**
  * Aggregates counts and recent activity for the signed-in user’s workspace dashboard.
  */
-export async function GET() {
+export async function GET(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
 
   try {
+    const url = new URL(req.url);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
     const { projectCount, extractionCount, recent, openActions, activity, activitySeries, execution } =
-      await getWorkspaceSummaryForUser(userId);
+      await getWorkspaceSummaryForUser(userId, projectId);
     return NextResponse.json({
       projectCount,
       extractionCount,

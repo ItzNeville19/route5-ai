@@ -19,6 +19,24 @@ export type PaletteRecentRun = {
   snippet: string;
 };
 
+export type PaletteSearchCommitment = {
+  id: string;
+  title: string;
+  ownerName: string;
+  projectId: string | null;
+  projectName: string | null;
+  deadline: string;
+  priority: string;
+  status: string;
+  searchText: string;
+};
+
+export type PalettePerson = {
+  id: string;
+  name: string;
+  email: string | null;
+};
+
 export type PaletteItem = {
   id: string;
   label: string;
@@ -103,10 +121,21 @@ export function buildPaletteItems(params: {
   userEmail?: string | null;
   projects: WorkspacePaletteProject[];
   recentRuns?: PaletteRecentRun[];
+  searchCommitments?: PaletteSearchCommitment[];
+  people?: PalettePerson[];
   /** Workspace-wide incomplete actions (Desk queue); sharpens Desk description. */
   openActionsCount?: number;
 }): PaletteItem[] {
-  const { signedIn, displayName, userEmail, projects, recentRuns = [], openActionsCount = 0 } = params;
+  const {
+    signedIn,
+    displayName,
+    userEmail,
+    projects,
+    recentRuns = [],
+    searchCommitments = [],
+    people = [],
+    openActionsCount = 0,
+  } = params;
   const showDeveloperTools = canAccessDeveloperTools(userEmail);
 
   if (!signedIn) {
@@ -171,12 +200,37 @@ export function buildPaletteItems(params: {
     description: r.snippet,
     keywords: [
       "recent",
-      "extraction",
+      "capture",
       "history",
       r.projectName.toLowerCase(),
       r.snippet.slice(0, 40).toLowerCase(),
     ],
     section: "activity",
+  }));
+
+  const commitmentItems: PaletteItem[] = searchCommitments.map((c) => ({
+    id: `commitment-${c.id}`,
+    label: c.title,
+    href: `/workspace/commitments?id=${encodeURIComponent(c.id)}`,
+    description: `${c.ownerName}${c.projectName ? ` · ${c.projectName}` : ""} · ${c.priority} · due ${new Date(c.deadline).toLocaleDateString()}`,
+    keywords: [
+      "commitment",
+      c.ownerName.toLowerCase(),
+      (c.projectName ?? "").toLowerCase(),
+      c.status.toLowerCase(),
+      c.priority.toLowerCase(),
+      c.searchText.slice(0, 320).toLowerCase(),
+    ],
+    section: "activity",
+  }));
+
+  const peopleItems: PaletteItem[] = people.map((p) => ({
+    id: `person-${p.id}`,
+    label: p.name,
+    href: "/workspace/team",
+    description: p.email ? `Owner · ${p.email}` : "Owner",
+    keywords: ["owner", "person", "assignee", p.name.toLowerCase(), (p.email ?? "").toLowerCase()],
+    section: "account",
   }));
 
   const deskDescription =
@@ -266,14 +320,14 @@ export function buildPaletteItems(params: {
         "capture",
         "paste",
         "work",
-        "extract",
+        "analyze",
         "actions",
         "todo",
         "checklist",
         "queue",
         "commitment",
         "operational",
-        "pass",
+        "review",
       ],
       section: "workspace",
     },
@@ -492,9 +546,11 @@ export function buildPaletteItems(params: {
 
   return filterLivePaletteItems([
     ...activity,
+    ...commitmentItems,
     ...agent,
     ...workspaceHidden,
     ...projectItems,
+    ...peopleItems,
     ...site,
     ...legalSignedIn,
   ]);

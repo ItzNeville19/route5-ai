@@ -71,6 +71,27 @@ const EMPTY_SUMMARY: WorkspaceSummaryState = {
 };
 
 const WorkspaceDataContext = createContext<WorkspaceDataValue | null>(null);
+const ACTIVE_PROJECT_STORAGE_KEY = "route5.headerProjectId";
+
+function readScopedProjectId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY);
+    return raw && raw.trim() ? raw.trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearScopedProjectId() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);
+    window.dispatchEvent(new CustomEvent("route5:project-scope-changed", { detail: { projectId: null } }));
+  } catch {
+    /* ignore */
+  }
+}
 
 export function useWorkspaceData(): WorkspaceDataValue {
   const value = useContext(WorkspaceDataContext);
@@ -92,6 +113,7 @@ export function WorkspaceDataProvider({
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingEntitlements, setLoadingEntitlements] = useState(true);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const refreshProjects = useCallback(async () => {
     setLoadingProjects(true);
@@ -100,13 +122,18 @@ export function WorkspaceDataProvider({
       const data = (await res.json().catch(() => ({}))) as {
         projects?: Project[];
       };
-      setProjects(res.ok ? (data.projects ?? []) : []);
+      if (!res.ok) return;
+      const next = data.projects ?? [];
+      setProjects(next);
+      if (activeProjectId && !next.some((p) => p.id === activeProjectId)) {
+        clearScopedProjectId();
+      }
     } catch {
-      setProjects([]);
+      /* keep previous projects on transient network errors */
     } finally {
       setLoadingProjects(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   const refreshEntitlements = useCallback(async () => {
     setLoadingEntitlements(true);
@@ -143,9 +170,12 @@ export function WorkspaceDataProvider({
   const refreshSummary = useCallback(async () => {
     setLoadingSummary(true);
     try {
+      const params = new URLSearchParams();
+      if (activeProjectId) params.set("projectId", activeProjectId);
+      const suffix = params.toString() ? `?${params.toString()}` : "";
       const [sumRes, execRes] = await Promise.all([
-        fetch("/api/workspace/summary", { credentials: "same-origin" }),
-        fetch("/api/workspace/execution", { credentials: "same-origin" }),
+        fetch(`/api/workspace/summary${suffix}`, { credentials: "same-origin" }),
+        fetch(`/api/workspace/execution${suffix}`, { credentials: "same-origin" }),
       ]);
 
       const execJson = (await execRes.json().catch(() => ({}))) as {
@@ -198,7 +228,7 @@ export function WorkspaceDataProvider({
     } finally {
       setLoadingSummary(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   const refreshAll = useCallback(async () => {
     await Promise.all([refreshProjects(), refreshSummary(), refreshEntitlements()]);
@@ -213,6 +243,18 @@ export function WorkspaceDataProvider({
     window.addEventListener("route5:project-updated", onRefresh);
     return () => window.removeEventListener("route5:project-updated", onRefresh);
   }, [refreshAll]);
+
+  useEffect(() => {
+    const applyScope = () => setActiveProjectId(readScopedProjectId());
+    applyScope();
+    const onScopeChanged = () => applyScope();
+    window.addEventListener("route5:project-scope-changed", onScopeChanged);
+    window.addEventListener("storage", onScopeChanged);
+    return () => {
+      window.removeEventListener("route5:project-scope-changed", onScopeChanged);
+      window.removeEventListener("storage", onScopeChanged);
+    };
+  }, []);
 
   const getProjectById = useCallback(
     (projectId: string) => projects.find((project) => project.id === projectId),

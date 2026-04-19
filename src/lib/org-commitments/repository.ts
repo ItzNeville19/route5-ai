@@ -99,6 +99,7 @@ export async function listOrgCommitments(
     owner?: string;
     dateFrom?: string;
     dateTo?: string;
+    projectId?: string;
     q?: string;
     sort?: OrgCommitmentListSort;
     order?: "asc" | "desc";
@@ -118,6 +119,7 @@ export async function listOrgCommitments(
     if (opts.status) q = q.eq("status", opts.status);
     if (opts.priority) q = q.eq("priority", opts.priority);
     if (opts.owner) q = q.eq("owner_id", opts.owner);
+    if (opts.projectId) q = q.eq("project_id", opts.projectId);
     if (opts.dateFrom) q = q.gte("deadline", opts.dateFrom);
     if (opts.dateTo) q = q.lte("deadline", opts.dateTo);
     /* Keyword filter applied in-memory after fetch (reliable across PostgREST or() quirks). */
@@ -170,6 +172,10 @@ export async function listOrgCommitments(
   if (opts.owner) {
     parts.push("owner_id = ?");
     params.push(opts.owner);
+  }
+  if (opts.projectId) {
+    parts.push("project_id = ?");
+    params.push(opts.projectId);
   }
   if (opts.dateFrom) {
     parts.push("deadline >= ?");

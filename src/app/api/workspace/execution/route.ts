@@ -20,7 +20,9 @@ export async function GET(req: Request) {
   if (rateLimited) return rateLimited;
 
   try {
-    const overview = await getExecutionOverviewForUser(userId);
+    const url = new URL(req.url);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
+    const overview = await getExecutionOverviewForUser(userId, projectId);
     return NextResponse.json({ overview });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });

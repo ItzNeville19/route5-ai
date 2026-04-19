@@ -16,8 +16,8 @@ export default function FeedExecutionSnapshot({
 }: FeedExecutionSnapshotProps) {
   return (
     <section className="mb-[var(--r5-space-5)]" aria-label="Feed summary">
-      <div className="grid grid-cols-3 gap-[var(--r5-space-2)] sm:gap-[var(--r5-space-3)]">
-        <div className="group flex min-h-[4.5rem] flex-col justify-between rounded-[var(--r5-radius-md)] border border-r5-border-subtle/90 bg-r5-surface-secondary/45 px-[var(--r5-space-3)] py-[var(--r5-space-3)] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
+      <div className="grid grid-cols-1 gap-[var(--r5-space-2)] sm:grid-cols-3 sm:gap-[var(--r5-space-3)]">
+        <div className="workspace-preview-panel group flex min-h-[4.5rem] flex-col justify-between px-[var(--r5-space-3)] py-[var(--r5-space-3)] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-text-tertiary">
               Active
@@ -32,7 +32,7 @@ export default function FeedExecutionSnapshot({
             {commitmentsCount}
           </p>
         </div>
-        <div className="group flex min-h-[4.5rem] flex-col justify-between rounded-[var(--r5-radius-md)] border border-r5-status-overdue/25 bg-r5-status-overdue/[0.07] px-[var(--r5-space-3)] py-[var(--r5-space-3)] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
+        <div className="workspace-preview-panel group flex min-h-[4.5rem] flex-col justify-between border-r5-status-overdue/30 bg-r5-status-overdue/[0.08] px-[var(--r5-space-3)] py-[var(--r5-space-3)] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-status-overdue/90">
               Overdue
@@ -47,7 +47,7 @@ export default function FeedExecutionSnapshot({
             {overdueCount}
           </p>
         </div>
-        <div className="group flex min-h-[4.5rem] flex-col justify-between rounded-[var(--r5-radius-md)] border border-r5-status-completed/25 bg-r5-status-completed/[0.08] px-[var(--r5-space-3)] py-[var(--r5-space-3)] shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
+        <div className="workspace-preview-panel group flex min-h-[4.5rem] flex-col justify-between border-r5-status-completed/30 bg-r5-status-completed/[0.09] px-[var(--r5-space-3)] py-[var(--r5-space-3)] transition-[transform,box-shadow] duration-[var(--r5-duration-normal)] ease-[var(--r5-ease-standard)] hover:-translate-y-0.5 hover:shadow-[var(--r5-shadow-elevated)]">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-status-completed/90">
               Done this week

@@ -15,6 +15,7 @@ import { countActiveCommitments } from "@/lib/billing/store";
 import { PLAN_LIMITS, planDisplayName, recommendedPlanAfterLimit } from "@/lib/billing/plans";
 import { resolveEffectiveBillingPlan } from "@/lib/billing/resolve-plan";
 import type { BillingPlanId } from "@/lib/billing/types";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
 
 export const runtime = "nodejs";
 
@@ -25,6 +26,7 @@ const itemSchema = z
     title: z.string().min(1).max(2000),
     description: z.string().max(20_000).optional().nullable(),
     ownerId: z.string().min(1).max(128),
+    projectId: z.string().min(1).max(128).nullable().optional(),
     deadline: z.string().min(1).max(48),
     priority: prioritySchema,
   })
@@ -45,6 +47,15 @@ export async function POST(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before creating commitments.",
+      },
+      { status: 503 }
+    );
+  }
 
   const rateLimited = enforceRateLimits(
     req,
@@ -95,6 +106,7 @@ export async function POST(req: Request) {
         title: it.title,
         description: it.description ?? null,
         ownerId: it.ownerId,
+        projectId: it.projectId ?? null,
         deadline: new Date(it.deadline).toISOString(),
         priority: it.priority,
       });

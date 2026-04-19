@@ -1,129 +1,43 @@
 import Link from "next/link";
-import AdvertisingSafeHarbor from "@/components/marketing/AdvertisingSafeHarbor";
-import { BILLING_LIVE, PLAN_TIERS, type PlanTierId } from "@/lib/plans-catalog";
-
-function TierCta({
-  tierId,
-  cta,
-  signedIn,
-}: {
-  tierId: PlanTierId;
-  cta: string;
-  signedIn: boolean;
-}) {
-  if (tierId === "free") {
-    return signedIn ? (
-      <Link
-        href="/overview"
-        className="btn-primary inline-flex w-full justify-center rounded-xl py-2.5 text-[13px] font-semibold"
-      >
-        Open workspace
-      </Link>
-    ) : (
-      <Link
-        href="/sign-up"
-        className="btn-primary inline-flex w-full justify-center rounded-xl py-2.5 text-[13px] font-semibold"
-      >
-        Create account
-      </Link>
-    );
-  }
-  if (tierId === "enterprise" || tierId === "ultra") {
-    return (
-      <Link
-        href={`/contact?subject=${encodeURIComponent(`Route5 ${tierId} plan`)}`}
-        className="inline-flex w-full justify-center rounded-xl border border-black/[0.12] bg-white/80 py-2.5 text-[13px] font-semibold text-[#1d1d1f] shadow-sm transition hover:bg-white"
-      >
-        {cta}
-      </Link>
-    );
-  }
-  if (BILLING_LIVE) {
-    const checkoutPlan = tierId === "pro" ? "starter" : tierId === "ultra" ? "growth" : tierId;
-    return (
-      <Link
-        href={`/contact?subject=${encodeURIComponent(`Route5 ${checkoutPlan} — purchase`)}`}
-        title="Opens contact — complete purchase or invoice with our team (card checkout when integrated)"
-        className="inline-flex w-full justify-center rounded-xl bg-[#0071e3] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0077ed]"
-      >
-        {cta}
-      </Link>
-    );
-  }
-  return (
-    <Link
-      href={`/contact?subject=${encodeURIComponent("Route5 Starter")}`}
-      className="inline-flex w-full justify-center rounded-xl bg-[#0071e3] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0077ed]"
-    >
-      {cta}
-    </Link>
-  );
-}
 
 type Props = {
-  /** From `auth()` on the pricing page — drives Free tier CTA. */
   signedIn: boolean;
 };
 
-/** Public marketing pricing — same tiers and copy as in-app account plans (`PLAN_TIERS`). */
 export default function PublicPlansGrid({ signedIn }: Props) {
   return (
-    <div className="mx-auto mt-12 max-w-[1100px]">
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-2">
-      {PLAN_TIERS.map((tier) => (
-        <div
-          key={tier.id}
-          className={`flex flex-col rounded-3xl border p-7 text-left ${
-            tier.highlighted
-              ? "border-[#a78bfa]/45 bg-gradient-to-b from-white/90 to-[#faf5ff]/95 shadow-[0_24px_60px_-28px_rgba(91,33,182,0.25)]"
-              : "glass-liquid liquid-glass-shimmer"
-          }`}
-        >
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-              {tier.name}
-            </p>
-            <p className="text-[22px] font-semibold tabular-nums text-[#1d1d1f]">
-              {tier.price}
-              {tier.price !== "Custom" ? (
-                <span className="text-[13px] font-medium text-[#6e6e73]"> / mo</span>
-              ) : null}
-            </p>
-          </div>
-          <p className="mt-2 text-[15px] font-medium text-[#1d1d1f]">{tier.tagline}</p>
-          <p className="mt-2 rounded-xl border border-black/[0.06] bg-black/[0.03] px-3 py-2 text-[12px] leading-relaxed text-[#6e6e73]">
-            {tier.valueNote}
-          </p>
-          <ul className="mt-4 flex-1 space-y-2.5 text-[13px] leading-relaxed text-[#424245]">
-            {tier.features.map((f) => (
-              <li key={f} className="flex gap-2">
-                <span className="text-[#5b21b6]" aria-hidden>
-                  ✓
-                </span>
-                <span>{f}</span>
-              </li>
-            ))}
-          </ul>
-          {tier.id === "enterprise" ? (
-            <p className="mt-3 text-[12px] leading-relaxed text-[#6e6e73]">
-              Security and procurement:{" "}
-              <Link href="/trust" className="font-medium text-[#0071e3] hover:underline">
-                Trust &amp; compliance
-              </Link>
-              .
-            </p>
+    <div className="mx-auto mt-12 max-w-[960px]">
+      <div className="rounded-3xl border border-white/15 bg-black/35 p-8 text-center backdrop-blur-md sm:p-10">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-400">
+          Enterprise pricing
+        </p>
+        <h3 className="mt-3 text-[clamp(1.5rem,3.5vw,2.1rem)] font-semibold tracking-[-0.03em] text-white">
+          Pricing that scales with your team
+        </h3>
+        <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-zinc-300">
+          Route5 is built for teams that cannot afford to miss a commitment. We tailor pricing and
+          rollout support to your operating model.
+        </p>
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+          <a
+            href="mailto:neville@rayze.xyz?subject=Route5%20Pricing"
+            className="inline-flex min-h-11 items-center rounded-full bg-white px-6 py-3 text-[14px] font-semibold text-black transition hover:bg-zinc-100"
+          >
+            Contact for Pricing
+          </a>
+          {signedIn ? (
+            <Link
+              href="/workspace/billing"
+              className="inline-flex min-h-11 items-center rounded-full border border-white/20 px-6 py-3 text-[14px] font-medium text-zinc-200 transition hover:border-white/35 hover:bg-white/[0.06]"
+            >
+              Open billing workspace
+            </Link>
           ) : null}
-          <div className="mt-6">
-            <TierCta tierId={tier.id} cta={tier.cta} signedIn={signedIn} />
-          </div>
         </div>
-      ))}
+        <p className="mt-4 text-[12px] text-zinc-500">
+          Contact: <a className="hover:text-zinc-300" href="mailto:neville@rayze.xyz">neville@rayze.xyz</a>
+        </p>
       </div>
-      <AdvertisingSafeHarbor variant="plans-grid" className="mt-10" />
-      <p className="mt-4 text-center text-[12px] leading-relaxed text-[#6e6e73]">
-        Billing checkout currently uses plan IDs <strong>Starter</strong> and <strong>Growth</strong>. On this page,
-        Pro maps to Starter, Ultra maps to Growth, and Enterprise remains contract-based.
-      </p>
     </div>
   );
 }

@@ -3,14 +3,21 @@ import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
-import { getLimitsForTier, resolveTierForUser } from "@/lib/entitlements";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
+import { getLimitsForTier } from "@/lib/entitlements";
+import { resolveEffectiveTierForUser } from "@/lib/entitlements-effective";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { planDisplayName, recommendedPlanAfterLimit } from "@/lib/billing/plans";
 import { resolveEffectiveBillingPlan } from "@/lib/billing/resolve-plan";
 import {
   createProjectForUser,
   listProjectsForUser,
+  restoreProjectsFromBackupForUser,
 } from "@/lib/workspace/store";
+import {
+  loadProjectBackupForUser,
+  saveProjectBackupForUser,
+} from "@/lib/workspace/project-backup";
 import {
   enforceRateLimits,
   iconEmojiSchema,
@@ -25,6 +32,15 @@ export async function GET(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before loading projects.",
+      },
+      { status: 503 }
+    );
+  }
 
   const rateLimited = enforceRateLimits(
     req,
@@ -36,7 +52,15 @@ export async function GET(req: Request) {
   if (rateLimited) return rateLimited;
 
   try {
-    const projects = await listProjectsForUser(userId);
+    let projects = await listProjectsForUser(userId);
+    if (projects.length === 0 && process.env.NODE_ENV !== "production") {
+      // Local/dev recovery only — production must reflect Supabase state exactly.
+      const backup = await loadProjectBackupForUser(userId);
+      if (backup.length > 0) {
+        projects = await restoreProjectsFromBackupForUser(userId, backup);
+      }
+    }
+    await saveProjectBackupForUser(userId, projects);
     return NextResponse.json({ projects });
   } catch (e) {
     return NextResponse.json(
@@ -50,6 +74,15 @@ export async function POST(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before creating projects.",
+      },
+      { status: 503 }
+    );
+  }
 
   const rateLimited = enforceRateLimits(
     req,
@@ -83,7 +116,7 @@ export async function POST(req: Request) {
     } catch {
       email = undefined;
     }
-    const tier = resolveTierForUser(userId, email);
+    const tier = await resolveEffectiveTierForUser(userId, email);
     const { maxProjects } = getLimitsForTier(tier);
     const existing = await listProjectsForUser(userId);
     if (existing.length >= maxProjects) {
@@ -112,6 +145,8 @@ export async function POST(req: Request) {
     const project = await createProjectForUser(userId, parsed.data.name, {
       iconEmoji: icon,
     });
+    const latest = await listProjectsForUser(userId);
+    await saveProjectBackupForUser(userId, latest);
     return NextResponse.json({ project });
   } catch (e) {
     return NextResponse.json(

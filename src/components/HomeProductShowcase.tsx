@@ -19,7 +19,6 @@ type Tile = {
 export default function HomeProductShowcase() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
-
   const tiles: Tile[] = [
     {
       href: "/feed",
@@ -47,7 +46,7 @@ export default function HomeProductShowcase() {
   return (
     <section
       id="showcase"
-      className="scroll-mt-28 border-t border-white/10 px-5 py-20 sm:px-8 lg:px-12"
+      className="r5-immersive-stage scroll-mt-28 border-t border-white/10 px-5 py-20 sm:px-8 lg:px-12"
     >
       <div className="mx-auto max-w-[1180px]">
         <motion.div
@@ -89,7 +88,7 @@ export default function HomeProductShowcase() {
             >
               <Link
                 href={tile.href}
-                className="group relative flex h-full min-h-[168px] flex-col overflow-hidden rounded-[22px] border border-white/[0.1] bg-gradient-to-br from-white/[0.07] to-white/[0.02] p-6 text-left shadow-[0_20px_60px_-40px_rgba(0,0,0,0.85)] transition duration-300 hover:border-violet-400/35 hover:shadow-[0_24px_70px_-36px_rgba(139,92,246,0.35)]"
+                className="workspace-preview-panel group relative flex h-full min-h-[168px] flex-col p-6 text-left transition duration-300 hover:border-violet-400/35 hover:shadow-[0_24px_70px_-36px_rgba(139,92,246,0.35)]"
               >
                 <div
                   className="pointer-events-none absolute inset-0 opacity-0 transition duration-500 group-hover:opacity-100"

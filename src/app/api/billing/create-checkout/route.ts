@@ -2,7 +2,7 @@ import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { CHECKOUT_PRICES } from "@/lib/billing/plans";
+import { CHECKOUT_PRICES, PLAN_MIN_SEATS } from "@/lib/billing/plans";
 import { getStripe, appBaseUrl } from "@/lib/billing/stripe-client";
 import { getOrgSubscription, upsertOrgSubscriptionPartial } from "@/lib/billing/store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
@@ -57,6 +57,8 @@ export async function POST(req: Request) {
 
     const sub = await getOrgSubscription(orgId);
     let customerId = sub?.stripeCustomerId ?? null;
+    const minimumSeats = PLAN_MIN_SEATS[plan];
+    const checkoutSeatCount = Math.max(sub?.seatCount ?? 1, minimumSeats);
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: email ?? undefined,
@@ -75,12 +77,12 @@ export async function POST(req: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: checkoutSeatCount }],
       success_url: `${base}/workspace/billing?checkout=success`,
       cancel_url: `${base}/workspace/billing`,
       metadata: { org_id: orgId },
       subscription_data: {
-        metadata: { org_id: orgId },
+        metadata: { org_id: orgId, minimum_seats: String(minimumSeats) },
       },
     });
 
@@ -88,7 +90,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Checkout session missing URL" }, { status: 500 });
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: session.url, seats: checkoutSeatCount, minimumSeats });
   } catch (e) {
     console.error("create-checkout", e);
     return NextResponse.json({ error: "Could not start checkout" }, { status: 500 });

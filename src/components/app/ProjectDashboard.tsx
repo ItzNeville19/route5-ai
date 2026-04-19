@@ -34,6 +34,30 @@ function statusTone(status: Commitment["status"]): string {
   return "text-r5-status-completed";
 }
 
+type GroupKey = "overdue" | "at_risk" | "on_track" | "completed";
+const GROUP_ORDER: GroupKey[] = ["overdue", "at_risk", "on_track", "completed"];
+const GROUP_LABEL: Record<GroupKey, string> = {
+  overdue: "OVERDUE",
+  at_risk: "AT RISK",
+  on_track: "ON TRACK",
+  completed: "COMPLETED",
+};
+
+function toGroup(status: Commitment["status"]): GroupKey {
+  if (status === "overdue") return "overdue";
+  if (status === "at_risk") return "at_risk";
+  if (status === "completed") return "completed";
+  return "on_track";
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.max(1, Math.floor(diff / 60_000))}m ago`;
+  if (diff < 86_400_000) return `${Math.max(1, Math.floor(diff / 3_600_000))}h ago`;
+  return `${Math.max(1, Math.floor(diff / 86_400_000))}d ago`;
+}
+
 export default function ProjectDashboard({ projectId }: Props) {
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
@@ -58,6 +82,15 @@ export default function ProjectDashboard({ projectId }: Props) {
             setProject(projData.project);
           } else {
             setProject(null);
+            if (projRes.status === 404) {
+              const listRes = await fetch("/api/projects", { credentials: "same-origin" });
+              const listData = (await listRes.json().catch(() => ({}))) as { projects?: Project[] };
+              const first = listData.projects?.[0];
+              if (first && first.id !== projectId) {
+                router.replace(`/projects/${first.id}`);
+                return;
+              }
+            }
           }
           setCommitments(commitmentsData.commitments ?? []);
         }
@@ -69,7 +102,7 @@ export default function ProjectDashboard({ projectId }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, router]);
 
   const sorted = useMemo(
     () =>
@@ -91,6 +124,19 @@ export default function ProjectDashboard({ projectId }: Props) {
     }
     return { overdue, atRisk, onTrack };
   }, [commitments]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<GroupKey, Commitment[]>();
+    for (const key of GROUP_ORDER) map.set(key, []);
+    for (const row of sorted) {
+      const bucket = toGroup(row.status);
+      const list = map.get(bucket);
+      if (list) list.push(row);
+    }
+    return map;
+  }, [sorted]);
+
+  const activityRows = useMemo(() => sorted.slice(0, 10), [sorted]);
 
   if (loading) {
     return (
@@ -125,6 +171,15 @@ export default function ProjectDashboard({ projectId }: Props) {
         <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
           {commitments.length} commitments · <span className="text-r5-status-overdue">{summary.overdue} overdue</span> · <span className="text-r5-status-at-risk">{summary.atRisk} at risk</span> · <span className="text-r5-status-completed">{summary.onTrack} on track</span>
         </p>
+        <div className="mt-[var(--r5-space-3)]">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("route5:capture-open"))}
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
+          >
+            Add commitment
+          </button>
+        </div>
       </header>
 
       {sorted.length === 0 ? (
@@ -132,24 +187,56 @@ export default function ProjectDashboard({ projectId }: Props) {
           No commitments in this project yet.
         </div>
       ) : (
-        <ul className="overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20">
-          {sorted.map((row) => (
-            <li key={row.id} className="border-b border-r5-border-subtle/40 px-[var(--r5-space-4)] py-[var(--r5-space-3)] last:border-b-0">
-              <div className="flex items-start justify-between gap-[var(--r5-space-3)]">
-                <div className="min-w-0">
-                  <p className="truncate text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
-                  <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
-                    {ownerLabel(row)} · {dueLabel(row.dueDate)}
+        <div className="space-y-[var(--r5-space-3)]">
+          {GROUP_ORDER.map((group) => {
+            const rows = grouped.get(group) ?? [];
+            if (rows.length === 0) return null;
+            return (
+              <section
+                key={group}
+                className="overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20"
+              >
+                <header className="flex items-center justify-between border-b border-r5-border-subtle/50 px-[var(--r5-space-4)] py-[var(--r5-space-2)]">
+                  <p className={`text-[11px] font-semibold tracking-[0.14em] ${group === "overdue" ? "text-r5-status-overdue" : group === "at_risk" ? "text-r5-status-at-risk" : "text-r5-text-secondary"}`}>
+                    {GROUP_LABEL[group]}
                   </p>
-                </div>
-                <span className={`shrink-0 text-[length:var(--r5-font-body)] capitalize ${statusTone(row.status)}`}>
-                  {row.status.replace("_", " ")}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  <span className="text-[11px] text-r5-text-tertiary">{rows.length}</span>
+                </header>
+                <ul>
+                  {rows.map((row) => (
+                    <li key={row.id} className="border-b border-r5-border-subtle/40 px-[var(--r5-space-4)] py-[var(--r5-space-3)] last:border-b-0">
+                      <div className="flex items-start justify-between gap-[var(--r5-space-3)]">
+                        <div className="min-w-0">
+                          <p className="truncate text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
+                          <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                            {ownerLabel(row)} · {dueLabel(row.dueDate)}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 text-[length:var(--r5-font-body)] capitalize ${statusTone(row.status)}`}>
+                          {row.status.replace("_", " ")}
+                        </span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
+
+      {activityRows.length > 0 ? (
+        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">Project activity</h2>
+          <ul className="mt-[var(--r5-space-2)] space-y-[var(--r5-space-2)]">
+            {activityRows.map((row) => (
+              <li key={`activity-${row.id}`} className="text-[12px] text-r5-text-secondary">
+                <span className="text-r5-text-primary">{row.title}</span> updated {timeAgo(row.lastUpdatedAt)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <Link href="/projects" className="inline-flex text-[length:var(--r5-font-body)] text-r5-text-secondary hover:text-r5-text-primary">
         Back to projects

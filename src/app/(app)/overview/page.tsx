@@ -12,7 +12,12 @@ type OwnerRollup = {
   overdue: number;
   atRisk: number;
   onTrack: number;
+  total: number;
   totalOpen: number;
+  completionRate: number;
+  responseRate: number;
+  escalationRate: number;
+  reliabilityScore: number;
   pressureScore: number;
 };
 
@@ -99,7 +104,7 @@ export default function LeadershipPage() {
 
   const ownerBreakdown = useMemo<OwnerRollup[]>(() => {
     const byOwner = new Map<string, OwnerRollup>();
-    for (const row of openRows) {
+    for (const row of rows) {
       const ownerId = row.ownerId?.trim() || "unassigned";
       const current = byOwner.get(ownerId) ?? {
         ownerId,
@@ -107,24 +112,53 @@ export default function LeadershipPage() {
         overdue: 0,
         atRisk: 0,
         onTrack: 0,
+        total: 0,
         totalOpen: 0,
+        completionRate: 0,
+        responseRate: 0,
+        escalationRate: 0,
+        reliabilityScore: 0,
         pressureScore: 0,
       };
-      current.totalOpen += 1;
+      current.total += 1;
+      if (!isCompletedRow(row)) current.totalOpen += 1;
       if (row.status === "overdue") current.overdue += 1;
       else if (row.status === "at_risk") current.atRisk += 1;
       else current.onTrack += 1;
-      current.pressureScore = current.overdue * 3 + current.atRisk * 2 + current.totalOpen;
       byOwner.set(ownerId, current);
+    }
+    for (const owner of byOwner.values()) {
+      const ownerRows = rows.filter((r) => (r.ownerId?.trim() || "unassigned") === owner.ownerId);
+      const completed = ownerRows.filter((r) => Boolean(r.completedAt));
+      const completedOnTime = completed.filter((r) => {
+        if (!r.completedAt) return false;
+        return new Date(r.completedAt).getTime() <= new Date(r.deadline).getTime();
+      }).length;
+      const acknowledgedIn24h = ownerRows.filter((r) => {
+        const createdMs = new Date(r.createdAt).getTime();
+        const lastActivityMs = new Date(r.lastActivityAt).getTime();
+        if (!Number.isFinite(createdMs) || !Number.isFinite(lastActivityMs)) return false;
+        return lastActivityMs - createdMs <= 24 * 3600000;
+      }).length;
+      owner.completionRate = owner.total > 0 ? Math.round((completedOnTime / owner.total) * 100) : 0;
+      owner.responseRate = owner.total > 0 ? Math.round((acknowledgedIn24h / owner.total) * 100) : 0;
+      owner.escalationRate = owner.total > 0 ? Math.round(((owner.overdue + owner.atRisk) / owner.total) * 100) : 0;
+      owner.reliabilityScore = Math.max(
+        0,
+        Math.round(owner.completionRate * 0.55 + owner.responseRate * 0.25 + (100 - owner.escalationRate) * 0.2)
+      );
+      owner.pressureScore = owner.overdue * 3 + owner.atRisk * 2 + owner.totalOpen;
     }
     return [...byOwner.values()].sort(
       (a, b) =>
+        b.overdue - a.overdue ||
+        b.atRisk - a.atRisk ||
         b.pressureScore - a.pressureScore ||
         b.overdue - a.overdue ||
         b.atRisk - a.atRisk ||
         b.totalOpen - a.totalOpen
     );
-  }, [openRows]);
+  }, [rows]);
 
   const staleRows = useMemo(
     () =>
@@ -227,8 +261,10 @@ export default function LeadershipPage() {
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Overdue</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">At risk</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">On track</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Total</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Open</th>
-                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Pressure</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Completion %</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Reliability</th>
               </tr>
             </thead>
             <tbody>
@@ -238,13 +274,15 @@ export default function LeadershipPage() {
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-overdue">{owner.overdue}</td>
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-at-risk">{owner.atRisk}</td>
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-completed">{owner.onTrack}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.total}</td>
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.totalOpen}</td>
-                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.pressureScore}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.completionRate}%</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.reliabilityScore}</td>
                 </tr>
               ))}
               {ownerBreakdown.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-[var(--r5-space-2)] py-[var(--r5-space-4)] text-r5-text-secondary">No open commitments.</td>
+                  <td colSpan={8} className="px-[var(--r5-space-2)] py-[var(--r5-space-4)] text-r5-text-secondary">No open commitments.</td>
                 </tr>
               ) : null}
             </tbody>

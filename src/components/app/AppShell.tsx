@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SignIn, useAuth } from "@clerk/nextjs";
@@ -10,9 +10,6 @@ import WorkspaceLayout from "@/components/app/WorkspaceLayout";
 import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
-
-/** Max time before Clerk client shows retry (session bootstrap). */
-const CLERK_READY_MS = 4500;
 
 function AppShellClerkMissing() {
   return (
@@ -81,51 +78,11 @@ function ClerkConnectingSpinner() {
   );
 }
 
-function ClerkSessionLoadError({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-      <p className="max-w-md text-[16px] font-semibold text-[#1d1d1f]">Couldn&apos;t reach your session</p>
-      <p className="mt-3 max-w-md text-[14px] leading-relaxed text-[#6e6e73]">
-        The sign-in service didn&apos;t respond in time. Check your network, confirm Clerk keys in{" "}
-        <code className="rounded bg-black/[0.06] px-1.5 py-0.5 text-[13px]">.env.local</code>, or try again.
-      </p>
-      <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <button
-          type="button"
-          onClick={onRetry}
-          className="rounded-full bg-[#0071e3] px-6 py-2.5 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#0077ed]"
-        >
-          Retry
-        </button>
-        <Link
-          href="/"
-          className="rounded-full border border-black/[0.12] px-6 py-2.5 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-black/[0.04]"
-        >
-          Home
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 /** Must only render when `ClerkProvider` is present (keys configured). */
 function AppShellWithClerk({ children }: { children: React.ReactNode }) {
   const { isLoaded, userId } = useAuth();
-  const [clerkTimedOut, setClerkTimedOut] = useState(false);
-
-  useEffect(() => {
-    if (isLoaded) {
-      setClerkTimedOut(false);
-      return;
-    }
-    const t = window.setTimeout(() => setClerkTimedOut(true), CLERK_READY_MS);
-    return () => window.clearTimeout(t);
-  }, [isLoaded]);
 
   if (!isLoaded) {
-    if (clerkTimedOut) {
-      return <ClerkSessionLoadError onRetry={() => window.location.reload()} />;
-    }
     return <ClerkConnectingSpinner />;
   }
 
@@ -216,13 +173,7 @@ function SignedInAppShell({
     if (skipWorkspaceOnboardingGate) return;
 
     const workspaceOnboarding =
-      pathname === "/feed" ||
-      pathname === "/capture" ||
-      pathname === "/overview" ||
-      pathname === "/desk" ||
-      pathname === "/projects" ||
-      pathname?.startsWith("/projects/") ||
-      (pathname?.startsWith("/workspace") && !pathname.startsWith("/workspace/onboarding"));
+      pathname?.startsWith("/workspace") && !pathname.startsWith("/workspace/onboarding");
 
     if (!workspaceOnboarding) return;
 

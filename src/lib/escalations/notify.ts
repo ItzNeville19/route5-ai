@@ -17,6 +17,20 @@ function formatDueDate(iso: string): string {
   }
 }
 
+async function getOwnerDisplayName(clerkUserId: string): Promise<string> {
+  try {
+    const client = await clerkClient();
+    const u = await client.users.getUser(clerkUserId);
+    const full = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+    if (full) return full;
+    if (u.firstName?.trim()) return u.firstName.trim();
+    if (u.username?.trim()) return u.username.trim();
+    return u.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "Owner";
+  } catch {
+    return "Owner";
+  }
+}
+
 async function getPrimaryEmail(clerkUserId: string): Promise<string | null> {
   try {
     const client = await clerkClient();
@@ -93,19 +107,24 @@ function emailBody(params: {
 function subjectForSeverity(
   severity: OrgEscalationSeverity,
   title: string,
-  deadlineIso: string
+  deadlineIso: string,
+  ownerName: string
 ): string {
   const t = title.slice(0, 80);
+  const firstName = ownerName.split(/\s+/)[0] || ownerName;
   switch (severity) {
     case "warning":
-      return `Action needed: ${t} due in 72 hours`;
+      return `${firstName}, ${t} is due in 3 days — any blockers?`;
     case "urgent":
-      return `Urgent: ${t} due in 48 hours`;
+      return `${firstName}, ${t} is due tomorrow — needs your attention`;
     case "critical":
-      return `Critical: ${t} due in 24 hours`;
+      return `Action required: ${t} due today`;
     case "overdue": {
-      const d = formatDueDate(deadlineIso);
-      return `Overdue: ${t} was due on ${d}`;
+      const days = Math.max(
+        1,
+        Math.floor((Date.now() - new Date(deadlineIso).getTime()) / 86_400_000)
+      );
+      return `${t} is now ${days} day${days === 1 ? "" : "s"} overdue — ${firstName} needs to update this`;
     }
     default:
       return `[Route5] ${t}`;
@@ -133,8 +152,18 @@ export async function notifyEscalationCreated(ctx: EscalationNotifyContext): Pro
   notifiedAdminAt: string | null;
 }> {
   const { severity, title, deadline, commitmentId, ownerId, isUpgrade } = ctx;
-  const subject = subjectForSeverity(severity, title, deadline);
-  const body = emailBody({ title, deadline, severity, commitmentId });
+  const ownerDisplayName = await getOwnerDisplayName(ownerId);
+  const subject = subjectForSeverity(severity, title, deadline, ownerDisplayName);
+  const body = [
+    `${ownerDisplayName}, quick check-in from Route5.`,
+    "",
+    `The commitment "${title}" needs attention.`,
+    `Deadline: ${formatDueDate(deadline)}`,
+    `Priority level: ${severity}`,
+    "",
+    "If anything is blocked, add a quick status update so the team has context.",
+    `Open commitment: ${commitmentLink(commitmentId)}`,
+  ].join("\n");
   const link = commitmentLink(commitmentId);
   const slackPrefix = isUpgrade ? "[Escalation upgraded] " : "";
   const now = new Date().toISOString();

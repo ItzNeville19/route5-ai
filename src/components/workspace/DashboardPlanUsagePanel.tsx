@@ -132,7 +132,7 @@ export default function DashboardPlanUsagePanel() {
   const usage = entitlements?.usage;
   const features = entitlements?.features;
 
-  const upgradeHref = "/account/plans";
+  const upgradeHref = "/workspace/billing";
   const pricingHref = "/pricing";
 
   const tabClass = (id: TabId) =>

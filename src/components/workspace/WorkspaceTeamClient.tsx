@@ -14,12 +14,12 @@ import { formatRelativeLong } from "@/lib/relative-time";
 const ORG_SWITCHER_APPEARANCE = {
   variables: {
     colorPrimary: "#a78bfa",
-    colorBackground: "#0f172a",
-    colorText: "#f1f5f9",
-    colorTextSecondary: "#94a3b8",
-    colorInputBackground: "#1e293b",
-    colorInputText: "#f1f5f9",
-    colorNeutral: "#334155",
+    colorForeground: "#0f172a",
+    colorMutedForeground: "#475569",
+    colorBackground: "#ffffff",
+    colorInput: "#f8fafc",
+    colorInputForeground: "#0f172a",
+    colorNeutral: "#cbd5e1",
     borderRadius: "0.75rem",
   },
   elements: {
@@ -31,8 +31,8 @@ const ORG_SWITCHER_APPEARANCE = {
     organizationSwitcherPopoverMain: "!text-slate-100",
     organizationSwitcherPopoverActionButton:
       "!text-slate-100 hover:!bg-slate-800 rounded-lg",
-    organizationPreviewMainIdentifier: "!text-slate-100",
-    organizationPreviewSecondaryIdentifier: "!text-slate-400",
+    organizationPreviewMainIdentifier: "!text-r5-text-primary",
+    organizationPreviewSecondaryIdentifier: "!text-r5-text-secondary",
     organizationSwitcherPopoverFooter: "border-t border-slate-700 !bg-slate-950",
     organizationSwitcherPopoverRootBox: "text-slate-100",
   },
@@ -303,7 +303,7 @@ export default function WorkspaceTeamClient() {
             {enterprise ? (
               <>
                 <Sparkles className="h-3 w-3 text-amber-200" aria-hidden />
-                Enterprise — priority seats &amp; support
+                Enterprise plan
               </>
             ) : (
               <>{entitlements?.tierLabel ?? "Workspace plan"} — shared seats</>
@@ -312,7 +312,7 @@ export default function WorkspaceTeamClient() {
         </div>
         <p className="mt-1 text-[length:var(--r5-font-body)] text-r5-text-secondary">
           {enterprise
-            ? "Your contract includes elevated limits and a dedicated success path. Invite from Route5 and keep Clerk org roles aligned — we never show fake flows."
+            ? "Your workspace is on an enterprise contract. Invite teammates from Route5 and manage org roles in Clerk."
             : "Send operational invites from Route5, or share a join link. Seat checks run before email goes out."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

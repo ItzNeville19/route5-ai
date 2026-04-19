@@ -47,7 +47,6 @@ import {
   type FeedBucket,
 } from "@/lib/feed/group-commitments";
 import { ORG_PRIORITY_LABEL } from "@/lib/org-commitments/tracker-constants";
-import FeedExecutionSnapshot from "@/components/feed/FeedExecutionSnapshot";
 import FeedPersonalGreeting from "@/components/feed/FeedPersonalGreeting";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -70,12 +69,13 @@ const SECTION_LABEL: Record<FeedBucket, string> = {
 
 type FeedFilter = "all" | "mine" | "team" | "unassigned" | "overdue" | "at_risk";
 
-type FeedSortUi = "due" | "priority" | "owner" | "updated" | "created";
+type FeedSortUi = "due" | "priority" | "owner" | "updated" | "risk";
 type FeedGroupMode = "timeline" | "owner" | "status";
 
 const FEED_VIEW_STORAGE_KEY = "route5:feed-saved-views:v1";
 const FEED_CACHE_KEY = "route5:feed-cache:v1";
 const FEED_DENSITY_KEY = "route5:feed-density:v1";
+const ACTIVE_PROJECT_STORAGE_KEY = "route5.headerProjectId";
 
 type FeedSavedView = {
   id: string;
@@ -90,10 +90,10 @@ type FeedDensity = "comfortable" | "compact";
 
 const FEED_FILTER_OPTIONS: readonly { value: FeedFilter; label: string; hint: string }[] = [
   { value: "all", label: "All", hint: "Every open commitment in this workspace" },
-  { value: "team", label: "Active", hint: "Active commitments owned across the team" },
-  { value: "overdue", label: "Overdue", hint: "Past deadline and not done" },
   { value: "mine", label: "Mine", hint: "Owned by you" },
+  { value: "team", label: "My Team", hint: "Commitments owned by teammates" },
   { value: "unassigned", label: "Unassigned", hint: "No owner set yet" },
+  { value: "overdue", label: "Overdue", hint: "Past deadline and not done" },
 ];
 
 function sortApiParams(ui: FeedSortUi): { sort: OrgCommitmentListSort; order: "asc" | "desc" } {
@@ -104,8 +104,8 @@ function sortApiParams(ui: FeedSortUi): { sort: OrgCommitmentListSort; order: "a
       return { sort: "owner_id", order: "asc" };
     case "updated":
       return { sort: "updated_at", order: "desc" };
-    case "created":
-      return { sort: "created_at", order: "desc" };
+    case "risk":
+      return { sort: "deadline", order: "asc" };
     case "due":
     default:
       return { sort: "deadline", order: "asc" };
@@ -282,6 +282,26 @@ function feedVisibleRows(rows: OrgCommitmentRow[]): OrgCommitmentRow[] {
   return rows.filter((r) => !isCompletedRow(r) || isCompletedVisibleInFeed(r));
 }
 
+function FeedHeroSummary({
+  activeCount,
+  overdueCount,
+  completedThisWeek,
+}: {
+  activeCount: number;
+  overdueCount: number;
+  completedThisWeek: number;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-4 text-[13px] font-medium text-r5-text-secondary">
+      <span className="text-r5-text-primary">{activeCount} Active</span>
+      <span className={overdueCount > 0 ? "text-r5-status-overdue" : "text-r5-text-secondary"}>
+        {overdueCount} Overdue
+      </span>
+      <span>{completedThisWeek} Done this week</span>
+    </div>
+  );
+}
+
 export default function CommitmentFeed() {
   const { user } = useUser();
   const { open: openCapture } = useCapture();
@@ -325,8 +345,13 @@ export default function CommitmentFeed() {
   const [refreshing, setRefreshing] = useState(false);
   const rowIdsSeen = useRef<Set<string>>(new Set());
   const [justAddedIds, setJustAddedIds] = useState<Set<string>>(new Set());
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const { sort: apiSort, order: apiOrder } = sortApiParams(feedSort);
+  const feedCacheKey = useMemo(
+    () => `${FEED_CACHE_KEY}:${activeProjectId ?? "all"}`,
+    [activeProjectId]
+  );
   const listAbortRef = useRef<AbortController | null>(null);
 
   const loadList = useCallback(async () => {
@@ -339,6 +364,7 @@ export default function CommitmentFeed() {
       const sp = new URLSearchParams();
       sp.set("sort", apiSort);
       sp.set("order", apiOrder);
+      if (activeProjectId) sp.set("projectId", activeProjectId);
       const res = await fetch(`/api/commitments?${sp.toString()}`, {
         credentials: "same-origin",
         signal: ctrl.signal,
@@ -356,7 +382,7 @@ export default function CommitmentFeed() {
         setLastSyncAt(syncedAt);
         setLastLoadMs(Math.round(performance.now() - started));
         try {
-          sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ rows: nextRows, at: syncedAt }));
+          sessionStorage.setItem(feedCacheKey, JSON.stringify({ rows: nextRows, at: syncedAt }));
         } catch {
           /* ignore */
         }
@@ -368,7 +394,7 @@ export default function CommitmentFeed() {
     } finally {
       if (listAbortRef.current === ctrl) listAbortRef.current = null;
     }
-  }, [apiSort, apiOrder]);
+  }, [apiSort, apiOrder, activeProjectId, feedCacheKey]);
 
   const loadProjects = useCallback(async () => {
     const res = await fetch("/api/projects", { credentials: "same-origin" });
@@ -383,6 +409,16 @@ export default function CommitmentFeed() {
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(FEED_CACHE_KEY);
+      const scopedRaw = sessionStorage.getItem(feedCacheKey);
+      if (scopedRaw) {
+        const parsed = JSON.parse(scopedRaw) as { rows?: OrgCommitmentRow[]; at?: string };
+        if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
+          setRows(parsed.rows);
+          setBootstrapped(true);
+          if (parsed.at) setLastSyncAt(parsed.at);
+          return;
+        }
+      }
       if (!raw) return;
       const parsed = JSON.parse(raw) as { rows?: OrgCommitmentRow[]; at?: string };
       if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
@@ -393,7 +429,7 @@ export default function CommitmentFeed() {
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [feedCacheKey]);
 
   useEffect(() => {
     void loadList();
@@ -431,6 +467,25 @@ export default function CommitmentFeed() {
   useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    const readScope = () => {
+      try {
+        const raw = localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY);
+        setActiveProjectId(raw && raw.trim() ? raw.trim() : null);
+      } catch {
+        setActiveProjectId(null);
+      }
+    };
+    readScope();
+    const onScopeChanged = () => readScope();
+    window.addEventListener("route5:project-scope-changed", onScopeChanged);
+    window.addEventListener("storage", onScopeChanged);
+    return () => {
+      window.removeEventListener("route5:project-scope-changed", onScopeChanged);
+      window.removeEventListener("storage", onScopeChanged);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -614,15 +669,23 @@ export default function CommitmentFeed() {
 
   const searchFiltered = useMemo(() => {
     const q = deferredFeedSearch.trim().toLowerCase();
-    if (!q) return filterOnlyRows;
-    return filterOnlyRows.filter((r) => {
+    const base = !q
+      ? filterOnlyRows
+      : filterOnlyRows.filter((r) => {
       if (r.title.toLowerCase().includes(q)) return true;
       if (r.description?.toLowerCase().includes(q)) return true;
       const pn = r.projectId ? projectNameById.get(r.projectId) : undefined;
       if (pn?.toLowerCase().includes(q)) return true;
       return false;
     });
-  }, [filterOnlyRows, deferredFeedSearch, projectNameById]);
+    if (feedSort !== "risk") return base;
+    return [...base].sort((a, b) => {
+      const ar = isLikelyAtRisk(a);
+      const br = isLikelyAtRisk(b);
+      if (ar.risky !== br.risky) return ar.risky ? -1 : 1;
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+    });
+  }, [filterOnlyRows, deferredFeedSearch, projectNameById, feedSort]);
 
   const grouped = useMemo(() => groupFeedRows(searchFiltered), [searchFiltered]);
   const groupedByOwner = useMemo(() => {
@@ -1211,7 +1274,7 @@ export default function CommitmentFeed() {
       <div className="mx-auto w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
         <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
-          <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
+          <FeedHeroSummary activeCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
         <div className="h-9 w-40 animate-pulse rounded-[var(--r5-radius-card)] bg-r5-border-subtle/35" />
         <div className="mt-[var(--r5-space-8)] space-y-[var(--r5-space-3)]">
@@ -1231,7 +1294,7 @@ export default function CommitmentFeed() {
       <div className="mx-auto w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] pb-[var(--r5-space-8)] pt-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:pt-[var(--r5-space-6)]">
         <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
-          <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
+          <FeedHeroSummary activeCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
         <div className="flex min-h-[calc(100dvh-var(--r5-layout-chrome-vertical)-var(--r5-space-8))] flex-col items-center justify-center px-[var(--r5-space-2)] text-center">
         <div className="relative mb-8 flex h-20 w-20 items-center justify-center rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/40 shadow-[var(--r5-shadow-elevated)] ring-1 ring-r5-accent/15">
@@ -1261,7 +1324,7 @@ export default function CommitmentFeed() {
       <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
         <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
-          <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
+          <FeedHeroSummary activeCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
         <FeedHeaderStrip
           feedSearch={feedSearch}
@@ -1318,7 +1381,7 @@ export default function CommitmentFeed() {
       <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
         <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
-          <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
+          <FeedHeroSummary activeCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
         <FeedHeaderStrip
           feedSearch={feedSearch}
@@ -1373,7 +1436,7 @@ export default function CommitmentFeed() {
     <div className="route5-perspective-shell relative mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-5 py-10 pb-16 sm:px-10 sm:py-14 sm:pb-24">
       <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
         <FeedPersonalGreeting />
-        <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
+        <FeedHeroSummary activeCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
       </div>
       <FeedHeaderStrip
         feedSearch={feedSearch}
@@ -1408,7 +1471,7 @@ export default function CommitmentFeed() {
       />
 
       {focusLane.length > 0 ? (
-        <section className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/25 p-3">
+        <section className="workspace-preview-panel mb-4 p-3">
           <div className="mb-2 flex items-center justify-between">
             <p className="text-[12px] font-semibold uppercase tracking-wide text-r5-text-secondary">Focus lane</p>
             <span className="text-[11px] text-r5-text-tertiary">Top execution pressure</span>
@@ -1431,7 +1494,7 @@ export default function CommitmentFeed() {
       ) : null}
 
       {selectedIds.size > 0 ? (
-        <div className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-accent/25 bg-r5-surface-secondary/55 px-3 py-3">
+        <div className="workspace-preview-panel mb-4 px-3 py-3">
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
             {selectedIds.size} selected
@@ -1567,9 +1630,9 @@ export default function CommitmentFeed() {
           ))}
         </div>
       ) : groupMode === "status" ? (
-        <div className="grid gap-3 lg:grid-cols-5">
+        <div className="workspace-preview-panel grid gap-3 p-3 lg:grid-cols-5">
           {groupedByStatus.map((lane) => (
-            <section key={lane.key} className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20">
+            <section key={lane.key} className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/35">
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-r5-border-subtle/50 bg-r5-surface-secondary/70 px-3 py-2 backdrop-blur-sm">
                 <h3 className="text-[12px] font-semibold text-r5-text-primary">{lane.label}</h3>
                 <span className="text-[11px] text-r5-text-tertiary">{lane.rows.length}</span>
@@ -1803,7 +1866,7 @@ function FeedHeaderStrip({
   refreshing: boolean;
 }) {
   const quietLink =
-    "text-[13px] font-normal text-zinc-500 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40";
+    "text-[13px] font-normal text-r5-text-secondary transition-colors hover:text-r5-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-r5-accent/40";
   const presetBtn = `${quietLink} rounded-sm px-0.5`;
 
   const stats = [
@@ -1820,12 +1883,12 @@ function FeedHeaderStrip({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-      className="mb-10 w-full space-y-6 sm:mb-12"
+      className="mb-8 w-full space-y-4 sm:mb-10"
     >
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+      <div className="workspace-preview-panel flex flex-col gap-6 p-4 sm:p-5 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
         <div className="min-w-0 space-y-1">
-          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">Feed</h1>
-          <p className="text-[13px] font-medium text-zinc-500">
+          <h1 className="text-xl font-semibold tracking-tight text-r5-text-primary sm:text-2xl">Feed</h1>
+          <p className="text-[13px] font-medium text-r5-text-secondary">
             Updated {relativeTimeLabel(lastSyncAt)}
             {lastLoadMs != null ? ` · ${lastLoadMs}ms` : ""}
           </p>
@@ -1836,7 +1899,7 @@ function FeedHeaderStrip({
           </label>
           <div className="relative flex w-full items-center">
             <Search
-              className="pointer-events-none absolute left-3.5 h-4 w-4 text-zinc-500"
+              className="pointer-events-none absolute left-3.5 h-4 w-4 text-r5-text-tertiary"
               strokeWidth={1.75}
               aria-hidden
             />
@@ -1848,12 +1911,12 @@ function FeedHeaderStrip({
               onChange={(e) => setFeedSearch(e.target.value)}
               placeholder="Search title, notes, project…"
               autoComplete="off"
-              className="liquid-glass-dark min-h-[44px] w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-11 pr-3.5 text-[15px] font-normal text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] outline-none backdrop-blur-xl transition-[border-color,box-shadow,transform] placeholder:text-zinc-600 focus:border-white/25 focus:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_8px_32px_-12px_rgba(99,102,241,0.25)]"
+              className="min-h-[44px] w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary/70 py-2.5 pl-11 pr-3.5 text-[15px] font-normal text-r5-text-primary shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] outline-none transition-[border-color,box-shadow,transform] placeholder:text-r5-text-tertiary focus:border-r5-accent/45 focus:shadow-[0_0_0_1px_rgba(167,139,250,0.2),0_8px_28px_-12px_rgba(99,102,241,0.25)]"
             />
           </div>
-          <p className="mt-2 text-[12px] text-zinc-600">
+          <p className="mt-2 text-[12px] text-r5-text-tertiary">
             Press{" "}
-            <kbd className="rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 font-mono text-[11px] text-zinc-400">
+            <kbd className="rounded border border-r5-border-subtle bg-r5-surface-primary px-1 py-0.5 font-mono text-[11px] text-r5-text-secondary">
               /
             </kbd>{" "}
             to focus search
@@ -1861,16 +1924,16 @@ function FeedHeaderStrip({
         </div>
       </div>
 
-      <dl className="liquid-glass-dark liquid-glass-dark-interactive liquid-glass-tilt-3d liquid-glass-shimmer grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 sm:grid-cols-3 lg:grid-cols-6">
+      <dl className="workspace-preview-panel grid grid-cols-2 gap-px sm:grid-cols-3 lg:grid-cols-6">
         {stats.map((s) => (
           <div
             key={s.key}
-            className="flex flex-col gap-0.5 bg-zinc-950/40 px-4 py-3.5 sm:min-h-[88px] sm:justify-center"
+            className="flex flex-col gap-0.5 bg-r5-surface-primary/35 px-4 py-3.5 sm:min-h-[88px] sm:justify-center"
           >
-            <dt className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">{s.label}</dt>
+            <dt className="text-[10px] font-medium uppercase tracking-[0.14em] text-r5-text-tertiary">{s.label}</dt>
             <dd
               className={`text-xl font-semibold tabular-nums tracking-tight sm:text-2xl ${
-                "stress" in s && s.stress ? "text-white" : "text-zinc-100"
+                "stress" in s && s.stress ? "text-r5-text-primary" : "text-r5-text-primary"
               }`}
             >
               {s.value}
@@ -1879,8 +1942,8 @@ function FeedHeaderStrip({
         ))}
       </dl>
 
-      <nav className="border-b border-white/[0.08]" aria-label="Assignment filters">
-        <div className="-mb-px flex flex-wrap gap-x-6 gap-y-1">
+      <nav className="workspace-preview-panel px-4 pb-3 pt-3.5 sm:px-5" aria-label="Assignment filters">
+        <div className="-mb-px flex flex-wrap gap-x-5 gap-y-1">
           {FEED_FILTER_OPTIONS.map((opt) => {
             const active = opt.value === feedFilter;
             return (
@@ -1891,8 +1954,8 @@ function FeedHeaderStrip({
                 onClick={() => setFeedFilter(opt.value)}
                 className={`relative pb-3 text-[13px] font-medium transition-colors ${
                   active
-                    ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-white after:content-['']"
-                    : "text-zinc-500 hover:text-zinc-300"
+                    ? "text-r5-text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-r5-accent after:content-['']"
+                    : "text-r5-text-secondary hover:text-r5-text-primary"
                 }`}
               >
                 {opt.label}
@@ -1902,60 +1965,60 @@ function FeedHeaderStrip({
         </div>
       </nav>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="workspace-preview-panel flex flex-col gap-4 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[13px]">
           <button type="button" onClick={() => applyQuickPreset("my_queue")} className={presetBtn}>
             My queue
           </button>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <button type="button" onClick={() => applyQuickPreset("triage")} className={presetBtn}>
             Triage
           </button>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <button type="button" onClick={() => applyQuickPreset("critical")} className={presetBtn}>
             At risk
           </button>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <button type="button" onClick={() => applyQuickPreset("due_soon")} className={presetBtn}>
             Due soon
           </button>
-          <span className="mx-2 hidden h-4 w-px bg-white/10 sm:block" aria-hidden />
+          <span className="mx-2 hidden h-4 w-px bg-r5-border-subtle sm:block" aria-hidden />
           <button
             type="button"
             onClick={onCaptureOpen}
-            className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/[0.06]"
+            className="rounded-full bg-r5-accent/20 px-3 py-1.5 text-[13px] font-semibold text-r5-text-primary ring-1 ring-r5-accent/35 transition hover:bg-r5-accent/28"
           >
             Capture
           </button>
-          <span className="mx-2 hidden h-4 w-px bg-white/10 sm:block" aria-hidden />
+          <span className="mx-2 hidden h-4 w-px bg-r5-border-subtle sm:block" aria-hidden />
           <Link href="/desk" className={quietLink}>
             Desk
           </Link>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <Link href="/overview" className={quietLink}>
             Leadership
           </Link>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <Link href="/workspace/escalations" className={quietLink}>
             Escalations
           </Link>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <Link href="/projects" className={quietLink}>
             Projects
           </Link>
-          <span className="text-zinc-700" aria-hidden>
+          <span className="text-r5-text-tertiary" aria-hidden>
             ·
           </span>
           <Link href="/integrations" className={quietLink}>
@@ -1967,29 +2030,29 @@ function FeedHeaderStrip({
           onClick={onSync}
           disabled={refreshing}
           title="Reload list"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white disabled:opacity-50"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 px-4 py-2 text-[13px] font-medium text-r5-text-primary transition hover:border-r5-accent/35 hover:bg-r5-surface-hover disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden />
           Sync
         </button>
       </div>
 
-      <details className="group liquid-glass-dark liquid-glass-tilt-3d overflow-hidden rounded-2xl border border-white/10 shadow-[0_8px_32px_-16px_rgba(0,0,0,0.5)]">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-[13px] font-medium text-zinc-400 marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
+      <details className="workspace-preview-panel group overflow-hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-[13px] font-medium text-r5-text-secondary marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
           <span>Display and export</span>
           <ChevronDown
-            className="h-4 w-4 shrink-0 text-zinc-500 transition duration-200 group-open:rotate-180"
+            className="h-4 w-4 shrink-0 text-r5-text-tertiary transition duration-200 group-open:rotate-180"
             aria-hidden
           />
         </summary>
-        <div className="border-t border-white/[0.06] px-5 pb-6 pt-5 sm:px-6">
+        <div className="border-t border-r5-border-subtle/60 px-5 pb-6 pt-5 sm:px-6">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <label className="flex max-w-md cursor-pointer items-start gap-3 text-[14px] leading-snug text-zinc-500">
+            <label className="flex max-w-md cursor-pointer items-start gap-3 text-[14px] leading-snug text-r5-text-secondary">
               <input
                 type="checkbox"
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-white focus:ring-white/30"
+                className="mt-0.5 h-4 w-4 rounded border-r5-border-subtle bg-transparent text-r5-accent focus:ring-r5-accent/35"
               />
               <span>
                 Background sync refreshes the list every 30 seconds while this page is open.
@@ -1998,7 +2061,7 @@ function FeedHeaderStrip({
             <button
               type="button"
               onClick={onExport}
-              className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[14px] font-medium text-zinc-200 transition hover:border-white/20 hover:text-white"
+              className="shrink-0 rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 px-4 py-2 text-[14px] font-medium text-r5-text-primary transition hover:border-r5-accent/35 hover:text-r5-text-primary"
             >
               Export CSV
             </button>
@@ -2011,12 +2074,12 @@ function FeedHeaderStrip({
               return (
                 <div
                   key={id}
-                  className="inline-flex overflow-hidden rounded-full border border-white/10"
+                  className="inline-flex overflow-hidden rounded-full border border-r5-border-subtle"
                 >
                   <button
                     type="button"
                     onClick={() => saveCurrentView(slot)}
-                    className="px-3 py-1.5 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
+                    className="px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
                     title={`Save view ${slot}`}
                   >
                     Save {slot}
@@ -2025,7 +2088,7 @@ function FeedHeaderStrip({
                     type="button"
                     onClick={() => applySavedView(id)}
                     disabled={!has}
-                    className="border-l border-white/10 px-3 py-1.5 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-35"
+                    className="border-l border-r5-border-subtle px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary disabled:opacity-35"
                     title={`Load view ${slot}`}
                   >
                     Load {slot}
@@ -2037,8 +2100,8 @@ function FeedHeaderStrip({
 
           <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
             <div>
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Group by</p>
-              <div className="inline-flex overflow-hidden rounded-full border border-white/10 p-0.5">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-r5-text-tertiary">Group by</p>
+              <div className="inline-flex overflow-hidden rounded-full border border-r5-border-subtle p-0.5">
                 {(["timeline", "owner", "status"] as const).map((mode) => (
                   <button
                     key={mode}
@@ -2046,8 +2109,8 @@ function FeedHeaderStrip({
                     onClick={() => setGroupMode(mode)}
                     className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
                       groupMode === mode
-                        ? "bg-white text-zinc-950"
-                        : "text-zinc-400 hover:text-white"
+                        ? "bg-r5-accent text-white"
+                        : "text-r5-text-secondary hover:text-r5-text-primary"
                     }`}
                   >
                     {mode === "timeline" ? "Timeline" : mode === "owner" ? "Owner" : "State"}
@@ -2056,8 +2119,8 @@ function FeedHeaderStrip({
               </div>
             </div>
             <div>
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Density</p>
-              <div className="inline-flex overflow-hidden rounded-full border border-white/10 p-0.5">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-r5-text-tertiary">Density</p>
+              <div className="inline-flex overflow-hidden rounded-full border border-r5-border-subtle p-0.5">
                 {(["comfortable", "compact"] as const).map((mode) => (
                   <button
                     key={mode}
@@ -2065,8 +2128,8 @@ function FeedHeaderStrip({
                     onClick={() => setDensity(mode)}
                     className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
                       density === mode
-                        ? "bg-white text-zinc-950"
-                        : "text-zinc-400 hover:text-white"
+                        ? "bg-r5-accent text-white"
+                        : "text-r5-text-secondary hover:text-r5-text-primary"
                     }`}
                   >
                     {mode === "comfortable" ? "Roomy" : "Dense"}
@@ -2075,18 +2138,18 @@ function FeedHeaderStrip({
               </div>
             </div>
             <div className="min-w-[200px] flex-1 lg:max-w-xs">
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Sort</p>
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-r5-text-tertiary">Sort</p>
               <select
                 value={feedSort}
                 onChange={(e) => setFeedSort(e.target.value as FeedSortUi)}
-                className="h-11 w-full cursor-pointer rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[14px] font-medium text-white outline-none transition focus:border-white/25 focus:ring-1 focus:ring-white/20"
+                className="h-11 w-full cursor-pointer rounded-xl border border-r5-border-subtle bg-r5-surface-primary/70 px-3 text-[14px] font-medium text-r5-text-primary outline-none transition focus:border-r5-accent/35 focus:ring-1 focus:ring-r5-accent/20"
                 aria-label="Sort"
               >
                 <option value="due">Due date</option>
                 <option value="priority">Priority</option>
                 <option value="owner">Owner</option>
                 <option value="updated">Recently updated</option>
-                <option value="created">Date created</option>
+                <option value="risk">Slip risk</option>
               </select>
             </div>
           </div>
@@ -2207,7 +2270,7 @@ function FeedSectionStatic({
         </span>
       </div>
       <ul
-        className={`route5-tilt-hover overflow-visible rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/25 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
+        className={`workspace-preview-panel route5-tilt-hover overflow-visible bg-r5-surface-primary/22 ${bucketListAccent(bucket)}`}
       >
         <AnimatePresence initial={false}>
           {rows.map((row) => (
@@ -2363,7 +2426,7 @@ function FeedCompletedSection({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className={`route5-tilt-hover overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
+            className={`workspace-preview-panel route5-tilt-hover overflow-hidden bg-r5-surface-primary/22 ${bucketListAccent(bucket)}`}
           >
             {rows.map((row) => (
               <FeedRow
@@ -2575,7 +2638,7 @@ function FeedRow({
         overdueBorder ? "border-l-2 border-l-r5-status-overdue" : ""
       } ${dimLater ? "opacity-[0.72]" : ""} ${completed ? "opacity-60" : ""} ${
         justAdded ? "ring-1 ring-r5-status-on-track/35 ring-inset" : ""
-      } ${active ? "ring-1 ring-r5-accent/35 ring-inset" : ""}`}
+      } ${active ? "bg-white/[0.03] ring-1 ring-r5-accent/35 ring-inset" : ""}`}
       onTouchStart={(e) => {
         const t = e.changedTouches[0];
         touchStart.current = { x: t.clientX, y: t.clientY };
@@ -2604,8 +2667,8 @@ function FeedRow({
           if (el) rowButtonRefs.current.set(row.id, el);
           else rowButtonRefs.current.delete(row.id);
         }}
-        className={`w-full cursor-pointer text-left outline-none transition-colors duration-[var(--r5-duration-fast)] hover:bg-r5-surface-hover/40 focus-visible:ring-2 focus-visible:ring-r5-accent/35 ${
-          density === "compact" ? "px-2.5 py-1 sm:px-3 sm:py-1.5" : "px-3 py-1.5 sm:px-4 sm:py-2"
+        className={`w-full cursor-pointer text-left outline-none transition-colors duration-[var(--r5-duration-fast)] hover:bg-r5-surface-hover/55 focus-visible:ring-2 focus-visible:ring-r5-accent/35 ${
+          density === "compact" ? "px-2.5 py-1.5 sm:px-3.5 sm:py-2" : "px-3.5 py-2 sm:px-4 sm:py-2.5"
         }`}
         onFocus={onActivate}
         onMouseEnter={() => {

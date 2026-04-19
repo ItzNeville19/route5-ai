@@ -48,6 +48,18 @@ function formatTimeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+type NotificationGroupLabel = "Today" | "This Week" | "Earlier";
+
+function notificationGroupForDate(iso: string): NotificationGroupLabel {
+  const now = new Date();
+  const created = new Date(iso);
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diff = now.getTime() - created.getTime();
+  if (created.getTime() >= startOfToday) return "Today";
+  if (diff < 7 * 24 * 60 * 60 * 1000) return "This Week";
+  return "Earlier";
+}
+
 function iconForType(t: NotificationType): LucideIcon {
   switch (t) {
     case "commitment_assigned":
@@ -70,6 +82,8 @@ function iconForType(t: NotificationType): LucideIcon {
       return Mail;
     case "weekly_summary":
       return BarChart2;
+    case "daily_morning_digest":
+      return Info;
     default:
       return Bell;
   }
@@ -85,6 +99,8 @@ function resolveNotificationHref(n: OrgNotificationRow): string | null {
       return "/workspace/billing";
     case "weekly_summary":
       return "/workspace/dashboard";
+    case "daily_morning_digest":
+      return "/feed?filter=mine";
     case "team_invited":
       if (typeof m.signupUrl === "string" && m.signupUrl.length > 0) return m.signupUrl;
       return "/settings";
@@ -216,6 +232,18 @@ export default function WorkspaceNotificationsPopover() {
     window.addEventListener("route5:notifications-open", onOpen);
     return () => window.removeEventListener("route5:notifications-open", onOpen);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   const digestItems = useMemo(
     () =>
@@ -398,31 +426,42 @@ export default function WorkspaceNotificationsPopover() {
       ) : notifList.length === 0 ? (
         <p className="px-3 py-6 text-center text-[length:var(--r5-font-subheading)] text-r5-text-secondary">You are all caught up.</p>
       ) : (
-        notifList.map((n) => {
-          const Icon = iconForType(n.type);
+        (["Today", "This Week", "Earlier"] as const).map((group) => {
+          const grouped = notifList.filter((n) => notificationGroupForDate(n.createdAt) === group);
+          if (grouped.length === 0) return null;
           return (
-            <button
-              key={n.id}
-              type="button"
-              onClick={() => void onClickNotification(n)}
-              className={`mb-1 flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition ${
-                n.read ? "hover:bg-r5-surface-hover/40" : "bg-r5-surface-hover/60 hover:bg-r5-surface-hover"
-              }`}
-            >
-              <div className="relative shrink-0 pt-0.5">
-                <Icon className="h-4 w-4 text-r5-text-secondary" strokeWidth={2} aria-hidden />
-                {!n.read ? (
-                  <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-r5-accent shadow-[0_0_0_2px_rgba(9,9,11,0.95)]" />
-                ) : null}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[length:var(--r5-font-subheading)] font-medium leading-snug text-r5-text-primary">{n.title}</p>
-                <p className="mt-0.5 line-clamp-2 text-[length:var(--r5-font-body)] leading-snug text-r5-text-secondary">
-                  {n.body}
-                </p>
-                <p className="mt-1 text-[11px] text-r5-text-tertiary">{formatTimeAgo(n.createdAt)}</p>
-              </div>
-            </button>
+            <section key={group} className="mb-3">
+              <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
+                {group}
+              </p>
+              {grouped.map((n) => {
+                const Icon = iconForType(n.type);
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => void onClickNotification(n)}
+                    className={`mb-1 flex w-full gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                      n.read ? "hover:bg-r5-surface-hover/40" : "bg-r5-surface-hover/60 hover:bg-r5-surface-hover"
+                    }`}
+                  >
+                    <div className="relative shrink-0 pt-0.5">
+                      <Icon className="h-4 w-4 text-r5-text-secondary" strokeWidth={2} aria-hidden />
+                      {!n.read ? (
+                        <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-r5-accent shadow-[0_0_0_2px_rgba(9,9,11,0.95)]" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[length:var(--r5-font-subheading)] font-medium leading-snug text-r5-text-primary">{n.title}</p>
+                      <p className="mt-0.5 line-clamp-2 text-[length:var(--r5-font-body)] leading-snug text-r5-text-secondary">
+                        {n.body}
+                      </p>
+                      <p className="mt-1 text-[11px] text-r5-text-tertiary">{formatTimeAgo(n.createdAt)}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </section>
           );
         })
       )}
@@ -542,6 +581,7 @@ export default function WorkspaceNotificationsPopover() {
                 role="dialog"
                 aria-label="Notifications"
                 aria-modal="true"
+                onMouseDown={(event) => event.stopPropagation()}
               >
                 {panelContent}
               </aside>

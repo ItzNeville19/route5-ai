@@ -33,7 +33,7 @@ export default function WorkspaceAiSettingsCard() {
               AI settings
             </h2>
             <p className="text-[12px] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Configure how decision capture runs in this deployment. Optional connectors live under{" "}
+              Configure how decision capture works in this deployment. Optional connectors live under{" "}
               <Link href="/settings#connections" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
                 Connections
               </Link>

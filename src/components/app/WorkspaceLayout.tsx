@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import WorkspaceHeader from "@/components/WorkspaceHeader";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
@@ -8,6 +8,7 @@ import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
 import NewProjectModal from "@/components/workspace/NewProjectModal";
 import WorkspaceSidebar from "@/components/app/WorkspaceSidebar";
 import WorkspaceMobileNav from "@/components/app/WorkspaceMobileNav";
+import WorkspaceMobileSidebar from "@/components/app/WorkspaceMobileSidebar";
 import {
   WorkspaceExperienceProvider,
   useWorkspaceExperience,
@@ -27,6 +28,16 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { shellModifierClass, prefs } = exp;
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  useEffect(() => {
+    if (!mobileSidebarOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileSidebarOpen]);
+
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -65,15 +76,24 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-dvh w-full">
         <WorkspaceSidebar />
         <div className="agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
-          <WorkspaceHeader />
+          <WorkspaceHeader
+            onSidebarToggle={() => {
+              if (typeof window !== "undefined" && window.innerWidth < 768) {
+                setMobileSidebarOpen((v) => !v);
+                return;
+              }
+              exp.setPrefs({ sidebarHidden: !sidebarHidden });
+            }}
+          />
           <WorkspaceBillingBanner />
-          <main className="min-h-0 flex-1 overflow-y-auto pb-[var(--r5-mobile-nav-height)] md:pb-0 [@media(pointer:fine)]:pb-0">
+          <main className="min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0">
             <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
               {children}
             </div>
           </main>
         </div>
       </div>
+      <WorkspaceMobileSidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <WorkspaceMobileNav />
       <NewProjectModal />
     </div>
