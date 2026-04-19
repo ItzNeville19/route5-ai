@@ -71,6 +71,8 @@ export default function ProjectDashboard({ projectId }: Props) {
   useEffect(() => {
     let cancelled = false;
     const fetchOpts: RequestInit = { credentials: "same-origin", cache: "no-store" };
+    const notFoundRetryDelayMs = 600;
+    const notFoundMaxRetries = 6;
 
     async function loadDetail(attempt: number): Promise<void> {
       setLoading(true);
@@ -91,22 +93,14 @@ export default function ProjectDashboard({ projectId }: Props) {
           return;
         }
 
-        if (projRes.status === 404 && attempt < 2) {
-          await new Promise((r) => window.setTimeout(r, 450));
+        if (projRes.status === 404 && attempt < notFoundMaxRetries) {
+          await new Promise((r) => window.setTimeout(r, notFoundRetryDelayMs));
           if (!cancelled) return loadDetail(attempt + 1);
           return;
         }
 
         setProject(null);
         setCommitments(commitmentsData.commitments ?? []);
-        if (projRes.status === 404) {
-          const listRes = await fetch("/api/projects", fetchOpts);
-          const listData = (await listRes.json().catch(() => ({}))) as { projects?: Project[] };
-          const first = listData.projects?.[0];
-          if (first && first.id !== projectId) {
-            router.replace(`/projects/${first.id}`);
-          }
-        }
       } finally {
         if (!cancelled) setLoading(false);
       }

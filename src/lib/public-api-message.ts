@@ -6,6 +6,18 @@ export function publicWorkspaceError(cause?: unknown): string {
   if (process.env.NODE_ENV === "development" && cause != null) {
     console.error("[route5 workspace]", cause);
   }
+  if (
+    cause &&
+    typeof cause === "object" &&
+    "code" in cause &&
+    "message" in cause &&
+    (cause as { code?: unknown }).code === "PGRST205"
+  ) {
+    const message = String((cause as { message?: unknown }).message ?? "");
+    if (message.toLowerCase().includes("could not find the table")) {
+      return "Workspace database is not initialized yet. Run the SQL files in supabase/migrations on your Supabase project, then redeploy.";
+    }
+  }
   return "Workspace is finishing sync. Try again in a moment.";
 }
 

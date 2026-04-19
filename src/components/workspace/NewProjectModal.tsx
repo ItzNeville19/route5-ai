@@ -27,6 +27,9 @@ export default function NewProjectModal() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [mounted, setMounted] = useState(false);
   const [name, setName] = useState("");
+  const [iconEmoji, setIconEmoji] = useState("");
+  const [openCaptureAfter, setOpenCaptureAfter] = useState(true);
+  const [template, setTemplate] = useState("blank");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,6 +39,9 @@ export default function NewProjectModal() {
 
   const reset = useCallback(() => {
     setName("");
+    setIconEmoji("");
+    setOpenCaptureAfter(true);
+    setTemplate("blank");
     setError(null);
     setCreating(false);
   }, []);
@@ -91,7 +97,10 @@ export default function NewProjectModal() {
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         cache: "no-store",
-        body: JSON.stringify({ name: trimmed }),
+        body: JSON.stringify({
+          name: trimmed,
+          iconEmoji: iconEmoji.trim() ? iconEmoji.trim() : undefined,
+        }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         error?: string;
@@ -122,28 +131,28 @@ export default function NewProjectModal() {
         setError(t("modal.newProject.errorCreate"));
         return;
       }
-      const verify = await fetch(`/api/projects/${encodeURIComponent(pid)}`, {
-        credentials: "same-origin",
-        cache: "no-store",
-      });
-      if (!verify.ok) {
-        const errJson = (await verify.json().catch(() => ({}))) as { error?: string };
-        setError(
-          errJson.error ??
-            "Project was created but could not be loaded. Check Supabase env on the server."
-        );
-        return;
-      }
       try {
         localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, pid);
         window.dispatchEvent(new CustomEvent("route5:project-scope-changed", { detail: { projectId: pid } }));
       } catch {
         /* ignore */
       }
-      pushToast(`Project "${trimmed}" created`, "success");
+      pushToast(`Project "${data.project?.name ?? trimmed}" created`, "success");
       dialogRef.current?.close();
       router.refresh();
-      router.push(`/projects/${pid}`, { scroll: true });
+      if (openCaptureAfter) {
+        router.push(`/projects/${pid}`, { scroll: true });
+        window.setTimeout(() => {
+          window.dispatchEvent(new Event("route5:capture-open"));
+        }, 120);
+      } else {
+        router.push(`/projects/${pid}`, { scroll: true });
+      }
+      try {
+        localStorage.setItem("route5.newProjectTemplate", template);
+      } catch {
+        /* ignore */
+      }
       void refreshAll();
     } catch (err) {
       const msg = err instanceof Error && err.message ? err.message : t("modal.newProject.errorCreate");
@@ -177,7 +186,9 @@ export default function NewProjectModal() {
             </span>
             <div>
               <h2 className="text-[17px] font-semibold text-zinc-900">{t("modal.newProject.title")}</h2>
-              <p className="mt-0.5 text-[12px] text-zinc-500">Name your project, then create.</p>
+              <p className="mt-0.5 text-[12px] text-zinc-500">
+                {t("modal.newProject.stepOf", { step: 1, total: 1 })}
+              </p>
             </div>
           </div>
           <button
@@ -191,6 +202,20 @@ export default function NewProjectModal() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <p className="mb-3 text-[12px] leading-relaxed text-zinc-500">{t("modal.newProject.step1Intro")}</p>
+          <label htmlFor="new-project-icon" className="text-[12px] font-medium text-zinc-600">
+            {t("modal.newProject.icon")}
+          </label>
+          <input
+            id="new-project-icon"
+            name="projectIcon"
+            value={iconEmoji}
+            onChange={(e) => setIconEmoji(e.target.value.slice(0, 2))}
+            placeholder="★"
+            aria-label={t("modal.newProject.projectIconAria")}
+            autoComplete="off"
+            className="mt-2 min-h-11 w-20 rounded-2xl border border-zinc-200 bg-white px-3 py-3 text-center text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+          />
           <label htmlFor="new-project-name" className="text-[12px] font-medium text-zinc-600">
             {t("modal.newProject.projectName")}
           </label>
@@ -204,6 +229,34 @@ export default function NewProjectModal() {
             className="mt-2 min-h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
             autoFocus
           />
+          <div className="mt-4 space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+            <p className="text-[12px] text-zinc-500">{t("modal.newProject.step2Intro")}</p>
+            <label htmlFor="new-project-template" className="text-[12px] font-medium text-zinc-700">
+              {t("modal.newProject.templateLabel")}
+            </label>
+            <select
+              id="new-project-template"
+              value={template}
+              onChange={(e) => setTemplate(e.target.value)}
+              className="min-h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-[13px] text-zinc-900"
+            >
+              <option value="blank">{t("modal.newProject.templateBlank")}</option>
+              <option value="standard">Standard</option>
+              <option value="execution">Execution</option>
+            </select>
+            <label className="mt-2 flex items-start gap-2 text-[12px] text-zinc-700">
+              <input
+                type="checkbox"
+                checked={openCaptureAfter}
+                onChange={(e) => setOpenCaptureAfter(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-zinc-900"
+              />
+              <span>
+                <span className="font-medium">{t("modal.newProject.openCaptureAfter")}</span>
+                <span className="mt-0.5 block text-zinc-500">{t("modal.newProject.openCaptureAfterHint")}</span>
+              </span>
+            </label>
+          </div>
           {error ? (
             <p className="mt-3 text-[13px] text-red-700" role="alert">
               {error}

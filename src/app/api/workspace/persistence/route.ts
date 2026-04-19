@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/require-user";
-import { isSupabaseConfigured } from "@/lib/supabase-env";
+import { getSupabaseRealtimePublicKey, isSupabaseConfigured } from "@/lib/supabase-env";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +13,7 @@ export async function GET() {
   if (!auth.ok) return auth.response;
 
   const serviceConfigured = isSupabaseConfigured();
-  const anonConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
-  );
+  const anonConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() && getSupabaseRealtimePublicKey());
   const onVercel = process.env.VERCEL === "1";
 
   return NextResponse.json(

@@ -24,4 +24,5 @@ create index if not exists commitments_last_updated_idx on public.commitments (l
 
 alter table public.commitments enable row level security;
 
+drop policy if exists "deny_all_commitments" on public.commitments;
 create policy "deny_all_commitments" on public.commitments for all using (false);

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { assertValidServiceRoleKey } from "@/lib/supabase-env";
+import { assertValidServiceRoleKey, getSupabaseServiceRoleKey } from "@/lib/supabase-env";
 
 /** Recreate client when URL/key change so .env.local updates apply without stale cache. */
 let cached: { url: string; key: string; client: SupabaseClient } | undefined;
@@ -10,10 +10,10 @@ let cached: { url: string; key: string; client: SupabaseClient } | undefined;
  */
 export function getServiceClient(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const key = getSupabaseServiceRoleKey();
   if (!url || !key) {
     throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Add them in .env.local (see .env.example)."
+      "Missing NEXT_PUBLIC_SUPABASE_URL and/or Supabase server key. Set SUPABASE_SERVICE_ROLE_KEY (preferred) or SUPABASE_SECRET_KEY."
     );
   }
   assertValidServiceRoleKey(key);
