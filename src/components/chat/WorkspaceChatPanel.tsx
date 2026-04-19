@@ -10,11 +10,12 @@ import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvide
 type ChatChannel = {
   id: string;
   orgId: string;
-  type: "direct" | "project";
+  type: "direct" | "project" | "group";
   projectId: string | null;
   title: string;
   unreadCount: number;
   lastMessageAt: string | null;
+  memberUserIds: string[];
 };
 
 type ChatMessage = {
@@ -22,6 +23,12 @@ type ChatMessage = {
   channelId: string;
   userId: string;
   body: string;
+  attachments?: Array<{
+    id: string;
+    name: string;
+    mimeType?: string;
+    size?: number;
+  }>;
   createdAt: string;
 };
 
@@ -55,12 +62,17 @@ export default function WorkspaceChatPanel() {
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composer, setComposer] = useState("");
+  const [pendingAttachments, setPendingAttachments] = useState<
+    Array<{ id: string; name: string; mimeType?: string; size?: number }>
+  >([]);
   const [query, setQuery] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const [orgMembers, setOrgMembers] = useState<
     Array<{ userId: string; name: string; email: string | null }>
   >([]);
   const [directTarget, setDirectTarget] = useState("");
+  const [groupTitle, setGroupTitle] = useState("");
+  const [groupMemberIds, setGroupMemberIds] = useState<string[]>([]);
   const { displayName: memberName } = useMemberDirectory();
 
   const loadChannels = useCallback(async () => {
@@ -85,13 +97,39 @@ export default function WorkspaceChatPanel() {
   const loadMembers = useCallback(async () => {
     const res = await fetch("/api/workspace/organization", { credentials: "same-origin" });
     const data = (await res.json().catch(() => ({}))) as {
-      members?: Array<{ userId: string; name: string; email: string | null }>;
+      members?: Array<{
+        userId: string;
+        displayName?: string;
+        profile?: {
+          firstName?: string | null;
+          lastName?: string | null;
+          username?: string | null;
+          primaryEmail?: string | null;
+        };
+      }>;
     };
     if (!res.ok) return;
-    const next = (data.members ?? []).filter((m) => m.userId !== userId);
+    const next = (data.members ?? [])
+      .filter((m) => m.userId !== userId)
+      .map((m) => {
+        const p = m.profile;
+        const fromProfile =
+          [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim() ||
+          p?.username?.trim() ||
+          p?.primaryEmail?.split("@")[0]?.trim();
+        const name = (m.displayName ?? fromProfile ?? "Teammate").trim();
+        return {
+          userId: m.userId,
+          name,
+          email: p?.primaryEmail ?? null,
+        };
+      });
     setOrgMembers(next);
     if (!directTarget && next.length > 0) setDirectTarget(next[0].userId);
-  }, [directTarget, userId]);
+    if (groupMemberIds.length === 0 && next.length > 0) {
+      setGroupMemberIds([next[0].userId]);
+    }
+  }, [directTarget, userId, groupMemberIds.length]);
 
   const selectedChannel = useMemo(
     () => channels.find((channel) => channel.id === selectedChannelId) ?? null,
@@ -102,7 +140,12 @@ export default function WorkspaceChatPanel() {
     const q = query.trim().toLowerCase();
     if (!q) return channels;
     return channels.filter((channel) => {
-      const label = channel.type === "project" ? channel.title : memberName(dmPeerId(channel.title, userId) ?? "", userId, displayName);
+      const label =
+        channel.type === "project"
+          ? channel.title
+          : channel.type === "group"
+            ? channel.title
+            : memberName(dmPeerId(channel.title, userId) ?? "", userId, displayName);
       return label.toLowerCase().includes(q);
     });
   }, [channels, query, userId, memberName, displayName]);
@@ -179,7 +222,7 @@ export default function WorkspaceChatPanel() {
   }, []);
 
   async function sendMessage() {
-    if (!selectedChannelId || !composer.trim()) return;
+    if (!selectedChannelId || (!composer.trim() && pendingAttachments.length === 0)) return;
     const body = composer;
     setComposer("");
     await fetch("/api/chat/messages", {
@@ -189,8 +232,10 @@ export default function WorkspaceChatPanel() {
       body: JSON.stringify({
         channelId: selectedChannelId,
         body,
+        attachments: pendingAttachments,
       }),
     });
+    setPendingAttachments([]);
     await loadMessages(selectedChannelId);
     await loadChannels();
   }
@@ -201,12 +246,33 @@ export default function WorkspaceChatPanel() {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
-      body: JSON.stringify({ targetUserId: directTarget }),
+      body: JSON.stringify({ type: "direct", targetUserId: directTarget }),
     });
     if (!res.ok) return;
     const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel };
     await loadChannels();
     if (data.channel?.id) setSelectedChannelId(data.channel.id);
+  }
+
+  async function createGroup() {
+    if (!groupTitle.trim() || groupMemberIds.length === 0) return;
+    const res = await fetch("/api/chat/channels", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        type: "group",
+        title: groupTitle.trim(),
+        memberUserIds: groupMemberIds,
+      }),
+    });
+    if (!res.ok) return;
+    const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel };
+    await loadChannels();
+    if (data.channel?.id) {
+      setSelectedChannelId(data.channel.id);
+      setGroupTitle("");
+    }
   }
 
   const hasUnread = unreadCount > 0;
@@ -289,6 +355,47 @@ export default function WorkspaceChatPanel() {
                           New DM
                         </button>
                       </div>
+                      <div className="space-y-2 rounded-md border border-r5-border-subtle/60 bg-r5-surface-secondary/30 p-2">
+                        <input
+                          value={groupTitle}
+                          onChange={(event) => setGroupTitle(event.target.value)}
+                          placeholder="Group name"
+                          className="h-9 w-full rounded-md border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 text-xs text-r5-text-primary"
+                        />
+                        <div className="max-h-20 space-y-1 overflow-y-auto">
+                          {orgMembers.map((member) => {
+                            const checked = groupMemberIds.includes(member.userId);
+                            return (
+                              <label
+                                key={`group-${member.userId}`}
+                                className="flex min-h-8 items-center gap-2 rounded px-1.5 text-[11px] text-r5-text-secondary"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(event) =>
+                                    setGroupMemberIds((prev) =>
+                                      event.target.checked
+                                        ? [...new Set([...prev, member.userId])]
+                                        : prev.filter((id) => id !== member.userId)
+                                    )
+                                  }
+                                />
+                                <span className="truncate">
+                                  {member.name || member.email || member.userId}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void createGroup()}
+                          className="h-8 w-full rounded-md border border-r5-border-subtle bg-r5-surface-hover px-2 text-[11px] font-medium text-r5-text-primary"
+                        >
+                          Create group
+                        </button>
+                      </div>
                     </div>
                     <div className="no-scrollbar min-h-0 space-y-1 overflow-y-auto p-2">
                       {loadingChannels && channels.length === 0 ? (
@@ -301,7 +408,9 @@ export default function WorkspaceChatPanel() {
                           const label =
                             channel.type === "project"
                               ? `# ${channel.title}`
-                              : memberName(peerId ?? "", userId, displayName);
+                              : channel.type === "group"
+                                ? `# ${channel.title}`
+                                : memberName(peerId ?? "", userId, displayName);
                           return (
                             <button
                               key={channel.id}
@@ -365,7 +474,29 @@ export default function WorkspaceChatPanel() {
                                   {memberName(message.userId, userId, displayName)}
                                 </p>
                               ) : null}
-                              <p className="whitespace-pre-wrap leading-relaxed">{message.body}</p>
+                              {message.body !== "[attachment]" ? (
+                                <p className="whitespace-pre-wrap leading-relaxed">{message.body}</p>
+                              ) : null}
+                              {message.attachments && message.attachments.length > 0 ? (
+                                <div className="mt-2 space-y-1">
+                                  {message.attachments.map((attachment) => (
+                                    <div
+                                      key={attachment.id}
+                                      className="rounded-md border border-r5-border-subtle/70 bg-r5-surface-primary/50 px-2 py-1 text-[11px] text-r5-text-secondary"
+                                    >
+                                      <span className="font-medium text-r5-text-primary">
+                                        {attachment.name}
+                                      </span>
+                                      {typeof attachment.size === "number"
+                                        ? ` · ${Math.max(
+                                            1,
+                                            Math.round(attachment.size / 1024)
+                                          )}KB`
+                                        : ""}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
                               <p className="mt-1 text-[10px] text-r5-text-tertiary">{prettyTime(message.createdAt)}</p>
                             </article>
                           );
@@ -381,6 +512,28 @@ export default function WorkspaceChatPanel() {
                           void sendMessage();
                         }}
                       >
+                        <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/40 px-3 text-xs text-r5-text-secondary hover:text-r5-text-primary">
+                          Attach
+                          <input
+                            type="file"
+                            className="sr-only"
+                            multiple
+                            onChange={(event) => {
+                              const files = Array.from(event.target.files ?? []);
+                              if (files.length === 0) return;
+                              setPendingAttachments((prev) => [
+                                ...prev,
+                                ...files.slice(0, 8).map((file) => ({
+                                  id: crypto.randomUUID(),
+                                  name: file.name.slice(0, 260),
+                                  mimeType: file.type || "application/octet-stream",
+                                  size: file.size,
+                                })),
+                              ].slice(0, 8));
+                              event.currentTarget.value = "";
+                            }}
+                          />
+                        </label>
                         <textarea
                           value={composer}
                           onChange={(event) => setComposer(event.target.value)}
@@ -390,13 +543,31 @@ export default function WorkspaceChatPanel() {
                         />
                         <button
                           type="submit"
-                          disabled={!selectedChannelId || !composer.trim()}
+                          disabled={!selectedChannelId || (!composer.trim() && pendingAttachments.length === 0)}
                           className="inline-flex h-10 items-center gap-2 rounded-lg border border-r5-border-subtle bg-r5-surface-hover px-3 text-sm font-medium text-r5-text-primary disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Send className="h-3.5 w-3.5" />
                           Send
                         </button>
                       </form>
+                      {pendingAttachments.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {pendingAttachments.map((attachment) => (
+                            <button
+                              key={attachment.id}
+                              type="button"
+                              onClick={() =>
+                                setPendingAttachments((prev) =>
+                                  prev.filter((item) => item.id !== attachment.id)
+                                )
+                              }
+                              className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-2 py-0.5 text-[10px] text-r5-text-secondary"
+                            >
+                              {attachment.name} ×
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
                     </footer>
                   </section>
                 </div>

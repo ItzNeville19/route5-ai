@@ -13,6 +13,8 @@ import type { UpgradePromptPayload } from "@/lib/billing/types";
 
 type OrgMemberOption = {
   userId: string;
+  /** From API when present — preferred over client-side inference. */
+  displayName?: string;
   profile: {
     firstName: string | null;
     lastName: string | null;
@@ -23,6 +25,7 @@ type OrgMemberOption = {
 };
 
 function displayNameForMember(m: OrgMemberOption): string {
+  if (m.displayName?.trim()) return m.displayName.trim();
   const fn = m.profile.firstName?.trim();
   const ln = m.profile.lastName?.trim();
   const combined = [fn, ln].filter(Boolean).join(" ").trim();
@@ -68,7 +71,7 @@ const ACTIVE_PROJECT_STORAGE_KEY = "route5.headerProjectId";
 export default function NewProjectModal() {
   const { t } = useI18n();
   const router = useRouter();
-  const { pushToast, shellModifierClass } = useWorkspaceExperience();
+  const { pushToast } = useWorkspaceExperience();
   const { showUpgrade } = useBillingUpgrade();
   const { refreshAll } = useWorkspaceData();
 
@@ -127,21 +130,28 @@ export default function NewProjectModal() {
     void fetch("/api/workspace/organization", { credentials: "same-origin" })
       .then(async (res) => {
         const data = (await res.json().catch(() => ({}))) as {
-          members?: OrgMemberOption[];
+          members?: Array<
+            OrgMemberOption & { displayName?: string; profile?: OrgMemberOption["profile"] }
+          >;
         };
         if (!res.ok || cancelled) return;
         const raw = data.members ?? [];
         setOrgMembers(
-          raw.map((row) => ({
-            userId: row.userId,
-            profile: {
+          raw.map((row) => {
+            const profile = {
               firstName: row.profile?.firstName ?? null,
               lastName: row.profile?.lastName ?? null,
               username: row.profile?.username ?? null,
               imageUrl: row.profile?.imageUrl ?? null,
               primaryEmail: row.profile?.primaryEmail ?? null,
-            },
-          }))
+            };
+            const opt: OrgMemberOption = {
+              userId: String(row.userId ?? ""),
+              displayName: typeof row.displayName === "string" ? row.displayName : undefined,
+              profile,
+            };
+            return { ...opt, displayName: opt.displayName ?? displayNameForMember(opt) };
+          })
         );
       })
       .catch(() => {
@@ -231,18 +241,23 @@ export default function NewProjectModal() {
             onClick={close}
           />
           <div
-            className={`relative z-[1] flex max-h-[min(92vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border border-zinc-200/90 bg-white/95 text-zinc-900 shadow-[0_25px_80px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:rounded-3xl ${shellModifierClass}`}
+            className="relative z-[1] isolate flex max-h-[min(92vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border !border-zinc-200 shadow-[0_25px_80px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:rounded-3xl"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.98)",
+              color: "#18181b",
+              colorScheme: "light",
+            }}
           >
-            <header className="relative flex shrink-0 items-center justify-between border-b border-zinc-200/90 bg-white/80 px-4 py-3 backdrop-blur-sm">
+            <header className="relative flex shrink-0 items-center justify-between border-b !border-zinc-200 bg-white px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100">
                   <FolderKanban className="h-4 w-4 text-zinc-700" aria-hidden />
                 </span>
                 <div>
-                  <h2 id="new-project-modal-title" className="text-[17px] font-semibold text-zinc-900">
+                  <h2 id="new-project-modal-title" className="text-[17px] font-semibold !text-zinc-900">
                     {t("modal.newProject.title")}
                   </h2>
-                  <p className="mt-0.5 text-[12px] text-zinc-500">
+                  <p className="mt-0.5 text-[12px] !text-zinc-500">
                     Create a project and sync it across every signed-in device.
                   </p>
                 </div>
@@ -256,7 +271,7 @@ export default function NewProjectModal() {
                 <X className="h-5 w-5" />
               </button>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto bg-white/95 px-4 py-4 sm:px-5">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4 sm:px-5">
               <div className="space-y-4">
                 <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-3">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
@@ -286,7 +301,7 @@ export default function NewProjectModal() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t("modal.newProject.namePlaceholder")}
-                    className="mt-2 min-h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+                    className="mt-2 min-h-11 w-full rounded-2xl border !border-zinc-200 !bg-white px-4 py-3 text-[15px] !text-zinc-900 placeholder:!text-zinc-400 focus:!border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
                     autoFocus
                   />
                 </div>
@@ -301,13 +316,13 @@ export default function NewProjectModal() {
                     onChange={(e) => setDescription(e.target.value.slice(0, 240))}
                     rows={3}
                     placeholder="What this project is responsible for"
-                    className="mt-2 w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+                    className="mt-2 w-full resize-none rounded-2xl border !border-zinc-200 !bg-white px-4 py-3 text-[14px] !text-zinc-900 placeholder:!text-zinc-400 focus:!border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
                   />
                 </div>
 
                 <div>
                   <label className="text-[12px] font-medium text-zinc-600">Team members</label>
-                  <div className="mt-2 max-h-[180px] space-y-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50/90 p-2">
+                  <div className="mt-2 max-h-[180px] space-y-1 overflow-y-auto rounded-2xl border !border-zinc-200 !bg-zinc-50 p-2">
                     {orgMembers.length === 0 ? (
                       <p className="px-2 py-2 text-[12px] text-zinc-500">
                         Add organization members first to assign collaborators.
@@ -315,12 +330,13 @@ export default function NewProjectModal() {
                     ) : (
                       orgMembers.map((member) => {
                         const checked = selectedMemberIds.includes(member.userId);
-                        const label = displayNameForMember(member);
+                        const label =
+                          member.displayName?.trim() || displayNameForMember(member);
                         const subtitle = member.profile.primaryEmail?.trim() || null;
                         return (
                           <label
                             key={member.userId}
-                            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] text-zinc-900 hover:bg-white"
+                            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] !text-zinc-900 hover:!bg-white"
                           >
                             <input
                               type="checkbox"
@@ -405,7 +421,7 @@ export default function NewProjectModal() {
               </div>
             </div>
 
-            <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-zinc-200/90 bg-white/90 px-4 py-3 backdrop-blur-sm">
+            <footer className="flex shrink-0 items-center justify-end gap-2 border-t !border-zinc-200 !bg-white px-4 py-3">
               <button
                 type="button"
                 onClick={close}

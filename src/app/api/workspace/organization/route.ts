@@ -15,21 +15,40 @@ import { appBaseUrl } from "@/lib/integrations/app-url";
 
 export const runtime = "nodejs";
 
+type MemberProfile = {
+  firstName: string | null;
+  lastName: string | null;
+  username: string | null;
+  imageUrl: string | null;
+  primaryEmail: string | null;
+};
+
 type MemberDto = {
   userId: string;
+  /** Precomputed for clients (avoids raw Clerk ids in UI). */
+  displayName: string;
   role: OrgRole;
   joinedAt: string;
   status: string;
   invitedBy: string | null;
   activeCommitmentsCount: number;
-  profile: {
-    firstName: string | null;
-    lastName: string | null;
-    username: string | null;
-    imageUrl: string | null;
-    primaryEmail: string | null;
-  };
+  profile: MemberProfile;
 };
+
+function displayNameFromProfile(p: MemberProfile): string {
+  const full = [p.firstName, p.lastName]
+    .filter((x): x is string => Boolean(x?.trim()))
+    .map((x) => x.trim())
+    .join(" ");
+  if (full) return full;
+  if (p.username?.trim()) return p.username.trim();
+  const em = p.primaryEmail?.trim();
+  if (em) {
+    const local = em.split("@")[0]?.trim();
+    if (local) return local;
+  }
+  return "Teammate";
+}
 
 function normalizeRole(input: unknown): OrgRole | null {
   const role = String(input ?? "").trim().toLowerCase();
@@ -63,36 +82,40 @@ export async function GET() {
       members.map(async (member) => {
         try {
           const u = await clerk.users.getUser(member.userId);
+          const profile: MemberProfile = {
+            firstName: u.firstName,
+            lastName: u.lastName,
+            username: u.username,
+            imageUrl: u.imageUrl,
+            primaryEmail: u.primaryEmailAddress?.emailAddress ?? null,
+          };
           return {
             userId: member.userId,
+            displayName: displayNameFromProfile(profile),
             role: member.role,
             joinedAt: member.joinedAt,
             status: member.status,
             invitedBy: member.invitedBy,
             activeCommitmentsCount: activeCountByUser.get(member.userId) ?? 0,
-            profile: {
-              firstName: u.firstName,
-              lastName: u.lastName,
-              username: u.username,
-              imageUrl: u.imageUrl,
-              primaryEmail: u.primaryEmailAddress?.emailAddress ?? null,
-            },
+            profile,
           };
         } catch {
+          const profile: MemberProfile = {
+            firstName: null,
+            lastName: null,
+            username: null,
+            imageUrl: null,
+            primaryEmail: null,
+          };
           return {
             userId: member.userId,
+            displayName: displayNameFromProfile(profile),
             role: member.role,
             joinedAt: member.joinedAt,
             status: member.status,
             invitedBy: member.invitedBy,
             activeCommitmentsCount: activeCountByUser.get(member.userId) ?? 0,
-            profile: {
-              firstName: null,
-              lastName: null,
-              username: null,
-              imageUrl: null,
-              primaryEmail: null,
-            },
+            profile,
           };
         }
       })
