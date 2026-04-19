@@ -15,8 +15,18 @@ export const dynamic = "force-dynamic";
 
 const postSchema = z.object({
   channelId: z.string().min(1),
-  body: z.string().min(1).max(4000),
-  attachments: z.array(z.unknown()).optional(),
+  body: z.string().max(4000).optional(),
+  attachments: z
+    .array(
+      z.object({
+        id: z.string().min(1).max(120),
+        name: z.string().min(1).max(260),
+        mimeType: z.string().max(180).optional(),
+        size: z.number().int().nonnegative().max(50 * 1024 * 1024).optional(),
+      })
+    )
+    .max(8)
+    .optional(),
 });
 
 export async function GET(req: Request) {
@@ -39,10 +49,14 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = postSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  const normalizedBody = (parsed.data.body ?? "").trim();
+  if (!normalizedBody && (parsed.data.attachments?.length ?? 0) === 0) {
+    return NextResponse.json({ error: "Message or attachment required" }, { status: 400 });
+  }
   const message = await createChatMessage(
     auth.userId,
     parsed.data.channelId,
-    parsed.data.body,
+    normalizedBody || "[attachment]",
     parsed.data.attachments ?? []
   );
   if (!message) return NextResponse.json({ error: "Message could not be created" }, { status: 400 });
@@ -65,7 +79,7 @@ export async function POST(req: Request) {
       userId: memberId,
       type: "chat_message",
       title: "New team message",
-      body: parsed.data.body.slice(0, 160),
+      body: (normalizedBody || "Sent an attachment").slice(0, 160),
       metadata: { channelId: parsed.data.channelId, messageId: message.id, link: "/workspace/chat" },
     });
   }

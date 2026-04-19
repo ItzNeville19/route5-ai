@@ -118,14 +118,18 @@ export function WorkspaceDataProvider({
   const refreshProjects = useCallback(async () => {
     setLoadingProjects(true);
     try {
-      const res = await fetch("/api/projects", { credentials: "same-origin" });
+      const res = await fetch("/api/projects", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       const data = (await res.json().catch(() => ({}))) as {
         projects?: Project[];
       };
       if (!res.ok) return;
       const next = data.projects ?? [];
       setProjects(next);
-      if (activeProjectId && !next.some((p) => p.id === activeProjectId)) {
+      const scoped = readScopedProjectId();
+      if (scoped && !next.some((p) => p.id === scoped)) {
         clearScopedProjectId();
       }
     } catch {
@@ -133,7 +137,7 @@ export function WorkspaceDataProvider({
     } finally {
       setLoadingProjects(false);
     }
-  }, [activeProjectId]);
+  }, []);
 
   const refreshEntitlements = useCallback(async () => {
     setLoadingEntitlements(true);

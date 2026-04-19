@@ -173,6 +173,7 @@ export default function NewProjectModal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
+        cache: "no-store",
         body: JSON.stringify({
           name: trimmed,
           ...(icon ? { iconEmoji: icon } : {}),
@@ -204,18 +205,33 @@ export default function NewProjectModal() {
         return;
       }
       const pid = data.project?.id;
-      if (pid) {
-        try {
-          localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, pid);
-          window.dispatchEvent(new CustomEvent("route5:project-scope-changed", { detail: { projectId: pid } }));
-        } catch {
-          /* ignore */
-        }
-        pushToast(`Project "${trimmed}" created`, "success");
-        await refreshAll();
-        close();
-        router.push(`/projects/${pid}`, { scroll: true });
+      if (!pid) {
+        setError(t("modal.newProject.errorCreate"));
+        return;
       }
+      const verify = await fetch(`/api/projects/${encodeURIComponent(pid)}`, {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (!verify.ok) {
+        const errJson = (await verify.json().catch(() => ({}))) as { error?: string };
+        setError(
+          errJson.error ??
+            "Project was created but the app could not load it. Check that Supabase URL and service role key are set on the server."
+        );
+        return;
+      }
+      try {
+        localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, pid);
+        window.dispatchEvent(new CustomEvent("route5:project-scope-changed", { detail: { projectId: pid } }));
+      } catch {
+        /* ignore */
+      }
+      pushToast(`Project "${trimmed}" created`, "success");
+      await refreshAll();
+      close();
+      router.refresh();
+      router.push(`/projects/${pid}`, { scroll: true });
     } catch {
       setError(t("modal.newProject.errorCreate"));
     } finally {

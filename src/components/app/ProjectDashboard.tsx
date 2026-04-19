@@ -70,38 +70,49 @@ export default function ProjectDashboard({ projectId }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const fetchOpts: RequestInit = { credentials: "same-origin", cache: "no-store" };
+
+    async function loadDetail(attempt: number): Promise<void> {
       setLoading(true);
       try {
         const [projRes, commitmentsRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}`, { credentials: "same-origin" }),
-          fetch(`/api/projects/${projectId}/commitments?filter=all`, { credentials: "same-origin" }),
+          fetch(`/api/projects/${projectId}`, fetchOpts),
+          fetch(`/api/projects/${projectId}/commitments?filter=all`, fetchOpts),
         ]);
 
         const projData = (await projRes.json().catch(() => ({}))) as ProjectDetailResponse;
         const commitmentsData = (await commitmentsRes.json().catch(() => ({}))) as ProjectCommitmentsResponse;
 
-        if (!cancelled) {
-          if (projRes.ok && projData.project) {
-            setProject(projData.project);
-          } else {
-            setProject(null);
-            if (projRes.status === 404) {
-              const listRes = await fetch("/api/projects", { credentials: "same-origin" });
-              const listData = (await listRes.json().catch(() => ({}))) as { projects?: Project[] };
-              const first = listData.projects?.[0];
-              if (first && first.id !== projectId) {
-                router.replace(`/projects/${first.id}`);
-                return;
-              }
-            }
-          }
+        if (cancelled) return;
+
+        if (projRes.ok && projData.project) {
+          setProject(projData.project);
           setCommitments(commitmentsData.commitments ?? []);
+          return;
+        }
+
+        if (projRes.status === 404 && attempt < 2) {
+          await new Promise((r) => window.setTimeout(r, 450));
+          if (!cancelled) return loadDetail(attempt + 1);
+          return;
+        }
+
+        setProject(null);
+        setCommitments(commitmentsData.commitments ?? []);
+        if (projRes.status === 404) {
+          const listRes = await fetch("/api/projects", fetchOpts);
+          const listData = (await listRes.json().catch(() => ({}))) as { projects?: Project[] };
+          const first = listData.projects?.[0];
+          if (first && first.id !== projectId) {
+            router.replace(`/projects/${first.id}`);
+          }
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+
+    void loadDetail(0);
 
     return () => {
       cancelled = true;
@@ -229,6 +240,13 @@ export default function ProjectDashboard({ projectId }: Props) {
       {tab === "members" ? (
         <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
           <h2 className="text-[14px] font-semibold text-r5-text-primary">Assigned members</h2>
+          <p className="mt-[var(--r5-space-2)] text-[12px] leading-relaxed text-r5-text-secondary">
+            Invite people under{" "}
+            <Link href="/workspace/organization" className="font-medium text-r5-text-primary underline-offset-2 hover:underline">
+              Organization
+            </Link>{" "}
+            first. After they accept, add them when you create a project (Team members) or include them on the next project you create.
+          </p>
           {project.memberUserIds && project.memberUserIds.length > 0 ? (
             <ul className="mt-[var(--r5-space-3)] space-y-2">
               {project.memberUserIds.map((memberId) => (
@@ -252,7 +270,7 @@ export default function ProjectDashboard({ projectId }: Props) {
         <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
           <h2 className="text-[14px] font-semibold text-r5-text-primary">Project channel</h2>
           <p className="mt-[var(--r5-space-2)] text-[13px] text-r5-text-secondary">
-            Every project has a shared channel in Team Chat for decisions, follow-ups, and mentions.
+            Every project has a shared channel in Team Chat. Open Team Chat to message this project, start DMs, or create a group channel (sidebar → Chat or the chat icon).
           </p>
           <div className="mt-[var(--r5-space-3)] flex gap-2">
             <button

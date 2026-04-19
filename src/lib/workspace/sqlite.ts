@@ -642,6 +642,57 @@ function getDb(): Database.Database {
       `ALTER TABLE org_commitments ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE SET NULL`
     );
   }
+  const projectMemberCols = (
+    database.prepare(`PRAGMA table_info(project_members)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!projectMemberCols.includes("updated_at")) {
+    database.exec(`ALTER TABLE project_members ADD COLUMN updated_at TEXT`);
+    database.exec(`UPDATE project_members SET updated_at = created_at WHERE updated_at IS NULL`);
+  }
+  const chatChannelCols = (
+    database.prepare(`PRAGMA table_info(chat_channels)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!chatChannelCols.includes("title")) {
+    database.exec(`ALTER TABLE chat_channels ADD COLUMN title TEXT NOT NULL DEFAULT 'Channel'`);
+  }
+  if (!chatChannelCols.includes("created_by")) {
+    database.exec(`ALTER TABLE chat_channels ADD COLUMN created_by TEXT`);
+  }
+  if (!chatChannelCols.includes("updated_at")) {
+    database.exec(`ALTER TABLE chat_channels ADD COLUMN updated_at TEXT`);
+    database.exec(`UPDATE chat_channels SET updated_at = created_at WHERE updated_at IS NULL`);
+  }
+  const chatChannelMemberCols = (
+    database.prepare(`PRAGMA table_info(chat_channel_members)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!chatChannelMemberCols.includes("updated_at")) {
+    database.exec(`ALTER TABLE chat_channel_members ADD COLUMN updated_at TEXT`);
+    database.exec(
+      `UPDATE chat_channel_members SET updated_at = created_at WHERE updated_at IS NULL`
+    );
+  }
+  const chatMessageCols = (
+    database.prepare(`PRAGMA table_info(chat_messages)`).all() as { name: string }[]
+  ).map((c) => c.name);
+  if (!chatMessageCols.includes("user_id")) {
+    database.exec(`ALTER TABLE chat_messages ADD COLUMN user_id TEXT`);
+    database.exec(`UPDATE chat_messages SET user_id = sender_id WHERE user_id IS NULL`);
+  }
+  if (!chatMessageCols.includes("body")) {
+    database.exec(`ALTER TABLE chat_messages ADD COLUMN body TEXT NOT NULL DEFAULT ''`);
+    database.exec(`UPDATE chat_messages SET body = content WHERE body = ''`);
+  }
+  if (!chatMessageCols.includes("attachments_json")) {
+    database.exec(`ALTER TABLE chat_messages ADD COLUMN attachments_json TEXT NOT NULL DEFAULT '[]'`);
+    database.exec(`UPDATE chat_messages SET attachments_json = attachments WHERE attachments_json = '[]'`);
+  }
+  if (!chatMessageCols.includes("metadata_json")) {
+    database.exec(`ALTER TABLE chat_messages ADD COLUMN metadata_json TEXT NOT NULL DEFAULT '{}'`);
+  }
+  if (!chatMessageCols.includes("updated_at")) {
+    database.exec(`ALTER TABLE chat_messages ADD COLUMN updated_at TEXT`);
+    database.exec(`UPDATE chat_messages SET updated_at = created_at WHERE updated_at IS NULL`);
+  }
   db = database;
   return database;
 }

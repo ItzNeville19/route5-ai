@@ -95,3 +95,34 @@ create policy "deny_all_project_members" on public.project_members for all using
 create policy "deny_all_chat_channels" on public.chat_channels for all using (false);
 create policy "deny_all_chat_channel_members" on public.chat_channel_members for all using (false);
 create policy "deny_all_chat_messages" on public.chat_messages for all using (false);
+
+-- Forward-compatible columns for richer chat UX.
+alter table public.project_members
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.chat_channels
+  add column if not exists title text not null default 'Channel',
+  add column if not exists created_by text,
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.chat_channels
+  drop constraint if exists chat_channels_type_check;
+alter table public.chat_channels
+  add constraint chat_channels_type_check check (type in ('direct', 'project', 'group'));
+
+alter table public.chat_channel_members
+  add column if not exists updated_at timestamptz not null default now();
+
+alter table public.chat_messages
+  add column if not exists user_id text,
+  add column if not exists body text not null default '',
+  add column if not exists attachments_json jsonb not null default '[]'::jsonb,
+  add column if not exists metadata_json jsonb not null default '{}'::jsonb,
+  add column if not exists updated_at timestamptz not null default now();
+
+update public.chat_messages
+set
+  user_id = coalesce(user_id, sender_id),
+  body = case when body = '' then coalesce(content, '') else body end,
+  attachments_json = coalesce(attachments_json, attachments, '[]'::jsonb)
+where true;

@@ -5,8 +5,9 @@ import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { listOrganizationMembers } from "@/lib/workspace/org-members";
 import { listProjectsForUser } from "@/lib/workspace/store";
+import { listProjectMemberIds } from "@/lib/workspace/project-members";
 
-export type ChatChannelType = "direct" | "project";
+export type ChatChannelType = "direct" | "project" | "group";
 
 export type ChatChannelRow = {
   id: string;
@@ -19,6 +20,7 @@ export type ChatChannelRow = {
   updatedAt: string;
   unreadCount: number;
   lastMessageAt: string | null;
+  memberUserIds: string[];
 };
 
 export type ChatMessageRow = {
@@ -64,7 +66,13 @@ type SqliteMessageRecord = {
   updated_at: string;
 };
 
-function toChannel(row: SqliteChannelRecord & { unread_count?: number; last_message_at?: string | null }): ChatChannelRow {
+function toChannel(
+  row: SqliteChannelRecord & {
+    unread_count?: number;
+    last_message_at?: string | null;
+    member_user_ids?: string[];
+  }
+): ChatChannelRow {
   return {
     id: row.id,
     orgId: row.org_id,
@@ -76,6 +84,7 @@ function toChannel(row: SqliteChannelRecord & { unread_count?: number; last_mess
     updatedAt: row.updated_at,
     unreadCount: Number(row.unread_count ?? 0),
     lastMessageAt: row.last_message_at ?? null,
+    memberUserIds: row.member_user_ids ?? [],
   };
 }
 
@@ -110,12 +119,15 @@ export async function ensureProjectChannelsForUser(userId: string): Promise<void
   }
 }
 
-async function ensureProjectChannel(
+/** Ensures a project-scoped chat channel exists and memberships match project members. */
+export async function ensureProjectChannel(
   orgId: string,
   projectId: string,
   title: string,
   actorUserId: string
 ): Promise<string> {
+  const projectMemberIds = await listProjectMemberIds(projectId);
+  const membersToJoin = [...new Set([actorUserId, ...projectMemberIds])];
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     const existing = await supabase
@@ -127,7 +139,13 @@ async function ensureProjectChannel(
       .maybeSingle<{ id: string }>();
     const found = existing.data?.id;
     if (found) {
-      await upsertChatMembership(found, actorUserId);
+      for (const memberId of membersToJoin) {
+        await upsertChatMembership(found, memberId);
+      }
+      await supabase
+        .from("chat_channels")
+        .update({ title: title.slice(0, 200), updated_at: nowIso() })
+        .eq("id", found);
       return found;
     }
     const id = uuid();
@@ -142,7 +160,9 @@ async function ensureProjectChannel(
       created_at: now,
       updated_at: now,
     });
-    await upsertChatMembership(id, actorUserId);
+    for (const memberId of membersToJoin) {
+      await upsertChatMembership(id, memberId);
+    }
     return id;
   }
   const db = getSqliteHandle();
@@ -154,11 +174,18 @@ async function ensureProjectChannel(
     )
     .get(orgId, projectId) as { id: string } | undefined;
   if (existing?.id) {
-    db.prepare(
-      `insert into chat_channel_members (id, channel_id, user_id, last_read_at, created_at, updated_at)
-       values (?, ?, ?, ?, ?, ?)
-       on conflict(channel_id, user_id) do update set updated_at = excluded.updated_at`
-    ).run(uuid(), existing.id, actorUserId, null, nowIso(), nowIso());
+    for (const memberId of membersToJoin) {
+      db.prepare(
+        `insert into chat_channel_members (id, channel_id, user_id, last_read_at, created_at, updated_at)
+         values (?, ?, ?, ?, ?, ?)
+         on conflict(channel_id, user_id) do update set updated_at = excluded.updated_at`
+      ).run(uuid(), existing.id, memberId, null, nowIso(), nowIso());
+    }
+    db.prepare(`update chat_channels set title = ?, updated_at = ? where id = ?`).run(
+      title.slice(0, 200),
+      nowIso(),
+      existing.id
+    );
     return existing.id;
   }
   const id = uuid();
@@ -167,10 +194,12 @@ async function ensureProjectChannel(
     `insert into chat_channels (id, org_id, type, project_id, title, created_by, created_at, updated_at)
      values (?, ?, 'project', ?, ?, ?, ?, ?)`
   ).run(id, orgId, projectId, title.slice(0, 200), actorUserId, now, now);
-  db.prepare(
-    `insert into chat_channel_members (id, channel_id, user_id, last_read_at, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?)`
-  ).run(uuid(), id, actorUserId, null, now, now);
+  for (const memberId of membersToJoin) {
+    db.prepare(
+      `insert into chat_channel_members (id, channel_id, user_id, last_read_at, created_at, updated_at)
+       values (?, ?, ?, ?, ?, ?)`
+    ).run(uuid(), id, memberId, null, now, now);
+  }
   return id;
 }
 
@@ -218,6 +247,10 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
       .eq("org_id", orgId)
       .in("id", channelIds)
       .order("updated_at", { ascending: false });
+    const { data: members } = await supabase
+      .from("chat_channel_members")
+      .select("channel_id,user_id")
+      .in("channel_id", channelIds);
     const { data: messages } = await supabase
       .from("chat_messages")
       .select("channel_id,created_at")
@@ -236,6 +269,14 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
       if (!entry.latest) entry.latest = createdAt;
       if (!entry.readAt || createdAt > entry.readAt) entry.count += 1;
     }
+    const memberIdsByChannel = new Map<string, string[]>();
+    for (const row of members ?? []) {
+      const channelId = String((row as { channel_id: string }).channel_id);
+      const memberUserId = String((row as { user_id: string }).user_id);
+      const list = memberIdsByChannel.get(channelId) ?? [];
+      list.push(memberUserId);
+      memberIdsByChannel.set(channelId, list);
+    }
     return (channels ?? []).map((channel) => {
       const stats = byChannel.get(String((channel as { id: string }).id));
       return {
@@ -249,6 +290,7 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
         updatedAt: String((channel as { updated_at: string }).updated_at),
         unreadCount: stats?.count ?? 0,
         lastMessageAt: stats?.latest ?? null,
+        memberUserIds: memberIdsByChannel.get(String((channel as { id: string }).id)) ?? [],
       };
     });
   }
@@ -274,7 +316,16 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
        order by coalesce(last_message_at, c.updated_at) desc`
     )
     .all(orgId, userId) as Array<SqliteChannelRecord & { unread_count: number; last_message_at: string | null }>;
-  return rows.map((row) => toChannel(row));
+  const withMembers = rows.map((row) => {
+    const memberRows = db
+      .prepare(`select user_id from chat_channel_members where channel_id = ?`)
+      .all(row.id) as Array<{ user_id: string }>;
+    return {
+      ...row,
+      member_user_ids: memberRows.map((memberRow) => memberRow.user_id),
+    };
+  });
+  return withMembers.map((row) => toChannel(row));
 }
 
 export async function listMessagesForChannel(userId: string, channelId: string): Promise<ChatMessageRow[]> {
@@ -377,6 +428,42 @@ export async function createDirectChannel(userId: string, targetUserId: string):
   }
   const channels = await listChannelsForUser(userId);
   return channels.find((channel) => channel.title === `dm:${pairKey}`) ?? null;
+}
+
+export async function createGroupChannel(
+  userId: string,
+  title: string,
+  memberUserIds: string[]
+): Promise<ChatChannelRow | null> {
+  if (!isSupabaseConfigured()) return null;
+  const channelTitle = title.trim().slice(0, 200);
+  if (!channelTitle) return null;
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  const members = await listOrganizationMembers(orgId);
+  const validMembers = new Set(members.map((member) => member.userId));
+  const participants = [...new Set([userId, ...memberUserIds])]
+    .filter((id) => validMembers.has(id))
+    .slice(0, 40);
+  if (participants.length < 2) return null;
+
+  const channelId = uuid();
+  const now = nowIso();
+  const supabase = getServiceClient();
+  await supabase.from("chat_channels").insert({
+    id: channelId,
+    org_id: orgId,
+    type: "group",
+    project_id: null,
+    title: channelTitle,
+    created_by: userId,
+    created_at: now,
+    updated_at: now,
+  });
+  for (const participant of participants) {
+    await upsertChatMembership(channelId, participant);
+  }
+  const channels = await listChannelsForUser(userId);
+  return channels.find((channel) => channel.id === channelId) ?? null;
 }
 
 export async function createChatMessage(

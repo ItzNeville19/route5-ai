@@ -723,7 +723,7 @@ export default function CapturePanel({
             role="dialog"
             aria-modal="true"
             aria-label="Capture commitments"
-            className="fixed inset-y-0 right-0 z-[210] flex w-full max-w-[400px] flex-col border-l border-r5-border-subtle bg-r5-surface-primary/95 shadow-[0_0_0_1px_rgba(255,255,255,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+            className="fixed inset-0 z-[210] flex w-full max-w-none flex-col border-r5-border-subtle bg-r5-surface-primary/95 shadow-[0_0_0_1px_rgba(255,255,255,0.04),-24px_0_48px_-12px_rgba(0,0,0,0.45)] backdrop-blur-xl md:inset-y-0 md:right-0 md:max-w-[400px] md:border-l"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -763,7 +763,7 @@ export default function CapturePanel({
               </div>
             ) : null}
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
               {phase === "input" || phase === "processing" ? (
                 <div className="space-y-4">
                   <div
@@ -829,7 +829,7 @@ export default function CapturePanel({
                     <span>{isMobileViewport ? "Use Process text button" : "Cmd+Enter to process"}</span>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap">
                     {(
                       [
                         ["Weekly team sync", "meeting"],
@@ -842,12 +842,12 @@ export default function CapturePanel({
                         type="button"
                         disabled={phase === "processing"}
                         onClick={() => setText(EXAMPLES[key])}
-                        className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary disabled:opacity-50"
+                        className="min-h-11 shrink-0 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary disabled:opacity-50"
                       >
                         {label}
                       </button>
                     ))}
-                    <label className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary">
+                    <label className="min-h-11 shrink-0 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary">
                       <span className="inline-flex items-center gap-1">
                         <Paperclip className="h-3.5 w-3.5" />
                         {fileBusy ? "Importing…" : "Import file"}
@@ -873,7 +873,7 @@ export default function CapturePanel({
                         const template = TEMPLATE_EXAMPLES[key];
                         if (template) setText(template.text);
                       }}
-                      className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary"
+                      className="min-h-11 shrink-0 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/50 px-3 py-1.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-accent/35 hover:text-r5-text-primary"
                     >
                       <option value="">Templates</option>
                       {Object.entries(TEMPLATE_EXAMPLES).map(([key, template]) => (
@@ -1372,7 +1372,7 @@ export default function CapturePanel({
                         </p>
                       ) : null}
 
-                      <div className="sticky bottom-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 py-3 backdrop-blur">
+                      <div className="sticky bottom-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur">
                         <button
                           type="button"
                           data-capture-commit="true"

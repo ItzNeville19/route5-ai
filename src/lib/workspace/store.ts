@@ -29,6 +29,7 @@ import { sendNotification } from "@/lib/notifications/service";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { isProjectMember, listMemberProjectIds } from "@/lib/workspace/project-members";
 import * as sqlite from "@/lib/workspace/sqlite";
 import { appBaseUrl } from "@/lib/app-base-url";
 import type { ProjectBackupItem } from "@/lib/workspace/project-backup";
@@ -176,15 +177,46 @@ export async function listProjectsForUser(userId: string): Promise<Project[]> {
   await ensureOrganizationForClerkUser(userId);
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
-    const { data, error } = await supabase
+    const { data: ownedRows, error } = await supabase
       .from("projects")
       .select("id, clerk_user_id, name, icon_emoji, created_at, updated_at")
       .eq("clerk_user_id", userId)
       .order("updated_at", { ascending: false });
     if (error) throw error;
-    return (data ?? []).map(rowToProject);
+    const memberProjectIds = await listMemberProjectIds(userId);
+    const ownedIds = new Set((ownedRows ?? []).map((row) => String((row as { id: string }).id)));
+    const sharedIds = memberProjectIds.filter((id) => !ownedIds.has(id));
+    let sharedRows: Array<{
+      id: string;
+      clerk_user_id: string;
+      name: string;
+      icon_emoji?: string | null;
+      created_at: string;
+      updated_at: string;
+    }> = [];
+    if (sharedIds.length > 0) {
+      const { data: rows } = await supabase
+        .from("projects")
+        .select("id, clerk_user_id, name, icon_emoji, created_at, updated_at")
+        .in("id", sharedIds);
+      sharedRows = (rows ?? []) as typeof sharedRows;
+    }
+    const merged = [...(ownedRows ?? []), ...sharedRows];
+    return merged
+      .map(rowToProject)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
-  return sqlite.listProjects(userId).map(rowToProject);
+  const owned = sqlite.listProjects(userId).map(rowToProject);
+  const memberProjectIds = await listMemberProjectIds(userId);
+  const extra: Project[] = [];
+  for (const projectId of memberProjectIds) {
+    if (owned.some((project) => project.id === projectId)) continue;
+    const row = sqlite.getProjectById(sqlite.getProjectOwnerClerkId(projectId) ?? "", projectId);
+    if (row) extra.push(rowToProject(row));
+  }
+  return [...owned, ...extra].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 }
 
 export async function createProjectForUser(
@@ -192,6 +224,11 @@ export async function createProjectForUser(
   name: string,
   opts?: { iconEmoji?: string | null }
 ): Promise<Project> {
+  if (process.env.VERCEL === "1" && !isSupabaseConfigured()) {
+    throw new Error(
+      "Supabase is required in production: set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (service role) on Vercel. Ephemeral SQLite cannot persist projects across requests."
+    );
+  }
   const orgId = await ensureOrganizationForClerkUser(userId);
   let icon: string | null = null;
   if (opts?.iconEmoji != null && String(opts.iconEmoji).trim()) {
@@ -254,6 +291,8 @@ export async function getProjectDetailForUser(
   userId: string,
   projectId: string
 ): Promise<{ project: Project; extractions: Extraction[] } | null> {
+  const access = await verifyProjectOwned(userId, projectId);
+  if (!access) return null;
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     const { data: project, error: pErr } = await supabase
@@ -262,7 +301,7 @@ export async function getProjectDetailForUser(
       .eq("id", projectId)
       .maybeSingle();
     if (pErr) throw pErr;
-    if (!project || project.clerk_user_id !== userId) return null;
+    if (!project) return null;
 
     const { data: rows, error: eErr } = await supabase
       .from("extractions")
@@ -290,9 +329,10 @@ export async function getProjectDetailForUser(
     return { project: rowToProject(project), extractions };
   }
 
-  const project = sqlite.getProjectById(userId, projectId);
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId) ?? userId;
+  const project = sqlite.getProjectById(ownerId, projectId);
   if (!project) return null;
-  const rows = sqlite.listExtractionsForProject(userId, projectId);
+  const rows = sqlite.listExtractionsForProject(ownerId, projectId);
   const extractions: Extraction[] = rows.map((row) => {
     let decisions: string[] = [];
     try {
@@ -330,11 +370,22 @@ export async function verifyProjectOwned(
       .eq("id", projectId)
       .maybeSingle();
     if (error) throw error;
-    if (!data || data.clerk_user_id !== userId) return null;
+    if (!data) return null;
+    if (data.clerk_user_id !== userId) {
+      const member = await isProjectMember(userId, projectId);
+      if (!member) return null;
+    }
     return { id: data.id };
   }
   const p = sqlite.getProjectById(userId, projectId);
-  return p ? { id: p.id } : null;
+  if (p) return { id: p.id };
+  const member = await isProjectMember(userId, projectId);
+  if (!member) return null;
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId);
+  if (!ownerId) return null;
+  const ownedRow = sqlite.getProjectById(ownerId, projectId);
+  if (!ownedRow) return null;
+  return { id: ownedRow.id };
 }
 
 export async function updateProjectForUser(
@@ -466,26 +517,18 @@ export async function updateExtractionActions(params: {
   extractionId: string;
   actionItems: ActionItemStored[];
 }): Promise<void> {
+  const access = await verifyProjectOwned(params.userId, params.projectId);
+  if (!access) throw new Error("NOT_FOUND");
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
-    const { data: project, error: pErr } = await supabase
-      .from("projects")
-      .select("id, clerk_user_id")
-      .eq("id", params.projectId)
-      .maybeSingle();
-    if (pErr) throw pErr;
-    if (!project || project.clerk_user_id !== params.userId) {
-      throw new Error("NOT_FOUND");
-    }
-
     const { data: extraction, error: gErr } = await supabase
       .from("extractions")
-      .select("id, project_id, clerk_user_id")
+      .select("id, project_id")
       .eq("id", params.extractionId)
       .eq("project_id", params.projectId)
       .maybeSingle();
     if (gErr) throw gErr;
-    if (!extraction || extraction.clerk_user_id !== params.userId) {
+    if (!extraction) {
       throw new Error("NOT_FOUND");
     }
 
@@ -501,8 +544,9 @@ export async function updateExtractionActions(params: {
     return;
   }
 
+  const ownerId = sqlite.getProjectOwnerClerkId(params.projectId) ?? params.userId;
   sqlite.updateExtractionActionItems(
-    params.userId,
+    ownerId,
     params.projectId,
     params.extractionId,
     params.actionItems
@@ -792,19 +836,8 @@ export async function duplicateExtractionForUser(
 export async function listPaletteProjectsForUser(
   userId: string
 ): Promise<{ id: string; name: string }[]> {
-  await ensureOrganizationForClerkUser(userId);
-  if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("projects")
-      .select("id, name")
-      .eq("clerk_user_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(40);
-    if (error) throw error;
-    return (data ?? []) as { id: string; name: string }[];
-  }
-  return sqlite.listProjectPalette(userId);
+  const projects = await listProjectsForUser(userId);
+  return projects.slice(0, 40).map((project) => ({ id: project.id, name: project.name }));
 }
 
 /** Removes all Route5 workspace rows for this user (before Clerk account deletion). */
@@ -860,13 +893,13 @@ export async function listCommitmentsForProject(
       .from("commitments")
       .select("*")
       .eq("project_id", projectId)
-      .eq("clerk_user_id", userId)
       .is("archived_at", null)
       .order("last_updated_at", { ascending: false });
     if (error) throw error;
     return (data ?? []).map((r) => mapRowToCommitment(r as Parameters<typeof mapRowToCommitment>[0]));
   }
-  return sqlite.listCommitmentsForProject(userId, projectId).map(mapRowToCommitment);
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId) ?? userId;
+  return sqlite.listCommitmentsForProject(ownerId, projectId).map(mapRowToCommitment);
 }
 
 export async function getCommitmentForUser(
@@ -874,6 +907,8 @@ export async function getCommitmentForUser(
   projectId: string,
   commitmentId: string
 ): Promise<Commitment | null> {
+  const access = await verifyProjectOwned(userId, projectId);
+  if (!access) return null;
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
     const { data, error } = await supabase
@@ -881,12 +916,12 @@ export async function getCommitmentForUser(
       .select("*")
       .eq("id", commitmentId)
       .eq("project_id", projectId)
-      .eq("clerk_user_id", userId)
       .maybeSingle();
     if (error) throw error;
     return data ? mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]) : null;
   }
-  const row = sqlite.getCommitmentRow(userId, projectId, commitmentId);
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId) ?? userId;
+  const row = sqlite.getCommitmentRow(ownerId, projectId, commitmentId);
   return row ? mapRowToCommitment(row) : null;
 }
 
@@ -1057,14 +1092,14 @@ export async function updateCommitmentForUser(
       })
       .eq("id", commitmentId)
       .eq("project_id", projectId)
-      .eq("clerk_user_id", userId)
       .select("*")
       .maybeSingle();
     if (error) throw error;
     return data ? mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]) : null;
   }
 
-  const row = sqlite.updateCommitmentRow(userId, projectId, commitmentId, {
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId) ?? userId;
+  const row = sqlite.updateCommitmentRow(ownerId, projectId, commitmentId, {
     title: nextTitle,
     description: nextDesc,
     ownerUserId: nextOwner,
@@ -1113,7 +1148,6 @@ export async function archiveCommitmentForUser(
       })
       .eq("id", commitmentId)
       .eq("project_id", projectId)
-      .eq("clerk_user_id", userId)
       .is("archived_at", null)
       .select("id");
     if (error) throw error;
@@ -1127,7 +1161,8 @@ export async function archiveCommitmentForUser(
     return ok;
   }
 
-  return sqlite.archiveCommitmentRow(userId, projectId, commitmentId, logPayload);
+  const ownerId = sqlite.getProjectOwnerClerkId(projectId) ?? userId;
+  return sqlite.archiveCommitmentRow(ownerId, projectId, commitmentId, logPayload);
 }
 
 /** @deprecated Use archiveCommitmentForUser — retained name for internal account wipe only. */
