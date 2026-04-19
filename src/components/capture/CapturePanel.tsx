@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { useUser } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -156,7 +157,9 @@ export default function CapturePanel({
   const [processNote, setProcessNote] = useState<string | null>(null);
   const [commitError, setCommitError] = useState<string | null>(null);
   const [successCount, setSuccessCount] = useState(0);
-  const [assignees, setAssignees] = useState<{ id: string; label: string }[]>([]);
+  const [assignees, setAssignees] = useState<{ id: string; label: string; imageUrl: string | null }[]>(
+    []
+  );
   const [openOwnerKey, setOpenOwnerKey] = useState<string | null>(null);
   const [openDueKey, setOpenDueKey] = useState<string | null>(null);
   const [expandedSnippets, setExpandedSnippets] = useState<Record<string, boolean>>({});
@@ -198,7 +201,7 @@ export default function CapturePanel({
         [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
         user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
         "You";
-      setAssignees([{ id: selfId, label: me }]);
+      setAssignees([{ id: selfId, label: me, imageUrl: user?.imageUrl ?? null }]);
     }
     const t = window.requestAnimationFrame(() => textareaRef.current?.focus());
     return () => window.cancelAnimationFrame(t);
@@ -224,10 +227,43 @@ export default function CapturePanel({
           [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
           user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
           "You";
-        const list = [...ids].map((id) => ({
-          id,
-          label: id === selfId ? selfLabel : `${id.slice(0, 12)}…`,
-        }));
+
+        type Collab = {
+          userId: string;
+          firstName: string | null;
+          lastName: string | null;
+          username: string | null;
+          imageUrl: string | null;
+          primaryEmail: string | null;
+        };
+        let byId = new Map<string, Collab>();
+        try {
+          const cr = await fetch("/api/workspace/collaborators", { credentials: "same-origin" });
+          const cj = (await cr.json().catch(() => ({}))) as { collaborators?: Collab[] };
+          if (cr.ok && cj.collaborators) {
+            byId = new Map(cj.collaborators.map((c) => [c.userId, c]));
+          }
+        } catch {
+          /* ignore */
+        }
+
+        const list = [...ids].map((id) => {
+          const row = byId.get(id);
+          const label =
+            id === selfId
+              ? selfLabel
+              : row
+                ? [row.firstName, row.lastName].filter(Boolean).join(" ").trim() ||
+                  (row.username ? `@${row.username}` : null) ||
+                  row.primaryEmail?.split("@")[0] ||
+                  `${id.slice(0, 10)}…`
+                : `${id.slice(0, 12)}…`;
+          return {
+            id,
+            label,
+            imageUrl: id === selfId ? user?.imageUrl ?? row?.imageUrl ?? null : row?.imageUrl ?? null,
+          };
+        });
         if (!cancelled) setAssignees(list);
       } catch {
         if (!cancelled) {
@@ -236,7 +272,7 @@ export default function CapturePanel({
             [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
             user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
             "You";
-          setAssignees([{ id: selfId, label: me }]);
+          setAssignees([{ id: selfId, label: me, imageUrl: user?.imageUrl ?? null }]);
         }
       }
     })();
@@ -538,6 +574,7 @@ export default function CapturePanel({
         return next;
       });
       setPhase("success");
+      window.dispatchEvent(new Event("route5:commitments-changed"));
       window.setTimeout(() => {
         onClose();
       }, 1400);
@@ -801,7 +838,26 @@ export default function CapturePanel({
                                         : "border-r5-status-at-risk/40 bg-r5-status-at-risk/10 text-r5-status-at-risk"
                                     }`}
                                   >
-                                    <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                                    {c.ownerUserId ? (
+                                      (() => {
+                                        const a = assignees.find((x) => x.id === c.ownerUserId);
+                                        return a?.imageUrl ? (
+                                          <span className="relative h-5 w-5 shrink-0 overflow-hidden rounded-full ring-1 ring-white/10">
+                                            <Image
+                                              src={a.imageUrl}
+                                              alt=""
+                                              width={20}
+                                              height={20}
+                                              className="object-cover"
+                                            />
+                                          </span>
+                                        ) : (
+                                          <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                                        );
+                                      })()
+                                    ) : (
+                                      <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                                    )}
                                     {c.ownerUserId
                                       ? assignees.find((a) => a.id === c.ownerUserId)?.label ??
                                         "Owner"
@@ -813,13 +869,28 @@ export default function CapturePanel({
                                         <button
                                           key={a.id}
                                           type="button"
-                                          className="flex w-full px-3 py-2 text-left text-[13px] text-r5-text-primary hover:bg-r5-surface-hover"
+                                          className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-r5-text-primary hover:bg-r5-surface-hover"
                                           onClick={() => {
                                             updateCard(c.key, { ownerUserId: a.id });
                                             setOpenOwnerKey(null);
                                           }}
                                         >
-                                          {a.label}
+                                          {a.imageUrl ? (
+                                            <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full ring-1 ring-white/10">
+                                              <Image
+                                                src={a.imageUrl}
+                                                alt=""
+                                                width={24}
+                                                height={24}
+                                                className="object-cover"
+                                              />
+                                            </span>
+                                          ) : (
+                                            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-r5-surface-secondary text-[10px] font-semibold text-r5-text-secondary">
+                                              {a.label.slice(0, 2).toUpperCase()}
+                                            </span>
+                                          )}
+                                          <span className="min-w-0 truncate">{a.label}</span>
                                         </button>
                                       ))}
                                     </div>

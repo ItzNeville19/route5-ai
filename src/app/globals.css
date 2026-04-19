@@ -175,6 +175,19 @@ body {
 }
 
 /* App default shell — lavender / pink mesh (restores purple glass look site-wide) */
+/* Auth routes (/login, /sign-up): match Clerk dark card — no light page behind invisible titles */
+.auth-route5-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: #fafafa;
+  background-color: #050505;
+  background-image: radial-gradient(
+    ellipse 90% 60% at 50% -30%,
+    rgba(255, 255, 255, 0.06),
+    transparent 55%
+  );
+}
+
 .theme-glass-site {
   min-height: 100vh;
   min-height: 100dvh;

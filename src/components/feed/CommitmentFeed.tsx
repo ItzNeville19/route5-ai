@@ -29,6 +29,9 @@ import {
   User,
   X,
 } from "lucide-react";
+import MemberAvatar from "@/components/people/MemberAvatar";
+import MemberProfilePeek from "@/components/people/MemberProfilePeek";
+import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import type {
   OrgCommitmentDetail,
   OrgCommitmentRow,
@@ -53,7 +56,6 @@ import {
   clerkDisplayName,
   clerkSelfInitials,
   ownerHoverLabelFromId,
-  ownerInitialsFromId,
 } from "@/components/feed/feed-user-display";
 
 const FEED_BUCKETS: FeedBucket[] = ["overdue", "today", "week", "later", "completed"];
@@ -108,14 +110,6 @@ function sortApiParams(ui: FeedSortUi): { sort: OrgCommitmentListSort; order: "a
     default:
       return { sort: "deadline", order: "asc" };
   }
-}
-
-function ownerAccentBg(ownerId: string): string {
-  if (!ownerId.trim()) return "";
-  let h = 0;
-  for (let i = 0; i < ownerId.length; i++) h = (h * 31 + ownerId.charCodeAt(i)) >>> 0;
-  const hue = h % 360;
-  return `hsl(${hue} 42% 36%)`;
 }
 
 function isUnassignedOwner(ownerId: string): boolean {
@@ -315,7 +309,7 @@ export default function CommitmentFeed() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
   const [lastLoadMs, setLastLoadMs] = useState<number | null>(null);
   const [savedViews, setSavedViews] = useState<FeedSavedView[]>([]);
@@ -336,36 +330,44 @@ export default function CommitmentFeed() {
   const listAbortRef = useRef<AbortController | null>(null);
 
   const loadList = useCallback(async () => {
-    listAbortRef.current?.abort();
+    const prev = listAbortRef.current;
+    if (prev && !prev.signal.aborted) prev.abort("feed-refresh");
     const ctrl = new AbortController();
     listAbortRef.current = ctrl;
-    const started = performance.now();
-    const sp = new URLSearchParams();
-    sp.set("sort", apiSort);
-    sp.set("order", apiOrder);
-    const res = await fetch(`/api/commitments?${sp.toString()}`, {
-      credentials: "same-origin",
-      signal: ctrl.signal,
-    });
-    const data = (await res.json().catch(() => ({}))) as {
-      orgId?: string;
-      commitments?: OrgCommitmentRow[];
-    };
-    if (ctrl.signal.aborted) return;
-    if (res.ok) {
-      if (data.orgId) setOrgId(data.orgId);
-      const nextRows = data.commitments ?? [];
-      const syncedAt = new Date().toISOString();
-      setRows(nextRows);
-      setLastSyncAt(syncedAt);
-      setLastLoadMs(Math.round(performance.now() - started));
-      try {
-        sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ rows: nextRows, at: syncedAt }));
-      } catch {
-        /* ignore */
+    try {
+      const started = performance.now();
+      const sp = new URLSearchParams();
+      sp.set("sort", apiSort);
+      sp.set("order", apiOrder);
+      const res = await fetch(`/api/commitments?${sp.toString()}`, {
+        credentials: "same-origin",
+        signal: ctrl.signal,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        orgId?: string;
+        commitments?: OrgCommitmentRow[];
+      };
+      if (ctrl.signal.aborted) return;
+      if (res.ok) {
+        if (data.orgId) setOrgId(data.orgId);
+        const nextRows = data.commitments ?? [];
+        const syncedAt = new Date().toISOString();
+        setRows(nextRows);
+        setLastSyncAt(syncedAt);
+        setLastLoadMs(Math.round(performance.now() - started));
+        try {
+          sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ rows: nextRows, at: syncedAt }));
+        } catch {
+          /* ignore */
+        }
       }
+      setBootstrapped(true);
+    } catch {
+      if (ctrl.signal.aborted) return;
+      setBootstrapped(true);
+    } finally {
+      if (listAbortRef.current === ctrl) listAbortRef.current = null;
     }
-    setBootstrapped(true);
   }, [apiSort, apiOrder]);
 
   const loadProjects = useCallback(async () => {
@@ -399,7 +401,9 @@ export default function CommitmentFeed() {
 
   useEffect(
     () => () => {
-      listAbortRef.current?.abort();
+      const ctrl = listAbortRef.current;
+      if (ctrl && !ctrl.signal.aborted) ctrl.abort("feed-unmount");
+      listAbortRef.current = null;
     },
     []
   );
@@ -465,6 +469,23 @@ export default function CommitmentFeed() {
   }, [density]);
 
   useEffect(() => {
+    try {
+      const v = localStorage.getItem("route5:feed-auto-refresh:v1");
+      if (v === "off") setAutoRefresh(false);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("route5:feed-auto-refresh:v1", autoRefresh ? "on" : "off");
+    } catch {
+      /* ignore */
+    }
+  }, [autoRefresh]);
+
+  useEffect(() => {
     if (!autoRefresh) return;
     const t = window.setInterval(() => {
       void loadList();
@@ -513,6 +534,37 @@ export default function CommitmentFeed() {
       void client.removeChannel(channel);
     };
   }, [orgId, loadList, loadDetail, expandedId]);
+
+  useEffect(() => {
+    const onExternalCommitmentChange = () => {
+      void loadList();
+      void refreshSummary();
+      void loadProjects();
+    };
+    window.addEventListener("route5:commitments-changed", onExternalCommitmentChange);
+    window.addEventListener("route5:project-updated", onExternalCommitmentChange);
+    return () => {
+      window.removeEventListener("route5:commitments-changed", onExternalCommitmentChange);
+      window.removeEventListener("route5:project-updated", onExternalCommitmentChange);
+    };
+  }, [loadList, refreshSummary, loadProjects]);
+
+  useEffect(() => {
+    let t: number | undefined;
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      window.clearTimeout(t);
+      t = window.setTimeout(() => {
+        void loadList();
+        void refreshSummary();
+      }, 350);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.clearTimeout(t);
+    };
+  }, [loadList, refreshSummary]);
 
   useEffect(() => {
     if (!popover) return;
@@ -737,6 +789,11 @@ export default function CommitmentFeed() {
       return Number.isFinite(age) && age >= 7 * 24 * 3_600_000;
     }).length;
   }, [filterOnlyRows]);
+
+  const atRiskCount = useMemo(
+    () => filterOnlyRows.filter((r) => !isCompletedRow(r) && r.status === "at_risk").length,
+    [filterOnlyRows]
+  );
 
   const applyRowPatch = useCallback((id: string, patch: Partial<OrgCommitmentRow>) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -1151,8 +1208,8 @@ export default function CommitmentFeed() {
 
   if (!bootstrapped) {
     return (
-      <div className="mx-auto w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
-        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
+        <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -1171,8 +1228,8 @@ export default function CommitmentFeed() {
 
   if (rows.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] pb-[var(--r5-space-8)] pt-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:pt-[var(--r5-space-6)]">
-        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] pb-[var(--r5-space-8)] pt-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:pt-[var(--r5-space-6)]">
+        <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -1201,8 +1258,8 @@ export default function CommitmentFeed() {
 
   if (searchFiltered.length === 0 && feedSearch.trim()) {
     return (
-      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
-        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+        <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -1216,8 +1273,6 @@ export default function CommitmentFeed() {
           setFeedSort={setFeedSort}
           groupMode={groupMode}
           setGroupMode={setGroupMode}
-          onRefresh={onRefreshFeed}
-          refreshing={refreshing}
           lastSyncAt={lastSyncAt}
           lastLoadMs={lastLoadMs}
           autoRefresh={autoRefresh}
@@ -1228,9 +1283,16 @@ export default function CommitmentFeed() {
           dueNext72hCount={dueNext72hCount}
           unassignedCount={unassignedCount}
           staleCount={staleCount}
+          overdueCount={overdueCount}
+          atRiskCount={atRiskCount}
+          openCount={activeCount}
           onExport={exportCurrent}
           density={density}
           setDensity={setDensity}
+          applyQuickPreset={applyQuickPreset}
+          onCaptureOpen={() => window.dispatchEvent(new Event("route5:capture-open"))}
+          onSync={() => void onRefreshFeed()}
+          refreshing={refreshing}
         />
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
@@ -1253,8 +1315,8 @@ export default function CommitmentFeed() {
 
   if (searchFiltered.length === 0 && filterActive) {
     return (
-      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
-        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+        <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -1268,8 +1330,6 @@ export default function CommitmentFeed() {
           setFeedSort={setFeedSort}
           groupMode={groupMode}
           setGroupMode={setGroupMode}
-          onRefresh={onRefreshFeed}
-          refreshing={refreshing}
           lastSyncAt={lastSyncAt}
           lastLoadMs={lastLoadMs}
           autoRefresh={autoRefresh}
@@ -1280,9 +1340,16 @@ export default function CommitmentFeed() {
           dueNext72hCount={dueNext72hCount}
           unassignedCount={unassignedCount}
           staleCount={staleCount}
+          overdueCount={overdueCount}
+          atRiskCount={atRiskCount}
+          openCount={activeCount}
           onExport={exportCurrent}
           density={density}
           setDensity={setDensity}
+          applyQuickPreset={applyQuickPreset}
+          onCaptureOpen={() => window.dispatchEvent(new Event("route5:capture-open"))}
+          onSync={() => void onRefreshFeed()}
+          refreshing={refreshing}
         />
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
@@ -1303,8 +1370,8 @@ export default function CommitmentFeed() {
   }
 
   return (
-    <div className="route5-perspective-shell relative mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
-      <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+    <div className="route5-perspective-shell relative mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[min(100%,1040px)] px-5 py-10 pb-16 sm:px-10 sm:py-14 sm:pb-24">
+      <div className="workspace-liquid-glass relative z-0 mb-8 overflow-hidden rounded-2xl border border-white/10 p-6 shadow-[0_12px_40px_-20px_rgba(0,0,0,0.55)] sm:mb-10 sm:p-8 [&>*]:relative [&>*]:z-10">
         <FeedPersonalGreeting />
         <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
       </div>
@@ -1318,8 +1385,6 @@ export default function CommitmentFeed() {
         setFeedSort={setFeedSort}
         groupMode={groupMode}
         setGroupMode={setGroupMode}
-        onRefresh={onRefreshFeed}
-        refreshing={refreshing}
         lastSyncAt={lastSyncAt}
         lastLoadMs={lastLoadMs}
         autoRefresh={autoRefresh}
@@ -1330,47 +1395,17 @@ export default function CommitmentFeed() {
         dueNext72hCount={dueNext72hCount}
         unassignedCount={unassignedCount}
         staleCount={staleCount}
+        overdueCount={overdueCount}
+        atRiskCount={atRiskCount}
+        openCount={activeCount}
         onExport={exportCurrent}
         density={density}
         setDensity={setDensity}
+        applyQuickPreset={applyQuickPreset}
+        onCaptureOpen={() => window.dispatchEvent(new Event("route5:capture-open"))}
+        onSync={() => void onRefreshFeed()}
+        refreshing={refreshing}
       />
-
-      <div className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/25 p-3">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">Quick views</p>
-          <span className="text-[11px] text-r5-text-tertiary">One-click feed presets</span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => applyQuickPreset("my_queue")}
-          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-        >
-          My queue
-        </button>
-        <button
-          type="button"
-          onClick={() => applyQuickPreset("triage")}
-          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-        >
-          Triage
-        </button>
-        <button
-          type="button"
-          onClick={() => applyQuickPreset("critical")}
-          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-        >
-          Critical lane
-        </button>
-        <button
-          type="button"
-          onClick={() => applyQuickPreset("due_soon")}
-          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-        >
-          Due soon
-        </button>
-        </div>
-      </div>
 
       {focusLane.length > 0 ? (
         <section className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/25 p-3">
@@ -1396,27 +1431,27 @@ export default function CommitmentFeed() {
       ) : null}
 
       {selectedIds.size > 0 ? (
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-[var(--r5-radius-lg)] border border-r5-accent/25 bg-r5-surface-secondary/55 px-3 py-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
+        <div className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-accent/25 bg-r5-surface-secondary/55 px-3 py-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
             {selectedIds.size} selected
-          </span>
-          <button
-            type="button"
-            onClick={() => void completeSelected()}
-            className="rounded-[var(--r5-radius-pill)] border border-r5-status-completed/30 bg-r5-status-completed/15 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
-          >
-            Complete all
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const ownerId = window.prompt("Reassign selected commitments to owner id:");
-              if (ownerId?.trim()) void reassignSelected(ownerId.trim());
-            }}
-            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
-          >
-            Reassign all
-          </button>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="rounded-[var(--r5-radius-pill)] px-2 py-1 text-[12px] text-r5-text-secondary hover:text-r5-text-primary"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void completeSelected()}
+              className="rounded-[var(--r5-radius-pill)] border border-r5-status-completed/30 bg-r5-status-completed/15 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+            >
+              Complete all
+            </button>
           {selfId ? (
             <button
               type="button"
@@ -1426,38 +1461,49 @@ export default function CommitmentFeed() {
               Assign to me
             </button>
           ) : null}
-          <button
-            type="button"
-            onClick={() => {
-              const choice = window.prompt("Priority for selected: critical | high | medium | low", "medium");
-              const normalized = choice?.trim().toLowerCase();
-              if (
-                normalized === "critical" ||
-                normalized === "high" ||
-                normalized === "medium" ||
-                normalized === "low"
-              ) {
-                void reprioritizeSelected(normalized);
-              }
-            }}
-            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
-          >
-            Priority all
-          </button>
-          <button
-            type="button"
-            onClick={() => void deferSelectedByDays(2)}
-            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
-          >
-            Push due +2d
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            className="ml-auto rounded-[var(--r5-radius-pill)] px-2 py-1 text-[12px] text-r5-text-secondary hover:text-r5-text-primary"
-          >
-            Clear
-          </button>
+            <details className="group">
+              <summary className="cursor-pointer list-none rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover">
+                Advanced actions
+              </summary>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ownerId = window.prompt("Reassign selected commitments to owner id:");
+                    if (ownerId?.trim()) void reassignSelected(ownerId.trim());
+                  }}
+                  className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+                >
+                  Reassign all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const choice = window.prompt("Priority for selected: critical | high | medium | low", "medium");
+                    const normalized = choice?.trim().toLowerCase();
+                    if (
+                      normalized === "critical" ||
+                      normalized === "high" ||
+                      normalized === "medium" ||
+                      normalized === "low"
+                    ) {
+                      void reprioritizeSelected(normalized);
+                    }
+                  }}
+                  className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+                >
+                  Priority all
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void deferSelectedByDays(2)}
+                  className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+                >
+                  Push due +2d
+                </button>
+              </div>
+            </details>
+          </div>
         </div>
       ) : null}
 
@@ -1705,8 +1751,6 @@ function FeedHeaderStrip({
   setFeedSort,
   groupMode,
   setGroupMode,
-  onRefresh,
-  refreshing,
   lastSyncAt,
   lastLoadMs,
   autoRefresh,
@@ -1717,9 +1761,16 @@ function FeedHeaderStrip({
   dueNext72hCount,
   unassignedCount,
   staleCount,
+  overdueCount,
+  atRiskCount,
+  openCount,
   onExport,
   density,
   setDensity,
+  applyQuickPreset,
+  onCaptureOpen,
+  onSync,
+  refreshing,
 }: {
   feedSearch: string;
   setFeedSearch: (s: string) => void;
@@ -1730,8 +1781,6 @@ function FeedHeaderStrip({
   setFeedSort: (s: FeedSortUi) => void;
   groupMode: FeedGroupMode;
   setGroupMode: (mode: FeedGroupMode) => void;
-  onRefresh: () => void;
-  refreshing: boolean;
   lastSyncAt: string | null;
   lastLoadMs: number | null;
   autoRefresh: boolean;
@@ -1742,29 +1791,53 @@ function FeedHeaderStrip({
   dueNext72hCount: number;
   unassignedCount: number;
   staleCount: number;
+  overdueCount: number;
+  atRiskCount: number;
+  openCount: number;
   onExport: () => void;
   density: FeedDensity;
   setDensity: (d: FeedDensity) => void;
+  applyQuickPreset: (preset: "my_queue" | "triage" | "critical" | "due_soon") => void;
+  onCaptureOpen: () => void;
+  onSync: () => void;
+  refreshing: boolean;
 }) {
+  const quietLink =
+    "text-[13px] font-normal text-zinc-500 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40";
+  const presetBtn = `${quietLink} rounded-sm px-0.5`;
+
+  const stats = [
+    { key: "open", label: "Open", value: openCount },
+    { key: "overdue", label: "Overdue", value: overdueCount, stress: overdueCount > 0 },
+    { key: "risk", label: "At risk", value: atRiskCount, stress: atRiskCount > 0 },
+    { key: "due72", label: "Due 72h", value: dueNext72hCount },
+    { key: "unassigned", label: "Unassigned", value: unassignedCount },
+    { key: "stale", label: "Stale", value: staleCount },
+  ] as const;
+
   return (
-    <header className="mb-[var(--r5-space-5)] w-full space-y-[var(--r5-space-4)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-r5-text-primary">
-            Feed
-          </h1>
-          <p className="mt-1 max-w-[52ch] text-[13px] text-r5-text-secondary">
-            Operator queue for execution health. Scan risk first, then update owners and due dates in-line.
+    <motion.header
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="mb-10 w-full space-y-6 sm:mb-12"
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+        <div className="min-w-0 space-y-1">
+          <h1 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">Feed</h1>
+          <p className="text-[13px] font-medium text-zinc-500">
+            Updated {relativeTimeLabel(lastSyncAt)}
+            {lastLoadMs != null ? ` · ${lastLoadMs}ms` : ""}
           </p>
         </div>
-        <div className="flex w-full min-w-0 flex-col gap-1.5 sm:max-w-[min(100%,320px)]">
+        <div className="w-full min-w-0 flex-1 lg:max-w-md xl:max-w-lg">
           <label className="sr-only" htmlFor="feed-search-input">
             Search commitments
           </label>
           <div className="relative flex w-full items-center">
             <Search
-              className="pointer-events-none absolute left-3 h-4 w-4 text-r5-text-tertiary"
-              strokeWidth={2}
+              className="pointer-events-none absolute left-3.5 h-4 w-4 text-zinc-500"
+              strokeWidth={1.75}
               aria-hidden
             />
             <input
@@ -1775,44 +1848,39 @@ function FeedHeaderStrip({
               onChange={(e) => setFeedSearch(e.target.value)}
               placeholder="Search title, notes, project…"
               autoComplete="off"
-              className="min-h-[40px] w-full rounded-[var(--r5-radius-md)] border border-r5-border-subtle/90 bg-r5-surface-primary/80 py-2 pl-10 pr-3 text-[length:var(--r5-font-body)] text-r5-text-primary shadow-[0_1px_0_rgba(255,255,255,0.04)_inset] outline-none transition-[border-color,box-shadow] placeholder:text-r5-text-tertiary focus:border-r5-accent/40 focus:ring-2 focus:ring-r5-accent/20"
+              className="liquid-glass-dark min-h-[44px] w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-11 pr-3.5 text-[15px] font-normal text-white shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] outline-none backdrop-blur-xl transition-[border-color,box-shadow,transform] placeholder:text-zinc-600 focus:border-white/25 focus:shadow-[0_0_0_1px_rgba(255,255,255,0.12),0_8px_32px_-12px_rgba(99,102,241,0.25)]"
             />
           </div>
-          <p className="text-[10px] text-r5-text-tertiary">
-            Press <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono">/</kbd>{" "}
+          <p className="mt-2 text-[12px] text-zinc-600">
+            Press{" "}
+            <kbd className="rounded border border-white/10 bg-white/[0.04] px-1 py-0.5 font-mono text-[11px] text-zinc-400">
+              /
+            </kbd>{" "}
             to focus search
           </p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-[var(--r5-space-3)]">
-        <div className="grid w-full gap-2 sm:grid-cols-3">
-          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
-            <p className="text-[11px] text-r5-text-secondary">Due next 72h</p>
-            <p className="text-[16px] font-semibold text-r5-text-primary">{dueNext72hCount}</p>
+      <dl className="liquid-glass-dark liquid-glass-dark-interactive liquid-glass-tilt-3d liquid-glass-shimmer grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/10 sm:grid-cols-3 lg:grid-cols-6">
+        {stats.map((s) => (
+          <div
+            key={s.key}
+            className="flex flex-col gap-0.5 bg-zinc-950/40 px-4 py-3.5 sm:min-h-[88px] sm:justify-center"
+          >
+            <dt className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">{s.label}</dt>
+            <dd
+              className={`text-xl font-semibold tabular-nums tracking-tight sm:text-2xl ${
+                "stress" in s && s.stress ? "text-white" : "text-zinc-100"
+              }`}
+            >
+              {s.value}
+            </dd>
           </div>
-          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
-            <p className="text-[11px] text-r5-text-secondary">Unassigned</p>
-            <p className="text-[16px] font-semibold text-r5-text-primary">{unassignedCount}</p>
-          </div>
-          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
-            <p className="text-[11px] text-r5-text-secondary">Stale</p>
-            <p className="text-[16px] font-semibold text-r5-text-primary">{staleCount}</p>
-          </div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between text-[11px] text-r5-text-tertiary">
-        <span>
-          Synced {relativeTimeLabel(lastSyncAt)}
-          {lastLoadMs != null ? ` · ${lastLoadMs}ms` : ""}
-        </span>
-        <Link href="/overview" className="font-medium text-r5-accent underline-offset-2 hover:underline">
-          Open leadership dashboard
-        </Link>
-      </div>
+        ))}
+      </dl>
 
-      <div className="flex flex-wrap items-center justify-between gap-[var(--r5-space-3)]">
-        <div className="flex flex-wrap items-center gap-[var(--r5-space-2)]">
+      <nav className="border-b border-white/[0.08]" aria-label="Assignment filters">
+        <div className="-mb-px flex flex-wrap gap-x-6 gap-y-1">
           {FEED_FILTER_OPTIONS.map((opt) => {
             const active = opt.value === feedFilter;
             return (
@@ -1821,10 +1889,10 @@ function FeedHeaderStrip({
                 type="button"
                 title={opt.hint}
                 onClick={() => setFeedFilter(opt.value)}
-                className={`min-h-[var(--r5-nav-item-height)] rounded-[var(--r5-radius-pill)] border px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] transition-[background-color,color,border-color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] active:scale-[0.98] ${
+                className={`relative pb-3 text-[13px] font-medium transition-colors ${
                   active
-                    ? "border-r5-accent/35 bg-r5-surface-secondary text-r5-text-primary shadow-[0_0_0_1px_rgba(167,139,250,0.12)]"
-                    : "border-r5-border-subtle/60 bg-r5-surface-primary/60 text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                    ? "text-white after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-white after:content-['']"
+                    : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
                 {opt.label}
@@ -1832,109 +1900,199 @@ function FeedHeaderStrip({
             );
           })}
         </div>
+      </nav>
 
-        <div className="no-scrollbar flex max-w-full items-center gap-[var(--r5-space-2)] overflow-x-auto pb-1">
-          <label className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-2 rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[12px] text-r5-text-secondary">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="h-3.5 w-3.5 rounded border-r5-border-subtle bg-r5-surface-primary"
-            />
-            Auto refresh
-          </label>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[13px]">
+          <button type="button" onClick={() => applyQuickPreset("my_queue")} className={presetBtn}>
+            My queue
+          </button>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <button type="button" onClick={() => applyQuickPreset("triage")} className={presetBtn}>
+            Triage
+          </button>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <button type="button" onClick={() => applyQuickPreset("critical")} className={presetBtn}>
+            At risk
+          </button>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <button type="button" onClick={() => applyQuickPreset("due_soon")} className={presetBtn}>
+            Due soon
+          </button>
+          <span className="mx-2 hidden h-4 w-px bg-white/10 sm:block" aria-hidden />
           <button
             type="button"
-            onClick={onExport}
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-2 rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[12px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            onClick={onCaptureOpen}
+            className="rounded-full px-3 py-1.5 text-[13px] font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/[0.06]"
           >
-            Export CSV
+            Capture
           </button>
-          <div className="hidden items-center gap-1 sm:flex">
+          <span className="mx-2 hidden h-4 w-px bg-white/10 sm:block" aria-hidden />
+          <Link href="/desk" className={quietLink}>
+            Desk
+          </Link>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <Link href="/overview" className={quietLink}>
+            Leadership
+          </Link>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <Link href="/workspace/escalations" className={quietLink}>
+            Escalations
+          </Link>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <Link href="/projects" className={quietLink}>
+            Projects
+          </Link>
+          <span className="text-zinc-700" aria-hidden>
+            ·
+          </span>
+          <Link href="/integrations" className={quietLink}>
+            Integrations
+          </Link>
+        </div>
+        <button
+          type="button"
+          onClick={onSync}
+          disabled={refreshing}
+          title="Reload list"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[13px] font-medium text-zinc-200 transition hover:border-white/20 hover:bg-white/[0.07] hover:text-white disabled:opacity-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} aria-hidden />
+          Sync
+        </button>
+      </div>
+
+      <details className="group liquid-glass-dark liquid-glass-tilt-3d overflow-hidden rounded-2xl border border-white/10 shadow-[0_8px_32px_-16px_rgba(0,0,0,0.5)]">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-[13px] font-medium text-zinc-400 marker:content-none [&::-webkit-details-marker]:hidden sm:px-5">
+          <span>Display and export</span>
+          <ChevronDown
+            className="h-4 w-4 shrink-0 text-zinc-500 transition duration-200 group-open:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <div className="border-t border-white/[0.06] px-5 pb-6 pt-5 sm:px-6">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <label className="flex max-w-md cursor-pointer items-start gap-3 text-[14px] leading-snug text-zinc-500">
+              <input
+                type="checkbox"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-white focus:ring-white/30"
+              />
+              <span>
+                Background sync refreshes the list every 30 seconds while this page is open.
+              </span>
+            </label>
+            <button
+              type="button"
+              onClick={onExport}
+              className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[14px] font-medium text-zinc-200 transition hover:border-white/20 hover:text-white"
+            >
+              Export CSV
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             {[1, 2, 3].map((slot) => {
               const id = `slot-${slot}`;
               const has = savedViews.some((v) => v.id === id);
               return (
-                <div key={id} className="inline-flex overflow-hidden rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/70">
+                <div
+                  key={id}
+                  className="inline-flex overflow-hidden rounded-full border border-white/10"
+                >
                   <button
                     type="button"
                     onClick={() => saveCurrentView(slot)}
-                    className="px-2 py-1 text-[11px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                    className="px-3 py-1.5 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
                     title={`Save view ${slot}`}
                   >
-                    S{slot}
+                    Save {slot}
                   </button>
                   <button
                     type="button"
                     onClick={() => applySavedView(id)}
                     disabled={!has}
-                    className="border-l border-r5-border-subtle/70 px-2 py-1 text-[11px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary disabled:opacity-40"
+                    className="border-l border-white/10 px-3 py-1.5 text-[12px] font-medium text-zinc-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-35"
                     title={`Load view ${slot}`}
                   >
-                    L{slot}
+                    Load {slot}
                   </button>
                 </div>
               );
             })}
           </div>
-          <div className="inline-flex min-h-[var(--r5-nav-item-height)] shrink-0 overflow-hidden rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70">
-            {(["timeline", "owner", "status"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setGroupMode(mode)}
-                className={`whitespace-nowrap px-2.5 text-[11px] transition ${
-                  groupMode === mode
-                    ? "bg-r5-surface-secondary text-r5-text-primary"
-                    : "bg-r5-surface-primary/80 text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
-                }`}
+
+          <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
+            <div>
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Group by</p>
+              <div className="inline-flex overflow-hidden rounded-full border border-white/10 p-0.5">
+                {(["timeline", "owner", "status"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setGroupMode(mode)}
+                    className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
+                      groupMode === mode
+                        ? "bg-white text-zinc-950"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    {mode === "timeline" ? "Timeline" : mode === "owner" ? "Owner" : "State"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Density</p>
+              <div className="inline-flex overflow-hidden rounded-full border border-white/10 p-0.5">
+                {(["comfortable", "compact"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setDensity(mode)}
+                    className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
+                      density === mode
+                        ? "bg-white text-zinc-950"
+                        : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    {mode === "comfortable" ? "Roomy" : "Dense"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="min-w-[200px] flex-1 lg:max-w-xs">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">Sort</p>
+              <select
+                value={feedSort}
+                onChange={(e) => setFeedSort(e.target.value as FeedSortUi)}
+                className="h-11 w-full cursor-pointer rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[14px] font-medium text-white outline-none transition focus:border-white/25 focus:ring-1 focus:ring-white/20"
+                aria-label="Sort"
               >
-                {mode === "timeline" ? "Timeline" : mode === "owner" ? "Owner" : "State"}
-              </button>
-            ))}
+                <option value="due">Due date</option>
+                <option value="priority">Priority</option>
+                <option value="owner">Owner</option>
+                <option value="updated">Recently updated</option>
+                <option value="created">Date created</option>
+              </select>
+            </div>
           </div>
-          <div className="inline-flex min-h-[var(--r5-nav-item-height)] shrink-0 overflow-hidden rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70">
-            {(["comfortable", "compact"] as const).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setDensity(mode)}
-                className={`whitespace-nowrap px-2.5 text-[11px] transition ${
-                  density === mode
-                    ? "bg-r5-surface-secondary text-r5-text-primary"
-                    : "bg-r5-surface-primary/80 text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
-                }`}
-              >
-                {mode === "comfortable" ? "Roomy" : "Dense"}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => void onRefresh()}
-            disabled={refreshing}
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-2 rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary disabled:opacity-50"
-            aria-label="Sync feed and workspace metrics"
-            title="Reload commitments and KPI tiles"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">Sync</span>
-          </button>
-          <select
-            value={feedSort}
-            onChange={(e) => setFeedSort(e.target.value as FeedSortUi)}
-            className="min-h-[var(--r5-nav-item-height)] cursor-pointer rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-medium text-r5-text-primary outline-none focus:ring-2 focus:ring-r5-accent/25"
-            aria-label="Sort"
-          >
-            <option value="due">Due date</option>
-            <option value="priority">Priority</option>
-            <option value="owner">Owner</option>
-            <option value="updated">Recently updated</option>
-            <option value="created">Date created</option>
-          </select>
         </div>
-      </div>
-    </header>
+      </details>
+    </motion.header>
   );
 }
 
@@ -2329,6 +2487,7 @@ function FeedRow({
   prefetchDetail: (id: string) => void;
   density: FeedDensity;
 }) {
+  const { displayName: memberName } = useMemberDirectory();
   const completed = isCompletedRow(row);
   const completing = completingId === row.id;
   const unassigned = isUnassignedOwner(row.ownerId);
@@ -2337,8 +2496,9 @@ function FeedRow({
   const [commentDraft, setCommentDraft] = useState("");
   const [sourceOpen, setSourceOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profilePeek, setProfilePeek] = useState<{ userId: string; rect: DOMRect } | null>(null);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const ownerBtnRef = useRef<HTMLButtonElement>(null);
+  const ownerBtnRef = useRef<HTMLDivElement>(null);
   const dueBtnRef = useRef<HTMLButtonElement>(null);
   const [popFixed, setPopFixed] = useState<{
     kind: "owner" | "due";
@@ -2409,6 +2569,7 @@ function FeedRow({
           : { opacity: 0, y: -6 }
       }
       animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ backgroundColor: "rgba(255,255,255,0.03)" }}
       transition={{ duration: justAdded ? 0.45 : 0.22, ease: [0.22, 1, 0.36, 1] }}
       className={`group border-b border-r5-border-subtle/40 last:border-b-0 ${
         overdueBorder ? "border-l-2 border-l-r5-status-overdue" : ""
@@ -2512,6 +2673,7 @@ function FeedRow({
                   title="Reassign"
                   onClick={(e) => {
                     e.stopPropagation();
+                    setProfilePeek(null);
                     setPopover({ type: "owner", commitmentId: row.id, draft: row.ownerId });
                   }}
                   className="rounded-[var(--r5-radius-card)] p-1.5 text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
@@ -2553,38 +2715,58 @@ function FeedRow({
             </div>
 
             <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5 text-[length:var(--r5-font-body)] text-r5-text-secondary">
-              <button
+              <div
                 ref={ownerBtnRef}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPopover({ type: "owner", commitmentId: row.id, draft: row.ownerId });
-                }}
-                title={ownerHoverLabelFromId(row.ownerId, selfId, selfDisplayName)}
-                aria-expanded={ownerPopoverOpen}
-                className="inline-flex max-w-full items-center gap-1.5 rounded-[var(--r5-radius-pill)] py-0.5 text-left transition hover:text-r5-text-primary"
+                className="inline-flex max-w-full items-center gap-1.5 rounded-[var(--r5-radius-pill)] py-0.5"
               >
                 {unassigned ? (
-                  <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPopover({ type: "owner", commitmentId: row.id, draft: row.ownerId });
+                    }}
+                    title="Assign owner"
+                    aria-expanded={ownerPopoverOpen}
+                    className="inline-flex max-w-full items-center gap-1.5 text-left transition hover:text-r5-text-primary"
+                  >
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle bg-r5-surface-secondary/50">
                       <Plus className="h-3 w-3 text-r5-text-secondary" />
                     </span>
                     <span className="text-r5-status-at-risk">Unassigned</span>
-                  </>
+                  </button>
                 ) : (
                   <>
-                    <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] text-[length:var(--r5-font-kbd)] font-semibold text-white"
-                      style={{ backgroundColor: ownerAccentBg(row.ownerId) }}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProfilePeek({ userId: row.ownerId, rect: e.currentTarget.getBoundingClientRect() });
+                      }}
+                      className="shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-r5-accent/40"
+                      title={`${memberName(row.ownerId, selfId, selfDisplayName)} — profile`}
+                      aria-label={`Open profile for ${memberName(row.ownerId, selfId, selfDisplayName)}`}
                     >
-                      {ownerInitialsFromId(row.ownerId, selfId, selfDisplayName, selfInitials)}
-                    </span>
-                    <span className="min-w-0 truncate sm:max-w-[220px]">
-                      {ownerHoverLabelFromId(row.ownerId, selfId, selfDisplayName)}
-                    </span>
+                      <MemberAvatar
+                        userId={row.ownerId}
+                        size={24}
+                        selfDisplayName={selfDisplayName}
+                        selfInitials={selfInitials}
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setProfilePeek({ userId: row.ownerId, rect: e.currentTarget.getBoundingClientRect() });
+                      }}
+                      className="min-w-0 truncate text-left transition hover:text-r5-text-primary sm:max-w-[220px]"
+                    >
+                      {memberName(row.ownerId, selfId, selfDisplayName)}
+                    </button>
                   </>
                 )}
-              </button>
+              </div>
               {!completed ? (
                 <svg
                   width="26"
@@ -2828,15 +3010,15 @@ function FeedRow({
                       className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/50 bg-r5-surface-primary/40 px-3 py-2"
                     >
                       <div className="flex items-center gap-2">
-                        <span
-                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] text-[length:var(--r5-font-kbd)] font-semibold text-white"
-                          style={{ backgroundColor: ownerAccentBg(c.userId) }}
-                        >
-                          {ownerInitialsFromId(c.userId, selfId, selfDisplayName, selfInitials)}
-                        </span>
+                        <MemberAvatar
+                          userId={c.userId}
+                          size={28}
+                          selfDisplayName={selfDisplayName}
+                          selfInitials={selfInitials}
+                        />
                         <div className="min-w-0 flex-1">
                           <p className="text-[length:var(--r5-font-caption)] font-medium text-r5-text-primary">
-                            {ownerHoverLabelFromId(c.userId, selfId, selfDisplayName)}
+                            {memberName(c.userId, selfId, selfDisplayName)}
                           </p>
                           <p className="text-[length:var(--r5-font-kbd)] text-r5-text-secondary">
                             {new Date(c.createdAt).toLocaleString()}
@@ -2871,6 +3053,19 @@ function FeedRow({
         ) : null}
       </AnimatePresence>
     </motion.li>
+
+    {typeof document !== "undefined" && profilePeek
+      ? createPortal(
+          <MemberProfilePeek
+            userId={profilePeek.userId}
+            anchorRect={profilePeek.rect}
+            onClose={() => setProfilePeek(null)}
+            selfDisplayName={selfDisplayName}
+            selfInitials={selfInitials}
+          />,
+          document.body
+        )
+      : null}
 
     {typeof document !== "undefined" && ownerPopoverOpen && popFixed?.kind === "owner" && showPopover?.type === "owner"
       ? createPortal(

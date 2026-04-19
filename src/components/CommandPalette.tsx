@@ -35,6 +35,7 @@ const PaletteContext = createContext<PaletteContextValue | null>(null);
 type PaletteApiPayload = {
   signedIn?: boolean;
   displayName?: string | null;
+  primaryEmail?: string | null;
   projects?: { id: string; name: string }[];
   recentRuns?: PaletteRecentRun[];
   openActionsCount?: number;
@@ -93,6 +94,7 @@ function applyPalettePayload(
   setters: {
     setSignedIn: (v: boolean) => void;
     setDisplayName: (v: string | null) => void;
+    setUserEmail: (v: string | null) => void;
     setProjects: (v: { id: string; name: string }[]) => void;
     setRecentRuns: (v: PaletteRecentRun[]) => void;
     setOpenActionsCount: (v: number) => void;
@@ -100,6 +102,11 @@ function applyPalettePayload(
 ) {
   setters.setSignedIn(Boolean(payload.signedIn));
   setters.setDisplayName(payload.displayName ?? null);
+  setters.setUserEmail(
+    typeof payload.primaryEmail === "string" && payload.primaryEmail.trim()
+      ? payload.primaryEmail.trim()
+      : null
+  );
   setters.setProjects(Array.isArray(payload.projects) ? payload.projects : []);
   setters.setRecentRuns(Array.isArray(payload.recentRuns) ? payload.recentRuns : []);
   setters.setOpenActionsCount(
@@ -143,6 +150,7 @@ export function CommandPaletteProvider({
   const [query, setQuery] = useState("");
   const [signedIn, setSignedIn] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [recentRuns, setRecentRuns] = useState<PaletteRecentRun[]>([]);
   const [openActionsCount, setOpenActionsCount] = useState(0);
@@ -160,6 +168,7 @@ export function CommandPaletteProvider({
       applyPalettePayload(paletteCache.payload, {
         setSignedIn,
         setDisplayName,
+        setUserEmail,
         setProjects,
         setRecentRuns,
         setOpenActionsCount,
@@ -181,6 +190,7 @@ export function CommandPaletteProvider({
       applyPalettePayload(data, {
         setSignedIn,
         setDisplayName,
+        setUserEmail,
         setProjects,
         setRecentRuns,
         setOpenActionsCount,
@@ -189,6 +199,7 @@ export function CommandPaletteProvider({
       if (ctrl.signal.aborted) return;
       setSignedIn(false);
       setDisplayName(null);
+      setUserEmail(null);
       setProjects([]);
       setRecentRuns([]);
       setOpenActionsCount(0);
@@ -240,11 +251,12 @@ export function CommandPaletteProvider({
       buildPaletteItems({
         signedIn: signedInEffective,
         displayName,
+        userEmail,
         projects,
         recentRuns,
         openActionsCount,
       }),
-    [signedInEffective, displayName, projects, recentRuns, openActionsCount]
+    [signedInEffective, displayName, userEmail, projects, recentRuns, openActionsCount]
   );
 
   const filtered = useMemo(() => {

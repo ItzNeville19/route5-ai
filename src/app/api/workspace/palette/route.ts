@@ -13,6 +13,7 @@ export async function GET() {
     return NextResponse.json({
       signedIn: false,
       displayName: null as string | null,
+      primaryEmail: null as string | null,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
       openActionsCount: 0,
@@ -30,6 +31,7 @@ export async function GET() {
     return NextResponse.json({
       signedIn: false,
       displayName: null as string | null,
+      primaryEmail: null as string | null,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
       openActionsCount: 0,
@@ -40,6 +42,7 @@ export async function GET() {
     return NextResponse.json({
       signedIn: false,
       displayName: null as string | null,
+      primaryEmail: null as string | null,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
       openActionsCount: 0,
@@ -49,10 +52,11 @@ export async function GET() {
 
   const { currentUser } = await import("@clerk/nextjs/server");
   const user = await currentUser();
+  const primaryEmail = user?.emailAddresses?.[0]?.emailAddress ?? null;
   const displayName =
     user?.firstName ||
     user?.username ||
-    user?.emailAddresses?.[0]?.emailAddress?.split("@")[0] ||
+    primaryEmail?.split("@")[0] ||
     "You";
 
   try {
@@ -69,6 +73,7 @@ export async function GET() {
     return NextResponse.json({
       signedIn: true,
       displayName,
+      primaryEmail,
       projects: projects as WorkspacePaletteProject[],
       recentRuns,
       openActionsCount: summary.openActions.length,
@@ -78,6 +83,7 @@ export async function GET() {
     return NextResponse.json({
       signedIn: true,
       displayName,
+      primaryEmail,
       projects: [] as WorkspacePaletteProject[],
       recentRuns: [] as PaletteRecentRun[],
       openActionsCount: 0,

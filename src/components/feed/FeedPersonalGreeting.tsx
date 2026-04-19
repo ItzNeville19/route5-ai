@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useReducedMotion } from "framer-motion";
-import {
-  type WorkspaceInsightContext,
-} from "@/lib/workspace-welcome";
+import { type WorkspaceInsightContext } from "@/lib/workspace-welcome";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -15,7 +13,7 @@ import { hourInTimezone, formatClockInTimezone } from "@/lib/timezone-date";
 import { stableHash } from "@/lib/stable-hash";
 import { getDisplayLocationLabel } from "@/lib/workspace-regions";
 
-/** Same personalized block as Overview hero — time-aware headline + local time / context line. */
+/** Time-aware headline + local time and a short, practical tip — no marketing taglines. */
 export default function FeedPersonalGreeting() {
   const { user } = useUser();
   const { summary, loadingSummary } = useWorkspaceData();
@@ -52,69 +50,25 @@ export default function FeedPersonalGreeting() {
   useEffect(() => {
     void minuteClockTick;
     const hour = hourInTimezone(effectiveIana);
-    const themeTone =
-      exp.prefs.appearanceTheme === "morning"
-        ? "morning"
-        : exp.prefs.appearanceTheme === "sunrise"
-          ? "warm"
-          : exp.prefs.appearanceTheme === "sunset"
-            ? "sunset"
-            : exp.prefs.appearanceTheme === "forest"
-              ? "steady"
-              : exp.prefs.appearanceTheme === "cosmic"
-                ? "cosmic"
-                : exp.prefs.appearanceTheme === "oled"
-                  ? "focused"
-                  : "classic";
     const phase =
       hour < 5 ? "early" : hour < 12 ? "morning" : hour < 17 ? "afternoon" : hour < 22 ? "evening" : "late";
 
     const headlinePoolByPhase: Record<typeof phase, string[]> = {
-      early: [
-        `${first}, early focus`,
-        `${first}, quiet start`,
-        `${first}, first move`,
-        `${first}, before the rush`,
-      ],
-      morning: [
-        `Good morning, ${first}`,
-        `${first}, ready to execute`,
-        `${first}, let's lock priorities`,
-        `${first}, momentum starts here`,
-      ],
-      afternoon: [
-        `Good afternoon, ${first}`,
-        `${first}, keep the pace`,
-        `${first}, execution check-in`,
-        `${first}, tighten the lane`,
-      ],
-      evening: [`Good evening, ${first}`, `${first}, final push`, `${first}, close strong`, `${first}, execution lane`],
-      late: [
-        `Welcome back, ${first}`,
-        `${first}, late session mode`,
-        `${first}, continue where you left off`,
-        `${first}, clean closeout`,
-      ],
-    };
-    const themeFlavor: Record<string, string[]> = {
-      morning: ["with calm clarity", "on a fresh lane"],
-      warm: ["with warm momentum", "on a high-energy lane"],
-      sunset: ["through the sunset stretch", "for a smooth closeout"],
-      steady: ["with steady pressure", "with clear signals"],
-      cosmic: ["on a deep-focus lane", "through the signal layer"],
-      focused: ["in precision mode", "with no-noise focus"],
-      classic: ["on your command lane", "with sharp execution focus"],
+      early: [`Hi, ${first}`, `Good morning, ${first}`, `${first} — early start`],
+      morning: [`Good morning, ${first}`, `Hi ${first}`, `${first} — good morning`],
+      afternoon: [`Good afternoon, ${first}`, `Hi ${first}`, `${first} — good afternoon`],
+      evening: [`Good evening, ${first}`, `Hi ${first}`, `${first} — good evening`],
+      late: [`Hi, ${first}`, `Welcome back, ${first}`, `${first} — still here`],
     };
     const base = headlinePoolByPhase[phase];
-    const mixed = [...base.map((line, i) => `${line} ${themeFlavor[themeTone][i % themeFlavor[themeTone].length]}`)];
-    const hSeed = stableHash(`${user?.id ?? "anon"}:${phase}:${themeTone}:${new Date().toISOString().slice(0, 10)}`);
-    let picked = mixed[hSeed % mixed.length] ?? mixed[0] ?? `Hi ${first}`;
+    const hSeed = stableHash(`${user?.id ?? "anon"}:${phase}:${new Date().toISOString().slice(0, 10)}`);
+    let picked = base[hSeed % base.length] ?? base[0] ?? `Hi ${first}`;
     try {
       const key = "route5:feed-greeting-history:v1";
       const raw = localStorage.getItem(key);
       const arr = raw ? (JSON.parse(raw) as string[]) : [];
       if (arr.includes(picked)) {
-        const alt = mixed.find((x) => !arr.includes(x));
+        const alt = base.find((x) => !arr.includes(x));
         if (alt) picked = alt;
       }
       localStorage.setItem(key, JSON.stringify([picked, ...arr].slice(0, 24)));
@@ -136,18 +90,17 @@ export default function FeedPersonalGreeting() {
     } else if (openActions > 0) {
       tip = `Confirm owner and due date on ${openActions} open action${openActions === 1 ? "" : "s"}.`;
     } else if (completionRate != null && completionRate >= 0.8) {
-      tip = "Great pace. Keep new commitments tightly scoped.";
+      tip = "Strong week on follow-through.";
     } else if (insightCtx.projectCount > 0) {
-      tip = `Focus on your top ${Math.min(3, insightCtx.projectCount)} active project${insightCtx.projectCount === 1 ? "" : "s"}.`;
+      tip = `You have ${insightCtx.projectCount} active project${insightCtx.projectCount === 1 ? "" : "s"}.`;
     } else {
-      tip = "Capture one clear decision to start momentum.";
+      tip = "Add a project when you're ready.";
     }
 
     setPersonalSub(`${prefix} ${tip}`);
   }, [
     minuteClockTick,
     effectiveIana,
-    exp.prefs.appearanceTheme,
     first,
     insightCtx.extractionCount,
     insightCtx.projectCount,
@@ -159,16 +112,20 @@ export default function FeedPersonalGreeting() {
     user?.id,
   ]);
 
-  const pulseClass =
-    loadingSummary && !reduceMotion ? "motion-safe:animate-pulse motion-reduce:animate-none" : "";
+  const linePulse =
+    loadingSummary && !reduceMotion
+      ? "motion-safe:animate-pulse motion-reduce:animate-none opacity-90"
+      : "";
 
   return (
-    <header className={`mb-[var(--r5-space-4)] ${pulseClass}`}>
-      <p className="text-[clamp(1.05rem,2.4vw,1.25rem)] font-[var(--r5-font-weight-semibold)] leading-[var(--r5-leading-heading)] tracking-[-0.03em] text-r5-text-primary">
+    <header className="mb-[var(--r5-space-4)]">
+      <p
+        className={`text-[clamp(1.05rem,2.4vw,1.25rem)] font-[var(--r5-font-weight-semibold)] leading-[var(--r5-leading-heading)] tracking-[-0.03em] text-r5-text-primary ${linePulse}`}
+      >
         {headline}
       </p>
       <p
-        className="mt-[var(--r5-space-2)] truncate whitespace-nowrap text-[length:var(--r5-font-body)] leading-[var(--r5-leading-body)] text-r5-text-secondary"
+        className={`mt-[var(--r5-space-2)] truncate whitespace-nowrap text-[length:var(--r5-font-body)] leading-[var(--r5-leading-body)] text-r5-text-secondary ${linePulse}`}
         title={personalSub}
       >
         {personalSub}

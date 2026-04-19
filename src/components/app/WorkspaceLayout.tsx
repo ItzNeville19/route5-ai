@@ -20,6 +20,7 @@ import {
 } from "@/components/billing/BillingUpgradeProvider";
 import WorkspaceBillingBanner from "@/components/billing/WorkspaceBillingBanner";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
+import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesProvider";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -92,7 +93,9 @@ export default function WorkspaceLayout({
           <BillingUpgradeProvider>
             <BillingLimitQueryListener />
             <CaptureProvider>
-              <WorkspaceShell>{children}</WorkspaceShell>
+              <MemberProfilesProvider>
+                <WorkspaceShell>{children}</WorkspaceShell>
+              </MemberProfilesProvider>
             </CaptureProvider>
           </BillingUpgradeProvider>
         </WorkspaceDataProvider>

@@ -8,17 +8,11 @@ import Navbar from "@/components/Navbar";
 import OnboardingShell from "@/components/app/OnboardingShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
 import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
 /** Max time before Clerk client shows retry (session bootstrap). */
 const CLERK_READY_MS = 4500;
-
-const clerkSignInAppearance = {
-  elements: {
-    rootBox: "w-full mx-auto",
-    card: "shadow-xl shadow-black/[0.08] border border-black/[0.06]",
-  },
-} as const;
 
 function AppShellClerkMissing() {
   return (
@@ -137,12 +131,7 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
 
   if (!userId) {
     return (
-      <div className="theme-glass-site relative min-h-dvh text-[#1d1d1f]">
-        <div
-          className="pointer-events-none fixed inset-0 z-0 bg-[#ececee]/80 backdrop-blur-xl"
-          aria-hidden
-        />
-        <div className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-[#a78bfa]/20 via-transparent to-[#c4b5fd]/15" />
+      <div className="auth-route5-shell relative min-h-dvh">
         <div className="relative z-10 flex min-h-dvh flex-col">
           <Navbar />
           <div className="flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-6 sm:px-6">
@@ -152,15 +141,18 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
                 signUpUrl="/sign-up"
                 fallbackRedirectUrl="/feed"
                 signUpFallbackRedirectUrl="/onboarding"
-                appearance={clerkSignInAppearance}
+                appearance={{
+                  ...route5ClerkAppearance,
+                  elements: {
+                    ...route5ClerkAppearance.elements,
+                    rootBox: "w-full mx-auto",
+                  },
+                }}
               />
             </div>
-            <p className="mt-8 max-w-sm text-center text-[13px] leading-relaxed text-[#6e6e73]">
+            <p className="mt-8 max-w-sm text-center text-[13px] leading-relaxed text-neutral-500">
               Prefer the full sign-in page?{" "}
-              <Link
-                href="/login"
-                className="font-medium text-[#0071e3] hover:underline"
-              >
+              <Link href="/login" className="font-medium text-white hover:underline">
                 Open /login
               </Link>
             </p>

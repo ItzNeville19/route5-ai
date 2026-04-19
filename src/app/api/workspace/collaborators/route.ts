@@ -1,12 +1,13 @@
 import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { listDistinctOwnerIdsForOrg } from "@/lib/org-commitments/repository";
 
 export const runtime = "nodejs";
 
 /**
- * People who currently own at least one org commitment — resolved via Clerk (real profiles).
+ * Workspace people: commitment owners plus (when available) active Clerk organization members,
+ * resolved to real names and profile images.
  */
 export async function GET() {
   const authz = await requireUserId();
@@ -14,10 +15,35 @@ export async function GET() {
   const { userId } = authz;
 
   try {
-    const ownerIds = await listDistinctOwnerIdsForOrg(userId);
+    const { orgId } = await auth();
+    const ownerIds = new Set(await listDistinctOwnerIdsForOrg(userId));
+    ownerIds.add(userId);
+
     const c = await clerkClient();
+    if (orgId) {
+      try {
+        let offset = 0;
+        for (let page = 0; page < 5; page++) {
+          const list = await c.organizations.getOrganizationMembershipList({
+            organizationId: orgId,
+            limit: 100,
+            offset,
+          });
+          for (const m of list.data ?? []) {
+            const uid = m.publicUserData?.userId;
+            if (uid) ownerIds.add(uid);
+          }
+          if (!list.data?.length || list.data.length < 100) break;
+          offset += 100;
+        }
+      } catch {
+        /* org roster is best-effort */
+      }
+    }
+
+    const ids = [...ownerIds].slice(0, 80);
     const collaborators = await Promise.all(
-      ownerIds.slice(0, 48).map(async (oid) => {
+      ids.map(async (oid) => {
         try {
           const u = await c.users.getUser(oid);
           return {

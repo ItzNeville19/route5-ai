@@ -12,8 +12,9 @@ import {
   Webhook,
   Zap,
 } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
 import { WEBHOOK_EVENT_TYPES } from "@/lib/public-api/types";
-import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
+import { canAccessDeveloperTools } from "@/lib/feature-flags";
 
 type ApiKeyRow = {
   id: string;
@@ -71,7 +72,8 @@ function copyText(text: string) {
 }
 
 export default function WorkspaceDeveloperPage() {
-  const devToolsEnabled = isDeveloperToolsEnabled();
+  const { user } = useUser();
+  const devToolsEnabled = canAccessDeveloperTools(user?.primaryEmailAddress?.emailAddress);
 
   const [baseUrl, setBaseUrl] = useState("");
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { FEED_HREF } from "@/lib/app-routes";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
 function closeMobileNavFromLogin() {
@@ -77,36 +78,36 @@ function LoginWithClerk() {
 
   if (!isLoaded) {
     return (
-      <div className="theme-glass-site min-h-dvh">
+      <div className="auth-route5-shell min-h-dvh">
         <Navbar />
         <div className="mx-auto flex min-h-[min(60vh,480px)] max-w-[480px] flex-col items-center justify-center px-4 pt-28">
           <div
-            className="h-9 w-9 animate-spin rounded-full border-2 border-[#0071e3] border-t-transparent"
+            className="h-9 w-9 animate-spin rounded-full border-2 border-white/30 border-t-white"
             aria-hidden
           />
-          <p className="mt-4 text-[13px] text-[#6e6e73]">Preparing sign-in…</p>
+          <p className="mt-4 text-[13px] text-neutral-400">Preparing sign-in…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="theme-glass-site min-h-dvh">
+    <div className="auth-route5-shell min-h-dvh">
       <Navbar />
       <div className="mx-auto flex max-w-[480px] flex-col px-4 pb-20 pt-24 sm:pt-28">
         {signedOutBanner ? (
           <div
             role="status"
-            className="mb-6 rounded-2xl border border-[#0071e3]/25 bg-[#0071e3]/8 px-4 py-3 text-left text-[13px] leading-relaxed text-[#1d1d1f]"
+            className="mb-6 rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-3 text-left text-[13px] leading-relaxed text-neutral-200"
           >
-            <p className="font-semibold text-[#0071e3]">Signed out</p>
-            <p className="mt-1 text-[#6e6e73]">
+            <p className="font-semibold text-white">Signed out</p>
+            <p className="mt-1 text-neutral-400">
               Your workspace session ended. Sign in again to continue where you left off.
             </p>
             <button
               type="button"
               onClick={() => setSignedOutBanner(false)}
-              className="mt-2 text-[12px] font-medium text-[#0071e3] underline-offset-2 hover:underline"
+              className="mt-2 text-[12px] font-medium text-white underline-offset-2 hover:underline"
             >
               Dismiss
             </button>
@@ -115,7 +116,7 @@ function LoginWithClerk() {
         <p className="mb-6 text-center">
           <Link
             href="/"
-            className="text-[13px] font-medium text-[#6e6e73] underline-offset-4 transition hover:text-[#0071e3] hover:underline"
+            className="text-[13px] font-medium text-neutral-400 underline-offset-4 transition hover:text-white hover:underline"
           >
             ← Back to Route5
           </Link>
@@ -127,17 +128,19 @@ function LoginWithClerk() {
             fallbackRedirectUrl={FEED_HREF}
             signUpFallbackRedirectUrl={FEED_HREF}
             appearance={{
+              ...route5ClerkAppearance,
               elements: {
+                ...route5ClerkAppearance.elements,
                 rootBox: "w-full mx-auto max-w-[420px]",
               },
             }}
           />
         </div>
-        <p className="mt-8 text-center text-[13px] text-[#86868b]">
+        <p className="mt-8 text-center text-[13px] text-neutral-500">
           New here?{" "}
           <Link
             href="/sign-up"
-            className="font-medium text-[#0071e3] hover:underline"
+            className="font-medium text-white hover:underline"
             onClick={closeMobileNavFromLogin}
           >
             Create an account
@@ -145,7 +148,7 @@ function LoginWithClerk() {
           {" · "}
           <Link
             href="/product"
-            className="font-medium text-[#0071e3] hover:underline"
+            className="font-medium text-white/90 hover:underline"
             onClick={closeMobileNavFromLogin}
           >
             Read what we ship

@@ -5,11 +5,17 @@ import { usePathname } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
 import {
+  AlertTriangle,
+  BarChart3,
   Bell,
   CreditCard,
+  FileBarChart,
   FolderOpen,
+  Gauge,
   Keyboard,
+  LayoutGrid,
   LifeBuoy,
+  LineChart,
   ListChecks,
   Palette,
   Plus,
@@ -23,6 +29,14 @@ import { ROUTE5_SIGNATURE } from "@/lib/brand-signature";
 
 const tierLabel =
   process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
+
+function NavSectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="px-[var(--r5-space-3)] pb-1 pt-4 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-text-tertiary first:pt-1">
+      {children}
+    </p>
+  );
+}
 
 function NavRow({
   href,
@@ -96,41 +110,87 @@ export default function WorkspaceSidebar() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <nav
-          className="no-scrollbar min-h-0 flex-1 space-y-[var(--r5-space-1)] overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
+          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
           aria-label={t("sidebar.navAria")}
         >
-          <NavRow
-            href="/feed"
-            active={path === "/feed"}
-            icon={ListChecks}
-            label={t("sidebar.feed")}
-          />
-          <NavRow
-            href="/projects"
-            active={path === "/projects" || path.startsWith("/projects/")}
-            icon={FolderOpen}
-            label={t("sidebar.projects")}
-          />
-          <NavRow
-            href="/workspace/team"
-            active={path === "/workspace/team"}
-            icon={Users}
-            label={t("sidebar.team")}
-          />
-
-          <button
-            type="button"
-            title="Create a new project"
-            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-            className="mt-[var(--r5-space-2)] flex w-full min-h-[var(--r5-nav-item-height)] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] border border-dashed border-r5-border-subtle bg-transparent px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary transition-[background-color,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:border-r5-text-tertiary hover:bg-r5-surface-hover"
-          >
-            <Plus
-              className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)] shrink-0 opacity-90"
-              strokeWidth={2}
-              aria-hidden
+          <div className="space-y-[var(--r5-space-1)]">
+            <NavSectionTitle>{t("sidebar.sectionWork")}</NavSectionTitle>
+            <NavRow
+              href="/feed"
+              active={path === "/feed"}
+              icon={ListChecks}
+              label={t("sidebar.feed")}
             />
-            <span>{t("sidebar.newProject")}</span>
-          </button>
+            <NavRow
+              href="/desk"
+              active={path === "/desk"}
+              icon={LayoutGrid}
+              label={t("sidebar.desk")}
+            />
+            <NavRow
+              href="/projects"
+              active={path === "/projects" || path.startsWith("/projects/")}
+              icon={FolderOpen}
+              label={t("sidebar.projects")}
+            />
+            <button
+              type="button"
+              title="Create a new project"
+              onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+              className="flex w-full min-h-[var(--r5-nav-item-height)] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] border border-dashed border-r5-border-subtle bg-transparent px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary transition-[background-color,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:border-r5-text-tertiary hover:bg-r5-surface-hover"
+            >
+              <Plus
+                className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)] shrink-0 opacity-90"
+                strokeWidth={2}
+                aria-hidden
+              />
+              <span>{t("sidebar.newProject")}</span>
+            </button>
+          </div>
+
+          <div className="mt-1 space-y-[var(--r5-space-1)]">
+            <NavSectionTitle>{t("sidebar.sectionOps")}</NavSectionTitle>
+            <NavRow
+              href="/overview"
+              active={path === "/overview"}
+              icon={BarChart3}
+              label={t("sidebar.leadership")}
+            />
+            <NavRow
+              href="/workspace/dashboard"
+              active={path === "/workspace/dashboard"}
+              icon={Gauge}
+              label={t("sidebar.execution")}
+            />
+            <NavRow
+              href="/team-insights"
+              active={path === "/team-insights"}
+              icon={LineChart}
+              label={t("sidebar.teamInsights")}
+            />
+            <NavRow
+              href="/reports"
+              active={path === "/reports"}
+              icon={FileBarChart}
+              label={t("sidebar.reports")}
+            />
+            <NavRow
+              href="/workspace/escalations"
+              active={path.startsWith("/workspace/escalations")}
+              icon={AlertTriangle}
+              label={t("sidebar.escalations")}
+            />
+          </div>
+
+          <div className="mt-1 space-y-[var(--r5-space-1)]">
+            <NavSectionTitle>{t("sidebar.sectionPeople")}</NavSectionTitle>
+            <NavRow
+              href="/workspace/team"
+              active={path === "/workspace/team"}
+              icon={Users}
+              label={t("sidebar.team")}
+            />
+          </div>
 
           <div
             className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"
@@ -138,42 +198,45 @@ export default function WorkspaceSidebar() {
             aria-hidden
           />
 
-          <NavRow
-            href="/workspace/customize"
-            active={path === "/workspace/customize"}
-            icon={Palette}
-            label={t("sidebar.customize")}
-          />
-          <NavRow
-            href="/workspace/help"
-            active={path === "/workspace/help"}
-            icon={LifeBuoy}
-            label="Help"
-          />
-          <NavRow
-            href="/settings"
-            active={path === "/settings"}
-            icon={Settings}
-            label={t("sidebar.settings")}
-          />
-          <NavRow
-            href="/workspace/billing"
-            active={path.startsWith("/workspace/billing")}
-            icon={CreditCard}
-            label="Billing"
-          />
-          <NavRow
-            active={false}
-            icon={Keyboard}
-            label="Shortcuts"
-            onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
-          />
-          <NavRow
-            active={false}
-            icon={Bell}
-            label="Notifications"
-            onClick={() => window.dispatchEvent(new Event("route5:notifications-open"))}
-          />
+          <div className="space-y-[var(--r5-space-1)]">
+            <NavSectionTitle>{t("sidebar.sectionAccount")}</NavSectionTitle>
+            <NavRow
+              href="/workspace/customize"
+              active={path === "/workspace/customize"}
+              icon={Palette}
+              label={t("sidebar.customize")}
+            />
+            <NavRow
+              href="/workspace/help"
+              active={path === "/workspace/help"}
+              icon={LifeBuoy}
+              label="Help"
+            />
+            <NavRow
+              href="/settings"
+              active={path === "/settings"}
+              icon={Settings}
+              label={t("sidebar.settings")}
+            />
+            <NavRow
+              href="/workspace/billing"
+              active={path.startsWith("/workspace/billing")}
+              icon={CreditCard}
+              label="Billing"
+            />
+            <NavRow
+              active={false}
+              icon={Keyboard}
+              label="Shortcuts"
+              onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
+            />
+            <NavRow
+              active={false}
+              icon={Bell}
+              label="Notifications"
+              onClick={() => window.dispatchEvent(new Event("route5:notifications-open"))}
+            />
+          </div>
         </nav>
       </div>
 

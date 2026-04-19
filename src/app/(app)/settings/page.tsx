@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebhookCard";
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
 import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
-import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
+import { canAccessDeveloperTools } from "@/lib/feature-flags";
 
 function SettingsSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
@@ -19,7 +20,8 @@ function SettingsSection({ title, description, children }: { title: string; desc
 }
 
 export default function WorkspaceSettingsPage() {
-  const showDeveloperTools = isDeveloperToolsEnabled();
+  const { user } = useUser();
+  const showDeveloperTools = canAccessDeveloperTools(user?.primaryEmailAddress?.emailAddress);
 
   return (
     <div className="mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">

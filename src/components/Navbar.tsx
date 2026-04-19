@@ -85,8 +85,15 @@ export default function Navbar() {
   const clerkConfigured = useClerkRuntimeEnabled();
   /** Marketing home uses the same dark command shell as the workspace. */
   const isCommandHome = pathname === "/";
+  /** Login / sign-up use dark chrome so nav + Clerk stay readable on black. */
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname?.startsWith("/login/") ||
+    pathname === "/sign-up" ||
+    pathname?.startsWith("/sign-up/");
+  const navUsesDarkChrome = isCommandHome || isAuthPage;
 
-  const navLinkClass = isCommandHome
+  const navLinkClass = navUsesDarkChrome
     ? "text-[13px] font-medium text-zinc-300 transition-colors duration-200 hover:text-white"
     : "text-[13px] font-medium text-[#1d1d1f]/65 transition-colors duration-200 hover:text-[#1d1d1f]";
 
@@ -110,12 +117,12 @@ export default function Navbar() {
 
   const mobileLink =
     "block px-4 py-3 text-[15px] transition " +
-    (isCommandHome
+    (navUsesDarkChrome
       ? "font-medium text-zinc-200 hover:bg-white/10"
       : "font-medium text-[#1d1d1f] hover:bg-[#0071e3]/10");
   const mobileCta =
     "block px-4 py-3 text-[15px] font-semibold transition " +
-    (isCommandHome
+    (navUsesDarkChrome
       ? "text-sky-400 hover:bg-white/10"
       : "text-[#0071e3] hover:bg-[#0071e3]/10");
 
@@ -145,7 +152,7 @@ export default function Navbar() {
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ type: "spring", damping: 26, stiffness: 340 }}
             className={
-              isCommandHome
+              navUsesDarkChrome
                 ? "absolute right-3 top-[56px] w-[min(calc(100vw-1.5rem),300px)] overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/95 py-2 shadow-2xl backdrop-blur-xl"
                 : "glass-liquid absolute right-3 top-[56px] w-[min(calc(100vw-1.5rem),300px)] overflow-hidden rounded-2xl py-2"
             }
@@ -164,7 +171,7 @@ export default function Navbar() {
             {clerkConfigured ? (
               <NavbarClerkExtrasLazy
                 variant="mobile"
-                isCommandHome={isCommandHome}
+                isCommandHome={navUsesDarkChrome}
                 mobileLink={mobileLink}
                 onMobileNavigate={() => setMobileOpen(false)}
               />
@@ -201,7 +208,7 @@ export default function Navbar() {
     <header className="fixed left-0 right-0 top-0 z-[1000]">
       <motion.nav
         className={`relative z-[20] border-b transition-[background,box-shadow,border-color] duration-500 ease-out ${
-          isCommandHome
+          navUsesDarkChrome
             ? scrolled
               ? "agent-header-liquid border-white/12 shadow-[0_12px_48px_-20px_rgba(0,0,0,0.55)]"
               : "border-transparent bg-zinc-950/40 backdrop-blur-2xl"
@@ -218,7 +225,7 @@ export default function Navbar() {
           >
             <span
               className={
-                isCommandHome
+                navUsesDarkChrome
                   ? "site-brand-wordmark text-white"
                   : "site-brand-wordmark text-[#1d1d1f]"
               }
@@ -238,7 +245,7 @@ export default function Navbar() {
                 {linkIsHighlighted(link) && (
                   <span
                     className={
-                      isCommandHome
+                      navUsesDarkChrome
                         ? "absolute -bottom-1 left-0 right-0 h-px bg-sky-400"
                         : "absolute -bottom-1 left-0 right-0 h-px bg-[#0071e3]"
                     }
@@ -255,7 +262,7 @@ export default function Navbar() {
               onClick={() => openCommandPalette()}
               title={t("marketing.nav.searchTitle")}
               className={
-                isCommandHome
+                navUsesDarkChrome
                   ? "rounded-lg p-2 text-zinc-400 transition hover:bg-white/10 hover:text-white"
                   : "rounded-lg p-2 text-[#1d1d1f]/70 transition hover:bg-black/[0.06] hover:text-[#1d1d1f]"
               }
@@ -264,12 +271,12 @@ export default function Navbar() {
               <Search className="h-[20px] w-[20px]" strokeWidth={2} aria-hidden />
             </button>
             {clerkConfigured ? (
-              <NavbarClerkExtrasLazy variant="desktop" isCommandHome={isCommandHome} mobileLink="" />
+              <NavbarClerkExtrasLazy variant="desktop" isCommandHome={navUsesDarkChrome} mobileLink="" />
             ) : (
               <Link
                 href="/login"
                 className={
-                  isCommandHome
+                  navUsesDarkChrome
                     ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
                     : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
                 }
@@ -281,7 +288,7 @@ export default function Navbar() {
               href="/feed"
               title="Signed-in workspace — Feed, projects, Overview"
               className={
-                isCommandHome
+                navUsesDarkChrome
                   ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
                   : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
               }
@@ -306,7 +313,7 @@ export default function Navbar() {
               }}
               title={t("marketing.nav.searchTitle")}
               className={
-                isCommandHome
+                navUsesDarkChrome
                   ? "rounded-lg p-2.5 text-zinc-400 transition hover:bg-white/10 hover:text-white active:scale-[0.97]"
                   : "rounded-lg p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] active:scale-[0.97]"
               }
@@ -318,7 +325,7 @@ export default function Navbar() {
               type="button"
               onClick={() => setMobileOpen((o) => !o)}
               className={
-                isCommandHome
+                navUsesDarkChrome
                   ? "rounded-lg p-2.5 text-zinc-400 transition hover:bg-white/10 hover:text-white active:scale-[0.97]"
                   : "rounded-lg p-2.5 text-[#1d1d1f]/75 transition hover:bg-black/[0.06] active:scale-[0.97]"
               }

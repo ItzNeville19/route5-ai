@@ -1,5 +1,5 @@
 import { deskUrl } from "@/lib/desk-routes";
-import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
+import { canAccessDeveloperTools } from "@/lib/feature-flags";
 
 export type WorkspacePaletteProject = { id: string; name: string };
 
@@ -99,13 +99,15 @@ const LEGAL: PaletteItem[] = [
 export function buildPaletteItems(params: {
   signedIn: boolean;
   displayName: string | null;
+  /** Primary sign-in email — used for founder dev-tools access. */
+  userEmail?: string | null;
   projects: WorkspacePaletteProject[];
   recentRuns?: PaletteRecentRun[];
   /** Workspace-wide incomplete actions (Desk queue); sharpens Desk description. */
   openActionsCount?: number;
 }): PaletteItem[] {
-  const { signedIn, displayName, projects, recentRuns = [], openActionsCount = 0 } = params;
-  const showDeveloperTools = isDeveloperToolsEnabled();
+  const { signedIn, displayName, userEmail, projects, recentRuns = [], openActionsCount = 0 } = params;
+  const showDeveloperTools = canAccessDeveloperTools(userEmail);
 
   if (!signedIn) {
     return filterLivePaletteItems([
