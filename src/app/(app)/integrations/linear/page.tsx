@@ -171,8 +171,8 @@ export default function LinearIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — issues land here; send to Desk for decision capture (same commitments as Overview)."
-                : "Ready — samples and URL import work now; add an API key for your workspace. Desk is the capture surface."}
+                ? "Live — issues land here; send to Desk to convert decisions into commitments."
+                : "Ready — sample issues and URL import work now. Add an API key to pull your live workspace."}
             </p>
           ) : (
             <p className="mt-2 h-[1.25rem] text-[13px] text-transparent" aria-hidden>
@@ -295,11 +295,11 @@ export default function LinearIntegrationPage() {
       </section>
 
       <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
-        Runs sync with{" "}
+        Decisions synced here update{" "}
         <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           Overview
         </Link>{" "}
-        — Desk is your daily workspace; projects stay the system of record.
+        — Desk is your daily execution surface; projects remain your source of truth.
       </p>
     </div>
   );

@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     }
   }
   try {
+    const startedAt = Date.now();
     const { orgs, results } = await runEscalationEngineForAllOrgs();
     const summary = results.map((r) => ({
       orgId: r.orgId,
@@ -24,7 +25,25 @@ export async function GET(req: Request) {
       stale48: r.stale48,
       total: r.created + r.upgraded + r.stale24 + r.stale48,
     }));
-    return NextResponse.json({ ok: true, orgs, results: summary });
+    const totals = summary.reduce(
+      (acc, row) => {
+        acc.created += row.created;
+        acc.upgraded += row.upgraded;
+        acc.stale24 += row.stale24;
+        acc.stale48 += row.stale48;
+        acc.total += row.total;
+        return acc;
+      },
+      { created: 0, upgraded: 0, stale24: 0, stale48: 0, total: 0 }
+    );
+    return NextResponse.json({
+      ok: true,
+      orgs,
+      results: summary,
+      totals,
+      generatedAt: new Date().toISOString(),
+      elapsedMs: Date.now() - startedAt,
+    });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Error";
     return NextResponse.json({ error: msg }, { status: 500 });

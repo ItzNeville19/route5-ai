@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Show } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
-import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
+
+const HeroClerkCardActionsLazy = dynamic(
+  () => import("./HeroClerkCardActions").then((m) => m.HeroClerkCardActions),
+  { ssr: false, loading: () => null }
+);
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { BrandSquircle, type BrandIconId } from "@/components/marketplace/brand-icons";
 
@@ -49,6 +54,7 @@ type HeroProps = {
 export default function Hero({ commandTheme = false }: HeroProps) {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
+  const clerkRuntimeOk = useClerkRuntimeEnabled();
   const kicker = commandTheme
     ? "text-zinc-400 [text-shadow:0_1px_18px_rgba(139,92,246,0.35)]"
     : "text-[#1d1d1f]/45";
@@ -132,59 +138,8 @@ export default function Hero({ commandTheme = false }: HeroProps) {
                 <p className={`mt-2 text-[13px] leading-relaxed sm:text-[14px] ${small}`}>
                   {t("marketing.hero.cardBody")}
                 </p>
-                {hasClerkPublishableKey() ? (
-                  <>
-                    <Show when="signed-in">
-                      <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>
-                        {t("marketing.hero.signedInTitle")}
-                      </p>
-                      <p className={`mt-1 text-[13px] leading-snug ${small}`}>
-                        {t("marketing.hero.signedInBody")}
-                      </p>
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <Link
-                          href="/feed"
-                          className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
-                        >
-                          {t("marketing.hero.openFeed")}
-                        </Link>
-                        <Link
-                          href="/settings#connections"
-                          className={secondaryBtn}
-                        >
-                          {t("sidebar.integrations")}
-                        </Link>
-                      </div>
-                    </Show>
-                    <Show when="signed-out">
-                      <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>
-                        {t("marketing.hero.signedOutTitle")}
-                      </p>
-                      <p className={`mt-1 text-[13px] leading-snug ${small}`}>
-                        {t("marketing.hero.signedOutBody")}
-                      </p>
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <Link
-                          href="/sign-up"
-                          className="inline-flex rounded-full bg-[#0071e3] px-5 py-2.5 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
-                        >
-                          {t("marketing.hero.createAccount")}
-                        </Link>
-                        <Link
-                          href="/login"
-                          className={secondaryBtn}
-                        >
-                          {t("marketing.hero.logIn")}
-                        </Link>
-                        <Link
-                          href="/overview"
-                          className={secondaryBtn}
-                        >
-                          {t("marketing.hero.dashboard")}
-                        </Link>
-                      </div>
-                    </Show>
-                  </>
+                {clerkRuntimeOk ? (
+                  <HeroClerkCardActionsLazy emphasis={emphasis} small={small} secondaryBtn={secondaryBtn} />
                 ) : (
                   <>
                     <p className={`mt-2 text-[15px] font-medium ${emphasis}`}>

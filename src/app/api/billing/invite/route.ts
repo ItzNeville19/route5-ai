@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { checkPlanLimit, planLimitResponse } from "@/lib/billing/gate";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 
@@ -10,10 +10,9 @@ export const runtime = "nodejs";
  * When Clerk Organizations is enabled, call this before creating an invitation.
  */
 export async function POST() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);

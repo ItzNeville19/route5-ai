@@ -1,31 +1,57 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { isClerkFullyConfigured } from "@/lib/clerk-env";
+import { NextResponse } from "next/server";
+import type { NextFetchEvent, NextMiddleware, NextRequest } from "next/server";
 
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/privacy(.*)",
-  "/terms(.*)",
-  "/login(.*)",
-  "/sign-up(.*)",
-  "/contact(.*)",
-  "/product(.*)",
-  "/pricing(.*)",
-  "/download(.*)",
-  "/trust(.*)",
-  /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
-  "/projects(.*)",
-  "/overview(.*)",
-  "/feed(.*)",
-]);
+/**
+ * Next.js 16+ `proxy.ts` runs before every matched request. A static
+ * `clerkMiddleware()` export initializes Clerk immediately and throws when
+ * `CLERK_SECRET_KEY` is missing (e.g. standalone without env). Lazily require
+ * Clerk only when both keys are present.
+ */
+let clerkProxyHandler: NextMiddleware | undefined;
 
-export const proxy = clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) {
-    return;
+function resolveClerkProxy(): NextMiddleware {
+  if (!clerkProxyHandler) {
+    const { clerkMiddleware, createRouteMatcher } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require("@clerk/nextjs/server") as typeof import("@clerk/nextjs/server");
+
+    const isPublicRoute = createRouteMatcher([
+      "/",
+      "/privacy(.*)",
+      "/terms(.*)",
+      "/login(.*)",
+      "/sign-up(.*)",
+      "/contact(.*)",
+      "/product(.*)",
+      "/pricing(.*)",
+      "/download(.*)",
+      "/trust(.*)",
+      /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
+      "/projects(.*)",
+      "/overview(.*)",
+      "/feed(.*)",
+    ]);
+
+    clerkProxyHandler = clerkMiddleware(async (auth, req) => {
+      if (isPublicRoute(req)) {
+        return;
+      }
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return;
+      }
+      await auth.protect();
+    });
   }
-  if (req.nextUrl.pathname.startsWith("/api/")) {
-    return;
+  return clerkProxyHandler;
+}
+
+export function proxy(request: NextRequest, event: NextFetchEvent) {
+  if (!isClerkFullyConfigured()) {
+    return NextResponse.next();
   }
-  await auth.protect();
-});
+  return resolveClerkProxy()(request, event);
+}
 
 export const config = {
   matcher: [

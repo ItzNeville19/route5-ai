@@ -39,9 +39,10 @@ function TierCta({
     );
   }
   if (BILLING_LIVE) {
+    const checkoutPlan = tierId === "pro" ? "starter" : tierId === "ultra" ? "growth" : tierId;
     return (
       <Link
-        href={`/contact?subject=${encodeURIComponent(`Route5 ${tierId} — purchase`)}`}
+        href={`/contact?subject=${encodeURIComponent(`Route5 ${checkoutPlan} — purchase`)}`}
         title="Opens contact — complete purchase or invoice with our team (card checkout when integrated)"
         className="inline-flex w-full justify-center rounded-xl bg-[#0071e3] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0077ed]"
       >
@@ -51,7 +52,7 @@ function TierCta({
   }
   return (
     <Link
-      href={`/contact?subject=${encodeURIComponent("Route5 Pro")}`}
+      href={`/contact?subject=${encodeURIComponent("Route5 Starter")}`}
       className="inline-flex w-full justify-center rounded-xl bg-[#0071e3] py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#0077ed]"
     >
       {cta}
@@ -119,6 +120,10 @@ export default function PublicPlansGrid({ signedIn }: Props) {
       ))}
       </div>
       <AdvertisingSafeHarbor variant="plans-grid" className="mt-10" />
+      <p className="mt-4 text-center text-[12px] leading-relaxed text-[#6e6e73]">
+        Billing checkout currently uses plan IDs <strong>Starter</strong> and <strong>Growth</strong>. On this page,
+        Pro maps to Starter, Ultra maps to Growth, and Enterprise remains contract-based.
+      </p>
     </div>
   );
 }

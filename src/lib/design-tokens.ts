@@ -101,7 +101,7 @@ export const R5_LAYOUT = {
   /** Primary navigation rail */
   sidebarWidth: 220,
   /** Sticky workspace header */
-  headerHeight: 52,
+  headerHeight: 44,
   /** Sidebar / mobile tab row item */
   navItemHeight: 36,
   /** Bottom tab bar on small viewports */

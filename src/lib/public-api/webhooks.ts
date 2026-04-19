@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "crypto";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { sendNotification } from "@/lib/notifications/service";
+import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
 import type { WebhookEventType } from "@/lib/public-api/types";
 import {
   getWebhookEndpoint,
@@ -139,13 +140,14 @@ export async function processWebhookDeliveryRetry(deliveryId: string): Promise<v
     await setWebhookEndpointEnabled(row.orgId, ep.id, false);
     const owner = await getOrganizationClerkUserId(row.orgId);
     if (owner) {
+      const link = isDeveloperToolsEnabled() ? "/workspace/developer" : "/settings";
       void sendNotification({
         orgId: row.orgId,
         userId: owner,
         type: "escalation_escalated",
         title: "Webhook endpoint disabled",
         body: `Endpoint ${ep.url.slice(0, 80)} was disabled after ${MAX_ATTEMPTS} failed delivery attempts.`,
-        metadata: { link: "/workspace/developer", webhookEndpointId: ep.id },
+        metadata: { link, webhookEndpointId: ep.id },
       });
     }
     return;

@@ -7,7 +7,7 @@ import { SignIn, useAuth } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 import OnboardingShell from "@/components/app/OnboardingShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
-import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
 /** Max time before Clerk client shows retry (session bootstrap). */
@@ -174,7 +174,8 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  if (!hasClerkPublishableKey()) {
+  const clerkRuntimeOk = useClerkRuntimeEnabled();
+  if (!clerkRuntimeOk) {
     return <AppShellClerkMissing />;
   }
   return <AppShellWithClerk>{children}</AppShellWithClerk>;

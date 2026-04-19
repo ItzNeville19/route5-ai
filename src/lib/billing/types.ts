@@ -11,7 +11,7 @@ export type OrgInvoiceStatus = "paid" | "open" | "void" | "uncollectible";
 
 export type UsageMetric = "seats" | "commitments" | "integrations";
 
-export type BillingFeature = "commitments" | "integrations" | "export" | "seats";
+export type BillingFeature = "commitments" | "integrations" | "export" | "seats" | "projects";
 
 export type OrgSubscriptionRow = {
   id: string;

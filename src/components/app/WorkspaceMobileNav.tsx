@@ -36,7 +36,7 @@ export default function WorkspaceMobileNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 flex h-[var(--r5-mobile-nav-height)] items-stretch border-t border-r5-border-subtle bg-r5-surface-primary/95 pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 flex h-[var(--r5-mobile-nav-height)] items-stretch border-t border-r5-border-subtle bg-r5-surface-primary/95 pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
       aria-label="Primary"
     >
       <LinkTab href="/feed" label="Feed" icon={ListChecks} active={path === "/feed"} />

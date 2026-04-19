@@ -1,5 +1,6 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { listDistinctOwnerIdsForOrg } from "@/lib/org-commitments/repository";
 
 export const runtime = "nodejs";
@@ -8,10 +9,9 @@ export const runtime = "nodejs";
  * People who currently own at least one org commitment — resolved via Clerk (real profiles).
  */
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   try {
     const ownerIds = await listDistinctOwnerIdsForOrg(userId);

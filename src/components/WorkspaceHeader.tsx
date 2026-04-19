@@ -10,7 +10,6 @@ import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperien
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
-import WorkspaceHeaderGreeting from "@/components/app/WorkspaceHeaderGreeting";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 
 export default function WorkspaceHeader() {
@@ -28,12 +27,12 @@ export default function WorkspaceHeader() {
 
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
-      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] flex-col gap-2 px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-2)] sm:px-[var(--r5-content-padding-x)] lg:flex-row lg:items-center lg:justify-between lg:gap-[var(--r5-space-4)]">
-        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)] lg:max-w-[min(100%,420px)]">
+      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-[var(--r5-space-2)] px-[var(--r5-content-padding-x-mobile)] py-1.5 sm:px-[var(--r5-content-padding-x)]">
+        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => exp.setPrefs({ sidebarHidden: !sidebarHidden })}
-            className="hidden shrink-0 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary md:inline-flex md:items-center md:justify-center"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -44,30 +43,24 @@ export default function WorkspaceHeader() {
               aria-hidden
             />
           </button>
-          {sidebarHidden ? (
-            <Link
-              href="/feed"
-              className="mr-1 inline-flex shrink-0"
-              title="Route5 — Feed"
-              aria-label="Route5 home"
-            >
-              <Route5WordmarkInline className="text-[length:var(--r5-font-subheading)]" />
-            </Link>
-          ) : null}
-          <h1 className="min-w-0 truncate text-[length:var(--r5-font-heading)] font-[var(--r5-font-weight-semibold)] leading-[var(--r5-leading-heading)] tracking-[-0.03em] text-r5-text-primary">
+          <Link
+            href="/feed"
+            className="mr-1 inline-flex shrink-0"
+            title="Route5 — Feed"
+            aria-label="Route5 home"
+          >
+            <Route5WordmarkInline className="text-[13px]" />
+          </Link>
+          <h1 className="min-w-0 truncate text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
             {pageTitle}
           </h1>
-        </div>
-
-        <div className="hidden min-w-0 flex-[1.1] justify-center px-[var(--r5-space-2)] lg:flex">
-          <WorkspaceHeaderGreeting />
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-[var(--r5-space-3)] py-[var(--r5-space-2)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
+            className="inline-flex h-8 items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
             aria-label="Search"
           >
             <Search
@@ -86,7 +79,7 @@ export default function WorkspaceHeader() {
           <button
             type="button"
             onClick={() => openCapture()}
-            className="group inline-flex items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-button)] border border-r5-border-subtle bg-r5-surface-secondary px-[var(--r5-space-3)] py-[var(--r5-space-2)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
+            className="group inline-flex h-8 items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
             aria-label="Open Capture"
           >
             <Plus
@@ -100,11 +93,11 @@ export default function WorkspaceHeader() {
             </kbd>
           </button>
 
-          <div className="pl-[var(--r5-space-1)]">
+          <div className="pl-1">
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "h-9 w-9 ring-2 ring-white/10",
+                  avatarBox: "h-8 w-8 ring-2 ring-white/10",
                   userButtonPopoverCard: "border border-white/10 bg-zinc-950/95 shadow-2xl",
                 },
               }}

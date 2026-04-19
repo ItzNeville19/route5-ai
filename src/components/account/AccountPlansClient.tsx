@@ -52,9 +52,10 @@ function Cta({
     );
   }
   if (BILLING_LIVE) {
+    const checkoutPlan = tierId === "pro" ? "starter" : tierId === "ultra" ? "growth" : tierId;
     return (
       <Link
-        href={`/contact?subject=${encodeURIComponent(`Route5 ${tierId} — purchase`)}`}
+        href={`/contact?subject=${encodeURIComponent(`Route5 ${checkoutPlan} — purchase`)}`}
         title="Contact to complete purchase — card checkout when integrated"
         className="inline-flex w-full justify-center rounded-xl bg-[var(--workspace-accent)] py-2.5 text-[13px] font-semibold text-[var(--workspace-on-accent)] transition hover:opacity-95"
       >
@@ -64,7 +65,7 @@ function Cta({
   }
   return (
     <Link
-      href={`/contact?subject=${encodeURIComponent("Route5 Pro")}`}
+      href={`/contact?subject=${encodeURIComponent("Route5 Starter")}`}
       className="inline-flex w-full justify-center rounded-xl bg-[var(--workspace-accent)] py-2.5 text-[13px] font-semibold text-[var(--workspace-on-accent)] transition hover:opacity-95"
     >
       {cta}
@@ -100,10 +101,10 @@ export default function AccountPlansClient() {
             </p>
           </div>
           <Link
-            href={BILLING_LIVE ? "/contact" : "/contact?subject=Route5%20Pro"}
+            href={BILLING_LIVE ? "/contact" : "/contact?subject=Route5%20Starter"}
             className="mt-4 inline-flex shrink-0 items-center justify-center rounded-full bg-[var(--workspace-accent)] px-6 py-2.5 text-[13px] font-semibold text-[var(--workspace-on-accent)] shadow-md transition hover:opacity-95 sm:mt-0"
           >
-            {BILLING_LIVE ? "Subscribe" : "Get Pro"}
+            {BILLING_LIVE ? "Subscribe" : "Get Starter"}
           </Link>
         </motion.div>
       ) : null}
@@ -167,6 +168,10 @@ export default function AccountPlansClient() {
         </motion.div>
       ))}
       </div>
+      <p className="mt-4 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
+        Billing checkout references Starter/Growth IDs. In pricing copy, Pro maps to Starter and Ultra maps to
+        Growth.
+      </p>
     </div>
   );
 }

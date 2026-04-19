@@ -164,8 +164,8 @@ export default function GitHubIntegrationPage() {
           {!loading ? (
             <p className="mt-2 max-w-lg text-[13px] text-[var(--workspace-muted-fg)]">
               {configured
-                ? "Live — assigned issues sync here; send everything to Desk for decision capture (same pipeline as Overview)."
-                : "Ready — sample issues and URL import work now; add a token for live assigned issues. Desk is always the capture surface."}
+                ? "Live — assigned issues sync here; move key decisions into Desk for execution."
+                : "Ready — sample issues and URL import work now; add a token for live assigned issues."}
             </p>
           ) : (
             <p className="mt-2 h-[1.25rem] text-[13px] text-transparent" aria-hidden>
@@ -292,11 +292,11 @@ export default function GitHubIntegrationPage() {
       </section>
 
       <p className="mt-8 text-[12px] text-[var(--workspace-muted-fg)]">
-        Same runs power{" "}
+        The same commitments power{" "}
         <Link href="/overview" className="font-medium text-[var(--workspace-accent)] hover:underline">
           Overview
         </Link>{" "}
-        metrics — Desk is where you capture and execute; projects stay the system of record.
+        metrics — Desk is where teams confirm execution, while projects stay the source of truth.
       </p>
     </div>
   );

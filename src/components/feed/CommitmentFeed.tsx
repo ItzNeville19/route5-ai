@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   useCallback,
+  useDeferredValue,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -68,20 +69,29 @@ const SECTION_LABEL: Record<FeedBucket, string> = {
 type FeedFilter = "all" | "mine" | "team" | "unassigned" | "overdue" | "at_risk";
 
 type FeedSortUi = "due" | "priority" | "owner" | "updated" | "created";
+type FeedGroupMode = "timeline" | "owner" | "status";
 
-const FEED_GUIDE_KEY = "route5:feed-guide-dismissed";
+const FEED_VIEW_STORAGE_KEY = "route5:feed-saved-views:v1";
+const FEED_CACHE_KEY = "route5:feed-cache:v1";
+const FEED_DENSITY_KEY = "route5:feed-density:v1";
+
+type FeedSavedView = {
+  id: string;
+  label: string;
+  filter: FeedFilter;
+  sort: FeedSortUi;
+  group: FeedGroupMode;
+  search: string;
+};
+
+type FeedDensity = "comfortable" | "compact";
 
 const FEED_FILTER_OPTIONS: readonly { value: FeedFilter; label: string; hint: string }[] = [
   { value: "all", label: "All", hint: "Every open commitment in this workspace" },
-  { value: "mine", label: "Mine", hint: "Owned by you" },
-  {
-    value: "team",
-    label: "Teammates",
-    hint: "Owned by someone else (collaboration across owners)",
-  },
-  { value: "unassigned", label: "Unassigned", hint: "No owner set yet" },
+  { value: "team", label: "Active", hint: "Active commitments owned across the team" },
   { value: "overdue", label: "Overdue", hint: "Past deadline and not done" },
-  { value: "at_risk", label: "At Risk", hint: "Flagged as needing attention" },
+  { value: "mine", label: "Mine", hint: "Owned by you" },
+  { value: "unassigned", label: "Unassigned", hint: "No owner set yet" },
 ];
 
 function sortApiParams(ui: FeedSortUi): { sort: OrgCommitmentListSort; order: "asc" | "desc" } {
@@ -163,6 +173,68 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function relativeTimeLabel(iso: string | null): string {
+  if (!iso) return "—";
+  const ms = new Date(iso).getTime();
+  if (!Number.isFinite(ms)) return "—";
+  const diff = Date.now() - ms;
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.max(1, Math.floor(diff / 60_000))}m ago`;
+  if (diff < 86_400_000) return `${Math.max(1, Math.floor(diff / 3_600_000))}h ago`;
+  return `${Math.max(1, Math.floor(diff / 86_400_000))}d ago`;
+}
+
+function downloadFeedCsv(rows: OrgCommitmentRow[], projectNameById: Map<string, string>) {
+  const header = ["title", "ownerId", "status", "priority", "deadline", "project", "updatedAt"];
+  const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const lines = rows.map((r) =>
+    [
+      r.title,
+      r.ownerId,
+      r.status,
+      r.priority,
+      r.deadline,
+      r.projectId ? projectNameById.get(r.projectId) ?? "" : "",
+      r.updatedAt,
+    ]
+      .map((v) => esc(v ?? ""))
+      .join(",")
+  );
+  const csv = [header.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `route5-feed-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function sourceLabelFromDescription(description: string | null): string | null {
+  if (!description) return null;
+  const firstLine = description.split("\n")[0]?.trim() ?? "";
+  const m = /^[-\u2014]\s*source\s*\(([^)]+)\)\s*[-\u2014]\s*$/i.exec(firstLine);
+  if (!m?.[1]) return null;
+  return m[1].trim();
+}
+
+function isLikelyAtRisk(row: OrgCommitmentRow): { risky: boolean; reason: string | null } {
+  if (isCompletedRow(row)) return { risky: false, reason: null };
+  if (row.status === "overdue") return { risky: true, reason: "Deadline passed" };
+  if (row.status === "at_risk") return { risky: true, reason: "Flagged as at risk" };
+  const deadlineMs = new Date(row.deadline).getTime();
+  const lastActivityMs = new Date(row.lastActivityAt).getTime();
+  const now = Date.now();
+  const hoursToDeadline = (deadlineMs - now) / 3_600_000;
+  const hoursSinceActivity = (now - lastActivityMs) / 3_600_000;
+  if (hoursToDeadline <= 48 && hoursSinceActivity >= 72) {
+    return { risky: true, reason: "No recent activity close to deadline" };
+  }
+  return { risky: false, reason: null };
+}
+
 function HighlightedTitle({ text, query }: { text: string; query: string }) {
   const q = query.trim();
   if (!q) return <>{text}</>;
@@ -234,9 +306,23 @@ export default function CommitmentFeed() {
   const [completedOpen, setCompletedOpen] = useState(false);
   const [feedFilter, setFeedFilter] = useState<FeedFilter>("all");
   const [feedSort, setFeedSort] = useState<FeedSortUi>("due");
+  const [groupMode, setGroupMode] = useState<FeedGroupMode>("timeline");
   const [feedSearch, setFeedSearch] = useState("");
+  const deferredFeedSearch = useDeferredValue(feedSearch);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const rowButtonRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
+  const [lastLoadMs, setLastLoadMs] = useState<number | null>(null);
+  const [savedViews, setSavedViews] = useState<FeedSavedView[]>([]);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [collapsedBuckets, setCollapsedBuckets] = useState<Partial<Record<FeedBucket, boolean>>>({});
+  const [density, setDensity] = useState<FeedDensity>("comfortable");
+  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const [popover, setPopover] = useState<
     | { type: "owner" | "due"; commitmentId: string; draft: string }
     | null
@@ -247,21 +333,37 @@ export default function CommitmentFeed() {
   const [justAddedIds, setJustAddedIds] = useState<Set<string>>(new Set());
 
   const { sort: apiSort, order: apiOrder } = sortApiParams(feedSort);
+  const listAbortRef = useRef<AbortController | null>(null);
 
   const loadList = useCallback(async () => {
+    listAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    listAbortRef.current = ctrl;
+    const started = performance.now();
     const sp = new URLSearchParams();
     sp.set("sort", apiSort);
     sp.set("order", apiOrder);
     const res = await fetch(`/api/commitments?${sp.toString()}`, {
       credentials: "same-origin",
+      signal: ctrl.signal,
     });
     const data = (await res.json().catch(() => ({}))) as {
       orgId?: string;
       commitments?: OrgCommitmentRow[];
     };
+    if (ctrl.signal.aborted) return;
     if (res.ok) {
       if (data.orgId) setOrgId(data.orgId);
-      setRows(data.commitments ?? []);
+      const nextRows = data.commitments ?? [];
+      const syncedAt = new Date().toISOString();
+      setRows(nextRows);
+      setLastSyncAt(syncedAt);
+      setLastLoadMs(Math.round(performance.now() - started));
+      try {
+        sessionStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ rows: nextRows, at: syncedAt }));
+      } catch {
+        /* ignore */
+      }
     }
     setBootstrapped(true);
   }, [apiSort, apiOrder]);
@@ -277,8 +379,30 @@ export default function CommitmentFeed() {
   }, []);
 
   useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(FEED_CACHE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { rows?: OrgCommitmentRow[]; at?: string };
+      if (Array.isArray(parsed.rows) && parsed.rows.length > 0) {
+        setRows(parsed.rows);
+        setBootstrapped(true);
+        if (parsed.at) setLastSyncAt(parsed.at);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
     void loadList();
   }, [loadList]);
+
+  useEffect(
+    () => () => {
+      listAbortRef.current?.abort();
+    },
+    []
+  );
 
   useEffect(() => {
     if (!bootstrapped) return;
@@ -304,6 +428,55 @@ export default function CommitmentFeed() {
     void loadProjects();
   }, [loadProjects]);
 
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FEED_VIEW_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as FeedSavedView[];
+      if (Array.isArray(parsed)) setSavedViews(parsed.slice(0, 3));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FEED_VIEW_STORAGE_KEY, JSON.stringify(savedViews.slice(0, 3)));
+    } catch {
+      /* ignore */
+    }
+  }, [savedViews]);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(FEED_DENSITY_KEY);
+      if (raw === "compact" || raw === "comfortable") setDensity(raw);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(FEED_DENSITY_KEY, density);
+    } catch {
+      /* ignore */
+    }
+  }, [density]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const t = window.setInterval(() => {
+      void loadList();
+    }, 30_000);
+    return () => window.clearInterval(t);
+  }, [autoRefresh, loadList]);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
+
   const loadDetail = useCallback(async (id: string) => {
     const res = await fetch(`/api/commitments/${id}`, { credentials: "same-origin" });
     const data = (await res.json().catch(() => ({}))) as {
@@ -317,6 +490,14 @@ export default function CommitmentFeed() {
   useEffect(() => {
     if (expandedId) void loadDetail(expandedId);
   }, [expandedId, loadDetail]);
+
+  const prefetchDetail = useCallback(
+    (id: string) => {
+      if (details[id]) return;
+      void loadDetail(id);
+    },
+    [details, loadDetail]
+  );
 
   useEffect(() => {
     if (!orgId) return;
@@ -380,7 +561,7 @@ export default function CommitmentFeed() {
   );
 
   const searchFiltered = useMemo(() => {
-    const q = feedSearch.trim().toLowerCase();
+    const q = deferredFeedSearch.trim().toLowerCase();
     if (!q) return filterOnlyRows;
     return filterOnlyRows.filter((r) => {
       if (r.title.toLowerCase().includes(q)) return true;
@@ -389,9 +570,126 @@ export default function CommitmentFeed() {
       if (pn?.toLowerCase().includes(q)) return true;
       return false;
     });
-  }, [filterOnlyRows, feedSearch, projectNameById]);
+  }, [filterOnlyRows, deferredFeedSearch, projectNameById]);
 
   const grouped = useMemo(() => groupFeedRows(searchFiltered), [searchFiltered]);
+  const groupedByOwner = useMemo(() => {
+    const m = new Map<string, OrgCommitmentRow[]>();
+    for (const row of searchFiltered) {
+      const key = row.ownerId.trim() || "unassigned";
+      const list = m.get(key) ?? [];
+      list.push(row);
+      m.set(key, list);
+    }
+    return [...m.entries()].sort((a, b) => {
+      const aOverdue = a[1].filter((r) => !isCompletedRow(r) && r.status === "overdue").length;
+      const bOverdue = b[1].filter((r) => !isCompletedRow(r) && r.status === "overdue").length;
+      if (aOverdue !== bOverdue) return bOverdue - aOverdue;
+      return b[1].length - a[1].length;
+    });
+  }, [searchFiltered]);
+
+  const groupedByStatus = useMemo(() => {
+    const lanes: {
+      key: "overdue" | "at_risk" | "in_progress" | "not_started" | "completed";
+      label: string;
+      rows: OrgCommitmentRow[];
+    }[] = [
+      { key: "overdue", label: "Overdue", rows: [] },
+      { key: "at_risk", label: "At risk", rows: [] },
+      { key: "in_progress", label: "In progress", rows: [] },
+      { key: "not_started", label: "Not started", rows: [] },
+      { key: "completed", label: "Completed", rows: [] },
+    ];
+    const byKey = new Map(lanes.map((l) => [l.key, l]));
+    for (const row of searchFiltered) {
+      const key = isCompletedRow(row)
+        ? "completed"
+        : row.status === "overdue"
+          ? "overdue"
+          : row.status === "at_risk"
+            ? "at_risk"
+            : row.status === "in_progress"
+              ? "in_progress"
+              : "not_started";
+      byKey.get(key)?.rows.push(row);
+    }
+    return lanes;
+  }, [searchFiltered]);
+
+  const focusLane = useMemo(() => {
+    return filterOnlyRows
+      .filter((r) => !isCompletedRow(r))
+      .map((row) => {
+        const dueMs = new Date(row.deadline).getTime();
+        const hoursToDue = Number.isFinite(dueMs) ? (dueMs - nowMs) / 3_600_000 : Number.POSITIVE_INFINITY;
+        const riskBoost = row.status === "overdue" ? 6 : row.status === "at_risk" ? 4 : 0;
+        const ownerMissing = isUnassignedOwner(row.ownerId) ? 2 : 0;
+        const staleHours = (nowMs - new Date(row.lastActivityAt).getTime()) / 3_600_000;
+        const staleBoost = staleHours >= 72 ? 2 : 0;
+        const dueBoost = hoursToDue <= 24 ? 3 : hoursToDue <= 72 ? 2 : 0;
+        return { row, score: riskBoost + ownerMissing + staleBoost + dueBoost };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+  }, [filterOnlyRows, nowMs]);
+
+  const ownerTrendByOwnerId = useMemo(() => {
+    const ownerMap = new Map<string, number[]>();
+    const now = Date.now();
+    const weekMs = 7 * 24 * 3_600_000;
+    for (const row of rows) {
+      const ownerKey = row.ownerId.trim() || "unassigned";
+      if (!ownerMap.has(ownerKey)) ownerMap.set(ownerKey, [0, 0, 0, 0, 0, 0]);
+      if (!row.completedAt) continue;
+      const age = now - new Date(row.completedAt).getTime();
+      if (age < 0) continue;
+      const weekIdx = Math.floor(age / weekMs);
+      if (weekIdx < 0 || weekIdx > 5) continue;
+      const arr = ownerMap.get(ownerKey);
+      if (!arr) continue;
+      arr[5 - weekIdx] += 1;
+    }
+    return ownerMap;
+  }, [rows]);
+
+  const projectHealthById = useMemo(() => {
+    const stats = new Map<string, { total: number; healthy: number }>();
+    for (const row of rows) {
+      if (!row.projectId) continue;
+      const cur = stats.get(row.projectId) ?? { total: 0, healthy: 0 };
+      cur.total += 1;
+      if (row.status === "on_track" || row.status === "completed") cur.healthy += 1;
+      stats.set(row.projectId, cur);
+    }
+    const out = new Map<string, number>();
+    for (const [projectId, s] of stats.entries()) {
+      out.set(projectId, Math.round((s.healthy / Math.max(1, s.total)) * 100));
+    }
+    return out;
+  }, [rows]);
+
+  const orderedVisibleRowIds = useMemo(() => searchFiltered.map((r) => r.id), [searchFiltered]);
+
+  useEffect(() => {
+    if (orderedVisibleRowIds.length === 0) {
+      setActiveRowId(null);
+      return;
+    }
+    if (!activeRowId || !orderedVisibleRowIds.includes(activeRowId)) {
+      setActiveRowId(orderedVisibleRowIds[0] ?? null);
+    }
+  }, [orderedVisibleRowIds, activeRowId]);
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (orderedVisibleRowIds.includes(id)) next.add(id);
+      }
+      return next;
+    });
+  }, [orderedVisibleRowIds]);
 
   const openCount = useMemo(
     () => searchFiltered.filter((c) => !isCompletedRow(c)).length,
@@ -415,6 +713,30 @@ export default function CommitmentFeed() {
       return new Date(c.completedAt).getTime() >= wk.getTime();
     }).length;
   }, [rows]);
+
+  const dueNext72hCount = useMemo(() => {
+    const now = Date.now();
+    const limit = now + 72 * 3_600_000;
+    return filterOnlyRows.filter((r) => {
+      if (isCompletedRow(r)) return false;
+      const due = new Date(r.deadline).getTime();
+      return Number.isFinite(due) && due >= now && due <= limit;
+    }).length;
+  }, [filterOnlyRows]);
+
+  const unassignedCount = useMemo(
+    () => filterOnlyRows.filter((r) => !isCompletedRow(r) && isUnassignedOwner(r.ownerId)).length,
+    [filterOnlyRows]
+  );
+
+  const staleCount = useMemo(() => {
+    const now = Date.now();
+    return filterOnlyRows.filter((r) => {
+      if (isCompletedRow(r)) return false;
+      const age = now - new Date(r.lastActivityAt).getTime();
+      return Number.isFinite(age) && age >= 7 * 24 * 3_600_000;
+    }).length;
+  }, [filterOnlyRows]);
 
   const applyRowPatch = useCallback((id: string, patch: Partial<OrgCommitmentRow>) => {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -454,7 +776,7 @@ export default function CommitmentFeed() {
     [revertRow, pushToast, loadDetail]
   );
 
-  async function markComplete(id: string, e?: React.MouseEvent) {
+  const markComplete = useCallback(async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     const row = rows.find((r) => r.id === id);
     if (!row || isCompletedRow(row) || completingId) return;
@@ -469,7 +791,7 @@ export default function CommitmentFeed() {
       updatedAt: now,
     });
     await patchRemote(id, { completed: true }, snapshot);
-  }
+  }, [applyRowPatch, completingId, patchRemote, rows]);
 
   async function dismissCommitment(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -484,23 +806,171 @@ export default function CommitmentFeed() {
     }
   }
 
-  async function saveOwner(id: string, ownerId: string) {
+  const saveOwner = useCallback(async (id: string, ownerId: string) => {
     const row = rows.find((r) => r.id === id);
     if (!row) return;
     const snapshot = { ...row };
     applyRowPatch(id, { ownerId });
     setPopover(null);
     await patchRemote(id, { ownerId }, snapshot);
-  }
+  }, [applyRowPatch, patchRemote, rows]);
 
-  async function saveDeadline(id: string, iso: string) {
+  const saveDeadline = useCallback(async (id: string, iso: string) => {
     const row = rows.find((r) => r.id === id);
     if (!row) return;
     const snapshot = { ...row };
     applyRowPatch(id, { deadline: new Date(iso).toISOString() });
     setPopover(null);
     await patchRemote(id, { deadline: new Date(iso).toISOString() }, snapshot);
-  }
+  }, [applyRowPatch, patchRemote, rows]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const navRowIds = rows.map((r) => r.id);
+      const t = e.target as HTMLElement | null;
+      const isEditable =
+        !!t &&
+        (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable || t.closest("[role='dialog']"));
+      const lower = e.key.toLowerCase();
+
+      if (e.key === "?" && !isEditable) {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+        return;
+      }
+      if (e.key === "Escape") {
+        if (selectedIds.size > 0) {
+          setSelectedIds(new Set());
+          return;
+        }
+        setShortcutsOpen(false);
+        return;
+      }
+      if (isEditable) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && popover) {
+        e.preventDefault();
+        if (popover.type === "owner") {
+          void saveOwner(popover.commitmentId, popover.draft.trim());
+        } else if (popover.type === "due" && popover.draft) {
+          void saveDeadline(popover.commitmentId, `${popover.draft}T12:00:00.000Z`);
+        }
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && lower === "a") {
+        e.preventDefault();
+        setSelectedIds(new Set(orderedVisibleRowIds));
+        return;
+      }
+
+      if (lower === "f") {
+        e.preventDefault();
+        const idx = FEED_FILTER_OPTIONS.findIndex((x) => x.value === feedFilter);
+        const next = FEED_FILTER_OPTIONS[(idx + 1) % FEED_FILTER_OPTIONS.length];
+        if (next) setFeedFilter(next.value);
+        return;
+      }
+
+      if (lower === "g") {
+        e.preventDefault();
+        window.location.assign("/feed");
+        return;
+      }
+      if (lower === "t" && groupMode === "timeline") {
+        e.preventDefault();
+        setCollapsedBuckets((prev) => {
+          const allCollapsed = FEED_BUCKETS.every((b) => b === "completed" || prev[b] === true);
+          const next: Partial<Record<FeedBucket, boolean>> = {};
+          for (const b of FEED_BUCKETS) {
+            if (b === "completed") continue;
+            next[b] = !allCollapsed;
+          }
+          return { ...prev, ...next };
+        });
+        return;
+      }
+      if (lower === "c") {
+        e.preventDefault();
+        openCapture();
+        return;
+      }
+      if (lower === "l") {
+        e.preventDefault();
+        window.location.assign("/overview");
+        return;
+      }
+      if (lower === "p") {
+        e.preventDefault();
+        window.location.assign("/projects");
+        return;
+      }
+      if ((lower === "j" || lower === "k") && navRowIds.length > 0) {
+        e.preventDefault();
+        const curr = Math.max(0, navRowIds.indexOf(activeRowId ?? navRowIds[0]!));
+        const nextIdx = lower === "j" ? Math.min(navRowIds.length - 1, curr + 1) : Math.max(0, curr - 1);
+        const nextId = navRowIds[nextIdx] ?? null;
+        setActiveRowId(nextId);
+        if (nextId) {
+          const el = rowButtonRefs.current.get(nextId);
+          el?.focus();
+          el?.scrollIntoView({ block: "nearest" });
+        }
+        return;
+      }
+      if (e.key === "Enter" && activeRowId) {
+        e.preventDefault();
+        setExpandedId((prev) => (prev === activeRowId ? null : activeRowId));
+        return;
+      }
+      if (lower === "e" && activeRowId) {
+        e.preventDefault();
+        setExpandedId(activeRowId);
+        window.setTimeout(() => {
+          document.getElementById(`feed-title-input-${activeRowId}`)?.focus();
+        }, 0);
+        return;
+      }
+      if ((lower === "x" || lower === "c") && activeRowId) {
+        e.preventDefault();
+        void markComplete(activeRowId);
+        return;
+      }
+      if (lower === "r" && activeRowId) {
+        e.preventDefault();
+        const row = rows.find((r) => r.id === activeRowId);
+        setPopover({
+          type: "owner",
+          commitmentId: activeRowId,
+          draft: row?.ownerId ?? "",
+        });
+        return;
+      }
+      if (lower === "d" && activeRowId) {
+        e.preventDefault();
+        const row = rows.find((r) => r.id === activeRowId);
+        setPopover({
+          type: "due",
+          commitmentId: activeRowId,
+          draft: row ? row.deadline.slice(0, 10) : "",
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [
+    activeRowId,
+    feedFilter,
+    groupMode,
+    markComplete,
+    openCapture,
+    orderedVisibleRowIds,
+    popover,
+    rows,
+    saveDeadline,
+    saveOwner,
+    selectedIds.size,
+  ]);
 
   async function saveTitle(id: string, title: string) {
     const row = rows.find((r) => r.id === id);
@@ -534,6 +1004,66 @@ export default function CommitmentFeed() {
     await patchRemote(id, { projectId }, snapshot);
   }
 
+  async function completeSelected() {
+    const ids = [...selectedIds];
+    for (const id of ids) {
+      // intentional sequential order so each optimistic completion animation remains legible.
+      await markComplete(id);
+    }
+    setSelectedIds(new Set());
+  }
+
+  async function reassignSelected(ownerId: string) {
+    const ids = [...selectedIds];
+    for (const id of ids) {
+      await saveOwner(id, ownerId);
+    }
+    setSelectedIds(new Set());
+  }
+
+  async function reprioritizeSelected(priority: OrgCommitmentRow["priority"]) {
+    const ids = [...selectedIds];
+    for (const id of ids) {
+      await savePriority(id, priority);
+    }
+  }
+
+  async function deferSelectedByDays(days: number) {
+    const ids = [...selectedIds];
+    for (const id of ids) {
+      const row = rows.find((r) => r.id === id);
+      if (!row || isCompletedRow(row)) continue;
+      const base = new Date(row.deadline).getTime();
+      const next = Number.isFinite(base) ? new Date(base + days * 86_400_000) : new Date();
+      await saveDeadline(id, next.toISOString());
+    }
+  }
+
+  function saveCurrentView(slot: number) {
+    const next: FeedSavedView = {
+      id: `slot-${slot}`,
+      label: `View ${slot}`,
+      filter: feedFilter,
+      sort: feedSort,
+      group: groupMode,
+      search: feedSearch,
+    };
+    setSavedViews((prev) => {
+      const rest = prev.filter((v) => v.id !== next.id);
+      return [...rest, next].slice(0, 3).sort((a, b) => a.id.localeCompare(b.id));
+    });
+    pushToast(`Saved ${next.label}.`, "success");
+  }
+
+  function applySavedView(id: string) {
+    const view = savedViews.find((v) => v.id === id);
+    if (!view) return;
+    setFeedFilter(view.filter);
+    setFeedSort(view.sort);
+    setGroupMode(view.group);
+    setFeedSearch(view.search);
+  }
+
   async function postComment(commitmentId: string, content: string) {
     const res = await fetch(`/api/commitments/${commitmentId}/comments`, {
       method: "POST",
@@ -554,12 +1084,75 @@ export default function CommitmentFeed() {
     }
   }, [loadList, refreshSummary]);
 
+  const exportCurrent = useCallback(() => {
+    downloadFeedCsv(searchFiltered, projectNameById);
+    pushToast("Exported current feed view.", "success");
+  }, [searchFiltered, projectNameById, pushToast]);
+
+  const toggleSelectedRow = useCallback(
+    (id: string, checked: boolean, withRange = false) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (withRange && lastSelectedId) {
+          const a = orderedVisibleRowIds.indexOf(lastSelectedId);
+          const b = orderedVisibleRowIds.indexOf(id);
+          if (a !== -1 && b !== -1) {
+            const [start, end] = a < b ? [a, b] : [b, a];
+            for (let i = start; i <= end; i++) {
+              const rid = orderedVisibleRowIds[i];
+              if (!rid) continue;
+              if (checked) next.add(rid);
+              else next.delete(rid);
+            }
+            return next;
+          }
+        }
+        if (checked) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+      setLastSelectedId(id);
+    },
+    [lastSelectedId, orderedVisibleRowIds]
+  );
+
+  const applyQuickPreset = useCallback(
+    (preset: "my_queue" | "triage" | "critical" | "due_soon") => {
+      if (preset === "my_queue") {
+        setFeedFilter("mine");
+        setFeedSort("due");
+        setGroupMode("timeline");
+        setFeedSearch("");
+        return;
+      }
+      if (preset === "triage") {
+        setFeedFilter("unassigned");
+        setFeedSort("updated");
+        setGroupMode("status");
+        setFeedSearch("");
+        return;
+      }
+      if (preset === "critical") {
+        setFeedFilter("at_risk");
+        setFeedSort("priority");
+        setGroupMode("status");
+        setFeedSearch("");
+        return;
+      }
+      setFeedFilter("all");
+      setFeedSort("due");
+      setGroupMode("timeline");
+      setFeedSearch("");
+    },
+    []
+  );
+
   const filterActive = feedFilter !== "all";
 
   if (!bootstrapped) {
     return (
-      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
-        <div className="relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
+        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -578,8 +1171,8 @@ export default function CommitmentFeed() {
 
   if (rows.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] pb-[var(--r5-space-8)] pt-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:pt-[var(--r5-space-6)]">
-        <div className="relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] pb-[var(--r5-space-8)] pt-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:pt-[var(--r5-space-6)]">
+        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -608,8 +1201,8 @@ export default function CommitmentFeed() {
 
   if (searchFiltered.length === 0 && feedSearch.trim()) {
     return (
-      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
-        <div className="relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -621,8 +1214,23 @@ export default function CommitmentFeed() {
           setFeedFilter={setFeedFilter}
           feedSort={feedSort}
           setFeedSort={setFeedSort}
+          groupMode={groupMode}
+          setGroupMode={setGroupMode}
           onRefresh={onRefreshFeed}
           refreshing={refreshing}
+          lastSyncAt={lastSyncAt}
+          lastLoadMs={lastLoadMs}
+          autoRefresh={autoRefresh}
+          setAutoRefresh={setAutoRefresh}
+          savedViews={savedViews}
+          saveCurrentView={saveCurrentView}
+          applySavedView={applySavedView}
+          dueNext72hCount={dueNext72hCount}
+          unassignedCount={unassignedCount}
+          staleCount={staleCount}
+          onExport={exportCurrent}
+          density={density}
+          setDensity={setDensity}
         />
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <p className="text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
@@ -645,8 +1253,8 @@ export default function CommitmentFeed() {
 
   if (searchFiltered.length === 0 && filterActive) {
     return (
-      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
-        <div className="relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+      <div className="mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+        <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
           <FeedPersonalGreeting />
           <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
         </div>
@@ -658,8 +1266,23 @@ export default function CommitmentFeed() {
           setFeedFilter={setFeedFilter}
           feedSort={feedSort}
           setFeedSort={setFeedSort}
+          groupMode={groupMode}
+          setGroupMode={setGroupMode}
           onRefresh={onRefreshFeed}
           refreshing={refreshing}
+          lastSyncAt={lastSyncAt}
+          lastLoadMs={lastLoadMs}
+          autoRefresh={autoRefresh}
+          setAutoRefresh={setAutoRefresh}
+          savedViews={savedViews}
+          saveCurrentView={saveCurrentView}
+          applySavedView={applySavedView}
+          dueNext72hCount={dueNext72hCount}
+          unassignedCount={unassignedCount}
+          staleCount={staleCount}
+          onExport={exportCurrent}
+          density={density}
+          setDensity={setDensity}
         />
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <p className="text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
@@ -680,8 +1303,8 @@ export default function CommitmentFeed() {
   }
 
   return (
-    <div className="relative mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
-      <div className="relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
+    <div className="route5-perspective-shell relative mx-auto min-h-[calc(100dvh-var(--r5-layout-chrome-vertical))] w-full max-w-[860px] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
+      <div className="liquid-glass-tilt-3d relative mb-[var(--r5-space-6)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-gradient-to-br from-r5-surface-secondary/50 via-r5-surface-primary/35 to-r5-accent/[0.07] p-5 shadow-[var(--r5-shadow-elevated)] ring-1 ring-white/[0.04]">
         <FeedPersonalGreeting />
         <FeedExecutionSnapshot commitmentsCount={activeCount} overdueCount={overdueCount} completedThisWeek={completedThisWeek} />
       </div>
@@ -693,9 +1316,150 @@ export default function CommitmentFeed() {
         setFeedFilter={setFeedFilter}
         feedSort={feedSort}
         setFeedSort={setFeedSort}
+        groupMode={groupMode}
+        setGroupMode={setGroupMode}
         onRefresh={onRefreshFeed}
         refreshing={refreshing}
+        lastSyncAt={lastSyncAt}
+        lastLoadMs={lastLoadMs}
+        autoRefresh={autoRefresh}
+        setAutoRefresh={setAutoRefresh}
+        savedViews={savedViews}
+        saveCurrentView={saveCurrentView}
+        applySavedView={applySavedView}
+        dueNext72hCount={dueNext72hCount}
+        unassignedCount={unassignedCount}
+        staleCount={staleCount}
+        onExport={exportCurrent}
+        density={density}
+        setDensity={setDensity}
       />
+
+      <div className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/25 p-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">Quick views</p>
+          <span className="text-[11px] text-r5-text-tertiary">One-click feed presets</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => applyQuickPreset("my_queue")}
+          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+        >
+          My queue
+        </button>
+        <button
+          type="button"
+          onClick={() => applyQuickPreset("triage")}
+          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+        >
+          Triage
+        </button>
+        <button
+          type="button"
+          onClick={() => applyQuickPreset("critical")}
+          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+        >
+          Critical lane
+        </button>
+        <button
+          type="button"
+          onClick={() => applyQuickPreset("due_soon")}
+          className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1.5 text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+        >
+          Due soon
+        </button>
+        </div>
+      </div>
+
+      {focusLane.length > 0 ? (
+        <section className="mb-4 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/25 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[12px] font-semibold uppercase tracking-wide text-r5-text-secondary">Focus lane</p>
+            <span className="text-[11px] text-r5-text-tertiary">Top execution pressure</span>
+          </div>
+          <ul className="space-y-1.5">
+            {focusLane.map(({ row, score }) => (
+              <li key={row.id}>
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(row.id)}
+                  className="flex w-full items-center justify-between rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/60 px-3 py-2 text-left transition hover:bg-r5-surface-hover"
+                >
+                  <span className="truncate text-[13px] text-r5-text-primary">{row.title}</span>
+                  <span className="ml-2 shrink-0 text-[11px] text-r5-text-secondary">Score {score}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {selectedIds.size > 0 ? (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-[var(--r5-radius-lg)] border border-r5-accent/25 bg-r5-surface-secondary/55 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">
+            {selectedIds.size} selected
+          </span>
+          <button
+            type="button"
+            onClick={() => void completeSelected()}
+            className="rounded-[var(--r5-radius-pill)] border border-r5-status-completed/30 bg-r5-status-completed/15 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+          >
+            Complete all
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const ownerId = window.prompt("Reassign selected commitments to owner id:");
+              if (ownerId?.trim()) void reassignSelected(ownerId.trim());
+            }}
+            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+          >
+            Reassign all
+          </button>
+          {selfId ? (
+            <button
+              type="button"
+              onClick={() => void reassignSelected(selfId)}
+              className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+            >
+              Assign to me
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              const choice = window.prompt("Priority for selected: critical | high | medium | low", "medium");
+              const normalized = choice?.trim().toLowerCase();
+              if (
+                normalized === "critical" ||
+                normalized === "high" ||
+                normalized === "medium" ||
+                normalized === "low"
+              ) {
+                void reprioritizeSelected(normalized);
+              }
+            }}
+            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+          >
+            Priority all
+          </button>
+          <button
+            type="button"
+            onClick={() => void deferSelectedByDays(2)}
+            className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-1 text-[12px] font-medium text-r5-text-primary"
+          >
+            Push due +2d
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="ml-auto rounded-[var(--r5-radius-pill)] px-2 py-1 text-[12px] text-r5-text-secondary hover:text-r5-text-primary"
+          >
+            Clear
+          </button>
+        </div>
+      ) : null}
 
       {openCount === 0 && grouped.completed.length > 0 ? (
         <motion.div
@@ -708,52 +1472,17 @@ export default function CommitmentFeed() {
         </motion.div>
       ) : null}
 
-      <div className="space-y-8">
-        {FEED_BUCKETS.map((bucket) => {
-          const list = grouped[bucket];
-          if (list.length === 0) return null;
-
-          if (bucket === "completed") {
-            return (
-              <FeedCompletedSection
-                key={bucket}
-                bucket={bucket}
-                label={SECTION_LABEL[bucket]}
-                rows={list}
-                open={completedOpen}
-                onToggle={() => setCompletedOpen((o) => !o)}
-                expandedId={expandedId}
-                setExpandedId={setExpandedId}
-                details={details}
-                popover={popover}
-                setPopover={setPopover}
-                popoverRef={popoverRef}
-                selfId={selfId}
-                selfDisplayName={selfDisplayName}
-                selfInitials={selfInitials}
-                justAddedIds={justAddedIds}
-                completingId={completingId}
-                markComplete={markComplete}
-                dismissCommitment={dismissCommitment}
-                saveTitle={saveTitle}
-                saveDescription={saveDescription}
-                saveOwner={saveOwner}
-                saveDeadline={saveDeadline}
-                savePriority={savePriority}
-                saveProject={saveProject}
-                postComment={postComment}
-                projectNameById={projectNameById}
-                projects={projects}
-                searchQuery={feedSearch}
-              />
-            );
-          }
-
-          return (
+      {groupMode === "owner" ? (
+        <div className="space-y-8">
+          {groupedByOwner.map(([ownerId, list]) => (
             <FeedSectionStatic
-              key={bucket}
-              bucket={bucket}
-              label={SECTION_LABEL[bucket]}
+              key={ownerId}
+              bucket={ownerId === "unassigned" ? "later" : "week"}
+              label={
+                ownerId === "unassigned"
+                  ? `Unassigned (${list.length})`
+                  : `${ownerHoverLabelFromId(ownerId, selfId, selfDisplayName)} (${list.length})`
+              }
               rows={list}
               expandedId={expandedId}
               setExpandedId={setExpandedId}
@@ -778,10 +1507,190 @@ export default function CommitmentFeed() {
               projectNameById={projectNameById}
               projects={projects}
               searchQuery={feedSearch}
+              activeRowId={activeRowId}
+              setActiveRowId={setActiveRowId}
+              rowButtonRefs={rowButtonRefs}
+              selectedIds={selectedIds}
+              toggleSelected={toggleSelectedRow}
+              ownerTrendByOwnerId={ownerTrendByOwnerId}
+              projectHealthById={projectHealthById}
+              nowMs={nowMs}
+              prefetchDetail={prefetchDetail}
+              density={density}
             />
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : groupMode === "status" ? (
+        <div className="grid gap-3 lg:grid-cols-5">
+          {groupedByStatus.map((lane) => (
+            <section key={lane.key} className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-r5-border-subtle/50 bg-r5-surface-secondary/70 px-3 py-2 backdrop-blur-sm">
+                <h3 className="text-[12px] font-semibold text-r5-text-primary">{lane.label}</h3>
+                <span className="text-[11px] text-r5-text-tertiary">{lane.rows.length}</span>
+              </div>
+              <ul className="max-h-[58vh] space-y-2 overflow-y-auto p-2">
+                {lane.rows.length === 0 ? (
+                  <li className="rounded-[var(--r5-radius-md)] border border-dashed border-r5-border-subtle/60 px-2 py-3 text-center text-[11px] text-r5-text-tertiary">
+                    No items
+                  </li>
+                ) : (
+                  lane.rows.map((row) => (
+                    <li key={row.id}>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId((prev) => (prev === row.id ? null : row.id))}
+                        className="w-full rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/70 px-2.5 py-2 text-left transition hover:bg-r5-surface-hover"
+                      >
+                        <p className="line-clamp-2 text-[12px] font-medium text-r5-text-primary">{row.title}</p>
+                        <p className="mt-1 text-[10px] text-r5-text-secondary">
+                          {ownerHoverLabelFromId(row.ownerId, selfId, selfDisplayName)} · {formatFeedDueLabel(row.deadline)}
+                        </p>
+                      </button>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {FEED_BUCKETS.map((bucket) => {
+            const list = grouped[bucket];
+            if (list.length === 0) return null;
+
+            if (bucket === "completed") {
+              return (
+                <FeedCompletedSection
+                  key={bucket}
+                  bucket={bucket}
+                  label={SECTION_LABEL[bucket]}
+                  rows={list}
+                  open={completedOpen}
+                  onToggle={() => setCompletedOpen((o) => !o)}
+                  expandedId={expandedId}
+                  setExpandedId={setExpandedId}
+                  details={details}
+                  popover={popover}
+                  setPopover={setPopover}
+                  popoverRef={popoverRef}
+                  selfId={selfId}
+                  selfDisplayName={selfDisplayName}
+                  selfInitials={selfInitials}
+                  justAddedIds={justAddedIds}
+                  completingId={completingId}
+                  markComplete={markComplete}
+                  dismissCommitment={dismissCommitment}
+                  saveTitle={saveTitle}
+                  saveDescription={saveDescription}
+                  saveOwner={saveOwner}
+                  saveDeadline={saveDeadline}
+                  savePriority={savePriority}
+                  saveProject={saveProject}
+                  postComment={postComment}
+                  projectNameById={projectNameById}
+                  projects={projects}
+                  searchQuery={feedSearch}
+                  activeRowId={activeRowId}
+                  setActiveRowId={setActiveRowId}
+                  rowButtonRefs={rowButtonRefs}
+                  selectedIds={selectedIds}
+                  toggleSelected={toggleSelectedRow}
+                  ownerTrendByOwnerId={ownerTrendByOwnerId}
+                  projectHealthById={projectHealthById}
+                  nowMs={nowMs}
+                  prefetchDetail={prefetchDetail}
+                  density={density}
+                />
+              );
+            }
+
+            const collapsed = collapsedBuckets[bucket] === true;
+            return (
+              <section key={bucket}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCollapsedBuckets((prev) => ({ ...prev, [bucket]: !collapsed }))
+                  }
+                  className="mb-3 flex w-full items-center justify-between px-0.5 text-left"
+                >
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-r5-text-primary">
+                    {collapsed ? (
+                      <ChevronRight className="h-4 w-4 text-r5-text-secondary" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-r5-text-secondary" />
+                    )}
+                    {SECTION_LABEL[bucket]}
+                  </span>
+                  <span className={`text-[13px] font-medium tabular-nums ${sectionCountClass(bucket)}`}>
+                    {list.length}
+                  </span>
+                </button>
+                {!collapsed ? (
+                  <FeedSectionStatic
+                    bucket={bucket}
+                    label={SECTION_LABEL[bucket]}
+                    rows={list}
+                    expandedId={expandedId}
+                    setExpandedId={setExpandedId}
+                    details={details}
+                    popover={popover}
+                    setPopover={setPopover}
+                    popoverRef={popoverRef}
+                    selfId={selfId}
+                    selfDisplayName={selfDisplayName}
+                    selfInitials={selfInitials}
+                    justAddedIds={justAddedIds}
+                    completingId={completingId}
+                    markComplete={markComplete}
+                    dismissCommitment={dismissCommitment}
+                    saveTitle={saveTitle}
+                    saveDescription={saveDescription}
+                    saveOwner={saveOwner}
+                    saveDeadline={saveDeadline}
+                    savePriority={savePriority}
+                    saveProject={saveProject}
+                    postComment={postComment}
+                    projectNameById={projectNameById}
+                    projects={projects}
+                    searchQuery={feedSearch}
+                    activeRowId={activeRowId}
+                    setActiveRowId={setActiveRowId}
+                    rowButtonRefs={rowButtonRefs}
+                    selectedIds={selectedIds}
+                    toggleSelected={toggleSelectedRow}
+                    ownerTrendByOwnerId={ownerTrendByOwnerId}
+                    projectHealthById={projectHealthById}
+                    nowMs={nowMs}
+                    prefetchDetail={prefetchDetail}
+                    density={density}
+                  />
+                ) : null}
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {shortcutsOpen ? (
+        <div className="fixed inset-0 z-[220] flex items-center justify-center bg-black/45 p-4">
+          <div className="w-full max-w-md rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[var(--r5-shadow-elevated)]">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[13px] font-semibold uppercase tracking-wide text-r5-text-secondary">Keyboard shortcuts</p>
+              <button type="button" onClick={() => setShortcutsOpen(false)} className="rounded p-1 text-r5-text-secondary hover:bg-r5-surface-hover">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <ul className="space-y-1 text-[13px] text-r5-text-primary">
+              <li><kbd className="font-mono">F</kbd> Next filter · <kbd className="font-mono">G</kbd> Feed · <kbd className="font-mono">C</kbd> Capture · <kbd className="font-mono">L</kbd> Leadership · <kbd className="font-mono">P</kbd> Projects</li>
+              <li><kbd className="font-mono">J / K</kbd> Move row · <kbd className="font-mono">Enter</kbd> Expand</li>
+              <li><kbd className="font-mono">E</kbd> Edit · <kbd className="font-mono">X</kbd> Complete · <kbd className="font-mono">R</kbd> Reassign · <kbd className="font-mono">D</kbd> Deadline</li>
+              <li><kbd className="font-mono">/</kbd> Search · <kbd className="font-mono">T</kbd> Collapse groups · <kbd className="font-mono">⌘A</kbd> Select all · <kbd className="font-mono">?</kbd> This panel · <kbd className="font-mono">Esc</kbd> Close</li>
+            </ul>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -794,8 +1703,23 @@ function FeedHeaderStrip({
   setFeedFilter,
   feedSort,
   setFeedSort,
+  groupMode,
+  setGroupMode,
   onRefresh,
   refreshing,
+  lastSyncAt,
+  lastLoadMs,
+  autoRefresh,
+  setAutoRefresh,
+  savedViews,
+  saveCurrentView,
+  applySavedView,
+  dueNext72hCount,
+  unassignedCount,
+  staleCount,
+  onExport,
+  density,
+  setDensity,
 }: {
   feedSearch: string;
   setFeedSearch: (s: string) => void;
@@ -804,84 +1728,33 @@ function FeedHeaderStrip({
   setFeedFilter: (f: FeedFilter) => void;
   feedSort: FeedSortUi;
   setFeedSort: (s: FeedSortUi) => void;
+  groupMode: FeedGroupMode;
+  setGroupMode: (mode: FeedGroupMode) => void;
   onRefresh: () => void;
   refreshing: boolean;
+  lastSyncAt: string | null;
+  lastLoadMs: number | null;
+  autoRefresh: boolean;
+  setAutoRefresh: (v: boolean) => void;
+  savedViews: FeedSavedView[];
+  saveCurrentView: (slot: number) => void;
+  applySavedView: (id: string) => void;
+  dueNext72hCount: number;
+  unassignedCount: number;
+  staleCount: number;
+  onExport: () => void;
+  density: FeedDensity;
+  setDensity: (d: FeedDensity) => void;
 }) {
-  const [guideOpen, setGuideOpen] = useState(false);
-
-  useEffect(() => {
-    try {
-      setGuideOpen(localStorage.getItem(FEED_GUIDE_KEY) !== "1");
-    } catch {
-      setGuideOpen(true);
-    }
-  }, []);
-
-  function dismissGuide() {
-    try {
-      localStorage.setItem(FEED_GUIDE_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    setGuideOpen(false);
-  }
-
   return (
     <header className="mb-[var(--r5-space-5)] w-full space-y-[var(--r5-space-4)]">
-      {guideOpen ? (
-        <div className="relative overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-accent/25 bg-gradient-to-br from-r5-accent/[0.09] via-r5-surface-secondary/40 to-r5-status-on-track/[0.06] px-[var(--r5-space-4)] py-[var(--r5-space-3)] shadow-[var(--r5-shadow-elevated)]">
-          <button
-            type="button"
-            onClick={dismissGuide}
-            className="absolute right-2 top-2 rounded-[var(--r5-radius-badge)] p-1 text-r5-text-tertiary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
-            aria-label="Dismiss tips"
-          >
-            <X className="h-4 w-4" strokeWidth={2} />
-          </button>
-          <p className="pr-8 text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-accent">
-            How Feed works
-          </p>
-          <ul className="mt-2 flex list-none flex-col gap-1.5 text-[length:var(--r5-font-body)] text-r5-text-secondary sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-1">
-            <li className="flex gap-2">
-              <span className="text-r5-accent" aria-hidden>
-                1.
-              </span>
-              <span>
-                <span className="font-medium text-r5-text-primary">Sync</span> updates the list and the KPI tiles above.
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-r5-accent" aria-hidden>
-                2.
-              </span>
-              <span>
-                Use <span className="font-medium text-r5-text-primary">filters</span> to narrow owners — hover a pill for a short
-                hint.
-              </span>
-            </li>
-            <li className="flex gap-2">
-              <span className="text-r5-accent" aria-hidden>
-                3.
-              </span>
-              <span>
-                <span className="font-medium text-r5-text-primary">Expand a row</span> to edit owner, due date, or add a comment
-                for your team.
-              </span>
-            </li>
-          </ul>
-        </div>
-      ) : null}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-[length:var(--r5-font-hero)] font-semibold tracking-[-0.04em] text-r5-text-primary sm:text-[length:var(--r5-font-display)]">
+          <h1 className="text-[20px] font-semibold tracking-[-0.01em] text-r5-text-primary">
             Feed
           </h1>
-          <p className="mt-1 max-w-[52ch] text-[length:var(--r5-font-body)] text-r5-text-secondary">
-            Your org’s commitments — newest context at the top. Filter by who owns what, sort by date or priority,{" "}
-            <Link href="/workspace/team" className="font-medium text-r5-accent underline-offset-2 hover:underline">
-              see who’s on the team
-            </Link>
-            , then search across titles and projects.
+          <p className="mt-1 max-w-[52ch] text-[13px] text-r5-text-secondary">
+            Operator queue for execution health. Scan risk first, then update owners and due dates in-line.
           </p>
         </div>
         <div className="flex w-full min-w-0 flex-col gap-1.5 sm:max-w-[min(100%,320px)]">
@@ -913,6 +1786,32 @@ function FeedHeaderStrip({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-[var(--r5-space-3)]">
+        <div className="grid w-full gap-2 sm:grid-cols-3">
+          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
+            <p className="text-[11px] text-r5-text-secondary">Due next 72h</p>
+            <p className="text-[16px] font-semibold text-r5-text-primary">{dueNext72hCount}</p>
+          </div>
+          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
+            <p className="text-[11px] text-r5-text-secondary">Unassigned</p>
+            <p className="text-[16px] font-semibold text-r5-text-primary">{unassignedCount}</p>
+          </div>
+          <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/70 px-3 py-2">
+            <p className="text-[11px] text-r5-text-secondary">Stale</p>
+            <p className="text-[16px] font-semibold text-r5-text-primary">{staleCount}</p>
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between text-[11px] text-r5-text-tertiary">
+        <span>
+          Synced {relativeTimeLabel(lastSyncAt)}
+          {lastLoadMs != null ? ` · ${lastLoadMs}ms` : ""}
+        </span>
+        <Link href="/overview" className="font-medium text-r5-accent underline-offset-2 hover:underline">
+          Open leadership dashboard
+        </Link>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-[var(--r5-space-3)]">
         <div className="flex flex-wrap items-center gap-[var(--r5-space-2)]">
           {FEED_FILTER_OPTIONS.map((opt) => {
             const active = opt.value === feedFilter;
@@ -934,7 +1833,82 @@ function FeedHeaderStrip({
           })}
         </div>
 
-        <div className="flex items-center gap-[var(--r5-space-2)]">
+        <div className="no-scrollbar flex max-w-full items-center gap-[var(--r5-space-2)] overflow-x-auto pb-1">
+          <label className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-2 rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[12px] text-r5-text-secondary">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-r5-border-subtle bg-r5-surface-primary"
+            />
+            Auto refresh
+          </label>
+          <button
+            type="button"
+            onClick={onExport}
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-2 rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70 bg-r5-surface-primary/80 px-[var(--r5-space-3)] text-[12px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+          >
+            Export CSV
+          </button>
+          <div className="hidden items-center gap-1 sm:flex">
+            {[1, 2, 3].map((slot) => {
+              const id = `slot-${slot}`;
+              const has = savedViews.some((v) => v.id === id);
+              return (
+                <div key={id} className="inline-flex overflow-hidden rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/70">
+                  <button
+                    type="button"
+                    onClick={() => saveCurrentView(slot)}
+                    className="px-2 py-1 text-[11px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                    title={`Save view ${slot}`}
+                  >
+                    S{slot}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applySavedView(id)}
+                    disabled={!has}
+                    className="border-l border-r5-border-subtle/70 px-2 py-1 text-[11px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary disabled:opacity-40"
+                    title={`Load view ${slot}`}
+                  >
+                    L{slot}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <div className="inline-flex min-h-[var(--r5-nav-item-height)] shrink-0 overflow-hidden rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70">
+            {(["timeline", "owner", "status"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setGroupMode(mode)}
+                className={`whitespace-nowrap px-2.5 text-[11px] transition ${
+                  groupMode === mode
+                    ? "bg-r5-surface-secondary text-r5-text-primary"
+                    : "bg-r5-surface-primary/80 text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                }`}
+              >
+                {mode === "timeline" ? "Timeline" : mode === "owner" ? "Owner" : "State"}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex min-h-[var(--r5-nav-item-height)] shrink-0 overflow-hidden rounded-[var(--r5-radius-md)] border border-r5-border-subtle/70">
+            {(["comfortable", "compact"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setDensity(mode)}
+                className={`whitespace-nowrap px-2.5 text-[11px] transition ${
+                  density === mode
+                    ? "bg-r5-surface-secondary text-r5-text-primary"
+                    : "bg-r5-surface-primary/80 text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                }`}
+              >
+                {mode === "comfortable" ? "Roomy" : "Dense"}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             onClick={() => void onRefresh()}
@@ -1014,6 +1988,16 @@ function FeedSectionStatic({
   projectNameById,
   projects,
   searchQuery,
+  activeRowId,
+  setActiveRowId,
+  rowButtonRefs,
+  selectedIds,
+  toggleSelected,
+  ownerTrendByOwnerId,
+  projectHealthById,
+  nowMs,
+  prefetchDetail,
+  density,
 }: {
   bucket: FeedBucket;
   label: string;
@@ -1043,6 +2027,16 @@ function FeedSectionStatic({
   projectNameById: Map<string, string>;
   projects: { id: string; name: string }[];
   searchQuery: string;
+  activeRowId: string | null;
+  setActiveRowId: (id: string | null) => void;
+  rowButtonRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
+  selectedIds: Set<string>;
+  toggleSelected: (id: string, checked: boolean, withRange?: boolean) => void;
+  ownerTrendByOwnerId: Map<string, number[]>;
+  projectHealthById: Map<string, number>;
+  nowMs: number;
+  prefetchDetail: (id: string) => void;
+  density: FeedDensity;
 }) {
   return (
     <section>
@@ -1055,7 +2049,7 @@ function FeedSectionStatic({
         </span>
       </div>
       <ul
-        className={`overflow-visible rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/25 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
+        className={`route5-tilt-hover overflow-visible rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/25 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
       >
         <AnimatePresence initial={false}>
           {rows.map((row) => (
@@ -1086,6 +2080,16 @@ function FeedSectionStatic({
               projectNameById={projectNameById}
               projects={projects}
               searchQuery={searchQuery}
+              active={activeRowId === row.id}
+              onActivate={() => setActiveRowId(row.id)}
+              rowButtonRefs={rowButtonRefs}
+              selected={selectedIds.has(row.id)}
+              toggleSelected={toggleSelected}
+              ownerTrendByOwnerId={ownerTrendByOwnerId}
+              projectHealthById={projectHealthById}
+              nowMs={nowMs}
+              prefetchDetail={prefetchDetail}
+              density={density}
             />
           ))}
         </AnimatePresence>
@@ -1123,6 +2127,16 @@ function FeedCompletedSection({
   projectNameById,
   projects,
   searchQuery,
+  activeRowId,
+  setActiveRowId,
+  rowButtonRefs,
+  selectedIds,
+  toggleSelected,
+  ownerTrendByOwnerId,
+  projectHealthById,
+  nowMs,
+  prefetchDetail,
+  density,
 }: {
   bucket: FeedBucket;
   label: string;
@@ -1154,6 +2168,16 @@ function FeedCompletedSection({
   projectNameById: Map<string, string>;
   projects: { id: string; name: string }[];
   searchQuery: string;
+  activeRowId: string | null;
+  setActiveRowId: (id: string | null) => void;
+  rowButtonRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
+  selectedIds: Set<string>;
+  toggleSelected: (id: string, checked: boolean, withRange?: boolean) => void;
+  ownerTrendByOwnerId: Map<string, number[]>;
+  projectHealthById: Map<string, number>;
+  nowMs: number;
+  prefetchDetail: (id: string) => void;
+  density: FeedDensity;
 }) {
   return (
     <section>
@@ -1181,7 +2205,7 @@ function FeedCompletedSection({
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className={`overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
+            className={`route5-tilt-hover overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/60 bg-r5-surface-primary/20 shadow-[0_1px_0_rgba(255,255,255,0.03)_inset] ${bucketListAccent(bucket)}`}
           >
             {rows.map((row) => (
               <FeedRow
@@ -1211,6 +2235,16 @@ function FeedCompletedSection({
                 projectNameById={projectNameById}
                 projects={projects}
                 searchQuery={searchQuery}
+                active={activeRowId === row.id}
+                onActivate={() => setActiveRowId(row.id)}
+                rowButtonRefs={rowButtonRefs}
+                selected={selectedIds.has(row.id)}
+                toggleSelected={toggleSelected}
+                ownerTrendByOwnerId={ownerTrendByOwnerId}
+                projectHealthById={projectHealthById}
+                nowMs={nowMs}
+                prefetchDetail={prefetchDetail}
+                density={density}
               />
             ))}
           </motion.ul>
@@ -1246,6 +2280,16 @@ function FeedRow({
   projectNameById,
   projects,
   searchQuery,
+  active,
+  onActivate,
+  rowButtonRefs,
+  selected,
+  toggleSelected,
+  ownerTrendByOwnerId,
+  projectHealthById,
+  nowMs,
+  prefetchDetail,
+  density,
 }: {
   bucket: FeedBucket;
   row: OrgCommitmentRow;
@@ -1274,6 +2318,16 @@ function FeedRow({
   projectNameById: Map<string, string>;
   projects: { id: string; name: string }[];
   searchQuery: string;
+  active: boolean;
+  onActivate: () => void;
+  rowButtonRefs: React.MutableRefObject<Map<string, HTMLDivElement>>;
+  selected: boolean;
+  toggleSelected: (id: string, checked: boolean, withRange?: boolean) => void;
+  ownerTrendByOwnerId: Map<string, number[]>;
+  projectHealthById: Map<string, number>;
+  nowMs: number;
+  prefetchDetail: (id: string) => void;
+  density: FeedDensity;
 }) {
   const completed = isCompletedRow(row);
   const completing = completingId === row.id;
@@ -1338,6 +2392,12 @@ function FeedRow({
   const ownerPopoverOpen =
     Boolean(popFixed?.kind === "owner" && showPopover?.type === "owner");
   const duePopoverOpen = Boolean(popFixed?.kind === "due" && showPopover?.type === "due");
+  const sourceLabel = sourceLabelFromDescription(row.description);
+  const risk = isLikelyAtRisk(row);
+  const staleDays = Math.floor((nowMs - new Date(row.lastActivityAt).getTime()) / (24 * 3_600_000));
+  const trend = ownerTrendByOwnerId.get(row.ownerId.trim() || "unassigned") ?? [0, 0, 0, 0, 0, 0];
+  const trendMax = Math.max(1, ...trend);
+  const projectHealth = row.projectId ? projectHealthById.get(row.projectId) : null;
 
   return (
     <>
@@ -1354,7 +2414,7 @@ function FeedRow({
         overdueBorder ? "border-l-2 border-l-r5-status-overdue" : ""
       } ${dimLater ? "opacity-[0.72]" : ""} ${completed ? "opacity-60" : ""} ${
         justAdded ? "ring-1 ring-r5-status-on-track/35 ring-inset" : ""
-      }`}
+      } ${active ? "ring-1 ring-r5-accent/35 ring-inset" : ""}`}
       onTouchStart={(e) => {
         const t = e.changedTouches[0];
         touchStart.current = { x: t.clientX, y: t.clientY };
@@ -1379,10 +2439,32 @@ function FeedRow({
             onToggle();
           }
         }}
-        className="w-full cursor-pointer px-3 py-2.5 text-left outline-none transition-colors duration-[var(--r5-duration-fast)] hover:bg-r5-surface-hover/40 focus-visible:ring-2 focus-visible:ring-r5-accent/35 sm:px-4 sm:py-3"
+        ref={(el) => {
+          if (el) rowButtonRefs.current.set(row.id, el);
+          else rowButtonRefs.current.delete(row.id);
+        }}
+        className={`w-full cursor-pointer text-left outline-none transition-colors duration-[var(--r5-duration-fast)] hover:bg-r5-surface-hover/40 focus-visible:ring-2 focus-visible:ring-r5-accent/35 ${
+          density === "compact" ? "px-2.5 py-1 sm:px-3 sm:py-1.5" : "px-3 py-1.5 sm:px-4 sm:py-2"
+        }`}
+        onFocus={onActivate}
+        onMouseEnter={() => {
+          onActivate();
+          prefetchDetail(row.id);
+        }}
       >
-        <div className="flex items-start gap-2 sm:gap-3">
+        <div className="flex min-h-[36px] items-start gap-2 sm:gap-3">
           <div className="flex shrink-0 items-start gap-2 pt-0.5">
+            <input
+              type="checkbox"
+              checked={selected}
+              onChange={(e) => {
+                e.stopPropagation();
+                toggleSelected(row.id, e.target.checked, e.nativeEvent instanceof MouseEvent ? e.nativeEvent.shiftKey : false);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 h-3.5 w-3.5 rounded border-r5-border-subtle bg-r5-surface-primary opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
+              aria-label={`Select ${row.title}`}
+            />
             <div
               className={`mt-1.5 h-4 shrink-0 rounded-[var(--r5-radius-pill)] ${priorityBarTone(row.priority).show ? "w-0.5" : "w-0"} ${priorityBarTone(row.priority).className}`}
               aria-hidden
@@ -1503,6 +2585,30 @@ function FeedRow({
                   </>
                 )}
               </button>
+              {!completed ? (
+                <svg
+                  width="26"
+                  height="8"
+                  viewBox="0 0 26 8"
+                  className="opacity-70"
+                  aria-label="Owner completion trend"
+                >
+                  {trend.map((v, i) => {
+                    const h = Math.max(1, Math.round((v / trendMax) * 7));
+                    return (
+                      <rect
+                        key={i}
+                        x={i * 4 + 1}
+                        y={8 - h}
+                        width="3"
+                        height={h}
+                        rx="1"
+                        className="fill-r5-text-tertiary"
+                      />
+                    );
+                  })}
+                </svg>
+              ) : null}
 
               <button
                 ref={dueBtnRef}
@@ -1525,14 +2631,47 @@ function FeedRow({
               </button>
 
               {row.projectId ? (
-                <Link
-                  href={`/projects/${row.projectId}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="shrink-0 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/60 bg-r5-surface-secondary/30 px-2.5 py-0.5 text-[length:var(--r5-font-caption)] font-medium text-r5-text-secondary transition hover:border-r5-border-subtle hover:text-r5-text-primary"
+                <>
+                  <Link
+                    href={`/projects/${row.projectId}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/60 bg-r5-surface-secondary/30 px-2.5 py-0.5 text-[length:var(--r5-font-caption)] font-medium text-r5-text-secondary transition hover:border-r5-border-subtle hover:text-r5-text-primary"
+                  >
+                    {projectNameById.get(row.projectId) ?? "Project"}
+                  </Link>
+                  {typeof projectHealth === "number" ? (
+                    <span className="text-[11px] text-r5-text-tertiary">Health {projectHealth}%</span>
+                  ) : null}
+                </>
+              ) : null}
+              {sourceLabel ? (
+                <span className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/60 bg-r5-surface-secondary/30 px-2 py-0.5 text-[11px] text-r5-text-secondary">
+                  Source: {sourceLabel}
+                </span>
+              ) : null}
+              {risk.risky ? (
+                <span className="rounded-[var(--r5-radius-pill)] border border-r5-status-at-risk/35 bg-r5-status-at-risk/15 px-2 py-0.5 text-[11px] text-r5-status-at-risk" title={risk.reason ?? "Execution risk"}>
+                  Risk
+                </span>
+              ) : null}
+              {!completed && staleDays >= 7 ? (
+                <span
+                  className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/70 bg-r5-surface-secondary/45 px-2 py-0.5 text-[11px] text-r5-text-secondary"
+                  title="No recent activity on this commitment"
                 >
-                  {projectNameById.get(row.projectId) ?? "Project"}
+                  Quiet {staleDays}d
+                </span>
+              ) : null}
+              {!completed ? (
+                <Link
+                  href={`/workspace/escalations?commitment_id=${encodeURIComponent(row.id)}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle/60 px-2 py-0.5 text-[11px] text-r5-text-secondary hover:text-r5-text-primary"
+                >
+                  Escalate
                 </Link>
               ) : null}
+              <span className="text-[11px] text-r5-text-tertiary">Updated {relativeTimeLabel(row.updatedAt)}</span>
             </div>
           </div>
         </div>
@@ -1552,6 +2691,7 @@ function FeedRow({
               <label className="block text-[length:var(--r5-font-kbd)] font-semibold uppercase tracking-wide text-r5-text-secondary">
                 Title
                 <input
+                  id={`feed-title-input-${row.id}`}
                   value={titleDraft}
                   onChange={(e) => setTitleDraft(e.target.value)}
                   onBlur={() => {

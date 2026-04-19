@@ -155,7 +155,7 @@ export async function processSlackMessageEvent(payload: {
       return;
     }
     try {
-      const cap = await insertSlackCapturedMessage({
+      await insertSlackCapturedMessage({
         orgId: integration.orgId,
         slackTeamId: payload.teamId,
         slackChannelId: payload.channel,

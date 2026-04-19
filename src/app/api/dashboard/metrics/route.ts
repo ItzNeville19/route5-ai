@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { computeLiveDashboardMetrics } from "@/lib/dashboard/compute";
 import { fetchMetricRowsForOrg } from "@/lib/dashboard/store";
 import { resolveOwnerDisplayNames } from "@/lib/dashboard/resolve-owners";
@@ -10,10 +10,9 @@ import { enforceRateLimits, userAndIpRateScopes } from "@/lib/security/request-g
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "dashboard:metrics", userId, {

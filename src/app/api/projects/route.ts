@@ -1,8 +1,12 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { getLimitsForTier, resolveTierForUser } from "@/lib/entitlements";
+import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { planDisplayName, recommendedPlanAfterLimit } from "@/lib/billing/plans";
+import { resolveEffectiveBillingPlan } from "@/lib/billing/resolve-plan";
 import {
   createProjectForUser,
   listProjectsForUser,
@@ -18,10 +22,9 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   const rateLimited = enforceRateLimits(
     req,
@@ -44,10 +47,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   const rateLimited = enforceRateLimits(
     req,
@@ -85,12 +87,21 @@ export async function POST(req: Request) {
     const { maxProjects } = getLimitsForTier(tier);
     const existing = await listProjectsForUser(userId);
     if (existing.length >= maxProjects) {
+      const orgId = await ensureOrganizationForClerkUser(userId);
+      const plan = await resolveEffectiveBillingPlan(orgId);
       return NextResponse.json(
         {
-          error: `Project limit reached (${maxProjects}) for your plan. Upgrade or remove a project.`,
+          error: "plan_limit",
+          message: `Project limit reached (${maxProjects}) on ${planDisplayName(plan)}. Upgrade to create more projects.`,
           code: "LIMIT_PROJECTS",
+          upgrade: {
+            currentPlan: plan,
+            limitHit: "projects" as const,
+            recommendedPlan: recommendedPlanAfterLimit(plan, "projects"),
+            message: `You’ve reached the project limit (${maxProjects}) for ${planDisplayName(plan)}. Upgrade to create more projects.`,
+          },
         },
-        { status: 403 }
+        { status: 409 }
       );
     }
 

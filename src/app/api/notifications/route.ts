@@ -1,14 +1,13 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { listOrgNotificationsForUser } from "@/lib/notifications/store";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const url = new URL(req.url);
   const unreadOnly = url.searchParams.get("unread") === "true";
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? "20") || 20));

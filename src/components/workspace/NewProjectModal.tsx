@@ -5,14 +5,16 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ChevronRight, FolderKanban, X } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { deskUrl, DEFAULT_DESK_PRESET_ID } from "@/lib/desk-routes";
 import { EXTRACTION_PRESETS } from "@/lib/extraction-presets";
 import type { Project } from "@/lib/types";
+import type { UpgradePromptPayload } from "@/lib/billing/types";
 
-/** Single-character markers (no emoji) — API stores first grapheme as project icon. */
-const ICON_MARKERS = ["", "◆", "◇", "●", "■", "▸"] as const;
+/** Default emoji markers — API stores first grapheme as project icon. */
+const ICON_MARKERS = ["", "🚀", "📈", "⚙️", "🎯", "🧩", "📝"] as const;
 
 const STEPS = 3 as const;
 
@@ -22,6 +24,7 @@ export default function NewProjectModal() {
   const { t } = useI18n();
   const router = useRouter();
   const { pushToast, shellModifierClass } = useWorkspaceExperience();
+  const { showUpgrade } = useBillingUpgrade();
   const { refreshAll } = useWorkspaceData();
 
   const [mounted, setMounted] = useState(false);
@@ -94,9 +97,16 @@ export default function NewProjectModal() {
         error?: string;
         code?: string;
         project?: Project;
+        message?: string;
+        upgrade?: UpgradePromptPayload;
       };
       if (!res.ok) {
-        if (res.status === 403 && data.code === "LIMIT_PROJECTS") {
+        if (res.status === 409 && data.error === "plan_limit" && data.upgrade) {
+          showUpgrade(data.upgrade);
+          setError(data.message ?? t("modal.newProject.projectLimitDefault"));
+          return;
+        }
+        if ((res.status === 403 || res.status === 409) && data.code === "LIMIT_PROJECTS") {
           setError(
             t("modal.newProject.errorLimit", {
               error: data.error ?? t("modal.newProject.projectLimitDefault"),
@@ -157,9 +167,10 @@ export default function NewProjectModal() {
             onClick={close}
           />
           <div
-            className={`theme-route5-command theme-agent-shell relative z-[1] flex max-h-[min(92vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border border-[var(--workspace-border)] bg-[var(--workspace-surface)] text-[var(--workspace-fg)] shadow-2xl sm:rounded-2xl ${shellModifierClass}`}
+            className={`theme-route5-command theme-agent-shell relative z-[1] flex max-h-[min(92vh,760px)] w-full max-w-xl flex-col overflow-hidden rounded-t-[1.25rem] border border-[var(--workspace-border)] bg-[var(--workspace-surface)] text-[var(--workspace-fg)] shadow-2xl sm:rounded-3xl ${shellModifierClass}`}
           >
-            <header className="flex shrink-0 items-center justify-between border-b border-[var(--workspace-border)] px-4 py-3">
+            <header className="relative flex shrink-0 items-center justify-between border-b border-[var(--workspace-border)] px-4 py-3">
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-[var(--workspace-accent)]/10 via-transparent to-[var(--workspace-lime)]/10" />
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--workspace-accent)]/15">
                   <FolderKanban className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
@@ -182,6 +193,33 @@ export default function NewProjectModal() {
                 <X className="h-5 w-5" />
               </button>
             </header>
+            <div className="flex items-center gap-2 border-b border-[var(--workspace-border)]/70 px-4 py-2">
+              {[1, 2, 3].map((n) => {
+                const active = n === step;
+                const done = n < step;
+                return (
+                  <span
+                    key={n}
+                    className={`inline-flex h-7 min-w-7 items-center justify-center rounded-full border px-2 text-[11px] font-semibold ${
+                      active
+                        ? "border-[var(--workspace-accent)]/45 bg-[var(--workspace-accent)]/15 text-[var(--workspace-fg)]"
+                        : done
+                          ? "border-emerald-500/35 bg-emerald-500/15 text-emerald-100"
+                          : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)]"
+                    }`}
+                  >
+                    {done ? <Check className="h-3.5 w-3.5" aria-hidden /> : n}
+                  </span>
+                );
+              })}
+              <span className="ml-1 text-[11px] text-[var(--workspace-muted-fg)]">
+                {step === 1
+                  ? "Name and icon"
+                  : step === 2
+                    ? "Template"
+                    : "Confirm and launch"}
+              </span>
+            </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
               {step === 1 ? (
@@ -198,7 +236,7 @@ export default function NewProjectModal() {
                         type="text"
                         value={iconMarker}
                         onChange={(e) => setIconMarker([...e.target.value].slice(0, 1).join(""))}
-                        className="flex h-11 w-11 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-center font-mono text-[18px] text-[var(--workspace-fg)]"
+                        className="flex h-11 w-11 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-center text-[18px] text-[var(--workspace-fg)]"
                         maxLength={8}
                         aria-label={t("modal.newProject.projectIconAria")}
                         placeholder="—"
@@ -208,7 +246,7 @@ export default function NewProjectModal() {
                           key={m}
                           type="button"
                           onClick={() => setIconMarker(m)}
-                          className={`flex h-9 w-9 items-center justify-center rounded-lg border font-mono text-[15px] ${
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg border text-[15px] ${
                             iconMarker === m
                               ? "border-[var(--workspace-accent)]/50 bg-[var(--workspace-accent)]/10 text-[var(--workspace-fg)]"
                               : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)]"
@@ -228,7 +266,7 @@ export default function NewProjectModal() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t("modal.newProject.namePlaceholder")}
-                      className="mt-2 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-3 text-[15px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
+                      className="mt-2 w-full rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-3 text-[15px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
                       autoFocus
                     />
                   </div>
@@ -254,13 +292,13 @@ export default function NewProjectModal() {
                     </span>
                     {presetId === null ? <Check className="h-4 w-4 text-[var(--workspace-accent)]" /> : null}
                   </button>
-                  <div className="grid max-h-[280px] gap-2 overflow-y-auto sm:max-h-[320px]">
+                  <div className="grid max-h-[300px] gap-2 overflow-y-auto sm:max-h-[340px]">
                     {EXTRACTION_PRESETS.map((p) => (
                       <button
                         key={p.id}
                         type="button"
                         onClick={() => setPresetId(p.id)}
-                        className={`flex w-full items-start justify-between gap-2 rounded-xl border px-3 py-2.5 text-left ${
+                        className={`flex w-full items-start justify-between gap-2 rounded-2xl border px-3 py-2.5 text-left ${
                           presetId === p.id
                             ? "border-[var(--workspace-accent)]/45 bg-[var(--workspace-accent)]/10"
                             : "border-[var(--workspace-border)]"

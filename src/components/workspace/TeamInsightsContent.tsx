@@ -1,73 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, FileJson, Users } from "lucide-react";
+import { AlertTriangle, ArrowRight, FileJson, Users } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { deskUrl } from "@/lib/desk-routes";
-import type { WorkspaceConnectorReadiness } from "@/lib/workspace-summary";
-
-type Summary = {
-  projectCount: number;
-  extractionCount: number;
-  readiness?: WorkspaceConnectorReadiness;
-};
 
 export default function TeamInsightsContent() {
-  const { entitlements, loadingEntitlements } = useWorkspaceData();
-  const [data, setData] = useState<Summary | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setLoadError(false);
-    try {
-      const res = await fetch("/api/workspace/summary", { credentials: "same-origin" });
-      const j = (await res.json().catch(() => ({}))) as Summary;
-      if (res.ok) {
-        setData({
-          projectCount: j.projectCount ?? 0,
-          extractionCount: j.extractionCount ?? 0,
-          readiness: j.readiness,
-        });
-        setLoadError(false);
-      } else {
-        setData(null);
-        setLoadError(true);
-      }
-    } catch {
-      setData(null);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  const r = data?.readiness;
+  const { entitlements, loadingEntitlements, summary, loadingSummary, executionOverview } = useWorkspaceData();
+  const r = summary.readiness;
   const fullTeam = entitlements?.features.teamInsightsFull ?? false;
   const integrationCount =
     r != null ? [r.openai, r.linear, r.github, r.figma].filter(Boolean).length : null;
+  const staleLoad = useMemo(
+    () =>
+      (executionOverview?.teamLoad ?? [])
+        .slice()
+        .sort((a, b) => b.activeCount - a.activeCount)
+        .slice(0, 3),
+    [executionOverview]
+  );
 
   return (
     <>
-      {loadError ? (
-        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-red-500/25 bg-red-950/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[13px] leading-relaxed text-red-100">
-            Couldn&apos;t load workspace counts. Check your connection or try again in a moment.
-          </p>
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="shrink-0 rounded-xl border border-red-400/35 bg-red-500/15 px-4 py-2 text-[13px] font-semibold text-red-50 transition hover:bg-red-500/25"
-          >
-            Retry
-          </button>
+      {loadingSummary ? (
+        <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[12px] text-[var(--workspace-muted-fg)]">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          Updating team execution view...
         </div>
       ) : null}
       {!loadingEntitlements && entitlements && !fullTeam ? (
@@ -95,7 +55,7 @@ export default function TeamInsightsContent() {
         >
           <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Projects (workspace)</p>
           <p className="mt-2 text-[28px] font-semibold tabular-nums text-[var(--workspace-fg)]">
-            {loading || loadError ? "—" : data?.projectCount ?? "—"}
+            {loadingSummary ? "—" : summary.projectCount}
           </p>
         </motion.div>
         <motion.div
@@ -104,9 +64,9 @@ export default function TeamInsightsContent() {
           transition={{ duration: 0.4, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
           className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/90 p-5 transition hover:border-[var(--workspace-accent)]/25"
         >
-          <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Saved runs (workspace)</p>
+          <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Decisions captured</p>
           <p className="mt-2 text-[28px] font-semibold tabular-nums text-[var(--workspace-fg)]">
-            {loading || loadError ? "—" : data?.extractionCount ?? "—"}
+            {loadingSummary ? "—" : summary.extractionCount}
           </p>
         </motion.div>
         <motion.div
@@ -117,7 +77,7 @@ export default function TeamInsightsContent() {
         >
           <p className="text-[11px] font-medium text-[var(--workspace-muted-fg)]">Integrations</p>
           <p className="mt-2 text-[22px] font-semibold tabular-nums text-[var(--workspace-fg)]">
-            {loadError || loading ? (
+            {loadingSummary ? (
               "—"
             ) : integrationCount === null ? (
               "—"
@@ -132,6 +92,56 @@ export default function TeamInsightsContent() {
         </motion.div>
       </div>
 
+      <div className="mt-4 grid gap-3 sm:grid-cols-4">
+        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Active</p>
+          <p className="text-[16px] font-semibold text-[var(--workspace-fg)]">
+            {executionOverview?.summary.activeTotal ?? "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">At risk</p>
+          <p className="text-[16px] font-semibold text-amber-200">
+            {executionOverview?.summary.atRiskCount ?? "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Overdue</p>
+          <p className="text-[16px] font-semibold text-rose-200">
+            {executionOverview?.summary.overdueCount ?? "—"}
+          </p>
+        </div>
+        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Unassigned</p>
+          <p className="text-[16px] font-semibold text-[var(--workspace-fg)]">
+            {executionOverview?.summary.unassignedCount ?? "—"}
+          </p>
+        </div>
+      </div>
+
+      <section className="mt-4 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/55 p-4">
+        <h2 className="text-[14px] font-semibold text-[var(--workspace-fg)]">Owner load snapshot</h2>
+        {staleLoad.length === 0 ? (
+          <p className="mt-2 text-[12px] text-[var(--workspace-muted-fg)]">
+            Owner load data will appear as commitments are assigned.
+          </p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {staleLoad.map((owner) => (
+              <li
+                key={owner.key}
+                className="flex items-center justify-between rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/45 px-3 py-2"
+              >
+                <p className="text-[13px] text-[var(--workspace-fg)]">{owner.label}</p>
+                <p className="text-[12px] text-[var(--workspace-muted-fg)]">
+                  {owner.activeCount} active {owner.overloaded ? "· overloaded" : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -145,13 +155,8 @@ export default function TeamInsightsContent() {
           <div>
             <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">How teams use this today</h2>
             <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-fg)] [opacity:0.9]">
-              Project and extraction counts are <span className="font-semibold">per signed-in account</span> (your
-              workspace data). Share exports or screens in meetings — real multi-seat org roles and shared tenants are
-              on the{" "}
-              <Link href="/docs/roadmap" className="font-semibold text-[var(--workspace-accent)] hover:underline">
-                roadmap
-              </Link>
-              . For standups, open{" "}
+              Project and decision counts are <span className="font-semibold">per signed-in account</span>. Share exports
+              or screens in meetings for weekly reviews. For standups, open{" "}
               <Link href="/overview" className="font-semibold text-[var(--workspace-accent)] hover:underline">
                 Reports
               </Link>{" "}
@@ -227,11 +232,7 @@ export default function TeamInsightsContent() {
       </motion.div>
 
       <p className="mt-8 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-        Multi-seat roles and org-wide dashboards are on the{" "}
-        <Link href="/docs/roadmap" className="font-medium text-[var(--workspace-accent)] hover:underline">
-          roadmap
-        </Link>
-        . Today, each signed-in user has their own projects and commitments; align in meetings with exports and the same UI
+        Today, each signed-in user has their own projects and commitments; align in meetings with exports and the same UI
         vocabulary above.
       </p>
     </>

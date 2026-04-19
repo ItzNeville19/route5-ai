@@ -27,43 +27,18 @@ export const EXTRACTION_PROVIDER_OPTIONS: {
 }[] = [
   {
     id: "auto",
-    label: "Automatic",
-    hint: "Use OpenAI when configured; otherwise offline heuristics.",
+    label: "Automatic (recommended)",
+    hint: "Uses OpenAI when this deployment is configured, otherwise falls back to offline processing.",
   },
   {
     id: "openai",
     label: "OpenAI",
-    hint: "GPT-powered decision capture (requires OPENAI_API_KEY on the server).",
-  },
-  {
-    id: "apple-intelligence",
-    label: "Apple Intelligence",
-    hint: "",
-  },
-  {
-    id: "groq-asr",
-    label: "Groq",
-    hint: "",
-  },
-  {
-    id: "nvidia-parakeet",
-    label: "NVIDIA Parakeet",
-    hint: "",
-  },
-  {
-    id: "whisperkit",
-    label: "WhisperKit",
-    hint: "",
-  },
-  {
-    id: "apple-speech",
-    label: "Apple Speech",
-    hint: "",
+    hint: "AI decision capture through your server-side OpenAI configuration.",
   },
   {
     id: "offline",
     label: "Offline only",
-    hint: "Heuristic decision capture — no external AI calls.",
+    hint: "No external AI calls. Uses local heuristics for deterministic capture.",
   },
 ];
 

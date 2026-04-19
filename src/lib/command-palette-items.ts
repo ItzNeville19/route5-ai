@@ -1,4 +1,5 @@
 import { deskUrl } from "@/lib/desk-routes";
+import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
 
 export type WorkspacePaletteProject = { id: string; name: string };
 
@@ -29,6 +30,43 @@ export type PaletteItem = {
   keywords?: string[];
   section: PaletteSection;
 };
+
+const LIVE_ROUTE_PREFIXES = [
+  "/",
+  "/account",
+  "/capture",
+  "/contact",
+  "/desk",
+  "/docs",
+  "/feed",
+  "/integrations",
+  "/login",
+  "/marketplace",
+  "/onboarding",
+  "/overview",
+  "/pricing",
+  "/privacy",
+  "/product",
+  "/projects",
+  "/settings",
+  "/sign-up",
+  "/support",
+  "/team-insights",
+  "/terms",
+  "/workspace",
+] as const;
+
+function isLivePaletteHref(href: string): boolean {
+  const clean = href.split("#")[0]?.split("?")[0] ?? href;
+  if (!clean.startsWith("/")) return false;
+  return LIVE_ROUTE_PREFIXES.some(
+    (prefix) => clean === prefix || (prefix !== "/" && clean.startsWith(`${prefix}/`))
+  );
+}
+
+function filterLivePaletteItems(items: PaletteItem[]): PaletteItem[] {
+  return items.filter((item) => !item.href || isLivePaletteHref(item.href));
+}
 
 const LEGAL: PaletteItem[] = [
   {
@@ -67,9 +105,10 @@ export function buildPaletteItems(params: {
   openActionsCount?: number;
 }): PaletteItem[] {
   const { signedIn, displayName, projects, recentRuns = [], openActionsCount = 0 } = params;
+  const showDeveloperTools = isDeveloperToolsEnabled();
 
   if (!signedIn) {
-    return [
+    return filterLivePaletteItems([
       {
         id: "home",
         label: "Home",
@@ -118,14 +157,14 @@ export function buildPaletteItems(params: {
         section: "account",
       },
       ...LEGAL,
-    ];
+    ]);
   }
 
   const who = displayName || "You";
 
   const activity: PaletteItem[] = recentRuns.map((r) => ({
     id: `recent-ex-${r.id}`,
-    label: `${r.projectName} · run`,
+    label: `${r.projectName} · recent update`,
     href: `/projects/${r.projectId}#ex-${r.id}`,
     description: r.snippet,
     keywords: [
@@ -141,7 +180,7 @@ export function buildPaletteItems(params: {
   const deskDescription =
     openActionsCount > 0
       ? `${openActionsCount} open action${openActionsCount === 1 ? "" : "s"} — clear the queue on Desk (oldest first)`
-      : "Capture operational text — structured passes & commitment queue";
+      : "Capture operational text and convert it into tracked commitments";
 
   /** Primary rail lives in the sidebar; these are the “everywhere else” shortcuts. */
   const agent: PaletteItem[] = [
@@ -261,13 +300,13 @@ export function buildPaletteItems(params: {
       id: "new-project",
       label: "New project",
       action: "open-new-project",
-      description: "Create a project — same as the sidebar New project button · ⌘N",
+      description: "Launch project builder · ⌘N",
       keywords: ["create", "add", "project", "new"],
       section: "workspace",
     },
     {
       id: "integrations-hub-public",
-      label: "Integrations",
+      label: "Integrations directory",
       href: "/integrations",
       description: "Connectors — Linear, Google, Slack, GitHub, and more",
       keywords: ["integrations", "linear", "github", "api", "connector", "connections", "hub"],
@@ -289,14 +328,18 @@ export function buildPaletteItems(params: {
       keywords: ["marketplace", "apps", "plugins", "catalog", "store", "library", "browse"],
       section: "workspace",
     },
-    {
-      id: "developer",
-      label: "Developer",
-      href: "/workspace/developer",
-      description: "Workspace developer tools",
-      keywords: ["developer", "dev", "debug", "api"],
-      section: "workspace",
-    },
+    ...(showDeveloperTools
+      ? [
+          {
+            id: "developer",
+            label: "Developer",
+            href: "/workspace/developer",
+            description: "Workspace developer tools",
+            keywords: ["developer", "dev", "debug", "api"],
+            section: "workspace" as const,
+          },
+        ]
+      : []),
     {
       id: "workspace-dashboard",
       label: "Analytics dashboard",
@@ -331,7 +374,7 @@ export function buildPaletteItems(params: {
     },
     {
       id: "integrations-hub",
-      label: "Workspace connector status",
+      label: "Integration status",
       href: "/workspace/integrations",
       description: "Org-level connector readiness vs. the public Integrations directory",
       keywords: ["integrations", "connectors", "linear", "github", "slack"],
@@ -359,7 +402,7 @@ export function buildPaletteItems(params: {
     id: `project-${p.id}`,
     label: p.name,
     href: `/projects/${p.id}`,
-    description: "Runs, actions & history",
+    description: "Decisions, actions, and history",
     keywords: ["project", p.name.toLowerCase()],
     section: "projects",
   }));
@@ -445,5 +488,12 @@ export function buildPaletteItems(params: {
     },
   ];
 
-  return [...activity, ...agent, ...workspaceHidden, ...projectItems, ...site, ...legalSignedIn];
+  return filterLivePaletteItems([
+    ...activity,
+    ...agent,
+    ...workspaceHidden,
+    ...projectItems,
+    ...site,
+    ...legalSignedIn,
+  ]);
 }

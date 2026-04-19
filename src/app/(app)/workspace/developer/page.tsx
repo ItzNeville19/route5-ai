@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { WEBHOOK_EVENT_TYPES } from "@/lib/public-api/types";
+import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
 
 type ApiKeyRow = {
   id: string;
@@ -70,6 +71,8 @@ function copyText(text: string) {
 }
 
 export default function WorkspaceDeveloperPage() {
+  const devToolsEnabled = isDeveloperToolsEnabled();
+
   const [baseUrl, setBaseUrl] = useState("");
   const [keys, setKeys] = useState<ApiKeyRow[]>([]);
   const [endpoints, setEndpoints] = useState<WebhookEndpointRow[]>([]);
@@ -98,6 +101,10 @@ export default function WorkspaceDeveloperPage() {
   }, []);
 
   const load = useCallback(async () => {
+    if (!devToolsEnabled) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError(null);
     try {
@@ -116,7 +123,7 @@ export default function WorkspaceDeveloperPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [devToolsEnabled]);
 
   useEffect(() => {
     void load();
@@ -355,6 +362,29 @@ export default function WorkspaceDeveloperPage() {
     ],
     [baseUrl]
   );
+
+  if (!devToolsEnabled) {
+    return (
+      <div className="mx-auto w-full max-w-[min(100%,760px)] pb-24">
+        <div className="rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-5 py-6">
+          <h1 className="text-[18px] font-semibold text-[var(--workspace-fg)]">Developer tools are disabled</h1>
+          <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
+            This workspace hides internal API tooling for standard users. Enable{" "}
+            <code className="rounded bg-[var(--workspace-canvas)] px-1.5 py-0.5 text-[12px]">
+              NEXT_PUBLIC_ROUTE5_SHOW_DEV_TOOLS
+            </code>{" "}
+            if your deployment requires this surface.
+          </p>
+          <Link
+            href="/settings"
+            className="mt-4 inline-flex rounded-xl border border-[var(--workspace-border)] px-3 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]/40"
+          >
+            Back to settings
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-[min(100%,960px)] pb-24">

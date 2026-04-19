@@ -19,6 +19,23 @@ type BillingUpgradeCtx = {
   close: () => void;
 };
 
+function limitDisplayLabel(limitHit: UpgradePromptPayload["limitHit"]): string {
+  switch (limitHit) {
+    case "commitments":
+      return "Commitments";
+    case "integrations":
+      return "Integrations";
+    case "export":
+      return "Export";
+    case "seats":
+      return "Seats";
+    case "projects":
+      return "Projects";
+    default:
+      return limitHit;
+  }
+}
+
 const BillingUpgradeContext = createContext<BillingUpgradeCtx | null>(null);
 
 export function useBillingUpgrade(): BillingUpgradeCtx {
@@ -107,7 +124,10 @@ function UpgradeModal({
                   {planDisplayName(payload.currentPlan)}
                 </span>
                 {" · "}
-                Limit: <span className="font-medium text-[var(--workspace-fg)]">{payload.limitHit}</span>
+                Limit:{" "}
+                <span className="font-medium text-[var(--workspace-fg)]">
+                  {limitDisplayLabel(payload.limitHit)}
+                </span>
               </p>
             </div>
           </div>
@@ -235,7 +255,14 @@ function BillingLimitQuerySync() {
 
   useEffect(() => {
     const lim = searchParams.get("billingLimit");
-    if (!lim || (lim !== "integrations" && lim !== "commitments" && lim !== "export" && lim !== "seats")) {
+    if (
+      !lim ||
+      (lim !== "integrations" &&
+        lim !== "commitments" &&
+        lim !== "export" &&
+        lim !== "seats" &&
+        lim !== "projects")
+    ) {
       return;
     }
     let cancelled = false;
@@ -257,6 +284,8 @@ function BillingLimitQuerySync() {
                 ? "You’ve reached your commitment limit on this plan. Upgrade to track more work."
                 : hit === "export"
                   ? "Dashboard export requires a paid plan."
+                  : hit === "projects"
+                    ? "You’ve reached your project limit on this plan. Upgrade to create more projects."
                   : "You’ve reached the seat limit for this plan. Upgrade to invite more teammates.",
         });
         const next = new URLSearchParams(searchParams.toString());

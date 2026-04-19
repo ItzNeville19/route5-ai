@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import {
@@ -32,6 +32,9 @@ export type EscalationApiRow = {
   commitmentDeadline: string;
   ownerId: string;
   ownerDisplayName: string;
+  isOpen: boolean;
+  isSnoozedActive: boolean;
+  ageHours: number;
 };
 
 function sortEscalations(rows: EscalationApiRow[]): EscalationApiRow[] {
@@ -43,10 +46,9 @@ function sortEscalations(rows: EscalationApiRow[]): EscalationApiRow[] {
 }
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "org-escalations:list", userId, {
@@ -90,9 +92,12 @@ export async function GET(req: Request) {
     const names = await resolveOwnerDisplayNames(ownerIds);
 
     const enriched: EscalationApiRow[] = [];
+    const nowMs = Date.now();
     for (const e of rows) {
       const c = cMap.get(e.commitmentId);
       if (!c) continue;
+      const snoozedActive =
+        !!e.snoozedUntil && new Date(e.snoozedUntil).getTime() > nowMs;
       enriched.push({
         id: e.id,
         orgId: e.orgId,
@@ -109,11 +114,30 @@ export async function GET(req: Request) {
         commitmentDeadline: c.deadline,
         ownerId: c.owner_id,
         ownerDisplayName: names.get(c.owner_id) ?? c.owner_id.slice(-8),
+        isOpen: !e.resolvedAt,
+        isSnoozedActive: snoozedActive,
+        ageHours: Math.max(
+          0,
+          Math.floor((nowMs - new Date(e.triggeredAt).getTime()) / 3_600_000)
+        ),
       });
     }
 
     const sorted = sortEscalations(enriched);
-    return NextResponse.json({ orgId, escalations: sorted });
+    const summary = {
+      total: sorted.length,
+      open: sorted.filter((x) => x.isOpen && !x.isSnoozedActive).length,
+      snoozed: sorted.filter((x) => x.isOpen && x.isSnoozedActive).length,
+      resolved: sorted.filter((x) => !x.isOpen).length,
+      overdue: sorted.filter((x) => x.severity === "overdue" && x.isOpen).length,
+      critical: sorted.filter((x) => x.severity === "critical" && x.isOpen).length,
+    };
+    return NextResponse.json({
+      orgId,
+      escalations: sorted,
+      summary,
+      generatedAt: new Date().toISOString(),
+    });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
   }

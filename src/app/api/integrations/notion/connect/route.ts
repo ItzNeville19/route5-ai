@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireUserIdRedirect } from "@/lib/auth/require-user";
 import { checkPlanLimit } from "@/lib/billing/gate";
 import { getNotionIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
@@ -9,10 +9,9 @@ import { appBaseUrl } from "@/lib/integrations/app-url";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.redirect(new URL("/login", appBaseUrl()));
-  }
+  const authz = await requireUserIdRedirect(new URL("/login", appBaseUrl()));
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const clientId = process.env.NOTION_CLIENT_ID?.trim();
   if (!clientId) {
     return NextResponse.json({ error: "Notion OAuth is not configured (NOTION_CLIENT_ID)" }, { status: 503 });

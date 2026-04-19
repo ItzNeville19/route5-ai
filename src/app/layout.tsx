@@ -1,13 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import MotionConfigProvider from "@/components/providers/MotionConfigProvider";
+import { ClerkRuntimeProvider } from "@/components/providers/ClerkRuntimeProvider";
 import ClerkProviderWrapper from "@/components/providers/ClerkProviderWrapper";
 import { CommandPaletteProvider } from "@/components/CommandPalette";
 import { PublicI18nProvider } from "@/components/i18n/I18nProvider";
+import { isClerkFullyConfigured } from "@/lib/clerk-env";
 import "./globals.css";
 
 const inter = Inter({
-  variable: "--font-geist-sans",
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -47,19 +49,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkRuntimeOk = isClerkFullyConfigured();
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full font-sans antialiased`}
     >
       <body className="theme-glass-site min-h-full flex flex-col antialiased">
-        <MotionConfigProvider>
-          <ClerkProviderWrapper>
-            <CommandPaletteProvider>
-              <PublicI18nProvider>{children}</PublicI18nProvider>
-            </CommandPaletteProvider>
-          </ClerkProviderWrapper>
-        </MotionConfigProvider>
+        <ClerkRuntimeProvider enabled={clerkRuntimeOk}>
+          <MotionConfigProvider>
+            <ClerkProviderWrapper>
+              <CommandPaletteProvider>
+                <PublicI18nProvider>{children}</PublicI18nProvider>
+              </CommandPaletteProvider>
+            </ClerkProviderWrapper>
+          </MotionConfigProvider>
+        </ClerkRuntimeProvider>
       </body>
     </html>
   );

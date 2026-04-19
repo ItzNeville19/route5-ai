@@ -209,16 +209,20 @@ export default function CommitmentDesk() {
 
   async function runCommit() {
     if (!projectId || proposedRows.length === 0) return;
-    const commitDrafts = proposedRows.map(({ key: _k, ...d }) => ({
-      title: d.title.trim(),
-      description: d.description ?? null,
-      ownerName: d.ownerName?.trim() || null,
-      ownerUserId: d.ownerUserId?.trim() || null,
-      source: d.source,
-      sourceReference: d.sourceReference,
-      priority: d.priority,
-      dueDate: d.dueDate?.trim() || null,
-    }));
+    const commitDrafts = proposedRows.map((draft) => {
+      const { key, ...d } = draft;
+      void key;
+      return {
+        title: d.title.trim(),
+        description: d.description ?? null,
+        ownerName: d.ownerName?.trim() || null,
+        ownerUserId: d.ownerUserId?.trim() || null,
+        source: d.source,
+        sourceReference: d.sourceReference,
+        priority: d.priority,
+        dueDate: d.dueDate?.trim() || null,
+      };
+    });
     if (commitDrafts.some((r) => !r.title)) {
       pushToast("Every row needs a title.", "error");
       return;

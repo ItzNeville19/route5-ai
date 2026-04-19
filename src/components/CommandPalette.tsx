@@ -3,6 +3,7 @@
 import {
   createContext,
   useCallback,
+  useDeferredValue,
   useContext,
   useEffect,
   useId,
@@ -14,7 +15,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Search } from "lucide-react";
+import { CornerDownLeft, RotateCw, Search } from "lucide-react";
 import { paletteOverlay, palettePanel } from "@/lib/motion";
 import {
   buildPaletteItems,
@@ -31,6 +32,19 @@ type PaletteContextValue = {
 
 const PaletteContext = createContext<PaletteContextValue | null>(null);
 
+type PaletteApiPayload = {
+  signedIn?: boolean;
+  displayName?: string | null;
+  projects?: { id: string; name: string }[];
+  recentRuns?: PaletteRecentRun[];
+  openActionsCount?: number;
+  workspaceDbOk?: boolean;
+};
+
+const PALETTE_CACHE_TTL_MS = 45_000;
+const PALETTE_MAX_RESULTS = 72;
+let paletteCache: { at: number; payload: PaletteApiPayload } | null = null;
+
 export function useCommandPalette(): PaletteContextValue {
   const ctx = useContext(PaletteContext);
   if (!ctx) {
@@ -40,13 +54,13 @@ export function useCommandPalette(): PaletteContextValue {
 }
 
 const SECTION_LABEL: Record<PaletteSection, string> = {
-  agent: "Go to",
+  agent: "Navigation",
   activity: "Recent",
-  projects: "Projects",
-  workspace: "More screens — search here",
-  site: "Website",
-  account: "Account",
-  legal: "Legal",
+  projects: "Commitments",
+  workspace: "Actions",
+  site: "Navigation",
+  account: "Navigation",
+  legal: "Navigation",
 };
 
 function groupFiltered(items: PaletteItem[]) {
@@ -74,6 +88,52 @@ function groupFiltered(items: PaletteItem[]) {
     .filter((g) => g.items.length > 0);
 }
 
+function applyPalettePayload(
+  payload: PaletteApiPayload,
+  setters: {
+    setSignedIn: (v: boolean) => void;
+    setDisplayName: (v: string | null) => void;
+    setProjects: (v: { id: string; name: string }[]) => void;
+    setRecentRuns: (v: PaletteRecentRun[]) => void;
+    setOpenActionsCount: (v: number) => void;
+  }
+) {
+  setters.setSignedIn(Boolean(payload.signedIn));
+  setters.setDisplayName(payload.displayName ?? null);
+  setters.setProjects(Array.isArray(payload.projects) ? payload.projects : []);
+  setters.setRecentRuns(Array.isArray(payload.recentRuns) ? payload.recentRuns : []);
+  setters.setOpenActionsCount(
+    typeof payload.openActionsCount === "number" && payload.openActionsCount >= 0
+      ? payload.openActionsCount
+      : 0
+  );
+}
+
+function rankPaletteItem(item: PaletteItem, query: string): number {
+  const label = item.label.toLowerCase();
+  const desc = (item.description ?? "").toLowerCase();
+  const keys = (item.keywords ?? []).map((k) => k.toLowerCase());
+  let score = 0;
+
+  if (label === query) score += 220;
+  else if (label.startsWith(query)) score += 160;
+  else if (label.includes(query)) score += 95;
+
+  if (desc.startsWith(query)) score += 40;
+  else if (desc.includes(query)) score += 24;
+
+  for (const k of keys) {
+    if (k === query) score += 72;
+    else if (k.startsWith(query)) score += 38;
+    else if (k.includes(query)) score += 16;
+  }
+
+  if (item.section === "agent") score += 18;
+  if (item.section === "workspace") score += 12;
+  if (item.section === "projects") score += 9;
+  return score;
+}
+
 export function CommandPaletteProvider({
   children,
 }: {
@@ -87,50 +147,71 @@ export function CommandPaletteProvider({
   const [recentRuns, setRecentRuns] = useState<PaletteRecentRun[]>([]);
   const [openActionsCount, setOpenActionsCount] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [loadingPalette, setLoadingPalette] = useState(false);
+  const inFlightRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const deferredQuery = useDeferredValue(query);
 
-  const loadPalette = useCallback(async () => {
+  const loadPalette = useCallback(async (forceNetwork = false) => {
+    if (!forceNetwork && paletteCache && Date.now() - paletteCache.at < PALETTE_CACHE_TTL_MS) {
+      applyPalettePayload(paletteCache.payload, {
+        setSignedIn,
+        setDisplayName,
+        setProjects,
+        setRecentRuns,
+        setOpenActionsCount,
+      });
+      return;
+    }
+
+    inFlightRef.current?.abort();
+    const ctrl = new AbortController();
+    inFlightRef.current = ctrl;
+    setLoadingPalette(true);
     try {
       const res = await fetch("/api/workspace/palette", {
         credentials: "same-origin",
+        signal: ctrl.signal,
       });
-      const data = (await res.json().catch(() => ({}))) as {
-        signedIn?: boolean;
-        displayName?: string | null;
-        projects?: { id: string; name: string }[];
-        recentRuns?: PaletteRecentRun[];
-        openActionsCount?: number;
-        workspaceDbOk?: boolean;
-      };
-      setSignedIn(Boolean(data.signedIn));
-      setDisplayName(data.displayName ?? null);
-      setProjects(Array.isArray(data.projects) ? data.projects : []);
-      setRecentRuns(Array.isArray(data.recentRuns) ? data.recentRuns : []);
-      setOpenActionsCount(
-        typeof data.openActionsCount === "number" && data.openActionsCount >= 0
-          ? data.openActionsCount
-          : 0
-      );
+      const data = (await res.json().catch(() => ({}))) as PaletteApiPayload;
+      paletteCache = { at: Date.now(), payload: data };
+      applyPalettePayload(data, {
+        setSignedIn,
+        setDisplayName,
+        setProjects,
+        setRecentRuns,
+        setOpenActionsCount,
+      });
     } catch {
+      if (ctrl.signal.aborted) return;
       setSignedIn(false);
       setDisplayName(null);
       setProjects([]);
       setRecentRuns([]);
       setOpenActionsCount(0);
+    } finally {
+      if (!ctrl.signal.aborted) setLoadingPalette(false);
     }
   }, []);
 
   useEffect(() => {
+    void loadPalette(false);
+    return () => {
+      inFlightRef.current?.abort();
+    };
+  }, [loadPalette]);
+
+  useEffect(() => {
     if (!open) return;
-    void loadPalette();
+    void loadPalette(false);
   }, [open, loadPalette]);
 
   useEffect(() => {
     const onRefresh = () => {
-      if (open) void loadPalette();
+      if (open) void loadPalette(true);
     };
     window.addEventListener("route5:project-updated", onRefresh);
     return () => window.removeEventListener("route5:project-updated", onRefresh);
@@ -167,20 +248,16 @@ export function CommandPaletteProvider({
   );
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return directory;
-    return directory.filter((item) => {
-      const blob = [
-        item.label,
-        item.description,
-        ...(item.keywords ?? []),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return blob.includes(q);
-    });
-  }, [query, directory]);
+    const q = deferredQuery.trim().toLowerCase();
+    if (!q) return directory.slice(0, PALETTE_MAX_RESULTS);
+    const ranked = directory
+      .map((item) => ({ item, score: rankPaletteItem(item, q) }))
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+      .slice(0, PALETTE_MAX_RESULTS)
+      .map((x) => x.item);
+    return ranked;
+  }, [deferredQuery, directory]);
 
   const grouped = useMemo(() => groupFiltered(filtered), [filtered]);
 
@@ -245,6 +322,19 @@ export function CommandPaletteProvider({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close]);
+
+  useEffect(() => {
+    if (!open || flatForNav.length === 0) return;
+    const seen = new Set<string>();
+    for (const item of flatForNav) {
+      if (!item.href) continue;
+      const clean = item.href.split("#")[0]?.split("?")[0] ?? item.href;
+      if (!clean || seen.has(clean)) continue;
+      seen.add(clean);
+      router.prefetch(clean);
+      if (seen.size >= 14) break;
+    }
+  }, [open, flatForNav, router]);
 
   const onPick = useCallback(
     (item: PaletteItem) => {
@@ -358,9 +448,7 @@ export function CommandPaletteProvider({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`absolute inset-0 backdrop-blur-[14px] ${
-              agentShell ? "bg-black/25" : "bg-[#0a0a12]/52"
-            }`}
+            className="absolute inset-0 bg-black/60"
             aria-label="Close command palette"
             onClick={close}
           />
@@ -369,7 +457,7 @@ export function CommandPaletteProvider({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className={`relative z-10 w-full max-w-xl overflow-hidden rounded-xl border shadow-2xl ${
+            className={`relative z-10 w-full max-w-[560px] overflow-hidden rounded-lg border shadow-2xl ${
               agentShell
                 ? "border-black/[0.08] bg-white/95 text-neutral-900 backdrop-blur-2xl"
                 : "glass-liquid border-black/[0.06] text-[#1d1d1f]"
@@ -380,11 +468,7 @@ export function CommandPaletteProvider({
                 : { WebkitBackdropFilter: "blur(48px) saturate(200%)" }
             }
           >
-            <div
-              className={`border-b px-4 py-3 ${
-                agentShell ? "border-black/[0.06]" : "border-black/[0.06]"
-              }`}
-            >
+            <div className="border-b border-black/[0.06] px-4 py-3">
               <p id={titleId} className="sr-only">
                 Command palette
               </p>
@@ -400,7 +484,7 @@ export function CommandPaletteProvider({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={placeholder}
-                  className={`min-w-0 flex-1 bg-transparent text-[16px] outline-none ${
+                  className={`min-h-[36px] min-w-0 flex-1 bg-transparent text-[15px] outline-none ${
                     agentShell
                       ? "text-neutral-900 placeholder:text-neutral-400"
                       : "text-[#1d1d1f] placeholder:text-[#a1a1a6]"
@@ -419,23 +503,20 @@ export function CommandPaletteProvider({
                   esc
                 </kbd>
               </div>
-              {agentShell && displayName ? (
-                <p className="mt-2 text-[11px] font-mono text-neutral-500">
-                  Signed in as {displayName}
-                </p>
-              ) : null}
               <p
                 className={`mt-2 text-[11px] ${agentShell ? "text-neutral-500" : "text-[#86868b]"}`}
                 aria-live="polite"
               >
-                {query.trim()
+                {loadingPalette
+                  ? "Refreshing live destinations..."
+                  : query.trim()
                   ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · opens the real page`
                   : `${flatForNav.length} destinations · hidden screens are in “More screens”`}
               </p>
             </div>
             <ul
               ref={listRef}
-              className="max-h-[min(52vh,400px)] overflow-y-auto p-2"
+              className="max-h-[400px] overflow-y-auto p-2"
               role="listbox"
             >
               {flatForNav.length === 0 ? (
@@ -444,13 +525,37 @@ export function CommandPaletteProvider({
                     agentShell ? "text-neutral-500" : "text-[#6e6e73]"
                   }`}
                 >
-                  No matches. Try another word.
+                  <p>No matches. Try another word.</p>
+                  <div className="mt-4 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        router.push("/feed");
+                        close();
+                      }}
+                      className="rounded-lg border border-black/10 bg-white/80 px-2.5 py-1.5 text-[12px] font-medium text-neutral-700 transition hover:bg-white"
+                    >
+                      Open feed
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuery("");
+                        window.dispatchEvent(new Event("route5:capture-open"));
+                        close();
+                      }}
+                      className="rounded-lg border border-black/10 bg-white/80 px-2.5 py-1.5 text-[12px] font-medium text-neutral-700 transition hover:bg-white"
+                    >
+                      Open capture
+                    </button>
+                  </div>
                 </li>
               ) : (
                 grouped.map((group) => (
                   <li key={group.section} className="mb-3 last:mb-0">
                     <p
-                      className={`mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                      className={`mb-1.5 px-2 text-[11px] font-semibold uppercase tracking-[0.05em] ${
                         agentShell ? "text-neutral-400" : "text-[#86868b]"
                       }`}
                     >
@@ -472,19 +577,25 @@ export function CommandPaletteProvider({
                                   : item.label
                               }
                               onClick={() => onPick(item)}
-                              onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`flex w-full flex-col gap-0.5 rounded-lg px-3 py-2.5 text-left transition sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${
+                              onMouseEnter={() => {
+                                setSelectedIndex(idx);
+                                if (item.href) {
+                                  const clean = item.href.split("#")[0]?.split("?")[0] ?? item.href;
+                                  if (clean) router.prefetch(clean);
+                                }
+                              }}
+                              className={`flex h-9 w-full items-center gap-3 rounded-[4px] border-l-2 border-transparent px-3 text-left transition ${
                                 active
                                   ? agentShell
-                                    ? "bg-neutral-200/80 ring-1 ring-black/[0.06]"
-                                    : "bg-[#0071e3]/10"
+                                    ? "border-l-r5-accent bg-neutral-200/80 ring-1 ring-black/[0.06]"
+                                    : "border-l-r5-accent bg-[#0071e3]/10"
                                   : agentShell
                                     ? "hover:bg-black/[0.04]"
                                     : "hover:bg-[#0071e3]/10"
                               }`}
                             >
                               <span
-                                className={`text-[15px] font-semibold tracking-[-0.02em] ${
+                                className={`truncate text-[13px] font-medium ${
                                   agentShell ? "text-neutral-900" : "text-[#1d1d1f]"
                                 }`}
                               >
@@ -492,7 +603,7 @@ export function CommandPaletteProvider({
                               </span>
                               {item.description ? (
                                 <span
-                                  className={`text-[12px] sm:text-right ${
+                                  className={`ml-auto truncate text-[13px] ${
                                     agentShell ? "text-neutral-500" : "text-[#86868b]"
                                   }`}
                                 >
@@ -520,6 +631,7 @@ export function CommandPaletteProvider({
                 Open · ↑↓ navigate
               </span>
               <span className="text-right font-mono">
+                <RotateCw className="mr-1 inline h-3.5 w-3.5" aria-hidden />
                 <kbd
                   className={`rounded border px-1.5 py-0.5 ${
                     agentShell
@@ -539,7 +651,17 @@ export function CommandPaletteProvider({
                 >
                   ⌘N
                 </kbd>{" "}
-                project
+                new project ·{" "}
+                <kbd
+                  className={`rounded border px-1.5 py-0.5 ${
+                    agentShell
+                      ? "border-black/[0.08] bg-neutral-100"
+                      : "border-black/[0.08] bg-white/70"
+                  }`}
+                >
+                  ⌘\
+                </kbd>{" "}
+                sidebar
               </span>
               <Link
                 href="/contact"

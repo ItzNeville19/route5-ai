@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { requireUserIdRedirect } from "@/lib/auth/require-user";
 import { checkPlanLimit } from "@/lib/billing/gate";
 import { getGmailIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
@@ -10,10 +10,9 @@ import { gmailOAuthScopes } from "@/lib/integrations/gmail-google";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.redirect(new URL("/login", appBaseUrl()));
-  }
+  const authz = await requireUserIdRedirect(new URL("/login", appBaseUrl()));
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
   if (!clientId) {
     return NextResponse.json({ error: "Google OAuth is not configured (GOOGLE_CLIENT_ID)" }, { status: 503 });

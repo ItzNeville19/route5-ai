@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { getOnboardingState, markOnboardingStepComplete, type OnboardingStep } from "@/lib/onboarding/progress-store";
 import { getOrganizationProfile, updateOrganizationProfile } from "@/lib/workspace/organizations-update";
@@ -17,8 +17,9 @@ import { getTeamsIntegrationForOrg } from "@/lib/integrations/zoom-teams-integra
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const orgId = await ensureOrganizationForClerkUser(userId);
   const state = await getOnboardingState(orgId, userId);
   const org = await getOrganizationProfile(orgId);
@@ -31,8 +32,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const orgId = await ensureOrganizationForClerkUser(userId);
   let body: {
     action?: string;

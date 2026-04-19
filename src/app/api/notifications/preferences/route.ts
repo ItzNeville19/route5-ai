@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { NOTIFICATION_TYPES, type NotificationType } from "@/lib/notifications/types";
 import {
@@ -32,10 +32,9 @@ function mergeDefaults(
 }
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);
     const rows = await listPreferencesForUser(orgId, userId);
@@ -61,10 +60,9 @@ const putSchema = z.object({
 });
 
 export async function PUT(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   let json: unknown;
   try {
     json = await req.json();

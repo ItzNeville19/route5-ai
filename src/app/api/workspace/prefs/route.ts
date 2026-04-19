@@ -1,5 +1,6 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import type { WorkspacePrefsV1 } from "@/lib/workspace-prefs";
 import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
@@ -57,10 +58,9 @@ const prefsPatchSchema = z
 const prefsBodySchema = z.object({ prefs: prefsPatchSchema }).strict();
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "prefs:get", userId, {
@@ -84,10 +84,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   const rateLimited = enforceRateLimits(
     req,

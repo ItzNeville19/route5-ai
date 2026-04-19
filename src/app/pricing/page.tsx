@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
+import { getAuthUserIdSafe } from "@/lib/auth/require-user";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PublicPlansGrid from "@/components/marketing/PublicPlansGrid";
@@ -12,8 +12,11 @@ export const metadata: Metadata = {
     "Plans and limits for Route5 — Free, Pro, Ultra, and Enterprise. Same packaging as in-app account settings.",
 };
 
+/** Clerk `auth()` reads request headers; must not be statically prerendered. */
+export const dynamic = "force-dynamic";
+
 export default async function PricingPage() {
-  const { userId } = await auth();
+  const userId = await getAuthUserIdSafe();
 
   return (
     <main className="theme-glass-site relative min-h-screen">

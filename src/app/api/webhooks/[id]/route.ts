@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { WEBHOOK_EVENT_TYPES, type WebhookEventType } from "@/lib/public-api/types";
@@ -26,8 +26,9 @@ const patchSchema = z
   .strict();
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const { id } = await ctx.params;
   let json: unknown;
   try {
@@ -58,8 +59,9 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 }
 
 export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const { id } = await ctx.params;
   try {
     const orgId = await ensureOrganizationForClerkUser(userId);

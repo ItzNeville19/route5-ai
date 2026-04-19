@@ -1,5 +1,6 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { CHECKOUT_PRICES } from "@/lib/billing/plans";
 import { getStripe, appBaseUrl } from "@/lib/billing/stripe-client";
@@ -16,10 +17,9 @@ const bodySchema = z
   .strict();
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   let json: unknown;
   try {

@@ -69,6 +69,8 @@ export default function OrgCommitmentTracker() {
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState<OrgCommitmentListSort>("deadline");
   const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [attentionOnly, setAttentionOnly] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [cTitle, setCTitle] = useState("");
@@ -381,7 +383,57 @@ export default function OrgCommitmentTracker() {
     }
   }
 
-  const sortedForDisplay = useMemo(() => rows, [rows]);
+  const trackerStats = useMemo(() => {
+    const open = rows.filter((r) => r.status !== "completed");
+    const now = Date.now();
+    const soonMs = 72 * 3_600_000;
+    return {
+      total: rows.length,
+      open: open.length,
+      overdue: rows.filter((r) => r.status === "overdue").length,
+      atRisk: rows.filter((r) => r.status === "at_risk").length,
+      dueSoon: open.filter((r) => {
+        const due = new Date(r.deadline).getTime();
+        return Number.isFinite(due) && due >= now && due - now <= soonMs;
+      }).length,
+    };
+  }, [rows]);
+
+  const activeFilterCount = useMemo(() => {
+    let n = 0;
+    if (q.trim()) n += 1;
+    if (statusFilter) n += 1;
+    if (priorityFilter) n += 1;
+    if (ownerFilter.trim()) n += 1;
+    if (dateFrom) n += 1;
+    if (dateTo) n += 1;
+    if (sort !== "deadline") n += 1;
+    if (order !== "asc") n += 1;
+    if (attentionOnly) n += 1;
+    return n;
+  }, [attentionOnly, dateFrom, dateTo, order, ownerFilter, priorityFilter, q, sort, statusFilter]);
+
+  async function markCompleteFromList(id: string) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/commitments/${id}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: true }),
+      });
+      if (!res.ok) return;
+      await loadList();
+      if (selectedId === id) await loadDetail(id);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const sortedForDisplay = useMemo(
+    () => (attentionOnly ? rows.filter((r) => r.status === "overdue" || r.status === "at_risk") : rows),
+    [rows, attentionOnly]
+  );
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-5 pb-20">
@@ -404,14 +456,14 @@ export default function OrgCommitmentTracker() {
               <button
                 type="button"
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg shadow-black/20 transition hover:opacity-95"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg shadow-black/20 transition hover:opacity-95 sm:w-auto"
               >
                 <Plus className="h-4 w-4" aria-hidden />
                 New commitment
               </button>
               <Link
                 href="/desk"
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)]"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] sm:w-auto"
               >
                 Desk
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
@@ -420,6 +472,20 @@ export default function OrgCommitmentTracker() {
           </div>
 
           <div className="flex flex-col gap-3 rounded-2xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/40 p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-3 py-1 text-[11px] text-[var(--workspace-muted-fg)]">
+                {trackerStats.open} open
+              </span>
+              <span className="rounded-full border border-red-400/35 bg-red-500/12 px-3 py-1 text-[11px] text-red-200">
+                {trackerStats.overdue} overdue
+              </span>
+              <span className="rounded-full border border-amber-400/35 bg-amber-500/12 px-3 py-1 text-[11px] text-amber-200">
+                {trackerStats.atRisk} at risk
+              </span>
+              <span className="rounded-full border border-sky-400/35 bg-sky-500/12 px-3 py-1 text-[11px] text-sky-200">
+                {trackerStats.dueSoon} due in 72h
+              </span>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative min-w-[200px] flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--workspace-muted-fg)]" />
@@ -430,6 +496,25 @@ export default function OrgCommitmentTracker() {
                   className="w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 py-2.5 pl-10 pr-3 text-[13px] text-[var(--workspace-fg)] outline-none ring-0 placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40"
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => setMobileFiltersOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2 text-[12px] font-semibold text-[var(--workspace-fg)] sm:hidden"
+              >
+                <Filter className="h-3.5 w-3.5" aria-hidden />
+                Filters
+                {activeFilterCount > 0 ? (
+                  <span className="rounded-full bg-[var(--workspace-accent)]/20 px-1.5 py-0.5 text-[10px] text-[var(--workspace-accent)]">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </button>
+            </div>
+            <div
+              className={`${
+                mobileFiltersOpen ? "flex" : "hidden"
+              } flex-wrap items-center gap-2 sm:flex`}
+            >
               <div className="flex items-center gap-1.5 text-[var(--workspace-muted-fg)]">
                 <Filter className="h-4 w-4" aria-hidden />
                 <span className="text-[11px] font-semibold uppercase tracking-wider">Filters</span>
@@ -495,6 +580,35 @@ export default function OrgCommitmentTracker() {
                 <option value="asc">Ascending</option>
                 <option value="desc">Descending</option>
               </select>
+              <button
+                type="button"
+                onClick={() => setAttentionOnly((v) => !v)}
+                className={`rounded-xl border px-3 py-2 text-[12px] font-semibold ${
+                  attentionOnly
+                    ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
+                    : "border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 text-[var(--workspace-fg)]"
+                }`}
+              >
+                {attentionOnly ? "Attention mode on" : "Attention mode"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setQ("");
+                  setStatusFilter("");
+                  setPriorityFilter("");
+                  setOwnerFilter("");
+                  setDateFrom("");
+                  setDateTo("");
+                  setSort("deadline");
+                  setOrder("asc");
+                  setAttentionOnly(false);
+                  setMobileFiltersOpen(false);
+                }}
+                className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2 text-[12px] font-semibold text-[var(--workspace-fg)]"
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
@@ -518,51 +632,68 @@ export default function OrgCommitmentTracker() {
                 const risk = c.status === "at_risk";
                 return (
                   <li key={c.id}>
-                    <button
-                      type="button"
-                      onClick={() => openDetail(c.id)}
-                      className={`flex w-full flex-col gap-2 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 p-4 text-left transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] ${
+                    <div
+                      className={`rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 p-3 transition ${
                         selectedId === c.id ? "border-[var(--workspace-accent)]/40 bg-[var(--workspace-nav-active)]" : ""
                       } ${overdue ? "ring-1 ring-red-400/40" : ""} ${risk && !overdue ? "ring-1 ring-amber-400/35" : ""}`}
                     >
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <p className="text-[14px] font-semibold leading-snug text-[var(--workspace-fg)]">{c.title}</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_STATUS_PILL[c.status]}`}
-                          >
-                            {ORG_STATUS_LABEL[c.status]}
-                          </span>
-                          <span
-                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_PRIORITY_PILL[c.priority]}`}
-                          >
-                            {ORG_PRIORITY_LABEL[c.priority]}
-                          </span>
+                      <button
+                        type="button"
+                        onClick={() => openDetail(c.id)}
+                        className="flex w-full flex-col gap-2 rounded-xl p-1 text-left transition hover:bg-[var(--workspace-nav-hover)]"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <p className="text-[14px] font-semibold leading-snug text-[var(--workspace-fg)]">{c.title}</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_STATUS_PILL[c.status]}`}
+                            >
+                              {ORG_STATUS_LABEL[c.status]}
+                            </span>
+                            <span
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_PRIORITY_PILL[c.priority]}`}
+                            >
+                              {ORG_PRIORITY_LABEL[c.priority]}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-4 text-[12px] text-[var(--workspace-muted-fg)]">
-                        <span className="inline-flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                          {ownerLabel(c.ownerId, user?.id)}
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                          <Calendar className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                          {new Date(c.deadline).toLocaleString()}
-                        </span>
-                        {overdue ? (
-                          <span className="inline-flex items-center gap-1 text-red-300">
-                            <Clock className="h-3.5 w-3.5" aria-hidden />
-                            Overdue
+                        <div className="flex flex-wrap items-center gap-4 text-[12px] text-[var(--workspace-muted-fg)]">
+                          <span className="inline-flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                            {ownerLabel(c.ownerId, user?.id)}
                           </span>
-                        ) : null}
-                        {risk && !overdue ? (
-                          <span className="inline-flex items-center gap-1 text-amber-200">
-                            <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                            At risk
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5 opacity-80" aria-hidden />
+                            {new Date(c.deadline).toLocaleString()}
                           </span>
-                        ) : null}
-                      </div>
-                    </button>
+                          {overdue ? (
+                            <span className="inline-flex items-center gap-1 text-red-300">
+                              <Clock className="h-3.5 w-3.5" aria-hidden />
+                              Overdue
+                            </span>
+                          ) : null}
+                          {risk && !overdue ? (
+                            <span className="inline-flex items-center gap-1 text-amber-200">
+                              <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
+                              At risk
+                            </span>
+                          ) : null}
+                        </div>
+                      </button>
+                      {c.status !== "completed" ? (
+                        <div className="mt-2 flex justify-end">
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => void markCompleteFromList(c.id)}
+                            className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/12 px-3 py-1 text-[11px] font-semibold text-emerald-100 disabled:opacity-50"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+                            Complete
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}

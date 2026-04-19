@@ -8,6 +8,7 @@ import {
   isOpenAIConfigured,
 } from "@/lib/ai/openai-client";
 import type { OrgCommitmentPriority } from "@/lib/org-commitment-types";
+import { resolveExtractionRoute } from "@/lib/ai-provider-presets";
 
 const CAPTURE_SYSTEM = `You extract concrete, accountable commitments from messy operational text (meeting notes, Slack threads, email forwards). Return ONLY valid JSON with this exact shape:
 {"commitments":[{"title":string,"ownerName":string|null,"dueDate":string|null,"priority":"critical"|"high"|"normal"|"low","sourceQuote":string,"sourceType":"meeting"|"slack"|"email"|"manual"}]}
@@ -94,7 +95,10 @@ function parseAiJson(content: string): CaptureProcessedCommitment[] {
     .filter((x): x is CaptureProcessedCommitment => x != null);
 }
 
-export async function processCaptureText(text: string): Promise<{
+export async function processCaptureText(
+  text: string,
+  extractionProviderId?: string
+): Promise<{
   commitments: CaptureProcessedCommitment[];
   mode: "ai" | "offline";
   error?: string;
@@ -104,7 +108,10 @@ export async function processCaptureText(text: string): Promise<{
     return { commitments: [], mode: "offline" };
   }
 
-  if (isOpenAIConfigured()) {
+  const openaiConfigured = isOpenAIConfigured();
+  const route = resolveExtractionRoute(extractionProviderId, openaiConfigured);
+
+  if (route === "openai") {
     try {
       const client = createOpenAIClient();
       const model = getOpenAIModel();

@@ -1,5 +1,5 @@
+import { requireUserIdRedirect } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { checkPlanLimit } from "@/lib/billing/gate";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { getZoomIntegrationForOrg } from "@/lib/integrations/zoom-teams-integration";
@@ -10,8 +10,9 @@ import { zoomAuthorizeUrl } from "@/lib/integrations/zoom-oauth";
 export const runtime = "nodejs";
 
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) return NextResponse.redirect(new URL("/login", appBaseUrl()));
+  const authz = await requireUserIdRedirect(new URL("/login", appBaseUrl()));
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const clientId = process.env.ZOOM_CLIENT_ID?.trim();
   if (!clientId) {
     return NextResponse.json({ error: "Zoom OAuth not configured" }, { status: 503 });

@@ -6,6 +6,7 @@ import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserPro
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
 import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
+import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
 
 function SettingsSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
@@ -18,6 +19,8 @@ function SettingsSection({ title, description, children }: { title: string; desc
 }
 
 export default function WorkspaceSettingsPage() {
+  const showDeveloperTools = isDeveloperToolsEnabled();
+
   return (
     <div className="mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
       <div>
@@ -76,12 +79,14 @@ export default function WorkspaceSettingsPage() {
         <WorkspaceAiSettingsCard />
       </SettingsSection>
 
-      <SettingsSection
-        title="Webhook Input"
-        description="Connect external systems to send updates into Route5."
-      >
-        <SettingsIngestWebhookCard />
-      </SettingsSection>
+      {showDeveloperTools ? (
+        <SettingsSection
+          title="Webhook Input"
+          description="Connect external systems to send updates into Route5."
+        >
+          <SettingsIngestWebhookCard />
+        </SettingsSection>
+      ) : null}
     </div>
   );
 }

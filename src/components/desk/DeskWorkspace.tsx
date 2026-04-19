@@ -160,9 +160,6 @@ export default function DeskWorkspace() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  /** Incremented when an integration draft lands in the capture field — triggers focus + highlight. */
-  const [deskImportPulse, setDeskImportPulse] = useState(0);
-  const [importGlow, setImportGlow] = useState(false);
   const captureRef = useRef<HTMLTextAreaElement | null>(null);
   const draftSaveTimer = useRef<number | null>(null);
   const projectDetailCache = useRef<Map<string, { extractions: Extraction[] }>>(new Map());
@@ -714,7 +711,7 @@ export default function DeskWorkspace() {
               />
             ) : null}
             <section
-              className={`dashboard-home-card desk-capture-focus rounded-[24px] p-5 sm:p-6 ${importGlow ? "desk-capture-import-glow" : ""}`}
+              className="dashboard-home-card desk-capture-focus rounded-[24px] p-5 sm:p-6"
               aria-labelledby="capture-heading"
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

@@ -210,14 +210,6 @@ export default function WorkspaceNotificationsPopover() {
   }, [userId, open, tab, loadUnreadCount, loadNotifications]);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
-  }, [open]);
-
-  useEffect(() => {
     function onOpen() {
       setOpen(true);
     }

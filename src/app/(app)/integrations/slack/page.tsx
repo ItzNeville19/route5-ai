@@ -59,8 +59,8 @@ export default function SlackIntegrationPage() {
         <div>
           <h1 className="text-[28px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)]">Slack</h1>
           <p className="mt-2 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Route5 Pro+ unlocks the Slack connector: paste exports into Desk, use marketplace shortcuts, and
-            (when your deployment sets tokens) route messages into projects.
+            Bring decision-making conversations from Slack into accountable execution. Route5 keeps owners, deadlines,
+            and progress visible in one place.
           </p>
         </div>
       </div>
@@ -130,11 +130,11 @@ export default function SlackIntegrationPage() {
             <ul className="mt-4 space-y-2 text-[13px] text-[var(--workspace-muted-fg)]">
               <li className="flex gap-2">
                 <span className={planAllows ? "text-emerald-400" : "text-zinc-400"}>●</span>
-                Plan allows Slack connector: {planAllows ? "yes" : "no (upgrade to Pro+)"}
+                Plan access: {planAllows ? "enabled" : "upgrade required"}
               </li>
               <li className="flex gap-2">
                 <span className={configured ? "text-emerald-400" : "text-zinc-400"}>●</span>
-                Server credentials: {configured ? "configured" : "not set — optional for paste workflows"}
+                Server setup: {configured ? "connected" : "not configured yet"}
               </li>
             </ul>
           </>
@@ -146,9 +146,9 @@ export default function SlackIntegrationPage() {
         <ol className="mt-3 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           <li>Copy a thread or export from Slack.</li>
           <li>
-            Open <Link href={deskUrl()}>Desk</Link> and paste — process the capture to get decisions and checklists.
+            Open <Link href={deskUrl()}>Desk</Link> and paste to create owners, deadlines, and commitments.
           </li>
-          <li>Pro+ enables this integration page, marketplace shortcuts, and optional server-side tokens.</li>
+          <li>When server setup is enabled, Slack routing can push directly into project workflows.</li>
         </ol>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { isCompletedRow } from "@/lib/feed/group-commitments";
@@ -12,6 +13,12 @@ type OwnerRollup = {
   atRisk: number;
   onTrack: number;
   totalOpen: number;
+  pressureScore: number;
+};
+
+type BreakdownPattern = {
+  label: string;
+  count: number;
 };
 
 function executionHealthScore(rows: OrgCommitmentRow[]): number {
@@ -32,9 +39,24 @@ function scoreTone(score: number): string {
   return "text-r5-status-completed";
 }
 
+function overdueDays(deadlineIso: string): number {
+  const due = new Date(deadlineIso).getTime();
+  if (Number.isNaN(due)) return 0;
+  const ms = Date.now() - due;
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
+function staleDays(lastActivityIso: string): number {
+  const ts = new Date(lastActivityIso).getTime();
+  if (Number.isNaN(ts)) return 0;
+  const ms = Date.now() - ts;
+  return Math.max(0, Math.floor(ms / 86_400_000));
+}
+
 export default function LeadershipPage() {
   const [rows, setRows] = useState<OrgCommitmentRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedAtIso, setLoadedAtIso] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,6 +71,7 @@ export default function LeadershipPage() {
         };
         if (!cancelled && res.ok) {
           setRows(data.commitments ?? []);
+          setLoadedAtIso(new Date().toISOString());
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -85,26 +108,96 @@ export default function LeadershipPage() {
         atRisk: 0,
         onTrack: 0,
         totalOpen: 0,
+        pressureScore: 0,
       };
       current.totalOpen += 1;
       if (row.status === "overdue") current.overdue += 1;
       else if (row.status === "at_risk") current.atRisk += 1;
       else current.onTrack += 1;
+      current.pressureScore = current.overdue * 3 + current.atRisk * 2 + current.totalOpen;
       byOwner.set(ownerId, current);
     }
-    return [...byOwner.values()].sort((a, b) => b.overdue - a.overdue || b.atRisk - a.atRisk || b.totalOpen - a.totalOpen);
+    return [...byOwner.values()].sort(
+      (a, b) =>
+        b.pressureScore - a.pressureScore ||
+        b.overdue - a.overdue ||
+        b.atRisk - a.atRisk ||
+        b.totalOpen - a.totalOpen
+    );
   }, [openRows]);
+
+  const staleRows = useMemo(
+    () =>
+      openRows
+        .filter((r) => staleDays(r.lastActivityAt) >= 3)
+        .sort((a, b) => staleDays(b.lastActivityAt) - staleDays(a.lastActivityAt))
+        .slice(0, 8),
+    [openRows]
+  );
+
+  const breakdownPatterns = useMemo<BreakdownPattern[]>(() => {
+    const map = new Map<string, number>();
+    for (const row of openRows) {
+      if (row.status !== "overdue" && row.status !== "at_risk") continue;
+      const key = `${row.priority} priority ${row.status === "overdue" ? "misses" : "risk"}`;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+    return [...map.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+  }, [openRows]);
+
+  const topOverdue = useMemo(
+    () =>
+      overdueRows
+        .slice()
+        .sort((a, b) => overdueDays(b.deadline) - overdueDays(a.deadline))
+        .slice(0, 10),
+    [overdueRows]
+  );
 
   return (
     <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] space-y-[var(--r5-space-5)]">
       <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-[var(--r5-space-5)]">
-        <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">Execution health</p>
+        <div className="flex flex-wrap items-start justify-between gap-[var(--r5-space-3)]">
+          <div>
+            <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">
+              Leadership command center
+            </p>
+            <h1 className="mt-[var(--r5-space-2)] text-[20px] font-semibold tracking-[-0.01em] text-r5-text-primary">
+              Execution health
+            </h1>
+            <p className="mt-[var(--r5-space-2)] max-w-[62ch] text-[13px] text-r5-text-secondary">
+              Instant read: what is breaking, who is overloaded, and where intervention is required.
+            </p>
+          </div>
+          <div className="flex items-center gap-[var(--r5-space-2)]">
+            <Link
+              href="/feed"
+              className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/50 px-[var(--r5-space-3)] py-[var(--r5-space-1)] text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+            >
+              Open feed
+            </Link>
+            <Link
+              href="/workspace/escalations"
+              className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/50 px-[var(--r5-space-3)] py-[var(--r5-space-1)] text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+            >
+              Escalations
+            </Link>
+          </div>
+        </div>
         {loading ? (
           <div className="mt-[var(--r5-space-3)] h-10 w-28 animate-pulse rounded-[var(--r5-radius-md)] bg-r5-border-subtle/35" />
         ) : (
-          <div className="mt-[var(--r5-space-3)] flex items-end gap-[var(--r5-space-2)]">
-            <p className={`text-[length:var(--r5-font-display)] font-semibold leading-none ${scoreTone(health)}`}>{health}</p>
-            <p className="pb-[var(--r5-space-1)] text-[length:var(--r5-font-subheading)] text-r5-text-secondary">/ 100</p>
+          <div className="mt-[var(--r5-space-4)] flex flex-wrap items-end justify-between gap-[var(--r5-space-3)]">
+            <div className="flex items-end gap-[var(--r5-space-2)]">
+              <p className={`text-[length:var(--r5-font-display)] font-semibold leading-none ${scoreTone(health)}`}>{health}</p>
+              <p className="pb-[var(--r5-space-1)] text-[length:var(--r5-font-subheading)] text-r5-text-secondary">/ 100</p>
+            </div>
+            <p className="text-[11px] text-r5-text-secondary">
+              {loadedAtIso ? `Updated ${new Date(loadedAtIso).toLocaleTimeString()}` : ""}
+            </p>
           </div>
         )}
       </section>
@@ -135,6 +228,7 @@ export default function LeadershipPage() {
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">At risk</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">On track</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Open</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Pressure</th>
               </tr>
             </thead>
             <tbody>
@@ -145,11 +239,12 @@ export default function LeadershipPage() {
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-at-risk">{owner.atRisk}</td>
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] text-r5-status-completed">{owner.onTrack}</td>
                   <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.totalOpen}</td>
+                  <td className="px-[var(--r5-space-2)] py-[var(--r5-space-2)]">{owner.pressureScore}</td>
                 </tr>
               ))}
               {ownerBreakdown.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-[var(--r5-space-2)] py-[var(--r5-space-4)] text-r5-text-secondary">No open commitments.</td>
+                  <td colSpan={6} className="px-[var(--r5-space-2)] py-[var(--r5-space-4)] text-r5-text-secondary">No open commitments.</td>
                 </tr>
               ) : null}
             </tbody>
@@ -157,20 +252,81 @@ export default function LeadershipPage() {
         </div>
       </section>
 
-      <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Overdue commitments</h2>
-        {overdueRows.length === 0 ? (
-          <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary">No overdue commitments.</p>
-        ) : (
-          <ul className="mt-[var(--r5-space-3)] space-y-[var(--r5-space-2)]">
-            {overdueRows.map((row) => (
-              <li key={row.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)]">
-                <p className="text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
-                <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{ownerHoverLabelFromId(row.ownerId, undefined, "")}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="grid gap-[var(--r5-space-3)] lg:grid-cols-2">
+        <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+          <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Top overdue commitments</h2>
+          {topOverdue.length === 0 ? (
+            <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary">No overdue commitments.</p>
+          ) : (
+            <ul className="mt-[var(--r5-space-3)] space-y-[var(--r5-space-2)]">
+              {topOverdue.map((row) => (
+                <li key={row.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)]">
+                  <div className="flex items-start justify-between gap-[var(--r5-space-2)]">
+                    <div>
+                      <p className="text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
+                      <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{ownerHoverLabelFromId(row.ownerId, undefined, "")}</p>
+                    </div>
+                    <p className="text-[11px] font-medium text-r5-status-overdue">
+                      {overdueDays(row.deadline)}d overdue
+                    </p>
+                  </div>
+                  <div className="mt-[var(--r5-space-2)]">
+                    <Link
+                      href={`/workspace/escalations?commitment_id=${encodeURIComponent(row.id)}`}
+                      className="text-[12px] font-medium text-r5-accent hover:underline"
+                    >
+                      Escalate now
+                    </Link>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="space-y-[var(--r5-space-3)]">
+          <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+            <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">
+              Stalled commitments
+            </h2>
+            {staleRows.length === 0 ? (
+              <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                No stalled commitments.
+              </p>
+            ) : (
+              <ul className="mt-[var(--r5-space-3)] space-y-[var(--r5-space-2)]">
+                {staleRows.map((row) => (
+                  <li key={row.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)]">
+                    <p className="text-[13px] text-r5-text-primary">{row.title}</p>
+                    <p className="text-[11px] text-r5-text-secondary">
+                      {staleDays(row.lastActivityAt)}d since activity
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+            <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">
+              Breakdown patterns
+            </h2>
+            {breakdownPatterns.length === 0 ? (
+              <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                No active risk clusters.
+              </p>
+            ) : (
+              <ul className="mt-[var(--r5-space-3)] space-y-[var(--r5-space-2)]">
+                {breakdownPatterns.map((pattern) => (
+                  <li key={pattern.label} className="flex items-center justify-between rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)]">
+                    <p className="text-[13px] text-r5-text-primary">{pattern.label}</p>
+                    <span className="text-[11px] font-semibold text-r5-text-secondary">{pattern.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </section>
     </div>
   );

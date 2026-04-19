@@ -80,7 +80,7 @@ export default function WorkspaceSidebar() {
 
   return (
     <aside
-      className="agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/95 backdrop-blur-2xl md:sticky md:top-0 md:flex md:self-start"
+      className="agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/95 backdrop-blur-2xl [@media(pointer:fine)]:sticky [@media(pointer:fine)]:top-0 [@media(pointer:fine)]:flex [@media(pointer:fine)]:self-start md:sticky md:top-0 md:flex md:self-start"
       aria-label={t("sidebar.navAria")}
     >
       <div className="shrink-0 px-[var(--r5-space-3)] pb-[var(--r5-space-2)] pt-[var(--r5-space-4)]">
@@ -90,20 +90,13 @@ export default function WorkspaceSidebar() {
             <p className="mt-[var(--r5-space-2)] line-clamp-2 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.12em] text-r5-text-tertiary">
               {ROUTE5_SIGNATURE.tagline}
             </p>
-            <p className="mt-[var(--r5-space-2)] text-[10px] leading-snug text-r5-text-tertiary">
-              More commands: press{" "}
-              <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono text-[9px]">
-                ⌘K
-              </kbd>{" "}
-              — Desk & Overview aren&apos;t duplicated here.
-            </p>
           </div>
         </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <nav
-          className="min-h-0 flex-1 space-y-[var(--r5-space-1)] overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)] [scrollbar-gutter:stable]"
+          className="no-scrollbar min-h-0 flex-1 space-y-[var(--r5-space-1)] overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
           aria-label={t("sidebar.navAria")}
         >
           <NavRow

@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { isOpenAIConfigured } from "@/lib/ai/openai-client";
 import { isFigmaConfigured } from "@/lib/figma-api";
 import { isGitHubConfigured } from "@/lib/github-api";
@@ -18,10 +18,9 @@ export const runtime = "nodejs";
  * Aggregates counts and recent activity for the signed-in user’s workspace dashboard.
  */
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   try {
     const { projectCount, extractionCount, recent, openActions, activity, activitySeries, execution } =

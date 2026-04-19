@@ -45,8 +45,9 @@ export function planDisplayName(plan: BillingPlanId): string {
 /** Next paid tier to recommend when a limit is hit. */
 export function recommendedPlanAfterLimit(
   current: BillingPlanId,
-  _hit: BillingFeature
+  hit: BillingFeature
 ): BillingPlanId {
+  void hit;
   if (current === "free") return "starter";
   if (current === "starter") return "growth";
   if (current === "growth") return "enterprise";

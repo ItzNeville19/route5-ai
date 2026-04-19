@@ -1,5 +1,6 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { isOpenAIConfigured } from "@/lib/ai/openai-client";
 import { isFigmaConfigured } from "@/lib/figma-api";
 import { isGitHubConfigured } from "@/lib/github-api";
@@ -17,10 +18,9 @@ export const runtime = "nodejs";
  * export on Reports; gated so Free cannot retrieve a “full export” even by URL.
  */
 export async function GET() {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
 
   let email: string | undefined;
   try {

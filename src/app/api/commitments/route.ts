@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
@@ -37,10 +37,9 @@ function deadlineInPast(deadlineIso: string): boolean {
 }
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "org-commitments:list", userId, {
@@ -73,10 +72,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "org-commitments:post", userId, {

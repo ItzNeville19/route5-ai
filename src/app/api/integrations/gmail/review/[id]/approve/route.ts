@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { approveGmailReviewEmail } from "@/lib/integrations/gmail-process-email";
 import { publicWorkspaceError } from "@/lib/public-api-message";
@@ -11,10 +11,9 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "gmail:review:approve", userId, { userLimit: 60, ipLimit: 120 })

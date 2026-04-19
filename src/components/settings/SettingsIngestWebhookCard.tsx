@@ -5,6 +5,10 @@ import { Webhook } from "lucide-react";
 
 type IngestInfo = {
   enabled: boolean;
+  diagnostics?: {
+    secretPresent?: boolean;
+    secretLooksLikeTemplate?: boolean;
+  };
   webhookUrl: string;
   method: string;
   auth: string;
@@ -67,8 +71,15 @@ export default function SettingsIngestWebhookCard() {
           <p className="mt-2 text-[var(--workspace-muted-fg)]">
             Set the environment variable{" "}
             <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px]">ROUTE5_INGEST_SECRET</code>{" "}
-            to a long random string, restart the server, and this panel will show the live webhook URL.
+            in your production deployment environment (for example, Vercel Project Settings), use a long random value,
+            then restart/redeploy so this panel can show the live webhook URL.
           </p>
+          {info.diagnostics?.secretLooksLikeTemplate ? (
+            <p className="mt-2 text-[var(--workspace-muted-fg)]">
+              A value is present, but it looks like a placeholder. Replace it with a real secret string before using
+              this endpoint.
+            </p>
+          ) : null}
         </div>
       ) : (
         <div className="mt-4 space-y-3 text-[13px] leading-relaxed">

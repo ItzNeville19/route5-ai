@@ -15,11 +15,34 @@ type ProjectRollup = {
   lastUpdated: string | null;
 };
 
+type ProjectCard = {
+  id: string;
+  name: string;
+  iconEmoji: string | null | undefined;
+  rollup: ProjectRollup;
+  health: number;
+  pressure: number;
+};
+
 function fmtDate(iso: string | null): string {
   if (!iso) return "No activity";
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return "No activity";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function projectHealth(rollup: ProjectRollup): number {
+  const open = rollup.overdue + rollup.atRisk + rollup.onTrack;
+  if (open <= 0) return 100;
+  const weighted = rollup.overdue * 16 + rollup.atRisk * 9 + rollup.onTrack * 2;
+  const score = 100 - Math.round(weighted / Math.max(open, 1));
+  return Math.max(0, Math.min(100, score));
+}
+
+function healthToneClass(score: number): string {
+  if (score < 60) return "text-r5-status-overdue";
+  if (score < 80) return "text-r5-status-at-risk";
+  return "text-r5-status-completed";
 }
 
 export default function ProjectsHub() {
@@ -70,6 +93,37 @@ export default function ProjectsHub() {
     return map;
   }, [commitments]);
 
+  const projectCards = useMemo<ProjectCard[]>(
+    () =>
+      [...projects]
+        .map((project) => {
+          const rollup = rollupByProject.get(project.id) ?? {
+            commitmentCount: 0,
+            overdue: 0,
+            atRisk: 0,
+            onTrack: 0,
+            lastUpdated: null,
+          };
+          const health = projectHealth(rollup);
+          const pressure = rollup.overdue * 3 + rollup.atRisk * 2 + rollup.onTrack;
+          return {
+            id: project.id,
+            name: project.name,
+            iconEmoji: project.iconEmoji,
+            rollup,
+            health,
+            pressure,
+          };
+        })
+        .sort((a, b) => a.health - b.health || b.pressure - a.pressure || a.name.localeCompare(b.name)),
+    [projects, rollupByProject]
+  );
+
+  const needsAttention = useMemo(
+    () => projectCards.filter((p) => p.rollup.overdue > 0 || p.rollup.atRisk > 0).slice(0, 4),
+    [projectCards]
+  );
+
   if (loadingProjects) {
     return (
       <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
@@ -102,15 +156,13 @@ export default function ProjectsHub() {
     );
   }
 
-  const sorted = [...projects].sort((a, b) => a.name.localeCompare(b.name));
-
   return (
     <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
       <div className="flex flex-wrap items-end justify-between gap-[var(--r5-space-4)]">
         <div>
           <h1 className="text-[length:var(--r5-font-heading)] font-semibold tracking-tight text-r5-text-primary">Projects</h1>
           <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-subheading)] text-r5-text-secondary">
-            {sorted.length} project{sorted.length === 1 ? "" : "s"}
+            {projectCards.length} project{projectCards.length === 1 ? "" : "s"}
           </p>
         </div>
         <button
@@ -123,21 +175,36 @@ export default function ProjectsHub() {
         </button>
       </div>
 
+      {needsAttention.length > 0 ? (
+        <section className="mt-[var(--r5-space-4)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
+          <h2 className="text-[15px] font-semibold text-r5-text-primary">Needs attention</h2>
+          <div className="mt-[var(--r5-space-3)] grid gap-[var(--r5-space-2)] sm:grid-cols-2">
+            {needsAttention.map((project) => (
+              <Link
+                key={project.id}
+                href={`/projects/${project.id}`}
+                className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/80 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
+              >
+                <p className="truncate text-[13px] font-medium text-r5-text-primary">{project.name}</p>
+                <p className="mt-[var(--r5-space-1)] text-[11px] text-r5-text-secondary">
+                  {project.rollup.overdue} overdue · {project.rollup.atRisk} at risk · health{" "}
+                  <span className={healthToneClass(project.health)}>{project.health}%</span>
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <ul className="mt-[var(--r5-space-6)] space-y-[var(--r5-space-2)]">
-        {sorted.map((project) => {
-          const rollup = rollupByProject.get(project.id) ?? {
-            commitmentCount: 0,
-            overdue: 0,
-            atRisk: 0,
-            onTrack: 0,
-            lastUpdated: null,
-          };
+        {projectCards.map((project) => {
+          const rollup = project.rollup;
 
           return (
             <li key={project.id}>
               <Link
                 href={`/projects/${project.id}`}
-                className="grid grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(120px,1fr)] items-center gap-[var(--r5-space-3)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover"
+                className="grid grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(120px,1fr)] items-center gap-[var(--r5-space-3)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover"
               >
                 <span className="min-w-0 flex items-center gap-[var(--r5-space-2)]">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
@@ -157,6 +224,7 @@ export default function ProjectsHub() {
                 </span>
 
                 <span className="text-right text-[length:var(--r5-font-body)] text-r5-text-secondary">{fmtDate(rollup.lastUpdated)}</span>
+                <span className={`text-right text-[12px] font-semibold ${healthToneClass(project.health)}`}>Health {project.health}%</span>
               </Link>
             </li>
           );

@@ -5,14 +5,12 @@ import { Sparkles } from "lucide-react";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import {
   EXTRACTION_PROVIDER_OPTIONS,
-  LLM_PROVIDER_OPTIONS,
 } from "@/lib/ai-provider-presets";
 import { getMarketplaceAppById } from "@/lib/marketplace-catalog";
 
 export default function WorkspaceAiSettingsCard() {
   const exp = useWorkspaceExperience();
   const extractionId = exp.prefs.extractionProviderId ?? "auto";
-  const llmId = exp.prefs.llmProviderId ?? "auto";
   const enabledFromMarketplace = (exp.prefs.installedMarketplaceAppIds ?? [])
     .map((id) => getMarketplaceAppById(id))
     .filter((a) => a && a.kind === "installable");
@@ -35,7 +33,7 @@ export default function WorkspaceAiSettingsCard() {
               AI settings
             </h2>
             <p className="text-[12px] text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              Configure which AI model powers Route5 decision capture. Optional connectors live under{" "}
+              Configure how decision capture runs in this deployment. Optional connectors live under{" "}
               <Link href="/settings#connections" className="font-medium text-[#0071e3] hover:underline dark:text-[var(--workspace-accent)]">
                 Connections
               </Link>
@@ -51,7 +49,7 @@ export default function WorkspaceAiSettingsCard() {
             htmlFor="extraction-provider"
             className="text-[12px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]"
           >
-            AI model
+            Decision capture mode
           </label>
           <select
             id="extraction-provider"
@@ -72,30 +70,8 @@ export default function WorkspaceAiSettingsCard() {
           ) : null}
         </div>
 
-        <div>
-          <label
-            htmlFor="llm-provider"
-            className="text-[12px] font-semibold uppercase tracking-[0.08em] text-neutral-500 dark:text-[var(--workspace-muted-fg)]"
-          >
-            Fallback model
-          </label>
-          <select
-            id="llm-provider"
-            value={llmId}
-            onChange={(e) => exp.setPrefs({ llmProviderId: e.target.value })}
-            className="mt-2 w-full max-w-md rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-[14px] text-neutral-900 shadow-sm focus:border-[#0071e3]/40 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/15 dark:border-[var(--workspace-border)] dark:bg-[var(--workspace-canvas)] dark:text-[var(--workspace-fg)]"
-          >
-            {LLM_PROVIDER_OPTIONS.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint ? (
-            <p className="mt-1.5 text-[12px] leading-relaxed text-neutral-500 dark:text-[var(--workspace-muted-fg)]">
-              {LLM_PROVIDER_OPTIONS.find((o) => o.id === llmId)?.hint}
-            </p>
-          ) : null}
+        <div className="rounded-xl border border-black/[0.06] bg-white/60 px-3 py-2.5 text-[12px] leading-relaxed text-neutral-600 dark:border-[var(--workspace-border)] dark:bg-[var(--workspace-canvas)]/60 dark:text-[var(--workspace-muted-fg)]">
+          Model version changes are controlled by deployment environment and server policy, not this page.
         </div>
 
         {enabledFromMarketplace.length > 0 ? (
@@ -118,7 +94,7 @@ export default function WorkspaceAiSettingsCard() {
         ) : null}
 
         <p className="rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-[12px] leading-relaxed text-emerald-950 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-100">
-          Route5 uses AI to identify and structure decisions from pasted text. Select your preferred model below.
+          Route5 uses this mode for both Capture and project intake so behavior is consistent across the product.
         </p>
       </div>
     </section>

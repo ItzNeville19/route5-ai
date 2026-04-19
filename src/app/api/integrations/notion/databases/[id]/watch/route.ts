@@ -1,5 +1,5 @@
+import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { notionRetrieveDatabase } from "@/lib/integrations/notion-api";
 import { getNotionIntegrationForOrg } from "@/lib/integrations/org-integrations-store";
 import { getNotionAccessToken } from "@/lib/integrations/notion-token";
@@ -14,10 +14,9 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "notion:watch", userId, { userLimit: 60, ipLimit: 120 })

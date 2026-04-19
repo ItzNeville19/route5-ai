@@ -335,8 +335,28 @@ export default function ExecutiveDashboard() {
                 Execution health
               </h1>
               <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Live metrics from org commitments. Trends use daily snapshots (populated by cron).
+                Live metrics from org commitments with trend context and escalation pressure.
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link
+                  href="/feed"
+                  className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                >
+                  Open feed
+                </Link>
+                <Link
+                  href="/workspace/escalations"
+                  className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                >
+                  Escalation queue
+                </Link>
+                <Link
+                  href="/projects"
+                  className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                >
+                  Project health
+                </Link>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {live ? (
@@ -591,12 +611,12 @@ export default function ExecutiveDashboard() {
                   </thead>
                   <tbody>
                     {sortedTeam.map((row) => (
-                      <tr key={row.ownerId} className="border-b border-[var(--workspace-border)]/50">
-                        <td className="py-2 pr-2 text-[var(--workspace-fg)]">{row.displayName}</td>
-                        <td className="py-2 pr-2 tabular-nums">{row.total}</td>
-                        <td className="py-2 pr-2 tabular-nums">{row.completedOnTime}</td>
-                        <td className="py-2 pr-2 tabular-nums">{row.completionRate}%</td>
-                        <td className={`py-2 tabular-nums ${row.overdueCount > 0 ? "text-red-300" : ""}`}>
+                      <tr key={row.ownerId} className="h-9 border-b border-[var(--workspace-border)]/50">
+                        <td className="pr-2 text-[13px] text-[var(--workspace-fg)]">{row.displayName}</td>
+                        <td className="pr-2 text-[13px] tabular-nums">{row.total}</td>
+                        <td className="pr-2 text-[13px] tabular-nums">{row.completedOnTime}</td>
+                        <td className="pr-2 text-[13px] tabular-nums">{row.completionRate}%</td>
+                        <td className={`text-[13px] tabular-nums ${row.overdueCount > 0 ? "font-semibold text-red-300" : ""}`}>
                           {row.overdueCount}
                         </td>
                       </tr>

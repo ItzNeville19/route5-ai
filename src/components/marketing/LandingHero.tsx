@@ -1,11 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Show } from "@clerk/nextjs";
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Play } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
+
+const LandingHeroClerkCtasLazy = dynamic(
+  () => import("@/components/LandingHeroClerkCtas").then((m) => m.LandingHeroClerkCtas),
+  { ssr: false, loading: () => null }
+);
 import { easeApple } from "@/lib/motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -13,6 +18,7 @@ const ease = [0.22, 1, 0.36, 1] as const;
 export default function LandingHero() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
+  const clerkRuntimeOk = useClerkRuntimeEnabled();
 
   return (
     <section className="relative flex min-h-[min(88dvh,820px)] flex-col justify-center overflow-hidden pt-20">
@@ -103,25 +109,8 @@ export default function LandingHero() {
             transition={{ delay: 0.45, duration: 0.45 }}
             className="mt-10 flex flex-wrap items-center justify-center gap-3"
           >
-            {hasClerkPublishableKey() ? (
-              <>
-                <Show when="signed-in">
-                  <Link
-                    href="/feed"
-                    className="inline-flex rounded-full border border-violet-500/35 bg-violet-500/10 px-5 py-2.5 text-[13px] font-semibold text-violet-200 transition hover:border-violet-400/50 hover:bg-violet-500/20"
-                  >
-                    {t("marketing.hero.openFeed")}
-                  </Link>
-                </Show>
-                <Show when="signed-out">
-                  <Link
-                    href="/sign-up"
-                    className="inline-flex rounded-full border border-white/12 px-5 py-2.5 text-[13px] font-semibold text-zinc-200 transition hover:border-white/25 hover:bg-white/[0.06]"
-                  >
-                    {t("marketing.landing.hero.ctaSignup")}
-                  </Link>
-                </Show>
-              </>
+            {clerkRuntimeOk ? (
+              <LandingHeroClerkCtasLazy />
             ) : (
               <Link
                 href="/login"

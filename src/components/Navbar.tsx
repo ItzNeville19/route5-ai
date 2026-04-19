@@ -2,14 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, Search, X } from "lucide-react";
-import { Show, UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { hasClerkPublishableKey } from "@/lib/clerk-env";
+import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
+
+const NavbarClerkExtrasLazy = dynamic(
+  () => import("./NavbarClerkExtras").then((m) => m.NavbarClerkExtras),
+  { ssr: false, loading: () => null }
+);
 
 export default function Navbar() {
   const { t } = useI18n();
@@ -77,7 +82,7 @@ export default function Navbar() {
     };
   }, [pathname]);
 
-  const clerkConfigured = hasClerkPublishableKey();
+  const clerkConfigured = useClerkRuntimeEnabled();
   /** Marketing home uses the same dark command shell as the workspace. */
   const isCommandHome = pathname === "/";
 
@@ -157,26 +162,12 @@ export default function Navbar() {
               </Link>
             ))}
             {clerkConfigured ? (
-              <>
-                <Show when="signed-out">
-                  <Link
-                    href="/login"
-                    className={mobileLink}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {t("marketing.hero.logIn")}
-                  </Link>
-                </Show>
-                <Show when="signed-in">
-                  <Link
-                    href="/settings"
-                    className={mobileLink}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {t("marketing.nav.settings")}
-                  </Link>
-                </Show>
-              </>
+              <NavbarClerkExtrasLazy
+                variant="mobile"
+                isCommandHome={isCommandHome}
+                mobileLink={mobileLink}
+                onMobileNavigate={() => setMobileOpen(false)}
+              />
             ) : (
               <Link
                 href="/login"
@@ -273,33 +264,7 @@ export default function Navbar() {
               <Search className="h-[20px] w-[20px]" strokeWidth={2} aria-hidden />
             </button>
             {clerkConfigured ? (
-              <>
-                <Show when="signed-out">
-                  <Link
-                    href="/login"
-                    className={
-                      isCommandHome
-                        ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"
-                        : "px-2 py-2 text-[13px] font-medium text-[#1d1d1f]/65 transition-colors hover:text-[#1d1d1f]"
-                    }
-                  >
-                    {t("marketing.hero.logIn")}
-                  </Link>
-                </Show>
-                <Show when="signed-in">
-                  <UserButton
-                    userProfileMode="navigation"
-                    userProfileUrl="/settings"
-                    showName={false}
-                    appearance={{
-                      elements: {
-                        avatarBox: "h-8 w-8",
-                        userButtonPopoverCard: "rounded-2xl",
-                      },
-                    }}
-                  />
-                </Show>
-              </>
+              <NavbarClerkExtrasLazy variant="desktop" isCommandHome={isCommandHome} mobileLink="" />
             ) : (
               <Link
                 href="/login"
