@@ -299,7 +299,9 @@ function FeedHeroSummary({
       <span className={overdueCount > 0 ? "text-r5-status-overdue" : "text-r5-text-secondary"}>
         {overdueCount} Overdue
       </span>
-      <span>{completedThisWeek} Done this week</span>
+      <span>
+        {completedThisWeek} Done · last 7 days
+      </span>
     </div>
   );
 }

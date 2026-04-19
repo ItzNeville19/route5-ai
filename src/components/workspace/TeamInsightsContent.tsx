@@ -120,10 +120,10 @@ export default function TeamInsightsContent() {
       </div>
 
       <section className="mt-4 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/55 p-4">
-        <h2 className="text-[14px] font-semibold text-[var(--workspace-fg)]">Owner load snapshot</h2>
+        <h2 className="text-[14px] font-semibold text-[var(--workspace-fg)]">Administrator load snapshot</h2>
         {staleLoad.length === 0 ? (
           <p className="mt-2 text-[12px] text-[var(--workspace-muted-fg)]">
-            Owner load data will appear as commitments are assigned.
+            Load by administrator will appear as commitments are assigned.
           </p>
         ) : (
           <ul className="mt-3 space-y-2">

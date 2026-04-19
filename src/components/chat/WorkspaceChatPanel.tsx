@@ -277,9 +277,10 @@ export default function WorkspaceChatPanel() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [addPeopleOpen]);
 
-  const loadMessages = useCallback(async (channelId: string) => {
+  const loadMessages = useCallback(async (channelId: string, opts?: { background?: boolean }) => {
     if (!channelId) return;
-    setLoadingMessages(true);
+    const background = opts?.background === true;
+    if (!background) setLoadingMessages(true);
     try {
       const res = await fetch(`/api/chat/messages?channelId=${encodeURIComponent(channelId)}`, {
         credentials: "same-origin",
@@ -291,7 +292,7 @@ export default function WorkspaceChatPanel() {
         prev.map((channel) => (channel.id === channelId ? { ...channel, unreadCount: 0 } : channel))
       );
     } finally {
-      setLoadingMessages(false);
+      if (!background) setLoadingMessages(false);
     }
   }, []);
 
@@ -305,6 +306,7 @@ export default function WorkspaceChatPanel() {
 
   useEffect(() => {
     if (!selectedChannelId) return;
+    setMessages([]);
     void loadMessages(selectedChannelId);
   }, [selectedChannelId, loadMessages]);
 
@@ -333,7 +335,7 @@ export default function WorkspaceChatPanel() {
     if (!client) return;
     const channel = client.channel(`chat:channel:${selectedChannelId}`);
     channel.on("broadcast", { event: "message" }, () => {
-      void loadMessages(selectedChannelId);
+      void loadMessages(selectedChannelId, { background: true });
       void loadChannels();
     });
     channel.subscribe();
@@ -382,7 +384,7 @@ export default function WorkspaceChatPanel() {
       setPendingAttachments(attachmentsSnapshot);
       return;
     }
-    await loadMessages(selectedChannelId);
+    await loadMessages(selectedChannelId, { background: true });
     await loadChannels();
   }
 
@@ -401,7 +403,7 @@ export default function WorkspaceChatPanel() {
     }
     setEditingMessageId(null);
     setEditDraft("");
-    if (selectedChannelId) await loadMessages(selectedChannelId);
+    if (selectedChannelId) await loadMessages(selectedChannelId, { background: true });
   }, [editingMessageId, editDraft, selectedChannelId, loadMessages, pushToast]);
 
   const deleteMessageAtScope = useCallback(
@@ -419,7 +421,7 @@ export default function WorkspaceChatPanel() {
       }
       setDeleteMenuMessageId(null);
       setOpenToolbarMessageId(null);
-      if (selectedChannelId) await loadMessages(selectedChannelId);
+      if (selectedChannelId) await loadMessages(selectedChannelId, { background: true });
       await loadChannels();
     },
     [selectedChannelId, loadMessages, loadChannels, pushToast]
@@ -442,7 +444,7 @@ export default function WorkspaceChatPanel() {
     setAddPeopleOpen(false);
     setAddPeopleIds([]);
     await loadChannels();
-    await loadMessages(selectedChannelId);
+    await loadMessages(selectedChannelId, { background: true });
   }, [selectedChannelId, addPeopleIds, pushToast, loadChannels, loadMessages]);
 
   async function createDirect() {

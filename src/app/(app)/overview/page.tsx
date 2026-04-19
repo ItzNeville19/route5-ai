@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useUser } from "@clerk/nextjs";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { isCompletedRow } from "@/lib/feed/group-commitments";
-import { ownerHoverLabelFromId } from "@/components/feed/feed-user-display";
+import { clerkDisplayName } from "@/components/feed/feed-user-display";
+import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 
 type OwnerRollup = {
   ownerId: string;
@@ -59,9 +61,21 @@ function staleDays(lastActivityIso: string): number {
 }
 
 export default function LeadershipPage() {
+  const { user } = useUser();
+  const { displayName: memberDisplayName } = useMemberDirectory();
+  const selfId = user?.id;
+  const selfDisplayName = clerkDisplayName(user);
   const [rows, setRows] = useState<OrgCommitmentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadedAtIso, setLoadedAtIso] = useState<string | null>(null);
+
+  const resolveAdministratorLabel = useMemo(
+    () => (ownerId: string) =>
+      ownerId === "unassigned"
+        ? "Unassigned"
+        : memberDisplayName(ownerId, selfId, selfDisplayName),
+    [memberDisplayName, selfId, selfDisplayName]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -108,7 +122,7 @@ export default function LeadershipPage() {
       const ownerId = row.ownerId?.trim() || "unassigned";
       const current = byOwner.get(ownerId) ?? {
         ownerId,
-        ownerLabel: ownerHoverLabelFromId(ownerId, undefined, ""),
+        ownerLabel: ownerId === "unassigned" ? "Unassigned" : ownerId,
         overdue: 0,
         atRisk: 0,
         onTrack: 0,
@@ -149,16 +163,21 @@ export default function LeadershipPage() {
       );
       owner.pressureScore = owner.overdue * 3 + owner.atRisk * 2 + owner.totalOpen;
     }
-    return [...byOwner.values()].sort(
-      (a, b) =>
-        b.overdue - a.overdue ||
-        b.atRisk - a.atRisk ||
-        b.pressureScore - a.pressureScore ||
-        b.overdue - a.overdue ||
-        b.atRisk - a.atRisk ||
-        b.totalOpen - a.totalOpen
-    );
-  }, [rows]);
+    return [...byOwner.values()]
+      .map((o) => ({
+        ...o,
+        ownerLabel: resolveAdministratorLabel(o.ownerId),
+      }))
+      .sort(
+        (a, b) =>
+          b.overdue - a.overdue ||
+          b.atRisk - a.atRisk ||
+          b.pressureScore - a.pressureScore ||
+          b.overdue - a.overdue ||
+          b.atRisk - a.atRisk ||
+          b.totalOpen - a.totalOpen
+      );
+  }, [rows, resolveAdministratorLabel]);
 
   const staleRows = useMemo(
     () =>
@@ -252,12 +271,14 @@ export default function LeadershipPage() {
       </section>
 
       <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Owner breakdown</h2>
+        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">
+          Administrator breakdown
+        </h2>
         <div className="mt-[var(--r5-space-3)] overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[length:var(--r5-font-body)]">
             <thead>
               <tr className="border-b border-r5-border-subtle/70 text-r5-text-secondary">
-                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Owner</th>
+                <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Administrator</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">Overdue</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">At risk</th>
                 <th className="px-[var(--r5-space-2)] py-[var(--r5-space-2)] font-medium">On track</th>
@@ -302,7 +323,9 @@ export default function LeadershipPage() {
                   <div className="flex items-start justify-between gap-[var(--r5-space-2)]">
                     <div>
                       <p className="text-[length:var(--r5-font-subheading)] text-r5-text-primary">{row.title}</p>
-                      <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{ownerHoverLabelFromId(row.ownerId, undefined, "")}</p>
+                      <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">
+                        {resolveAdministratorLabel(row.ownerId?.trim() || "unassigned")}
+                      </p>
                     </div>
                     <p className="text-[11px] font-medium text-r5-status-overdue">
                       {overdueDays(row.deadline)}d overdue

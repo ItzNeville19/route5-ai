@@ -22,8 +22,8 @@ function startOfUtcWeek(isoNow = new Date().toISOString()): string {
 }
 
 function ownerLabel(c: Commitment): string {
-  if (c.ownerUserId) return c.ownerUserId;
   if (c.ownerDisplayName?.trim()) return c.ownerDisplayName.trim();
+  if (c.ownerUserId) return c.ownerUserId;
   return "Unassigned";
 }
 

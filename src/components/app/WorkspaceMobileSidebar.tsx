@@ -2,7 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, ListChecks, LayoutGrid, FolderOpen, MessageSquare, BarChart3, Gauge, LineChart, FileBarChart, AlertTriangle, Users, Palette, LifeBuoy, Settings, CreditCard } from "lucide-react";
+import { useUser, UserButton } from "@clerk/nextjs";
+import {
+  X,
+  ListChecks,
+  LayoutGrid,
+  FolderOpen,
+  MessageSquare,
+  BarChart3,
+  Gauge,
+  LineChart,
+  FileBarChart,
+  AlertTriangle,
+  Users,
+  Palette,
+  LifeBuoy,
+  Settings,
+  CreditCard,
+} from "lucide-react";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+
+const tierLabel =
+  process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
 
 type WorkspaceMobileSidebarProps = {
   open: boolean;
@@ -43,6 +65,10 @@ const NAV_SECTIONS = [
 
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
+  const { user } = useUser();
+  const { entitlements } = useWorkspaceData();
+  const displayName =
+    user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
   return (
     <div
@@ -70,7 +96,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           </button>
         </div>
 
-        <nav className="no-scrollbar flex-1 overflow-y-auto px-3 py-3">
+        <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {NAV_SECTIONS.map((section) => (
             <div key={section.title} className="mb-4">
               <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
@@ -103,6 +129,33 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
             </div>
           ))}
         </nav>
+
+        <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-3 py-3 backdrop-blur-xl">
+          <div className="flex items-center gap-3 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-3 shadow-[var(--r5-shadow-elevated)]">
+            <UserButton
+              userProfileMode="navigation"
+              userProfileUrl="/settings"
+              appearance={{
+                ...route5ClerkAppearance,
+                elements: {
+                  ...route5ClerkAppearance.elements,
+                  avatarBox: "h-9 w-9 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
+                  userButtonAvatarImage: "h-full w-full object-cover",
+                  userButtonPopoverCard:
+                    "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
+                },
+              }}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
+                {displayName}
+              </p>
+              <p className="mt-[var(--r5-space-1)] text-[10px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
+                {entitlements?.tierLabel ?? tierLabel}
+              </p>
+            </div>
+          </div>
+        </div>
       </aside>
     </div>
   );
