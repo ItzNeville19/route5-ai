@@ -11,6 +11,32 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import type { Project } from "@/lib/types";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
 
+type OrgMemberOption = {
+  userId: string;
+  profile: {
+    firstName: string | null;
+    lastName: string | null;
+    username: string | null;
+    imageUrl: string | null;
+    primaryEmail: string | null;
+  };
+};
+
+function displayNameForMember(m: OrgMemberOption): string {
+  const fn = m.profile.firstName?.trim();
+  const ln = m.profile.lastName?.trim();
+  const combined = [fn, ln].filter(Boolean).join(" ").trim();
+  if (combined) return combined;
+  const un = m.profile.username?.trim();
+  if (un) return un;
+  const em = m.profile.primaryEmail?.trim();
+  if (em) {
+    const local = em.split("@")[0]?.trim();
+    if (local) return local;
+  }
+  return "Teammate";
+}
+
 const ICON_MARKERS = [
   "🚀",
   "📈",
@@ -53,9 +79,7 @@ export default function NewProjectModal() {
   const [iconMarker, setIconMarker] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [orgMembers, setOrgMembers] = useState<
-    Array<{ userId: string; name: string; email: string | null }>
-  >([]);
+  const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -103,10 +127,22 @@ export default function NewProjectModal() {
     void fetch("/api/workspace/organization", { credentials: "same-origin" })
       .then(async (res) => {
         const data = (await res.json().catch(() => ({}))) as {
-          members?: Array<{ userId: string; name: string; email: string | null }>;
+          members?: OrgMemberOption[];
         };
         if (!res.ok || cancelled) return;
-        setOrgMembers(data.members ?? []);
+        const raw = data.members ?? [];
+        setOrgMembers(
+          raw.map((row) => ({
+            userId: row.userId,
+            profile: {
+              firstName: row.profile?.firstName ?? null,
+              lastName: row.profile?.lastName ?? null,
+              username: row.profile?.username ?? null,
+              imageUrl: row.profile?.imageUrl ?? null,
+              primaryEmail: row.profile?.primaryEmail ?? null,
+            },
+          }))
+        );
       })
       .catch(() => {
         if (!cancelled) setOrgMembers([]);
@@ -190,24 +226,23 @@ export default function NewProjectModal() {
         >
           <button
             type="button"
-            className="absolute inset-0 bg-black/55 backdrop-blur-md"
+            className="absolute inset-0 bg-zinc-900/25 backdrop-blur-xl"
             aria-label={t("modal.newProject.close")}
             onClick={close}
           />
           <div
-            className={`theme-route5-command theme-agent-shell relative z-[1] flex max-h-[min(92vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border border-[var(--workspace-border)] bg-[var(--workspace-surface)] text-[var(--workspace-fg)] shadow-2xl sm:rounded-3xl ${shellModifierClass}`}
+            className={`relative z-[1] flex max-h-[min(92vh,680px)] w-full max-w-lg flex-col overflow-hidden rounded-t-[1.25rem] border border-zinc-200/90 bg-white/95 text-zinc-900 shadow-[0_25px_80px_-20px_rgba(0,0,0,0.35)] backdrop-blur-2xl sm:rounded-3xl ${shellModifierClass}`}
           >
-            <header className="relative flex shrink-0 items-center justify-between border-b border-[var(--workspace-border)] px-4 py-3">
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-[var(--workspace-accent)]/10 via-transparent to-[var(--workspace-lime)]/10" />
+            <header className="relative flex shrink-0 items-center justify-between border-b border-zinc-200/90 bg-white/80 px-4 py-3 backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--workspace-accent)]/15">
-                  <FolderKanban className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-zinc-100">
+                  <FolderKanban className="h-4 w-4 text-zinc-700" aria-hidden />
                 </span>
                 <div>
-                  <h2 id="new-project-modal-title" className="text-[17px] font-semibold text-[var(--workspace-fg)]">
+                  <h2 id="new-project-modal-title" className="text-[17px] font-semibold text-zinc-900">
                     {t("modal.newProject.title")}
                   </h2>
-                  <p className="mt-0.5 text-[12px] text-[var(--workspace-muted-fg)]">
+                  <p className="mt-0.5 text-[12px] text-zinc-500">
                     Create a project and sync it across every signed-in device.
                   </p>
                 </div>
@@ -215,27 +250,27 @@ export default function NewProjectModal() {
               <button
                 type="button"
                 onClick={close}
-                className="rounded-full p-2 text-[var(--workspace-muted-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                className="rounded-full p-2 text-zinc-500 hover:bg-zinc-100"
                 aria-label={t("modal.newProject.close")}
               >
                 <X className="h-5 w-5" />
               </button>
             </header>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+            <div className="min-h-0 flex-1 overflow-y-auto bg-white/95 px-4 py-4 sm:px-5">
               <div className="space-y-4">
-                <div className="workspace-preview-panel p-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
+                <div className="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
                     Preview
                   </p>
-                  <div className="mt-2 flex items-center gap-3 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-3 py-3">
-                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-[20px]">
+                  <div className="mt-2 flex items-center gap-3 rounded-xl border border-zinc-200 bg-white px-3 py-3 shadow-sm">
+                    <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-[20px]">
                       {iconMarker || "◆"}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-[14px] font-semibold text-[var(--workspace-fg)]">
+                      <p className="truncate text-[14px] font-semibold text-zinc-900">
                         {name.trim() || t("modal.newProject.untitled")}
                       </p>
-                      <p className="truncate text-[12px] text-[var(--workspace-muted-fg)]">
+                      <p className="truncate text-[12px] text-zinc-500">
                         {description.trim() || "Project will appear in your switcher immediately."}
                       </p>
                     </div>
@@ -243,7 +278,7 @@ export default function NewProjectModal() {
                 </div>
 
                 <div>
-                  <label htmlFor="new-project-name" className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
+                  <label htmlFor="new-project-name" className="text-[12px] font-medium text-zinc-600">
                     {t("modal.newProject.projectName")}
                   </label>
                   <input
@@ -251,13 +286,13 @@ export default function NewProjectModal() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder={t("modal.newProject.namePlaceholder")}
-                    className="mt-2 min-h-11 w-full rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-3 text-[15px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
+                    className="mt-2 min-h-11 w-full rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[15px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
                     autoFocus
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="new-project-description" className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
+                  <label htmlFor="new-project-description" className="text-[12px] font-medium text-zinc-600">
                     Description
                   </label>
                   <textarea
@@ -266,26 +301,26 @@ export default function NewProjectModal() {
                     onChange={(e) => setDescription(e.target.value.slice(0, 240))}
                     rows={3}
                     placeholder="What this project is responsible for"
-                    className="mt-2 w-full resize-none rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-3 text-[14px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
+                    className="mt-2 w-full resize-none rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-[14px] text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
-                    Team members
-                  </label>
-                  <div className="mt-2 max-h-[150px] space-y-1 overflow-y-auto rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/30 p-2">
+                  <label className="text-[12px] font-medium text-zinc-600">Team members</label>
+                  <div className="mt-2 max-h-[180px] space-y-1 overflow-y-auto rounded-2xl border border-zinc-200 bg-zinc-50/90 p-2">
                     {orgMembers.length === 0 ? (
-                      <p className="px-2 py-2 text-[12px] text-[var(--workspace-muted-fg)]">
+                      <p className="px-2 py-2 text-[12px] text-zinc-500">
                         Add organization members first to assign collaborators.
                       </p>
                     ) : (
                       orgMembers.map((member) => {
                         const checked = selectedMemberIds.includes(member.userId);
+                        const label = displayNameForMember(member);
+                        const subtitle = member.profile.primaryEmail?.trim() || null;
                         return (
                           <label
                             key={member.userId}
-                            className="flex min-h-11 items-center gap-2 rounded-lg px-2 py-1 text-[13px] text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                            className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-[13px] text-zinc-900 hover:bg-white"
                           >
                             <input
                               type="checkbox"
@@ -297,9 +332,31 @@ export default function NewProjectModal() {
                                     : prev.filter((id) => id !== member.userId)
                                 )
                               }
-                              className="h-4 w-4 rounded border-[var(--workspace-border)]"
+                              className="h-4 w-4 shrink-0 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900/20"
                             />
-                            <span className="truncate">{member.name || member.email || member.userId}</span>
+                            {member.profile.imageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={member.profile.imageUrl}
+                                alt=""
+                                className="h-8 w-8 shrink-0 rounded-full border border-zinc-200 object-cover"
+                              />
+                            ) : (
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-[11px] font-semibold text-zinc-600">
+                                {label
+                                  .split(/\s+/)
+                                  .map((w) => w[0])
+                                  .join("")
+                                  .slice(0, 2)
+                                  .toUpperCase() || "?"}
+                              </span>
+                            )}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate font-medium">{label}</span>
+                              {subtitle ? (
+                                <span className="block truncate text-[11px] text-zinc-500">{subtitle}</span>
+                              ) : null}
+                            </span>
                           </label>
                         );
                       })
@@ -308,7 +365,7 @@ export default function NewProjectModal() {
                 </div>
 
                 <div>
-                  <label className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
+                  <label className="text-[12px] font-medium text-zinc-600">
                     {t("modal.newProject.icon")}
                   </label>
                   <div className="mt-2 flex flex-wrap items-start gap-2">
@@ -316,12 +373,12 @@ export default function NewProjectModal() {
                       type="text"
                       value={iconMarker}
                       onChange={(e) => setIconMarker([...e.target.value].slice(0, 1).join(""))}
-                      className="flex h-11 w-11 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] text-center text-[18px] text-[var(--workspace-fg)]"
+                      className="flex h-11 w-11 rounded-xl border border-zinc-200 bg-white text-center text-[18px] text-zinc-900"
                       maxLength={8}
                       aria-label={t("modal.newProject.projectIconAria")}
                       placeholder="—"
                     />
-                    <div className="grid max-h-[126px] flex-1 grid-cols-8 gap-1.5 overflow-y-auto rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 p-1.5">
+                    <div className="grid max-h-[126px] flex-1 grid-cols-8 gap-1.5 overflow-y-auto rounded-lg border border-zinc-200 bg-zinc-50/90 p-1.5">
                       {ICON_MARKERS.map((m) => (
                         <button
                           key={m}
@@ -329,8 +386,8 @@ export default function NewProjectModal() {
                           onClick={() => setIconMarker(m)}
                           className={`flex h-8 w-8 items-center justify-center rounded-md border text-[15px] transition ${
                             iconMarker === m
-                              ? "border-[var(--workspace-accent)]/55 bg-[var(--workspace-accent)]/15 text-[var(--workspace-fg)]"
-                              : "border-[var(--workspace-border)]/70 text-[var(--workspace-muted-fg)] hover:border-[var(--workspace-border)]"
+                              ? "border-zinc-900 bg-zinc-900/5 text-zinc-900"
+                              : "border-zinc-200 text-zinc-500 hover:border-zinc-300"
                           }`}
                         >
                           {m}
@@ -341,18 +398,18 @@ export default function NewProjectModal() {
                 </div>
 
                 {error ? (
-                  <p className="text-[13px] text-[var(--workspace-danger-fg,#b91c1c)]" role="alert">
+                  <p className="text-[13px] text-red-700" role="alert">
                     {error}
                   </p>
                 ) : null}
               </div>
             </div>
 
-            <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-[var(--workspace-border)] px-4 py-3">
+            <footer className="flex shrink-0 items-center justify-end gap-2 border-t border-zinc-200/90 bg-white/90 px-4 py-3 backdrop-blur-sm">
               <button
                 type="button"
                 onClick={close}
-                className="inline-flex min-h-11 items-center rounded-xl border border-[var(--workspace-border)] px-4 py-2.5 text-[14px] font-medium text-[var(--workspace-muted-fg)]"
+                className="inline-flex min-h-11 items-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-[14px] font-medium text-zinc-700 hover:bg-zinc-50"
               >
                 Cancel
               </button>
@@ -360,7 +417,7 @@ export default function NewProjectModal() {
                 type="button"
                 disabled={creating || !name.trim()}
                 onClick={() => void createProject()}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[var(--workspace-fg)] px-4 py-2.5 text-[14px] font-semibold text-[var(--workspace-canvas)] disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-[14px] font-semibold text-white shadow-sm disabled:opacity-40"
               >
                 {creating ? (
                   <>
