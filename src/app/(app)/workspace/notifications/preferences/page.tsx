@@ -35,6 +35,18 @@ const COPY: Record<NotificationType, { title: string; description: string }> = {
     title: "Escalation escalated",
     description: "When an issue is escalated to a manager or admin.",
   },
+  security_login_alert: {
+    title: "Login security alert",
+    description: "A notice when Route5 detects a new sign-in for your account.",
+  },
+  marketing_product_updates: {
+    title: "Product updates",
+    description: "New launches, upgrades, and release notes that affect your workspace.",
+  },
+  marketing_feature_tips: {
+    title: "Feature tips",
+    description: "Practical playbooks and workflow tips for faster execution.",
+  },
   payment_failed: {
     title: "Payment failed",
     description: "When subscription payment cannot be processed.",

@@ -34,6 +34,7 @@ import type {
   ExecutionOverview,
 } from "@/lib/commitment-types";
 import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
+import { NativeDateInput } from "@/components/ui/native-datetime-fields";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { deskUrl } from "@/lib/desk-routes";
@@ -995,8 +996,7 @@ export default function CommitmentDesk() {
                           </label>
                           <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
                             Due
-                            <input
-                              type="date"
+                            <NativeDateInput
                               value={row.dueDate ? row.dueDate.slice(0, 10) : ""}
                               onChange={(e) =>
                                 updateProposedRow(row.key, {

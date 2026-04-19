@@ -2844,6 +2844,24 @@ body.theme-glass-site:has(main.landing-premium) {
   }
 }
 
+/* Clerk UserButton popover — Manage account / Sign out must stay light-on-dark (SDK focus/hover can wash out text). */
+.cl-userButtonPopoverRootBox [class*="userButtonPopoverActionButton"],
+.cl-userButtonPopoverRootBox button[role="menuitem"] {
+  color: #fafafa !important;
+}
+.cl-userButtonPopoverRootBox [class*="userButtonPopoverActionButton"] svg,
+.cl-userButtonPopoverRootBox button[role="menuitem"] svg {
+  color: #fafafa !important;
+  opacity: 1 !important;
+}
+.cl-userButtonPopoverRootBox [class*="userButtonPopoverActionButton"]:hover,
+.cl-userButtonPopoverRootBox [class*="userButtonPopoverActionButton"]:focus-visible,
+.cl-userButtonPopoverRootBox button[role="menuitem"]:hover,
+.cl-userButtonPopoverRootBox button[role="menuitem"]:focus-visible {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: #fafafa !important;
+}
+
 /* Clerk OrganizationSwitcher — prevent light popover + inherited white text (Team page). */
 .clerk-org-switcher-host [class*="cl-organizationSwitcherTrigger"] {
   color: var(--workspace-fg) !important;

@@ -14,6 +14,8 @@ import {
 import { getZoomIntegrationForOrg } from "@/lib/integrations/zoom-teams-integration";
 import { getTeamsIntegrationForOrg } from "@/lib/integrations/zoom-teams-integration";
 import { createOrganizationInvitation } from "@/lib/workspace/org-members";
+import { requireOrgRole } from "@/lib/workspace/org-members";
+import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
 
 export const runtime = "nodejs";
 
@@ -63,6 +65,10 @@ export async function POST(req: Request) {
   }
 
   if (body.action === "invite_team") {
+    const access = await requireOrgRole(userId, ["admin"]);
+    if (!access.ok || access.orgId !== orgId) {
+      return NextResponse.json({ error: "Only admins can invite members." }, { status: 403 });
+    }
     if (!body.emails?.length) {
       await markOnboardingStepComplete(orgId, userId, "invite_team");
       return NextResponse.json({ ok: true });
@@ -92,8 +98,10 @@ export async function POST(req: Request) {
         inviteeEmail: email,
         inviterName,
         orgName: org.name,
-        signupUrl: `${base}/sign-up?redirect_url=${encodeURIComponent(`/feed?invite=${invite.token}`)}`,
+        inviteUrl: `${base}/invite/${invite.token}`,
+        invitationToken: invite.token,
       });
+      broadcastOrgMembersChanged(orgId, { kind: "invited", invitationId: invite.id });
     }
     await markOnboardingStepComplete(orgId, userId, "invite_team");
     return NextResponse.json({ ok: true });

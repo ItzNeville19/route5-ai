@@ -14,6 +14,7 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 
 export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?: () => void }) {
   const pathname = usePathname() ?? "";
@@ -113,9 +114,12 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           <div className="pl-1">
             <UserButton
               appearance={{
+                ...route5ClerkAppearance,
                 elements: {
+                  ...route5ClerkAppearance.elements,
                   avatarBox: "h-8 w-8 ring-2 ring-white/10",
-                  userButtonPopoverCard: "border border-white/10 bg-zinc-950/95 shadow-2xl",
+                  userButtonPopoverCard:
+                    "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
                 },
               }}
             />

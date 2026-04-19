@@ -6,19 +6,23 @@ export async function notifyTeamInvited(params: {
   inviteeEmail: string;
   inviterName: string;
   orgName: string;
-  signupUrl: string;
+  inviteUrl: string;
+  /** Raw token — used by in-app notification deep links (always use /invite/[token]). */
+  invitationToken: string;
 }): Promise<void> {
+  const subject = `You have been invited to join ${params.orgName} on Route5`;
   await sendNotificationToEmail({
     orgId: params.orgId,
     email: params.inviteeEmail,
     type: "team_invited",
-    title: `You're invited to ${params.orgName}`,
-    body: `${params.inviterName} invited you to join ${params.orgName} on Route5.`,
+    title: subject,
+    body: `${params.inviterName} invited you to join ${params.orgName} on Route5. Open the link to review and join the workspace — shared projects appear in your Feed after you join.`,
     metadata: {
       inviterName: params.inviterName,
       orgName: params.orgName,
-      signupUrl: params.signupUrl,
-      link: params.signupUrl,
+      inviteUrl: params.inviteUrl,
+      invitationToken: params.invitationToken,
+      link: params.inviteUrl,
     },
   });
 }

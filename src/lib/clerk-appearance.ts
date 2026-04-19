@@ -54,8 +54,13 @@ export const route5ClerkAppearance = {
     alertText: "text-red-300",
     otpCodeFieldInput: "border border-white/15 bg-[#141414] text-white",
     userButtonPopoverCard: "border border-white/10 bg-[#0a0a0a] text-[#fafafa]",
-    userButtonPopoverActionButton: "text-[#fafafa] hover:bg-white/10",
-    userButtonPopoverActionButtonText: "text-[#fafafa]",
+    userButtonPopoverActionButton:
+      "!text-[#fafafa] !bg-transparent hover:!bg-white/10 [&_svg]:!text-[#fafafa] [&_svg]:!opacity-100 focus-visible:!ring-1 focus-visible:!ring-white/30",
+    userButtonPopoverActionButtonText: "!text-[#fafafa]",
+    userButtonPopoverActionButton__manageAccount:
+      "!text-[#fafafa] hover:!bg-white/10 [&_svg]:!text-[#fafafa]",
+    userButtonPopoverActionButton__signOut:
+      "!text-[#fafafa] hover:!bg-white/10 [&_svg]:!text-[#fafafa]",
     userButtonPopoverFooter: "border-t border-white/10",
   },
 } as const;

@@ -88,7 +88,15 @@ export default function FeedPersonalGreeting() {
     if (staleActions > 0) {
       tip = `Clear ${staleActions} stale action${staleActions === 1 ? "" : "s"} first.`;
     } else if (openActions > 0) {
-      tip = `Confirm owner and due date on ${openActions} open action${openActions === 1 ? "" : "s"}.`;
+      const n = openActions;
+      const pool = [
+        `You have ${n} commitment${n === 1 ? "" : "s"} waiting for ownership and a date — define them and execution starts.`,
+        `${n} open item${n === 1 ? "" : "s"} on your plate: a clear owner plus a deadline turns intent into momentum.`,
+        `Lock ${n} owner${n === 1 ? "" : "s"} and due date${n === 1 ? "" : "s"} — ambiguity is what quietly stalls teams.`,
+        `Small clarity wins: assign someone and pick a date for ${n} open action${n === 1 ? "" : "s"} today.`,
+      ];
+      const idx = stableHash(`${user?.id ?? "anon"}:open-tip:${n}:${new Date().toISOString().slice(0, 10)}`) % pool.length;
+      tip = pool[idx] ?? pool[0] ?? "";
     } else if (completionRate != null && completionRate >= 0.8) {
       tip = "Strong week on follow-through.";
     } else if (insightCtx.projectCount > 0) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { requireUserId } from "@/lib/auth/require-user";
 import { acceptOrganizationInvitationByToken } from "@/lib/workspace/org-members";
+import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,12 @@ export async function POST(req: Request) {
   } catch {
     email = null;
   }
+  if (!email) {
+    return NextResponse.json(
+      { error: "Could not verify your account email. Confirm your primary email, then try again." },
+      { status: 400 }
+    );
+  }
 
   const accepted = await acceptOrganizationInvitationByToken({
     token,
@@ -35,5 +42,6 @@ export async function POST(req: Request) {
   if (!accepted) {
     return NextResponse.json({ error: "Invitation is invalid or expired" }, { status: 400 });
   }
+  broadcastOrgMembersChanged(accepted.orgId, { kind: "accepted", userId });
   return NextResponse.json({ ok: true, orgId: accepted.orgId, role: accepted.role });
 }

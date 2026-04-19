@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MailPlus } from "lucide-react";
 import Link from "next/link";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -23,9 +24,19 @@ type OrganizationMember = {
 };
 
 type OrganizationPayload = {
+  orgId: string;
   orgName: string;
   me: { userId: string; role: OrgRole };
   members: OrganizationMember[];
+  invitations?: Array<{
+    id: string;
+    email: string;
+    role: OrgRole;
+    status: "pending";
+    invitedByName: string;
+    createdAt: string;
+    expiresAt: string;
+  }>;
 };
 
 function memberName(member: OrganizationMember): string {
@@ -69,6 +80,21 @@ export default function WorkspaceOrganizationClient() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const orgId = state?.orgId;
+    if (!orgId) return;
+    const client = getSupabaseBrowserClient();
+    if (!client) return;
+    const channel = client.channel(`org-members:${orgId}`);
+    channel.on("broadcast", { event: "changed" }, () => {
+      void load();
+    });
+    channel.subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [state?.orgId, load]);
+
   const sortedMembers = useMemo(
     () =>
       [...(state?.members ?? [])].sort((a, b) => {
@@ -77,6 +103,7 @@ export default function WorkspaceOrganizationClient() {
       }),
     [state?.members]
   );
+  const pendingInvites = state?.invitations ?? [];
 
   async function inviteMember() {
     if (!inviteEmail.trim()) return;
@@ -220,8 +247,34 @@ export default function WorkspaceOrganizationClient() {
         ) : (
           <div className="space-y-2">
             <p className="text-[12px] text-r5-text-secondary">
-              {state?.orgName ?? "Organization"} · {sortedMembers.length} members
+              {state?.orgName ?? "Organization"} · {sortedMembers.length} active · {pendingInvites.length} pending
             </p>
+            {pendingInvites.length > 0 ? (
+              <div className="space-y-2 rounded-xl border border-r5-border-subtle/70 bg-r5-surface-primary/50 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
+                  Pending invitations
+                </p>
+                {pendingInvites.map((invite) => (
+                  <div
+                    key={invite.id}
+                    className="flex flex-wrap items-center gap-2 rounded-lg border border-r5-border-subtle/60 bg-r5-surface-secondary/35 px-3 py-2"
+                  >
+                    <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-r5-text-primary">
+                      {invite.email}
+                    </p>
+                    <span className="rounded-full border border-amber-300/35 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                      Pending
+                    </span>
+                    <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-semibold text-r5-text-primary">
+                      {invite.role}
+                    </span>
+                    <p className="text-[11px] text-r5-text-secondary">
+                      Invited by {invite.invitedByName}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
             {sortedMembers.map((member) => {
               const name = memberName(member);
               const busy = busyMemberId === member.userId;

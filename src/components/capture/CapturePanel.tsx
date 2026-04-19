@@ -22,6 +22,7 @@ import type { OrgCommitmentPriority } from "@/lib/org-commitment-types";
 import { ORG_PRIORITY_LABEL, ORG_PRIORITY_PILL } from "@/lib/org-commitments/tracker-constants";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
+import { NativeDateInput } from "@/components/ui/native-datetime-fields";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
 type Phase = "input" | "processing" | "review" | "committing" | "success";
@@ -30,9 +31,13 @@ type CaptureCard = {
   key: string;
   title: string;
   ownerUserId: string | null;
+  /** True when we filled owner with you because extraction left it blank */
+  ownerDefaulted?: boolean;
   ownerNameHint: string | null;
   projectId: string | null;
   deadlineIso: string | null;
+  /** True when we set a default due date (e.g. one week) because none was found */
+  deadlineDefaulted?: boolean;
   deadlineOriginalPhrase: string | null;
   priority: OrgCommitmentPriority;
   source: CommitmentSource;
@@ -58,6 +63,14 @@ type ProjectOption = {
 const CAPTURE_HISTORY_KEY = "route5:capture-history-v1";
 const MAX_CAPTURE_HISTORY = 10;
 const MAX_CAPTURE_CHARS = 100_000;
+
+/** Apple Reminders–style default when the model finds no date: one week out, 5pm local */
+function getDefaultCaptureDeadlineIso(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  d.setHours(17, 0, 0, 0);
+  return d.toISOString();
+}
 
 const EXAMPLES: Record<string, string> = {
   meeting: `Q1 planning — Apr 2
@@ -449,21 +462,27 @@ export default function CapturePanel({
         setProcessNote("No commitments found — try clearer action items or bullets.");
         return;
       }
-      const mapped: CaptureCard[] = list.map((c) => ({
-        key: nanoid(),
-        title: c.title,
-        ownerUserId: c.ownerUserId?.trim() || null,
-        ownerNameHint: c.ownerName,
-        projectId: null,
-        deadlineIso: c.dueDateIso,
-        deadlineOriginalPhrase: c.deadlineOriginalPhrase ?? null,
-        priority: c.priority,
-        source: c.source,
-        sourceSnippet: c.sourceSnippet || c.title,
-        confidence: c.confidence ?? "medium",
-        isImplied: Boolean(c.isImplied),
-        impliedReason: c.impliedReason ?? null,
-      }));
+      const mapped: CaptureCard[] = list.map((c) => {
+        const extractedOwner = c.ownerUserId?.trim() || null;
+        const extractedDue = c.dueDateIso?.trim() ? c.dueDateIso : null;
+        return {
+          key: nanoid(),
+          title: c.title,
+          ownerUserId: extractedOwner || selfId || null,
+          ownerDefaulted: !extractedOwner && Boolean(selfId),
+          ownerNameHint: c.ownerName,
+          projectId: null,
+          deadlineIso: extractedDue || getDefaultCaptureDeadlineIso(),
+          deadlineDefaulted: !extractedDue,
+          deadlineOriginalPhrase: c.deadlineOriginalPhrase ?? null,
+          priority: c.priority,
+          source: c.source,
+          sourceSnippet: c.sourceSnippet || c.title,
+          confidence: c.confidence ?? "medium",
+          isImplied: Boolean(c.isImplied),
+          impliedReason: c.impliedReason ?? null,
+        };
+      });
 
       setCards([]);
       setPhase("review");
@@ -489,7 +508,7 @@ export default function CapturePanel({
       setPhase("input");
       setProcessNote("Something went wrong. Check your connection and try again.");
     }
-  }, [text, phase, prefs.extractionProviderId, captureHistory]);
+  }, [text, phase, prefs.extractionProviderId, captureHistory, selfId]);
 
   useEffect(() => {
     if (!open) return;
@@ -509,15 +528,7 @@ export default function CapturePanel({
       }
       if (!isMobileViewport && (e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "review") {
         e.preventDefault();
-        const unresolved = cards.filter((c) => !c.ownerUserId?.trim() || !c.deadlineIso).length;
-        if (unresolved === 0) {
-          document.querySelector<HTMLButtonElement>("[data-capture-commit='true']")?.click();
-          return;
-        }
-        const emptyTargets = Array.from(
-          document.querySelectorAll<HTMLElement>("[data-capture-empty='true']")
-        );
-        emptyTargets[0]?.focus();
+        document.querySelector<HTMLButtonElement>("[data-capture-commit='true']")?.click();
       }
       if (e.key === "Tab" && phase === "review") {
         const emptyTargets = Array.from(
@@ -548,7 +559,7 @@ export default function CapturePanel({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, phase, runProcess, cards, isMobileViewport]);
+  }, [open, onClose, phase, runProcess, isMobileViewport]);
 
   const removeCard = (key: string) => {
     setCards((c) => c.filter((x) => x.key !== key));
@@ -556,15 +567,23 @@ export default function CapturePanel({
   };
 
   const updateCard = (key: string, patch: Partial<CaptureCard>) => {
-    setCards((c) => c.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+    setCards((c) =>
+      c.map((x) => {
+        if (x.key !== key) return x;
+        const next = { ...x, ...patch };
+        if (patch.ownerUserId != null) next.ownerDefaulted = false;
+        if (patch.deadlineIso != null) next.deadlineDefaulted = false;
+        return next;
+      })
+    );
   };
 
-  const needsOwnerCount = useMemo(
-    () => cards.filter((c) => !c.ownerUserId?.trim()).length,
+  const defaultOwnerCount = useMemo(
+    () => cards.filter((c) => c.ownerDefaulted).length,
     [cards]
   );
-  const needsDueCount = useMemo(() => cards.filter((c) => !c.deadlineIso).length, [cards]);
-  const readyCount = Math.max(0, cards.length - needsOwnerCount - needsDueCount);
+  const defaultDueCount = useMemo(() => cards.filter((c) => c.deadlineDefaulted).length, [cards]);
+  const readyCount = cards.length;
   const impliedCount = useMemo(
     () => cards.filter((c) => c.isImplied).length,
     [cards]
@@ -608,19 +627,14 @@ export default function CapturePanel({
 
   const commitAll = useCallback(async () => {
     if (!selfId || cards.length === 0 || phase === "committing") return;
-    const unresolved = cards.filter((c) => !c.ownerUserId?.trim() || !c.deadlineIso).length;
-    if (unresolved > 0) {
-      setCommitError(`Resolve ${unresolved} required field${unresolved === 1 ? "" : "s"} first.`);
-      return;
-    }
     setCommitError(null);
     setPhase("committing");
     const items = cards.map((c) => ({
       title: c.title.trim(),
       description: buildDescription(c.sourceSnippet, c.source),
-      ownerId: c.ownerUserId!.trim(),
+      ownerId: (c.ownerUserId?.trim() || selfId).trim(),
       projectId: c.projectId ?? null,
-      deadline: c.deadlineIso!,
+      deadline: c.deadlineIso?.trim() ? c.deadlineIso : getDefaultCaptureDeadlineIso(),
       priority: c.priority,
     }));
     try {
@@ -676,7 +690,15 @@ export default function CapturePanel({
   const applyBulkToSelected = useCallback(
     (patch: Partial<CaptureCard>) => {
       if (selectedCardKeys.length === 0) return;
-      setCards((prev) => prev.map((card) => (selectedSet.has(card.key) ? { ...card, ...patch } : card)));
+      setCards((prev) =>
+        prev.map((card) => {
+          if (!selectedSet.has(card.key)) return card;
+          const next = { ...card, ...patch };
+          if (patch.ownerUserId != null) next.ownerDefaulted = false;
+          if (patch.deadlineIso != null) next.deadlineDefaulted = false;
+          return next;
+        })
+      );
     },
     [selectedCardKeys.length, selectedSet]
   );
@@ -968,15 +990,15 @@ export default function CapturePanel({
                         <p className="inline-flex flex-wrap items-center gap-2 rounded-full border border-r5-border-subtle bg-r5-surface-secondary/45 px-3 py-1 text-[12px] text-r5-text-primary">
                           <span className="inline-flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-r5-status-completed" aria-hidden />
-                            {readyCount} ready
+                            {readyCount} to save
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-r5-status-at-risk" aria-hidden />
-                            {needsOwnerCount} need owner
+                            {defaultOwnerCount} owner default
                           </span>
                           <span className="inline-flex items-center gap-1">
                             <span className="h-1.5 w-1.5 rounded-full bg-r5-status-at-risk" aria-hidden />
-                            {Math.max(needsDueCount, 0)} need due
+                            {defaultDueCount} due default
                           </span>
                           <span className="inline-flex items-center gap-1 text-r5-text-secondary">
                             {impliedCount} implied
@@ -1082,8 +1104,8 @@ export default function CapturePanel({
                               data-card-key={c.key}
                               tabIndex={-1}
                               className={`relative rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/70 p-4 shadow-sm ${
-                                !c.ownerUserId ? "ring-1 ring-r5-status-at-risk/20" : ""
-                              } ${!c.deadlineIso ? "ring-1 ring-r5-status-at-risk/15" : ""}`}
+                                c.ownerDefaulted ? "ring-1 ring-r5-status-at-risk/20" : ""
+                              } ${c.deadlineDefaulted ? "ring-1 ring-r5-status-at-risk/15" : ""}`}
                             >
                               <label className="absolute left-3 top-3 inline-flex items-center">
                                 <input
@@ -1127,9 +1149,9 @@ export default function CapturePanel({
                                       setOpenDueKey(null);
                                       setOpenOwnerKey((k) => (k === c.key ? null : c.key));
                                     }}
-                                    data-capture-empty={!c.ownerUserId ? "true" : "false"}
+                                    data-capture-empty={c.ownerDefaulted ? "true" : "false"}
                                     className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition ${
-                                      c.ownerUserId
+                                      !c.ownerDefaulted
                                         ? "border-r5-border-subtle text-r5-text-primary"
                                         : "border-r5-status-at-risk/45 bg-r5-status-at-risk/10 text-r5-text-primary"
                                     }`}
@@ -1201,9 +1223,9 @@ export default function CapturePanel({
                                       setOpenOwnerKey(null);
                                       setOpenDueKey((k) => (k === c.key ? null : c.key));
                                     }}
-                                    data-capture-empty={!c.deadlineIso ? "true" : "false"}
+                                    data-capture-empty={c.deadlineDefaulted ? "true" : "false"}
                                     className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition ${
-                                      c.deadlineIso
+                                      !c.deadlineDefaulted
                                         ? "border-r5-border-subtle text-r5-text-primary"
                                         : "border-r5-status-at-risk/45 bg-r5-status-at-risk/10 text-r5-text-primary"
                                     }`}
@@ -1241,14 +1263,13 @@ export default function CapturePanel({
                                           </button>
                                         ))}
                                       </div>
-                                      <input
-                                        type="date"
+                                      <NativeDateInput
                                         value={toYmd(c.deadlineIso)}
                                         onChange={(e) => {
                                           const iso = fromYmd(e.target.value);
                                           updateCard(c.key, { deadlineIso: iso });
                                         }}
-                                        className="rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2 py-1 text-[13px] text-r5-text-primary"
+                                        className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2 py-2 text-[13px] text-r5-text-primary"
                                       />
                                       <button
                                         type="button"
@@ -1382,9 +1403,7 @@ export default function CapturePanel({
                         >
                           {phase === "committing"
                             ? "Committing…"
-                            : needsOwnerCount + needsDueCount > 0
-                              ? `Resolve ${needsOwnerCount + needsDueCount} issue${needsOwnerCount + needsDueCount === 1 ? "" : "s"} first`
-                              : `Commit ${cards.length} commitment${cards.length === 1 ? "" : "s"}`}
+                            : `Commit ${cards.length} commitment${cards.length === 1 ? "" : "s"}`}
                         </button>
                       </div>
 

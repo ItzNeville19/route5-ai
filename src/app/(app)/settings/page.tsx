@@ -5,10 +5,24 @@ import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebho
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
+import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
 
-function SettingsSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+function SettingsSection({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id?: string;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-4)]">
+    <section
+      id={id}
+      className={`rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-4)] ${id ? "scroll-mt-28" : ""}`}
+    >
       <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">{title}</h2>
       <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-r5-text-secondary">{description}</p>
       <div className="mt-[var(--r5-space-4)]">{children}</div>
@@ -26,6 +40,7 @@ export default function WorkspaceSettingsPage() {
       </div>
 
       <SettingsSection
+        id="settings-account"
         title="Account"
         description="Manage your profile and sign-in details."
       >
@@ -36,6 +51,15 @@ export default function WorkspaceSettingsPage() {
       </SettingsSection>
 
       <SettingsSection
+        id="settings-preferences"
+        title="Preferences"
+        description="Location, timezone, language, and workspace surface settings."
+      >
+        <WorkspacePreferencesCard />
+      </SettingsSection>
+
+      <SettingsSection
+        id="settings-notifications"
         title="Notifications"
         description="Choose delivery channels for updates, follow-ups, and digests."
       >
@@ -48,6 +72,7 @@ export default function WorkspaceSettingsPage() {
       </SettingsSection>
 
       <SettingsSection
+        id="settings-ai"
         title="AI Settings"
         description="Control model behavior and capture sensitivity."
       >
@@ -55,11 +80,18 @@ export default function WorkspaceSettingsPage() {
       </SettingsSection>
 
       <SettingsSection
+        id="settings-integrations"
         title="Integrations"
         description="Webhook and email forwarding are live. Connect Slack, Gmail, and Notion from Integrations."
       >
         <div className="space-y-[var(--r5-space-3)]">
           <SettingsIngestWebhookCard />
+          <Link
+            href="/workspace/developer"
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-primary transition hover:bg-r5-surface-hover"
+          >
+            Open developer webhooks and API docs
+          </Link>
           <div className="grid gap-[var(--r5-space-2)] sm:grid-cols-3">
             {[
               { name: "Slack", href: "/integrations/slack" },

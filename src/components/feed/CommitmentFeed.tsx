@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
@@ -48,6 +49,7 @@ import {
 } from "@/lib/feed/group-commitments";
 import { ORG_PRIORITY_LABEL } from "@/lib/org-commitments/tracker-constants";
 import FeedPersonalGreeting from "@/components/feed/FeedPersonalGreeting";
+import { NativeDateInput, NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -303,6 +305,7 @@ function FeedHeroSummary({
 }
 
 export default function CommitmentFeed() {
+  const searchParams = useSearchParams();
   const { user } = useUser();
   const { open: openCapture } = useCapture();
   const { refreshSummary } = useWorkspaceData();
@@ -346,6 +349,9 @@ export default function CommitmentFeed() {
   const rowIdsSeen = useRef<Set<string>>(new Set());
   const [justAddedIds, setJustAddedIds] = useState<Set<string>>(new Set());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+  const [workspaceOnboardingComplete, setWorkspaceOnboardingComplete] = useState<boolean | null>(
+    null
+  );
 
   const { sort: apiSort, order: apiOrder } = sortApiParams(feedSort);
   const feedCacheKey = useMemo(
@@ -353,6 +359,19 @@ export default function CommitmentFeed() {
     [activeProjectId]
   );
   const listAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    const welcome = searchParams.get("welcome");
+    if (welcome !== "joined-org") return;
+    pushToast("Welcome to your organization. Shared projects and commitments are now available.", "success");
+    try {
+      const next = new URL(window.location.href);
+      next.searchParams.delete("welcome");
+      window.history.replaceState({}, "", `${next.pathname}${next.search}${next.hash}`);
+    } catch {
+      /* ignore */
+    }
+  }, [searchParams, pushToast]);
 
   const loadList = useCallback(async () => {
     const prev = listAbortRef.current;
@@ -467,6 +486,22 @@ export default function CommitmentFeed() {
   useEffect(() => {
     void loadProjects();
   }, [loadProjects]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/workspace/onboarding", { credentials: "same-origin" });
+        const data = (await res.json().catch(() => ({}))) as { complete?: boolean };
+        if (!cancelled) setWorkspaceOnboardingComplete(Boolean(data.complete));
+      } catch {
+        if (!cancelled) setWorkspaceOnboardingComplete(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const readScope = () => {
@@ -1305,7 +1340,7 @@ export default function CommitmentFeed() {
           No commitments yet
         </p>
         <p className="mt-2 max-w-md text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
-          Paste a meeting note or Slack message in Capture to get started.
+          Capture turns any text into tracked commitments with owners and due dates. Paste notes, lists, or follow-ups.
         </p>
         <button
           type="button"
@@ -1314,6 +1349,18 @@ export default function CommitmentFeed() {
         >
           Open Capture
         </button>
+        {workspaceOnboardingComplete === false ? (
+          <p className="mt-6 max-w-md text-[length:var(--r5-font-body)] leading-relaxed text-r5-text-secondary">
+            Optional:{" "}
+            <Link
+              href="/workspace/onboarding"
+              className="font-medium text-r5-text-primary underline decoration-r5-border-subtle underline-offset-4 hover:opacity-90"
+            >
+              finish workspace setup
+            </Link>{" "}
+            to invite your team and tune notifications.
+          </p>
+        ) : null}
         </div>
       </div>
     );
@@ -2987,8 +3034,7 @@ function FeedRow({
 
               <label className="block text-[length:var(--r5-font-kbd)] font-semibold uppercase tracking-wide text-r5-text-secondary">
                 Due date &amp; time
-                <input
-                  type="datetime-local"
+                <NativeDatetimeLocalInput
                   defaultValue={toDatetimeLocalValue(row.deadline)}
                   key={row.deadline}
                   onBlur={(e) => {
@@ -3197,13 +3243,12 @@ function FeedRow({
             className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary p-[var(--r5-space-3)] shadow-[var(--r5-shadow-elevated)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <input
-              type="date"
+            <NativeDateInput
               value={showPopover.draft}
               onChange={(e) =>
                 setPopover({ type: "due", commitmentId: row.id, draft: e.target.value })
               }
-              className="rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary px-2 py-1 text-[length:var(--r5-font-body)] text-r5-text-primary"
+              className="min-h-[40px] rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary px-2 py-1.5 text-[length:var(--r5-font-body)] text-r5-text-primary"
             />
             <div className="mt-2 flex justify-end gap-2">
               <button

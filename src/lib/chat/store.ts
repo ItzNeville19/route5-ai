@@ -253,7 +253,7 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
       .in("channel_id", channelIds);
     const { data: messages } = await supabase
       .from("chat_messages")
-      .select("channel_id,created_at")
+      .select("channel_id,created_at,user_id")
       .eq("org_id", orgId)
       .in("channel_id", channelIds)
       .order("created_at", { ascending: false });
@@ -264,10 +264,11 @@ export async function listChannelsForUser(userId: string): Promise<ChatChannelRo
     for (const row of messages ?? []) {
       const channelId = String((row as { channel_id: string }).channel_id);
       const createdAt = String((row as { created_at: string }).created_at);
+      const messageUserId = String((row as { user_id?: string }).user_id ?? "");
       const entry = byChannel.get(channelId);
       if (!entry) continue;
       if (!entry.latest) entry.latest = createdAt;
-      if (!entry.readAt || createdAt > entry.readAt) entry.count += 1;
+      if (messageUserId !== userId && (!entry.readAt || createdAt > entry.readAt)) entry.count += 1;
     }
     const memberIdsByChannel = new Map<string, string[]>();
     for (const row of members ?? []) {
@@ -339,7 +340,13 @@ export async function listMessagesForChannel(userId: string, channelId: string):
       .eq("channel_id", channelId)
       .order("created_at", { ascending: true })
       .limit(400);
-    return (data ?? []).map((row) => ({
+    const { data: hides } = await supabase
+      .from("chat_message_hides")
+      .select("message_id")
+      .eq("user_id", userId);
+    const hidden = new Set((hides ?? []).map((h) => String((h as { message_id: string }).message_id)));
+    const rows = (data ?? []).filter((row) => !hidden.has(String((row as { id: string }).id)));
+    return rows.map((row) => ({
       id: String((row as { id: string }).id),
       channelId: String((row as { channel_id: string }).channel_id),
       orgId: String((row as { org_id: string }).org_id),
@@ -354,13 +361,16 @@ export async function listMessagesForChannel(userId: string, channelId: string):
   const db = getSqliteHandle();
   const rows = db
     .prepare(
-      `select *
-       from chat_messages
-       where channel_id = ?
-       order by created_at asc
+      `select m.*
+       from chat_messages m
+       where m.channel_id = ?
+         and m.id not in (
+           select message_id from chat_message_hides where user_id = ?
+         )
+       order by m.created_at asc
        limit 400`
     )
-    .all(channelId) as SqliteMessageRecord[];
+    .all(channelId, userId) as SqliteMessageRecord[];
   return rows.map(toMessage);
 }
 
@@ -481,28 +491,43 @@ export async function createChatMessage(
   const id = uuid();
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
-    await supabase.from("chat_messages").insert({
+    const channelType: "direct" | "project" =
+      channel.type === "direct" ? "direct" : "project";
+    const { error: insertErr } = await supabase.from("chat_messages").insert({
       id,
       channel_id: channelId,
+      channel_type: channelType,
       org_id: channel.orgId,
+      sender_id: userId,
       user_id: userId,
+      content: text.slice(0, 4000),
       body: text.slice(0, 4000),
+      attachments: attachments,
       attachments_json: attachments,
       metadata_json: metadata,
       created_at: now,
       updated_at: now,
     });
-    await supabase.from("chat_channels").update({ updated_at: now }).eq("id", channelId);
+    if (insertErr) throw insertErr;
+    const { error: channelErr } = await supabase
+      .from("chat_channels")
+      .update({ updated_at: now })
+      .eq("id", channelId);
+    if (channelErr) throw channelErr;
   } else {
     const db = getSqliteHandle();
     db.prepare(
       `insert into chat_messages
-       (id, channel_id, org_id, user_id, body, attachments_json, metadata_json, created_at, updated_at)
-       values (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+       (id, org_id, channel_type, channel_id, sender_id, content, attachments, user_id, body, attachments_json, metadata_json, created_at, updated_at)
+       values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       id,
-      channelId,
       channel.orgId,
+      channel.type === "direct" ? "direct" : "project",
+      channelId,
+      userId,
+      text.slice(0, 4000),
+      JSON.stringify(attachments ?? []),
       userId,
       text.slice(0, 4000),
       JSON.stringify(attachments ?? []),
@@ -557,5 +582,157 @@ export async function listChannelMemberIds(channelId: string): Promise<string[]>
     .prepare(`select user_id from chat_channel_members where channel_id = ?`)
     .all(channelId) as Array<{ user_id: string }>;
   return rows.map((row) => row.user_id);
+}
+
+async function getChatMessageForUser(
+  userId: string,
+  messageId: string
+): Promise<{ message: ChatMessageRow; channel: ChatChannelRow } | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase.from("chat_messages").select("*").eq("id", messageId).maybeSingle();
+    if (error || !data) return null;
+    const raw = data as Record<string, unknown>;
+    const channelId = String(raw.channel_id);
+    const channel = await getChannelForUser(userId, channelId);
+    if (!channel) return null;
+    const msgUser = String(raw.user_id ?? raw.sender_id ?? "");
+    const message: ChatMessageRow = {
+      id: String(raw.id),
+      channelId,
+      orgId: String(raw.org_id),
+      userId: msgUser,
+      body: String(raw.body ?? raw.content ?? ""),
+      attachments: (raw.attachments_json as unknown[]) ?? (raw.attachments as unknown[]) ?? [],
+      metadata: (raw.metadata_json as Record<string, unknown>) ?? {},
+      createdAt: String(raw.created_at),
+      updatedAt: String(raw.updated_at ?? raw.created_at),
+    };
+    return { message, channel };
+  }
+  const db = getSqliteHandle();
+  const row = db.prepare(`select * from chat_messages where id = ?`).get(messageId) as
+    | SqliteMessageRecord
+    | undefined;
+  if (!row) return null;
+  const channel = await getChannelForUser(userId, row.channel_id);
+  if (!channel) return null;
+  return { message: toMessage(row), channel };
+}
+
+export async function updateChatMessage(
+  userId: string,
+  messageId: string,
+  newBody: string
+): Promise<ChatMessageRow | null> {
+  const found = await getChatMessageForUser(userId, messageId);
+  if (!found || found.message.userId !== userId) return null;
+  const text = newBody.trim().slice(0, 4000);
+  if (!text) return null;
+  const now = nowIso();
+  const meta = { ...found.message.metadata, edited: true };
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({
+        body: text,
+        content: text,
+        metadata_json: meta,
+        updated_at: now,
+      })
+      .eq("id", messageId)
+      .eq("user_id", userId);
+    if (error) return null;
+    await supabase.from("chat_channels").update({ updated_at: now }).eq("id", found.message.channelId);
+  } else {
+    const db = getSqliteHandle();
+    const r = db
+      .prepare(
+        `update chat_messages
+         set body = ?, content = ?, metadata_json = ?, updated_at = ?
+         where id = ? and user_id = ?`
+      )
+      .run(text, text, JSON.stringify(meta), now, messageId, userId);
+    if (r.changes === 0) return null;
+    db.prepare(`update chat_channels set updated_at = ? where id = ?`).run(now, found.message.channelId);
+  }
+  const next = await getChatMessageForUser(userId, messageId);
+  return next?.message ?? null;
+}
+
+/** Hide a message from this user only (others still see it). */
+export async function hideChatMessageForUser(userId: string, messageId: string): Promise<string | null> {
+  const found = await getChatMessageForUser(userId, messageId);
+  if (!found) return null;
+  const channelId = found.message.channelId;
+  const now = nowIso();
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { error } = await supabase.from("chat_message_hides").insert({
+      user_id: userId,
+      message_id: messageId,
+      created_at: now,
+    });
+    if (error && (error as { code?: string }).code !== "23505") return null;
+    await supabase.from("chat_channels").update({ updated_at: now }).eq("id", channelId);
+    return channelId;
+  }
+  const db = getSqliteHandle();
+  db.prepare(
+    `insert or ignore into chat_message_hides (user_id, message_id, created_at) values (?, ?, ?)`
+  ).run(userId, messageId, now);
+  db.prepare(`update chat_channels set updated_at = ? where id = ?`).run(now, channelId);
+  return channelId;
+}
+
+/** Returns channel id on success (for realtime broadcast). */
+export async function deleteChatMessage(userId: string, messageId: string): Promise<string | null> {
+  const found = await getChatMessageForUser(userId, messageId);
+  if (!found || found.message.userId !== userId) return null;
+  const channelId = found.message.channelId;
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { error } = await supabase.from("chat_messages").delete().eq("id", messageId).eq("user_id", userId);
+    if (error) return null;
+    await supabase.from("chat_channels").update({ updated_at: nowIso() }).eq("id", channelId);
+    return channelId;
+  }
+  const db = getSqliteHandle();
+  const r = db
+    .prepare(`delete from chat_messages where id = ? and user_id = ?`)
+    .run(messageId, userId);
+  if (r.changes === 0) return null;
+  db.prepare(`update chat_channels set updated_at = ? where id = ?`).run(nowIso(), channelId);
+  return channelId;
+}
+
+export async function addMembersToGroupChannel(
+  userId: string,
+  channelId: string,
+  memberUserIds: string[]
+): Promise<{ ok: boolean; error?: string }> {
+  const channel = await getChannelForUser(userId, channelId);
+  if (!channel) return { ok: false, error: "Channel not found" };
+  if (channel.type !== "group") {
+    return { ok: false, error: "Only group conversations support adding people here." };
+  }
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  const orgMembers = await listOrganizationMembers(orgId);
+  const valid = new Set(orgMembers.map((m) => m.userId));
+  const toAdd = [...new Set(memberUserIds)].filter((id) => valid.has(id));
+  if (toAdd.length === 0) return { ok: false, error: "Pick teammates from your organization." };
+  const now = nowIso();
+  for (const uid of toAdd) {
+    await upsertChatMembership(channelId, uid);
+  }
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    await supabase.from("chat_channels").update({ updated_at: now }).eq("id", channelId);
+  } else {
+    const db = getSqliteHandle();
+    db.prepare(`update chat_channels set updated_at = ? where id = ?`).run(now, channelId);
+  }
+  return { ok: true };
 }
 

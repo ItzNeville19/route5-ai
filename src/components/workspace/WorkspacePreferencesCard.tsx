@@ -76,6 +76,9 @@ export default function WorkspacePreferencesCard() {
       </h2>
 
       <div className="space-y-5">
+        <p className="text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          {t("prefs.defaultsIntro")}
+        </p>
         <div id="workspace-lang">
           <h3 className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]">
             {t("lang.section")}

@@ -128,20 +128,9 @@ export default function SettingsIngestWebhookCard() {
       {!info ? (
         <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
       ) : !info.enabled ? (
-        <div className="mt-4 rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
-          <p className="font-medium">Not configured on this deployment</p>
-          <p className="mt-2 text-[var(--workspace-muted-fg)]">
-            Set the environment variable{" "}
-            <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px]">ROUTE5_INGEST_SECRET</code>{" "}
-            in your production deployment environment (for example, Vercel Project Settings), use a long random value,
-            then restart/redeploy so this panel can show the live webhook URL.
-          </p>
-          {info.diagnostics?.secretLooksLikeTemplate ? (
-            <p className="mt-2 text-[var(--workspace-muted-fg)]">
-              A value is present, but it looks like a placeholder. Replace it with a real secret string before using
-              this endpoint.
-            </p>
-          ) : null}
+        <div className="mt-4 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          Webhook endpoint is temporarily unavailable in this environment. Use email forwarding for now, or open
+          Developer for API docs and endpoint status.
         </div>
       ) : (
         <div className="mt-4 space-y-3 text-[13px] leading-relaxed">

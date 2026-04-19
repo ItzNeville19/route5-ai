@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, BarChart3 } from "lucide-react";
+import { ArrowUpRight, BarChart3, Calendar } from "lucide-react";
 
 const CONNECTORS: { href: string; label: string; note: string }[] = [
   { href: "/integrations/linear", label: "Linear", note: "Browse or import when API keys are set" },
@@ -42,6 +42,35 @@ export default function SettingsConnectionsSection() {
           </li>
         ))}
       </ul>
+
+      <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/60 px-4 py-4">
+        <div className="flex flex-wrap items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--workspace-canvas)]/80 text-[var(--workspace-fg)] ring-1 ring-white/5">
+            <Calendar className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[14px] font-semibold text-[var(--workspace-fg)]">Google Calendar &amp; Apple Calendar</h3>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+              Connect Google once: Route5 syncs commitment due dates to your{" "}
+              <strong className="font-semibold text-[var(--workspace-fg)]">Google Calendar</strong> (deadline + a reminder
+              shortly before). On iPhone or Mac, add the same Google account under{" "}
+              <span className="whitespace-nowrap">Settings → Calendar</span> to see those events in the{" "}
+              <strong className="font-semibold text-[var(--workspace-fg)]">Apple Calendar</strong> app — no separate
+              Route5 app required.
+            </p>
+            <Link
+              href="/api/integrations/gmail/connect"
+              className="mt-3 inline-flex min-h-[40px] items-center justify-center rounded-xl bg-[var(--workspace-accent)] px-4 text-[13px] font-semibold text-[var(--workspace-on-accent)] transition hover:opacity-95"
+            >
+              Connect Google (includes Calendar)
+            </Link>
+            <p className="mt-2 text-[11px] text-[var(--workspace-muted-fg)]">
+              Uses the same secure Google sign-in as Gmail. Microsoft Teams / Outlook calendar sync is available when
+              your org connects Teams with calendar permissions.
+            </p>
+          </div>
+        </div>
+      </div>
       <div className="rounded-xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-canvas)]/35 px-4 py-3">
         <Link
           href="/overview"

@@ -183,12 +183,31 @@ export default function WorkspaceIntegrations() {
           description="Graph messages, commands, and Outlook calendar — coming soon."
           status="coming_soon"
         />
-        <IntegrationCard
-          icon={Calendar}
-          name="Calendar deadlines"
-          description="Google Calendar and Outlook events for commitment deadlines — coming soon."
-          status="coming_soon"
-        />
+        <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 p-5">
+          <div className="flex flex-wrap items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--workspace-surface)]/80 text-[var(--workspace-fg)] ring-1 ring-white/5">
+              <Calendar className="h-5 w-5" aria-hidden />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Calendar deadlines</h2>
+                <span className="rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-emerald-100">
+                  Live with Google
+                </span>
+              </div>
+              <p className="mt-1 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                Connect Google under Settings → Connections. Due dates sync to Google Calendar; add that Google account on
+                iPhone or Mac to see them in Apple Calendar too.
+              </p>
+              <Link
+                href="/settings#connections"
+                className="mt-3 inline-block text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+              >
+                Open Connections →
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
 
       <p className="text-center text-[12px] text-[var(--workspace-muted-fg)]">

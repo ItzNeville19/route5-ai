@@ -26,6 +26,9 @@ import {
   insertExtractionRow,
   verifyProjectOwned,
 } from "@/lib/workspace/store";
+import { createOrgCommitment } from "@/lib/org-commitments/repository";
+import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { broadcastOrgCommitmentEvent } from "@/lib/org-commitments/broadcast";
 import { resolveExtractionRoute } from "@/lib/ai-provider-presets";
 import {
   cleanText,
@@ -179,6 +182,24 @@ export async function POST(req: Request) {
       );
     } catch (syncErr) {
       console.error("[route5] commitments sync from extraction failed", syncErr);
+    }
+    try {
+      const orgId = await ensureOrganizationForClerkUser(userId);
+      const fallbackDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      fallbackDeadline.setHours(17, 0, 0, 0);
+      for (const item of actionItems) {
+        const row = await createOrgCommitment(userId, {
+          title: item.text,
+          description: item.text,
+          ownerId: userId,
+          projectId,
+          deadline: fallbackDeadline.toISOString(),
+          priority: "medium",
+        });
+        broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
+      }
+    } catch (orgSyncErr) {
+      console.error("[route5] org commitment sync from extraction failed", orgSyncErr);
     }
 
     return NextResponse.json({

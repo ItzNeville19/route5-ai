@@ -1,5 +1,5 @@
 /**
- * In-app assistant identity — short name for the iMessage-style panel.
+ * In-app assistant identity — short name for the side panel.
  * (Intentionally not a generic “Copilot” label.)
  */
 export const MERIDIAN_SHORT = "Relay";

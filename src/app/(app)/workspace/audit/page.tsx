@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import type { AuditTrailEntry } from "@/lib/workspace/audit-and-trends";
+import { NativeDateInput } from "@/components/ui/native-datetime-fields";
 import { deskUrl } from "@/lib/desk-routes";
 
 export default function WorkspaceAuditPage() {
@@ -67,8 +68,7 @@ export default function WorkspaceAuditPage() {
         </label>
         <label className="flex flex-col gap-1 text-[11px] font-semibold uppercase text-[var(--workspace-muted-fg)]">
           To
-          <input
-            type="date"
+          <NativeDateInput
             value={to}
             onChange={(e) => setTo(e.target.value)}
             className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-2 py-1.5 text-[13px] text-[var(--workspace-fg)]"

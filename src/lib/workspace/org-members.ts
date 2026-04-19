@@ -35,6 +35,16 @@ export type OrgInvitationRow = {
   createdAt: string;
 };
 
+export type PendingOrgInvitationRow = {
+  id: string;
+  orgId: string;
+  email: string;
+  role: OrgRole;
+  invitedBy: string;
+  expiresAt: string;
+  createdAt: string;
+};
+
 const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 /**
@@ -296,6 +306,119 @@ export async function createOrganizationInvitation(params: {
   };
 }
 
+export async function listPendingOrganizationInvitations(
+  orgId: string
+): Promise<PendingOrgInvitationRow[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_invitations")
+      .select("id, org_id, email, role, invited_by, expires_at, created_at")
+      .eq("org_id", orgId)
+      .is("accepted_at", null)
+      .gte("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: String(row.id),
+      orgId: String(row.org_id),
+      email: String(row.email),
+      role: row.role as OrgRole,
+      invitedBy: String(row.invited_by),
+      expiresAt: String(row.expires_at),
+      createdAt: String(row.created_at),
+    }));
+  }
+
+  const d = getSqliteHandle();
+  const rows = d
+    .prepare(
+      `SELECT id, org_id, email, role, invited_by, expires_at, created_at
+       FROM org_invitations
+       WHERE org_id = ? AND accepted_at IS NULL AND expires_at >= ?
+       ORDER BY created_at DESC`
+    )
+    .all(orgId, new Date().toISOString()) as Array<{
+    id: string;
+    org_id: string;
+    email: string;
+    role: OrgRole;
+    invited_by: string;
+    expires_at: string;
+    created_at: string;
+  }>;
+  return rows.map((row) => ({
+    id: row.id,
+    orgId: row.org_id,
+    email: row.email,
+    role: row.role,
+    invitedBy: row.invited_by,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  }));
+}
+
+export async function getOrganizationInvitationByToken(token: string): Promise<{
+  id: string;
+  orgId: string;
+  email: string;
+  role: OrgRole;
+  invitedBy: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+} | null> {
+  const normalized = token.trim();
+  if (!normalized) return null;
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_invitations")
+      .select("id, org_id, email, role, invited_by, expires_at, accepted_at")
+      .eq("token", normalized)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return {
+      id: String(data.id),
+      orgId: String(data.org_id),
+      email: String(data.email),
+      role: data.role as OrgRole,
+      invitedBy: String(data.invited_by),
+      expiresAt: String(data.expires_at),
+      acceptedAt: data.accepted_at ? String(data.accepted_at) : null,
+    };
+  }
+
+  const d = getSqliteHandle();
+  const row = d
+    .prepare(
+      `SELECT id, org_id, email, role, invited_by, expires_at, accepted_at
+       FROM org_invitations
+       WHERE token = ?`
+    )
+    .get(normalized) as
+    | {
+        id: string;
+        org_id: string;
+        email: string;
+        role: OrgRole;
+        invited_by: string;
+        expires_at: string;
+        accepted_at: string | null;
+      }
+    | undefined;
+  if (!row) return null;
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    email: row.email,
+    role: row.role,
+    invitedBy: row.invited_by,
+    expiresAt: row.expires_at,
+    acceptedAt: row.accepted_at,
+  };
+}
+
 export async function acceptOrganizationInvitationByToken(params: {
   token: string;
   userId: string;
@@ -315,7 +438,8 @@ export async function acceptOrganizationInvitationByToken(params: {
       return { orgId: String(data.org_id), role: data.role as OrgRole };
     }
     if (new Date(String(data.expires_at)).getTime() < Date.now()) return null;
-    if (params.email && String(data.email).toLowerCase() !== params.email.toLowerCase()) return null;
+    if (!params.email) return null;
+    if (String(data.email).toLowerCase() !== params.email.toLowerCase()) return null;
     await ensureOrgMember({
       orgId: String(data.org_id),
       userId: params.userId,
@@ -351,7 +475,8 @@ export async function acceptOrganizationInvitationByToken(params: {
   if (!row) return null;
   if (row.accepted_at) return { orgId: row.org_id, role: row.role };
   if (new Date(row.expires_at).getTime() < Date.now()) return null;
-  if (params.email && row.email.toLowerCase() !== params.email.toLowerCase()) return null;
+  if (!params.email) return null;
+  if (row.email.toLowerCase() !== params.email.toLowerCase()) return null;
   await ensureOrgMember({
     orgId: row.org_id,
     userId: params.userId,

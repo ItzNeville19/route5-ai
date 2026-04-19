@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ADVERTISING_DISCLOSURES } from "@/lib/advertising-disclosures";
+import PublicEmailSubscribe from "@/components/marketing/PublicEmailSubscribe";
 
 const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
@@ -82,6 +83,7 @@ export default function Footer({ tone = "light" }: FooterProps) {
               Enterprise execution layer — decisions become owned commitments with persistent
               accountability. Sits above Slack, Notion, and email; does not replace them.
             </p>
+            <PublicEmailSubscribe tone={command ? "command" : "light"} source="footer" />
           </div>
 
           <div className="grid grid-cols-2 gap-10 sm:gap-16">

@@ -12,17 +12,17 @@ import type { OrgCommitmentPriority } from "@/lib/org-commitment-types";
 import { resolveExtractionRoute } from "@/lib/ai-provider-presets";
 import { listDistinctOwnerIdsForOrg } from "@/lib/org-commitments/repository";
 
-const CAPTURE_SYSTEM = `You extract concrete, accountable commitments from messy operational text (meeting notes, Slack threads, email forwards).
+const CAPTURE_SYSTEM = `You extract concrete, accountable commitments from any operational text: notes, lists, brain dumps, reminders, email, Slack, meeting transcripts, or ad-hoc tasks. Do not assume the input was a meeting unless the text clearly says so.
 Today is: {{TODAY_ISO}}.
 Known org members (for owner matching): {{ORG_MEMBERS}}.
 Return ONLY valid JSON with this exact shape:
 {"commitments":[{"title":string,"ownerName":string|null,"ownerUserId":string|null,"deadlineISO":string|null,"deadlineOriginalPhrase":string|null,"priority":"critical"|"high"|"normal"|"low","confidence":number,"sourceSnippet":string,"sourceType":"meeting"|"slack"|"email"|"manual","isImplied":boolean,"impliedReason":string|null}]}
 
 Rules:
-- title: one clear sentence — what will be done (not "discuss X"), max 180 chars.
+- title: one clear sentence — what will be done (not "discuss X"), max 180 chars. Reminders-style: actionable, specific.
 - ownerName: person named as responsible, or null if unclear.
 - ownerUserId: if ownerName matches a known org member, include exact user id; else null.
-- deadlineISO: resolve relative dates to real ISO datetime (next Friday, end of month, by Wednesday, EOD Tuesday, this week, ASAP) using TODAY date.
+- deadlineISO: resolve relative dates to real ISO datetime (next Friday, end of month, by Wednesday, EOD Tuesday, this week, ASAP, tomorrow) using TODAY date. If no date is mentioned, use null (the app will apply a default).
 - deadlineOriginalPhrase: original phrase from text (e.g. "next Friday").
 - priority inference:
   critical/ASAP/urgent/immediately/blocker => critical
@@ -31,7 +31,7 @@ Rules:
   else normal
 - confidence: numeric value from 0 to 1 (inclusive) reflecting extraction certainty.
 - sourceSnippet: short verbatim phrase from the input supporting this item (<= 240 chars).
-- sourceType: best guess from tone and cues.
+- sourceType: use "manual" when the source is generic notes or unclear; only use meeting/slack/email when cues match.
 - isImplied true only if the commitment is strongly implied but not explicit; include impliedReason.
 - Drop duplicates and vague items. Max 20 commitments. If none, {"commitments":[]}.`;
 

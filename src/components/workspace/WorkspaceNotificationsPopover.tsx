@@ -17,6 +17,8 @@ import {
   Info,
   Mail,
   MessageSquare,
+  ShieldCheck,
+  Sparkles,
   UserPlus,
   X,
   XCircle,
@@ -38,6 +40,39 @@ import type { OrgNotificationRow } from "@/lib/notifications/types";
 type PanelTab = "notifications" | "digest";
 
 const PAGE_SIZE = 20;
+
+/** Normalize any stored invite URL to an in-app path so the client router always opens the accept page. */
+function invitePathFromMetadata(m: Record<string, unknown>): string | null {
+  const token =
+    typeof m.invitationToken === "string" && m.invitationToken.trim().length > 0
+      ? m.invitationToken.trim()
+      : null;
+  if (token) return `/invite/${encodeURIComponent(token)}`;
+
+  const candidates = [typeof m.inviteUrl === "string" ? m.inviteUrl : null, typeof m.link === "string" ? m.link : null].filter(
+    Boolean
+  ) as string[];
+
+  for (const raw of candidates) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (t.startsWith("/invite/")) {
+      const slug = t.slice("/invite/".length).split(/[?#]/)[0];
+      if (slug) return `/invite/${encodeURIComponent(slug)}`;
+    }
+    try {
+      const base = typeof window !== "undefined" ? window.location.origin : "https://route5.ai";
+      const u = new URL(t, t.startsWith("http") ? undefined : base);
+      const pathMatch = u.pathname.match(/^\/invite\/([^/?#]+)/);
+      if (pathMatch?.[1]) return `/invite/${encodeURIComponent(pathMatch[1])}`;
+      const q = u.searchParams.get("invite");
+      if (q) return `/invite/${encodeURIComponent(q)}`;
+    } catch {
+      /* ignore */
+    }
+  }
+  return null;
+}
 
 function formatTimeAgo(iso: string): string {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -75,6 +110,11 @@ function iconForType(t: NotificationType): LucideIcon {
       return AlertTriangle;
     case "escalation_escalated":
       return ArrowUpRight;
+    case "security_login_alert":
+      return ShieldCheck;
+    case "marketing_product_updates":
+    case "marketing_feature_tips":
+      return Sparkles;
     case "payment_failed":
       return CreditCard;
     case "subscription_cancelled":
@@ -94,6 +134,13 @@ function iconForType(t: NotificationType): LucideIcon {
 
 function resolveNotificationHref(n: OrgNotificationRow): string | null {
   const m = n.metadata;
+  if (n.type === "team_invited") {
+    const fromMeta = invitePathFromMetadata(m);
+    if (fromMeta) return fromMeta;
+    if (typeof m.inviteUrl === "string" && m.inviteUrl.length > 0) return m.inviteUrl;
+    if (typeof m.signupUrl === "string" && m.signupUrl.length > 0) return m.signupUrl;
+    return "/workspace/organization";
+  }
   if (typeof m.link === "string" && m.link.length > 0) return m.link;
   switch (n.type) {
     case "payment_failed":
@@ -103,12 +150,15 @@ function resolveNotificationHref(n: OrgNotificationRow): string | null {
     case "weekly_summary":
       return "/workspace/dashboard";
     case "daily_morning_digest":
-      return "/feed?filter=mine";
-    case "team_invited":
-      if (typeof m.signupUrl === "string" && m.signupUrl.length > 0) return m.signupUrl;
-      return "/settings";
+      return "/workspace/digest";
     case "chat_message":
       return "/workspace/chat";
+    case "security_login_alert":
+      return "/settings";
+    case "marketing_product_updates":
+      return "/product";
+    case "marketing_feature_tips":
+      return "/workspace/help";
     default:
       break;
   }
@@ -141,6 +191,7 @@ export default function WorkspaceNotificationsPopover() {
   const [notifList, setNotifList] = useState<OrgNotificationRow[]>([]);
   const [notifHasMore, setNotifHasMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [digestExpanded, setDigestExpanded] = useState<Record<number, boolean>>({});
   const nextOffsetRef = useRef(0);
 
   const fingerprint = useMemo(() => {
@@ -322,29 +373,29 @@ export default function WorkspaceNotificationsPopover() {
 
   async function onClickNotification(n: OrgNotificationRow) {
     await markOneRead(n.id);
-    const href = resolveNotificationHref(n);
+    const hrefRaw = resolveNotificationHref(n);
     handleOpenChange(false);
-
-    if (n.type === "team_invited" && user && href && /sign-up/i.test(href)) {
-      pushToast(
-        "You're already signed in. Use the invitation link from your email to accept the org invite, or ask an admin to add you in Clerk Dashboard.",
-        "info"
-      );
-      router.push("/settings");
-      return;
-    }
-
-    if (!href) {
-      if (n.type === "team_invited") {
-        pushToast(
-          "Open the link in your invite email to join. Org membership is managed in Clerk (Settings → Profile).",
-          "info"
-        );
-        router.push("/settings");
+    let href = hrefRaw;
+    if (href && /^https?:\/\//i.test(href)) {
+      try {
+        const u = new URL(href);
+        const pathMatch = u.pathname.match(/^\/invite\/([^/?#]+)/);
+        if (pathMatch?.[1]) {
+          href = `/invite/${encodeURIComponent(pathMatch[1])}`;
+        } else {
+          const fromQuery = u.searchParams.get("invite");
+          if (fromQuery) href = `/invite/${encodeURIComponent(fromQuery)}`;
+        }
+      } catch {
+        /* ignore */
       }
+    }
+    if (!href) return;
+
+    if (href.startsWith("/invite/")) {
+      window.location.assign(href);
       return;
     }
-
     if (/^https?:\/\//i.test(href)) {
       window.location.assign(href);
       return;
@@ -489,27 +540,49 @@ export default function WorkspaceNotificationsPopover() {
     <div
       className={`overflow-y-auto px-2 py-2 min-h-0 flex-1`}
     >
-      {digestItems.map((item, i) => (
-        <div
-          key={i}
-          className={`rounded-xl px-3 py-2.5 ${
-            item.tone === "warn" ? "bg-r5-status-at-risk/10" : "hover:bg-r5-surface-hover/40"
-          }`}
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">{item.title}</p>
-          {item.href ? (
-            <Link
-              href={item.href}
-              onClick={() => handleOpenChange(false)}
-              className="mt-1 block text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-primary transition hover:text-r5-text-primary"
-            >
-              {item.body}
-            </Link>
-          ) : (
-            <p className="mt-1 text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-secondary">{item.body}</p>
-          )}
-        </div>
-      ))}
+      {digestItems.map((item, i) => {
+        const expanded = Boolean(digestExpanded[i]);
+        const longBody = item.body.length > 160;
+        const bodyText =
+          longBody && !expanded
+            ? `${item.body.slice(0, 160).replace(/\s+\S*$/, "")}…`
+            : item.body;
+        return (
+          <div
+            key={i}
+            className={`rounded-xl px-3 py-2.5 ${
+              item.tone === "warn" ? "bg-r5-status-at-risk/10" : "hover:bg-r5-surface-hover/40"
+            }`}
+          >
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">{item.title}</p>
+            {item.href ? (
+              <Link
+                href={item.href}
+                onClick={() => handleOpenChange(false)}
+                className="mt-1 block text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-primary transition hover:text-r5-text-primary"
+              >
+                {bodyText}
+              </Link>
+            ) : (
+              <p className="mt-1 text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-secondary">{bodyText}</p>
+            )}
+            {longBody ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setDigestExpanded((prev) => ({
+                    ...prev,
+                    [i]: !expanded,
+                  }))
+                }
+                className="mt-1 text-[11px] font-medium text-r5-accent hover:underline"
+              >
+                {expanded ? "Show less" : "Expand"}
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
       {loadingSummary ? <p className="px-3 py-4 text-[length:var(--r5-font-subheading)] text-r5-text-secondary">Loading summary…</p> : null}
     </div>
   );

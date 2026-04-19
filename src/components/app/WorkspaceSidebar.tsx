@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
@@ -254,9 +255,13 @@ export default function WorkspaceSidebar() {
             userProfileMode="navigation"
             userProfileUrl="/settings"
             appearance={{
+              ...route5ClerkAppearance,
               elements: {
+                ...route5ClerkAppearance.elements,
                 avatarBox: "h-9 w-9 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
                 userButtonAvatarImage: "h-full w-full object-cover",
+                userButtonPopoverCard:
+                  "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
               },
             }}
           />

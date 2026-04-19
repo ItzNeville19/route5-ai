@@ -693,6 +693,15 @@ function getDb(): Database.Database {
     database.exec(`ALTER TABLE chat_messages ADD COLUMN updated_at TEXT`);
     database.exec(`UPDATE chat_messages SET updated_at = created_at WHERE updated_at IS NULL`);
   }
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS chat_message_hides (
+      user_id TEXT NOT NULL,
+      message_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, message_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_message_hides_user ON chat_message_hides(user_id);
+  `);
   db = database;
   return database;
 }

@@ -158,6 +158,42 @@ export async function countUnreadNotifications(userId: string): Promise<number> 
   return row?.c ?? 0;
 }
 
+export async function hasRecentNotificationByType(params: {
+  userId: string;
+  type: NotificationType;
+  withinMinutes: number;
+}): Promise<boolean> {
+  const cutoff = new Date(Date.now() - Math.max(1, params.withinMinutes) * 60_000).toISOString();
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .select("id")
+        .eq("user_id", params.userId)
+        .eq("type", params.type)
+        .gte("created_at", cutoff)
+        .is("deleted_at", null)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return Boolean(data?.id);
+    } catch (e) {
+      console.error("[notifications] Supabase recent-type check failed, using SQLite", e);
+    }
+  }
+  const d = getSqliteHandle();
+  const row = d
+    .prepare(
+      `SELECT id FROM org_notifications
+       WHERE user_id = ? AND type = ? AND deleted_at IS NULL AND created_at >= ?
+       ORDER BY created_at DESC
+       LIMIT 1`
+    )
+    .get(params.userId, params.type, cutoff) as { id: string } | undefined;
+  return Boolean(row?.id);
+}
+
 export async function markNotificationRead(id: string, userId: string): Promise<boolean> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {

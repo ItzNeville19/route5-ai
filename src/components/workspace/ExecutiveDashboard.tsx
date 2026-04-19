@@ -25,6 +25,7 @@ import {
   Loader2,
   Radio,
 } from "lucide-react";
+import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
 
@@ -645,8 +646,7 @@ export default function ExecutiveDashboard() {
                   <label className="block text-[11px] font-semibold uppercase text-[var(--workspace-muted-fg)]">
                     Until *
                   </label>
-                  <input
-                    type="datetime-local"
+                  <NativeDatetimeLocalInput
                     value={snoozeUntilLocal}
                     onChange={(ev) => setSnoozeUntilLocal(ev.target.value)}
                     className="w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[13px] text-[var(--workspace-fg)]"

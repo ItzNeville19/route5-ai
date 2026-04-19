@@ -4,7 +4,9 @@ export const en: Record<string, string> = {
   "lang.selectLabel": "Interface language",
   "lang.description":
     "Interface language for Route5. Dates and numbers follow this locale where supported.",
-  "lang.autoBrowser": "Match browser",
+  "lang.autoBrowser": "System default (browser)",
+  "prefs.defaultsIntro":
+    "By default, language follows your browser/system until you pick one here. Timezone starts from your device clock — pick a city/region below and tap Apply to save.",
   "sidebar.getStarted": "Get started",
   "sidebar.navAria": "Workspace",
   "sidebar.sectionWork": "Work",

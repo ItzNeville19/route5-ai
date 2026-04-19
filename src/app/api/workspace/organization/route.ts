@@ -4,6 +4,7 @@ import { requireUserId } from "@/lib/auth/require-user";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import {
   createOrganizationInvitation,
+  listPendingOrganizationInvitations,
   listOrganizationMembers,
   requireOrgRole,
   type OrgRole,
@@ -12,6 +13,7 @@ import { listOrgCommitmentsForOrgId } from "@/lib/org-commitments/repository";
 import { getOrganizationProfile } from "@/lib/workspace/organizations-update";
 import { notifyTeamInvited } from "@/lib/notifications/team-invite";
 import { appBaseUrl } from "@/lib/integrations/app-url";
+import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
 
 export const runtime = "nodejs";
 
@@ -33,6 +35,17 @@ type MemberDto = {
   invitedBy: string | null;
   activeCommitmentsCount: number;
   profile: MemberProfile;
+};
+
+type PendingInviteDto = {
+  id: string;
+  email: string;
+  role: OrgRole;
+  status: "pending";
+  invitedBy: string;
+  invitedByName: string;
+  createdAt: string;
+  expiresAt: string;
 };
 
 function displayNameFromProfile(p: MemberProfile): string {
@@ -67,8 +80,9 @@ export async function GET() {
   }
 
   try {
-    const [members, org, commitmentPage] = await Promise.all([
+    const [members, pendingInvitations, org, commitmentPage] = await Promise.all([
       listOrganizationMembers(orgId),
+      listPendingOrganizationInvitations(orgId),
       getOrganizationProfile(orgId),
       listOrgCommitmentsForOrgId(orgId, { limit: 5000, offset: 0 }),
     ]);
@@ -120,11 +134,40 @@ export async function GET() {
         }
       })
     );
+    const inviterIds = [...new Set(pendingInvitations.map((row) => row.invitedBy))];
+    const inviterNameById = new Map<string, string>();
+    await Promise.all(
+      inviterIds.map(async (id) => {
+        try {
+          const u = await clerk.users.getUser(id);
+          inviterNameById.set(
+            id,
+            [u.firstName, u.lastName].filter(Boolean).join(" ").trim() ||
+              u.username ||
+              u.primaryEmailAddress?.emailAddress ||
+              "Teammate"
+          );
+        } catch {
+          inviterNameById.set(id, "Teammate");
+        }
+      })
+    );
+    const invitations: PendingInviteDto[] = pendingInvitations.map((row) => ({
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      status: "pending",
+      invitedBy: row.invitedBy,
+      invitedByName: inviterNameById.get(row.invitedBy) ?? "Teammate",
+      createdAt: row.createdAt,
+      expiresAt: row.expiresAt,
+    }));
     return NextResponse.json({
       orgId,
       orgName: org.name,
       me: { userId, role: access.role },
       members: dto,
+      invitations,
     });
   } catch (error) {
     return NextResponse.json(
@@ -164,17 +207,29 @@ export async function POST(req: Request) {
       invitedBy: userId,
     });
     const org = await getOrganizationProfile(orgId);
+    let inviterName = "Route5 admin";
+    try {
+      const c = await clerkClient();
+      const u = await c.users.getUser(userId);
+      inviterName =
+        [u.firstName, u.lastName].filter(Boolean).join(" ").trim() ||
+        u.username ||
+        u.primaryEmailAddress?.emailAddress ||
+        inviterName;
+    } catch {
+      /* ignore */
+    }
     const base = appBaseUrl();
-    const signupUrl = `${base}/sign-up?redirect_url=${encodeURIComponent(
-      `/feed?invite=${invite.token}`
-    )}`;
+    const inviteUrl = `${base}/invite/${invite.token}`;
     await notifyTeamInvited({
       orgId,
       inviteeEmail: email,
-      inviterName: "Route5 admin",
+      inviterName,
       orgName: org.name,
-      signupUrl,
+      inviteUrl,
+      invitationToken: invite.token,
     });
+    broadcastOrgMembersChanged(orgId, { kind: "invited", invitationId: invite.id });
     return NextResponse.json({ ok: true, invitationId: invite.id });
   } catch (error) {
     return NextResponse.json(

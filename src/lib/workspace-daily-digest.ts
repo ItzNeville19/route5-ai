@@ -60,6 +60,7 @@ export function buildDailyDigestListItems(input: {
 
   const { projectCount, extractionCount, execution, recent } = summary;
   const stale = execution.staleOpenActions;
+  const tz = workspaceTimezone?.trim() || undefined;
 
   items.push({
     title: "Execution snapshot",
@@ -69,16 +70,11 @@ export function buildDailyDigestListItems(input: {
 
   if (executionOverview) {
     const s = executionOverview.summary;
-    const now = new Date();
+    const todayKey = dayKeyForTimezone(new Date(), tz);
     const dueTodayCount = executionOverview.riskFeed.filter((row) => {
       if (!row.dueDate) return false;
       const d = new Date(row.dueDate);
-      return (
-        Number.isFinite(d.getTime()) &&
-        d.getFullYear() === now.getFullYear() &&
-        d.getMonth() === now.getMonth() &&
-        d.getDate() === now.getDate()
-      );
+      return Number.isFinite(d.getTime()) && dayKeyForTimezone(d, tz) === todayKey;
     }).length;
     const overdueNames = executionOverview.riskFeed
       .filter((row) => row.status === "overdue")
@@ -120,6 +116,12 @@ export function buildDailyDigestListItems(input: {
         tone: "warn",
       });
     }
+    items.push({
+      title: "Full daily rundown",
+      body: `Today: ${dueTodayCount} due · ${s.overdueCount} overdue · ${s.atRiskCount} at risk · ${s.unassignedCount} unassigned. Open desk in order: ${topAttention.map((row) => row.title).join(" → ") || "No priority blockers right now."}`,
+      href: "/workspace/digest",
+      tone: s.overdueCount > 0 || s.atRiskCount > 0 ? "warn" : undefined,
+    });
   }
 
   if (stale > 0) {
@@ -142,4 +144,18 @@ export function buildDailyDigestListItems(input: {
   }
 
   return items;
+}
+
+function dayKeyForTimezone(date: Date, timezone?: string): string {
+  if (!timezone) return date.toISOString().slice(0, 10);
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
 }

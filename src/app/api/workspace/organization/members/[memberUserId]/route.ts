@@ -7,6 +7,7 @@ import {
   updateOrganizationMemberRole,
   type OrgRole,
 } from "@/lib/workspace/org-members";
+import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,7 @@ export async function PATCH(
     userId: memberUserId,
     role,
   });
+  if (ok) broadcastOrgMembersChanged(orgId, { kind: "member_updated", userId: memberUserId });
   return NextResponse.json({ ok });
 }
 
@@ -72,5 +74,6 @@ export async function DELETE(
     );
   }
   const ok = await removeOrganizationMember({ orgId, userId: memberUserId });
+  if (ok) broadcastOrgMembersChanged(orgId, { kind: "member_removed", userId: memberUserId });
   return NextResponse.json({ ok });
 }

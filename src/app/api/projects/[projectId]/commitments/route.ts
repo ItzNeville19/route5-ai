@@ -13,6 +13,8 @@ import {
   verifyProjectOwned,
 } from "@/lib/workspace/store";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { createOrgCommitment } from "@/lib/org-commitments/repository";
+import { broadcastOrgCommitmentEvent } from "@/lib/org-commitments/broadcast";
 import {
   cleanText,
   enforceRateLimits,
@@ -183,6 +185,20 @@ export async function POST(
         createdLogBody: "Committed from Desk",
       });
       const orgId = await ensureOrganizationForClerkUser(userId);
+      for (const c of commitments) {
+        const deadline = c.dueDate
+          ? new Date(`${c.dueDate}T17:00:00.000Z`).toISOString()
+          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const row = await createOrgCommitment(userId, {
+          title: c.title,
+          description: c.description,
+          ownerId: c.ownerUserId ?? userId,
+          projectId,
+          deadline,
+          priority: c.priority === "high" ? "high" : c.priority === "low" ? "low" : "medium",
+        });
+        broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
+      }
       await Promise.all(
         commitments
           .filter((c) => c.ownerUserId && c.ownerUserId !== userId)
@@ -228,6 +244,21 @@ export async function POST(
       ],
       { assignOwnerUserId: m.ownerUserId ?? undefined }
     );
+    const orgId = await ensureOrganizationForClerkUser(userId);
+    for (const c of commitments) {
+      const deadline = c.dueDate
+        ? new Date(`${c.dueDate}T17:00:00.000Z`).toISOString()
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const row = await createOrgCommitment(userId, {
+        title: c.title,
+        description: c.description,
+        ownerId: c.ownerUserId ?? userId,
+        projectId,
+        deadline,
+        priority: c.priority === "high" ? "high" : c.priority === "low" ? "low" : "medium",
+      });
+      broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
+    }
     return NextResponse.json({ commitments });
   } catch (e) {
     if (e instanceof Error && e.message === "NOT_FOUND") {

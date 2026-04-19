@@ -151,86 +151,27 @@ function SignedInAppShell({
     }
   }, [userId, pathname, router]);
 
-  /**
-   * Workspace wizard completion — never block the shell on this fetch.
-   * If the API is slow or stuck, users still see the app; we redirect when we learn they must finish setup.
-   */
-  useEffect(() => {
-    if (pathname === "/onboarding") return;
-
-    const skipWorkspaceOnboardingGate =
-      pathname === "/settings" ||
-      pathname === "/marketplace" ||
-      pathname?.startsWith("/marketplace/") ||
-      pathname === "/workspace/customize" ||
-      pathname === "/workspace/help" ||
-      pathname === "/workspace/chat" ||
-      pathname === "/workspace/billing" ||
-      pathname === "/workspace/team" ||
-      pathname === "/workspace/organization" ||
-      pathname === "/integrations" ||
-      pathname?.startsWith("/integrations/") ||
-      pathname?.startsWith("/account/");
-
-    if (skipWorkspaceOnboardingGate) return;
-
-    const workspaceOnboarding =
-      pathname?.startsWith("/workspace") && !pathname.startsWith("/workspace/onboarding");
-
-    if (!workspaceOnboarding) return;
-
-    let cancelled = false;
-    const controller = new AbortController();
-    const abortTimer = window.setTimeout(() => controller.abort(), 12_000);
-
-    void (async () => {
-      try {
-        const res = await fetch("/api/workspace/onboarding", {
-          credentials: "same-origin",
-          signal: controller.signal,
-        });
-        const data = (await res.json().catch(() => ({}))) as { complete?: boolean };
-        if (cancelled) return;
-        if (data.complete === false) {
-          router.replace("/workspace/onboarding");
-        }
-      } catch {
-        /* offline / timeout — stay on current page */
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(abortTimer);
-      controller.abort();
-    };
-  }, [userId, pathname, router]);
+  // Keep Feed stable: onboarding is rendered inline in empty states, not as an auto-redirect overlay.
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = new URLSearchParams(window.location.search).get("invite");
     if (!token) return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const res = await fetch("/api/workspace/organization/accept", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        if (!res.ok || cancelled) return;
-        const next = new URL(window.location.href);
-        next.searchParams.delete("invite");
-        router.replace(`${next.pathname}${next.search}${next.hash}`);
-      } catch {
-        /* ignore invalid/expired invite */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    router.replace(`/invite/${encodeURIComponent(token)}`);
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !userId) return;
+    const guardKey = `route5:login-alert:${userId}`;
+    if (window.sessionStorage.getItem(guardKey) === "1") return;
+    window.sessionStorage.setItem(guardKey, "1");
+    void fetch("/api/notifications/login-alert", {
+      method: "POST",
+      credentials: "same-origin",
+    }).catch(() => {
+      /* non-fatal */
+    });
+  }, [userId]);
 
   if (pathname === "/onboarding") {
     return <OnboardingShell>{children}</OnboardingShell>;

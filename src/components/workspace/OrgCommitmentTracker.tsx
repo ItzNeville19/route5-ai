@@ -28,6 +28,7 @@ import {
   ORG_STATUS_LABEL,
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
+import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
@@ -549,14 +550,12 @@ export default function OrgCommitmentTracker() {
                 placeholder="Owner (Clerk user id)"
                 className="min-w-[160px] rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2 text-[13px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)]"
               />
-              <input
-                type="datetime-local"
+              <NativeDatetimeLocalInput
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
                 className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-2 py-2 text-[12px] text-[var(--workspace-fg)]"
               />
-              <input
-                type="datetime-local"
+              <NativeDatetimeLocalInput
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
                 className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-2 py-2 text-[12px] text-[var(--workspace-fg)]"
@@ -832,8 +831,7 @@ export default function OrgCommitmentTracker() {
                   <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">
                     Deadline
                   </label>
-                  <input
-                    type="datetime-local"
+                  <NativeDatetimeLocalInput
                     value={editDeadline}
                     onChange={(e) => setEditDeadline(e.target.value)}
                     className="w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[var(--workspace-fg)]"
@@ -1056,12 +1054,11 @@ export default function OrgCommitmentTracker() {
               </div>
               <div>
                 <label className="text-[11px] font-semibold uppercase text-[var(--workspace-muted-fg)]">Deadline *</label>
-                <input
+                <NativeDatetimeLocalInput
                   required
-                  type="datetime-local"
                   value={cDeadline}
                   onChange={(e) => setCDeadline(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[var(--workspace-fg)]"
+                  className="mt-1 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
                 />
               </div>
               <div>

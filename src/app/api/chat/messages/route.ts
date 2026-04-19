@@ -74,14 +74,18 @@ export async function POST(req: Request) {
       messageId: message.id,
       createdAt: message.createdAt,
     });
-    await insertOrgNotification({
-      orgId: message.orgId,
-      userId: memberId,
-      type: "chat_message",
-      title: "New team message",
-      body: (normalizedBody || "Sent an attachment").slice(0, 160),
-      metadata: { channelId: parsed.data.channelId, messageId: message.id, link: "/workspace/chat" },
-    });
+    try {
+      await insertOrgNotification({
+        orgId: message.orgId,
+        userId: memberId,
+        type: "chat_message",
+        title: "New team message",
+        body: (normalizedBody || "Sent an attachment").slice(0, 160),
+        metadata: { channelId: parsed.data.channelId, messageId: message.id, link: "/workspace/chat" },
+      });
+    } catch {
+      // Chat delivery should not fail because optional notification fan-out failed.
+    }
   }
   return NextResponse.json({ message });
 }

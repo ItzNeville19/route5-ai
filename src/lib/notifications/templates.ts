@@ -20,6 +20,10 @@ You’re receiving operational mail from Route5. Manage preferences in the app u
 </td></tr></table></body></html>`;
 }
 
+function primaryCta(href: string, label: string): string {
+  return `<p style="margin:16px 0 0;"><a href="${escapeAttr(href)}" style="display:inline-block;border-radius:10px;background:#a78bfa;color:#0c0c0f;font-weight:700;text-decoration:none;padding:10px 14px;">${escapeHtml(label)}</a></p>`;
+}
+
 export function buildNotificationEmailHtml(
   type: NotificationType,
   params: {
@@ -75,8 +79,41 @@ export function buildNotificationEmailHtml(
       break;
     }
     case "team_invited": {
-      const signup = typeof meta.signupUrl === "string" ? meta.signupUrl : `${base}/sign-up`;
-      inner += `<p style="margin:12px 0 0;"><a href="${escapeAttr(signup)}" style="color:#a78bfa;font-weight:600;">Accept invitation →</a></p>`;
+      const inviteUrl =
+        typeof meta.inviteUrl === "string"
+          ? meta.inviteUrl
+          : typeof meta.signupUrl === "string"
+            ? meta.signupUrl
+            : `${base}/sign-up`;
+      inner += primaryCta(inviteUrl, "Join organization");
+      break;
+    }
+    case "security_login_alert": {
+      const signInAt = typeof meta.signInAt === "string" ? meta.signInAt : null;
+      const device = typeof meta.device === "string" ? meta.device : "Unknown device";
+      const location = typeof meta.location === "string" ? meta.location : "Unknown location";
+      inner += `<p style="margin:12px 0 0;font-size:13px;color:#a1a1aa;">Device: ${escapeHtml(device)}<br/>Location: ${escapeHtml(location)}${
+        signInAt ? `<br/>Time: ${escapeHtml(signInAt)}` : ""
+      }</p>`;
+      inner += primaryCta(`${base}/settings`, "Review account access");
+      break;
+    }
+    case "marketing_product_updates": {
+      const ctaUrl = typeof meta.ctaUrl === "string" ? meta.ctaUrl : `${base}/product`;
+      const ctaLabel = typeof meta.ctaLabel === "string" ? meta.ctaLabel : "Explore new releases";
+      inner += `<div style="margin:14px 0 0;border:1px solid rgba(167,139,250,0.35);background:rgba(167,139,250,0.08);border-radius:12px;padding:12px;">`;
+      inner += `<p style="margin:0;font-size:13px;color:#ddd6fe;">Latest updates are now live in your workspace. Roll them out to your team and keep execution momentum high.</p>`;
+      inner += `</div>`;
+      inner += primaryCta(ctaUrl, ctaLabel);
+      break;
+    }
+    case "marketing_feature_tips": {
+      const ctaUrl = typeof meta.ctaUrl === "string" ? meta.ctaUrl : `${base}/workspace/help`;
+      const ctaLabel = typeof meta.ctaLabel === "string" ? meta.ctaLabel : "See workflow playbook";
+      inner += `<div style="margin:14px 0 0;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);border-radius:12px;padding:12px;">`;
+      inner += `<p style="margin:0;font-size:13px;color:#bbf7d0;">Pro tip: route decisions through Capture, assign owners in Feed, and check Daily Digest each morning to prevent hidden blockers.</p>`;
+      inner += `</div>`;
+      inner += primaryCta(ctaUrl, ctaLabel);
       break;
     }
     case "weekly_summary":
