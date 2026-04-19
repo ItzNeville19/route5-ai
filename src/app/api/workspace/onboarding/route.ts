@@ -13,6 +13,7 @@ import {
 } from "@/lib/integrations/org-integrations-store";
 import { getZoomIntegrationForOrg } from "@/lib/integrations/zoom-teams-integration";
 import { getTeamsIntegrationForOrg } from "@/lib/integrations/zoom-teams-integration";
+import { createOrganizationInvitation } from "@/lib/workspace/org-members";
 
 export const runtime = "nodejs";
 
@@ -80,13 +81,18 @@ export async function POST(req: Request) {
     for (const raw of body.emails ?? []) {
       const email = raw.trim();
       if (!email.includes("@")) continue;
-      const redirectAfter = `${base}/feed`;
+      const invite = await createOrganizationInvitation({
+        orgId,
+        email: email.toLowerCase(),
+        role: "member",
+        invitedBy: userId,
+      });
       await notifyTeamInvited({
         orgId,
         inviteeEmail: email,
         inviterName,
         orgName: org.name,
-        signupUrl: `${base}/sign-up?redirect_url=${encodeURIComponent(redirectAfter)}`,
+        signupUrl: `${base}/sign-up?redirect_url=${encodeURIComponent(`/feed?invite=${invite.token}`)}`,
       });
     }
     await markOnboardingStepComplete(orgId, userId, "invite_team");

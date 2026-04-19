@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderOpen, ListChecks, Plus, Settings } from "lucide-react";
+import { FolderOpen, ListChecks, MessageSquare, Plus, Settings } from "lucide-react";
 import { useCapture } from "@/components/capture/CaptureProvider";
 
 function LinkTab({
@@ -53,6 +53,7 @@ export default function WorkspaceMobileNav() {
         <span className="max-w-full truncate">Capture</span>
       </button>
       <LinkTab href="/projects" label="Projects" icon={FolderOpen} active={path === "/projects" || path.startsWith("/projects/")} />
+      <LinkTab href="/workspace/chat" label="Chat" icon={MessageSquare} active={path === "/workspace/chat"} />
       <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
     </nav>
   );

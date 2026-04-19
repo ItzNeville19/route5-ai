@@ -27,7 +27,6 @@ import {
   verifyProjectOwned,
 } from "@/lib/workspace/store";
 import { resolveExtractionRoute } from "@/lib/ai-provider-presets";
-import { isSupabaseConfigured } from "@/lib/supabase-env";
 import {
   cleanText,
   enforceRateLimits,
@@ -50,15 +49,6 @@ export async function POST(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
-  if (process.env.NODE_ENV === "production" && !isSupabaseConfigured()) {
-    return NextResponse.json(
-      {
-        error:
-          "Durable storage is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel before running extractions.",
-      },
-      { status: 503 }
-    );
-  }
 
   const rateLimited = enforceRateLimits(
     req,

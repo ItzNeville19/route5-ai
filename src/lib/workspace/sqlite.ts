@@ -159,6 +159,75 @@ function getDb(): Database.Database {
       updated_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_organizations_clerk ON organizations(clerk_user_id);
+    CREATE TABLE IF NOT EXISTS org_members (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'member')),
+      invited_by TEXT,
+      joined_at TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'invited', 'removed')),
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE (org_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_members_org ON org_members(org_id, status);
+    CREATE INDEX IF NOT EXISTS idx_org_members_user ON org_members(user_id, status);
+    CREATE TABLE IF NOT EXISTS org_invitations (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      email TEXT NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'member')),
+      invited_by TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      accepted_at TEXT,
+      accepted_by TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_invitations_org ON org_invitations(org_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_org_invitations_email ON org_invitations(email, accepted_at);
+    CREATE TABLE IF NOT EXISTS project_members (
+      id TEXT PRIMARY KEY,
+      project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'manager', 'member')),
+      added_by TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (project_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_project_members_project ON project_members(project_id);
+    CREATE INDEX IF NOT EXISTS idx_project_members_user ON project_members(user_id);
+    CREATE TABLE IF NOT EXISTS chat_channels (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      type TEXT NOT NULL CHECK (type IN ('direct', 'project')),
+      project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_channels_org ON chat_channels(org_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_chat_channels_project ON chat_channels(project_id);
+    CREATE TABLE IF NOT EXISTS chat_channel_members (
+      id TEXT PRIMARY KEY,
+      channel_id TEXT NOT NULL REFERENCES chat_channels(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL,
+      last_read_at TEXT,
+      created_at TEXT NOT NULL,
+      UNIQUE (channel_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_channel_members_user ON chat_channel_members(user_id);
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id TEXT PRIMARY KEY,
+      org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      channel_type TEXT NOT NULL CHECK (channel_type IN ('direct', 'project')),
+      channel_id TEXT NOT NULL REFERENCES chat_channels(id) ON DELETE CASCADE,
+      sender_id TEXT NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      attachments TEXT NOT NULL DEFAULT '[]',
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_channel ON chat_messages(channel_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_org ON chat_messages(org_id, created_at DESC);
   `);
   const projCols = database
     .prepare(`PRAGMA table_info(projects)`)

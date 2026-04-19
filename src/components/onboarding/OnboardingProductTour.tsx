@@ -74,10 +74,10 @@ export default function OnboardingProductTour() {
             <div className="mt-4 flex flex-wrap gap-2">
               {slide.id === "team" ? (
                 <Link
-                  href="/workspace/team"
+                  href="/workspace/organization"
                   className="inline-flex items-center rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-4 py-2 text-[length:var(--r5-font-body)] font-medium text-r5-surface-primary transition hover:opacity-95"
                 >
-                  Open Team
+                  Open Organization
                 </Link>
               ) : null}
               <Link

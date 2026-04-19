@@ -5,6 +5,7 @@ export type Project = {
   name: string;
   /** Single emoji or short glyph shown in sidebar / dashboard */
   iconEmoji?: string | null;
+  memberUserIds?: string[];
   clerkUserId: string;
   createdAt: string;
   updatedAt: string;

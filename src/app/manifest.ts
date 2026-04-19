@@ -40,7 +40,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { name: "Leadership", short_name: "Lead", url: "/overview", description: "Execution health" },
       { name: "Projects", short_name: "Projects", url: "/projects", description: "All projects" },
       { name: "Settings", short_name: "Settings", url: "/settings", description: "Account & connections" },
-      { name: "Team", short_name: "Team", url: "/workspace/team", description: "People & organization" },
+      { name: "Organization", short_name: "Org", url: "/workspace/organization", description: "People & access" },
     ],
   };
 }

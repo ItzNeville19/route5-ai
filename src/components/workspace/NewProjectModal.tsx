@@ -53,6 +53,10 @@ export default function NewProjectModal() {
   const [iconMarker, setIconMarker] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [orgMembers, setOrgMembers] = useState<
+    Array<{ userId: string; name: string; email: string | null }>
+  >([]);
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -62,6 +66,7 @@ export default function NewProjectModal() {
     setName("");
     setDescription("");
     setIconMarker("");
+    setSelectedMemberIds([]);
     setError(null);
     setCreating(false);
   }, []);
@@ -92,6 +97,25 @@ export default function NewProjectModal() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    void fetch("/api/workspace/organization", { credentials: "same-origin" })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          members?: Array<{ userId: string; name: string; email: string | null }>;
+        };
+        if (!res.ok || cancelled) return;
+        setOrgMembers(data.members ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setOrgMembers([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   async function createProject() {
     const trimmed = name.trim();
     if (!trimmed) return;
@@ -106,6 +130,7 @@ export default function NewProjectModal() {
         body: JSON.stringify({
           name: trimmed,
           ...(icon ? { iconEmoji: icon } : {}),
+          ...(selectedMemberIds.length > 0 ? { memberUserIds: selectedMemberIds } : {}),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -243,6 +268,43 @@ export default function NewProjectModal() {
                     placeholder="What this project is responsible for"
                     className="mt-2 w-full resize-none rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-3 text-[14px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--workspace-accent)]/15"
                   />
+                </div>
+
+                <div>
+                  <label className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
+                    Team members
+                  </label>
+                  <div className="mt-2 max-h-[150px] space-y-1 overflow-y-auto rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/30 p-2">
+                    {orgMembers.length === 0 ? (
+                      <p className="px-2 py-2 text-[12px] text-[var(--workspace-muted-fg)]">
+                        Add organization members first to assign collaborators.
+                      </p>
+                    ) : (
+                      orgMembers.map((member) => {
+                        const checked = selectedMemberIds.includes(member.userId);
+                        return (
+                          <label
+                            key={member.userId}
+                            className="flex min-h-11 items-center gap-2 rounded-lg px-2 py-1 text-[13px] text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(event) =>
+                                setSelectedMemberIds((prev) =>
+                                  event.target.checked
+                                    ? [...new Set([...prev, member.userId])]
+                                    : prev.filter((id) => id !== member.userId)
+                                )
+                              }
+                              className="h-4 w-4 rounded border-[var(--workspace-border)]"
+                            />
+                            <span className="truncate">{member.name || member.email || member.userId}</span>
+                          </label>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
 
                 <div>

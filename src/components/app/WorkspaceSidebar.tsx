@@ -17,6 +17,7 @@ import {
   LifeBuoy,
   LineChart,
   ListChecks,
+  MessageSquare,
   Palette,
   Plus,
   Settings,
@@ -133,6 +134,12 @@ export default function WorkspaceSidebar() {
               icon={FolderOpen}
               label={t("sidebar.projects")}
             />
+            <NavRow
+              active={path === "/workspace/chat"}
+              icon={MessageSquare}
+              label="Chat"
+              onClick={() => window.dispatchEvent(new Event("route5:chat-open"))}
+            />
             <button
               type="button"
               title="Create a new project"
@@ -151,8 +158,8 @@ export default function WorkspaceSidebar() {
           <div className="mt-1 space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionOps")}</NavSectionTitle>
             <NavRow
-              href="/overview"
-              active={path === "/overview"}
+              href="/leadership"
+              active={path === "/overview" || path === "/leadership"}
               icon={BarChart3}
               label={t("sidebar.leadership")}
             />
@@ -185,10 +192,10 @@ export default function WorkspaceSidebar() {
           <div className="mt-1 space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionPeople")}</NavSectionTitle>
             <NavRow
-              href="/workspace/team"
-              active={path === "/workspace/team"}
+              href="/workspace/organization"
+              active={path === "/workspace/team" || path === "/workspace/organization"}
               icon={Users}
-              label={t("sidebar.team")}
+              label="Organization"
             />
           </div>
 

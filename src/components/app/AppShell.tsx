@@ -164,8 +164,10 @@ function SignedInAppShell({
       pathname?.startsWith("/marketplace/") ||
       pathname === "/workspace/customize" ||
       pathname === "/workspace/help" ||
+      pathname === "/workspace/chat" ||
       pathname === "/workspace/billing" ||
       pathname === "/workspace/team" ||
+      pathname === "/workspace/organization" ||
       pathname === "/integrations" ||
       pathname?.startsWith("/integrations/") ||
       pathname?.startsWith("/account/");
@@ -203,6 +205,32 @@ function SignedInAppShell({
       controller.abort();
     };
   }, [userId, pathname, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = new URLSearchParams(window.location.search).get("invite");
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/workspace/organization/accept", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+        if (!res.ok || cancelled) return;
+        const next = new URL(window.location.href);
+        next.searchParams.delete("invite");
+        router.replace(`${next.pathname}${next.search}${next.hash}`);
+      } catch {
+        /* ignore invalid/expired invite */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   if (pathname === "/onboarding") {
     return <OnboardingShell>{children}</OnboardingShell>;

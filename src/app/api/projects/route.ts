@@ -15,6 +15,10 @@ import {
   restoreProjectsFromBackupForUser,
 } from "@/lib/workspace/store";
 import {
+  listProjectMemberIdsByProject,
+  replaceProjectMembers,
+} from "@/lib/workspace/project-members";
+import {
   loadProjectBackupForUser,
   saveProjectBackupForUser,
 } from "@/lib/workspace/project-backup";
@@ -60,6 +64,13 @@ export async function GET(req: Request) {
         projects = await restoreProjectsFromBackupForUser(userId, backup);
       }
     }
+    const memberMap = await listProjectMemberIdsByProject(
+      projects.map((project) => project.id)
+    );
+    projects = projects.map((project) => ({
+      ...project,
+      memberUserIds: [...new Set([project.clerkUserId, ...(memberMap.get(project.id) ?? [])])],
+    }));
     await saveProjectBackupForUser(userId, projects);
     return NextResponse.json({ projects });
   } catch (e) {
@@ -99,6 +110,7 @@ export async function POST(req: Request) {
       .object({
         name: projectNameSchema,
         iconEmoji: iconEmojiSchema.optional(),
+        memberUserIds: z.array(z.string().min(1)).max(24).optional(),
       })
       .strict()
   );
@@ -145,9 +157,13 @@ export async function POST(req: Request) {
     const project = await createProjectForUser(userId, parsed.data.name, {
       iconEmoji: icon,
     });
+    const memberUserIds = await replaceProjectMembers(project.id, [
+      userId,
+      ...(parsed.data.memberUserIds ?? []),
+    ]);
     const latest = await listProjectsForUser(userId);
     await saveProjectBackupForUser(userId, latest);
-    return NextResponse.json({ project });
+    return NextResponse.json({ project: { ...project, memberUserIds } });
   } catch (e) {
     return NextResponse.json(
       { error: publicWorkspaceError(e) },

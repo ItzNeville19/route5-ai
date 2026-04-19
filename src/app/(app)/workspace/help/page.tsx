@@ -37,11 +37,11 @@ const cards = [
     cta: "Open Integrations",
   },
   {
-    title: "Team & org",
+    title: "Organization",
     body: "Clerk organization switcher plus everyone who currently owns a commitment — real people from your workspace data.",
-    href: "/workspace/team",
+    href: "/workspace/organization",
     icon: Users,
-    cta: "Open Team",
+    cta: "Open Organization",
   },
 ] as const;
 

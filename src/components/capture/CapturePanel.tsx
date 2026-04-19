@@ -244,6 +244,7 @@ export default function CapturePanel({
   const [selectedCardKeys, setSelectedCardKeys] = useState<string[]>([]);
   const [showRecent, setShowRecent] = useState(false);
   const [selectedTemplateKey, setSelectedTemplateKey] = useState("");
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -279,6 +280,15 @@ export default function CapturePanel({
     const t = window.requestAnimationFrame(() => textareaRef.current?.focus());
     return () => window.cancelAnimationFrame(t);
   }, [open, selfId, user]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const media = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobileViewport(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -490,14 +500,14 @@ export default function CapturePanel({
         onClose();
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "input") {
+      if (!isMobileViewport && (e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "input") {
         const t = e.target as HTMLElement;
         if (t.closest("[data-capture-textarea]")) {
           e.preventDefault();
           void runProcess();
         }
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "review") {
+      if (!isMobileViewport && (e.metaKey || e.ctrlKey) && e.key === "Enter" && phase === "review") {
         e.preventDefault();
         const unresolved = cards.filter((c) => !c.ownerUserId?.trim() || !c.deadlineIso).length;
         if (unresolved === 0) {
@@ -538,7 +548,7 @@ export default function CapturePanel({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, phase, runProcess, cards]);
+  }, [open, onClose, phase, runProcess, cards, isMobileViewport]);
 
   const removeCard = (key: string) => {
     setCards((c) => c.filter((x) => x.key !== key));
@@ -745,6 +755,13 @@ export default function CapturePanel({
                 <X className="h-5 w-5" strokeWidth={2} />
               </button>
             </header>
+            {isMobileViewport ? (
+              <div className="border-b border-r5-border-subtle/70 bg-r5-surface-secondary/40 px-5 py-2.5">
+                <p className="text-[11px] text-r5-text-secondary">
+                  For the best capture experience, use Route5 on desktop.
+                </p>
+              </div>
+            ) : null}
 
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
               {phase === "input" || phase === "processing" ? (
@@ -809,7 +826,7 @@ export default function CapturePanel({
                   ) : null}
                   <div className="flex items-center justify-between text-[11px] text-r5-text-secondary">
                     <span>{charCount.toLocaleString()} / {MAX_CAPTURE_CHARS.toLocaleString()} characters</span>
-                    <span>Cmd+Enter to process</span>
+                    <span>{isMobileViewport ? "Use Process text button" : "Cmd+Enter to process"}</span>
                   </div>
 
                   <div className="flex flex-wrap gap-2">
@@ -867,16 +884,18 @@ export default function CapturePanel({
                     </select>
                   </div>
 
-                  <p className="text-[11px] text-r5-text-secondary">
-                    <kbd className="rounded border border-r5-border-subtle bg-r5-surface-primary/60 px-1.5 py-0.5 font-mono text-[10px]">
-                      ⌘
-                    </kbd>
-                    <span className="mx-0.5">+</span>
-                    <kbd className="rounded border border-r5-border-subtle bg-r5-surface-primary/60 px-1.5 py-0.5 font-mono text-[10px]">
-                      Enter
-                    </kbd>
-                    <span className="ml-1.5">to process</span>
-                  </p>
+                  {!isMobileViewport ? (
+                    <p className="text-[11px] text-r5-text-secondary">
+                      <kbd className="rounded border border-r5-border-subtle bg-r5-surface-primary/60 px-1.5 py-0.5 font-mono text-[10px]">
+                        ⌘
+                      </kbd>
+                      <span className="mx-0.5">+</span>
+                      <kbd className="rounded border border-r5-border-subtle bg-r5-surface-primary/60 px-1.5 py-0.5 font-mono text-[10px]">
+                        Enter
+                      </kbd>
+                      <span className="ml-1.5">to process</span>
+                    </p>
+                  ) : null}
 
                   {processNote ? (
                     <p className="rounded-lg border border-r5-status-at-risk/35 bg-r5-status-at-risk/10 px-3 py-2 text-[13px] text-r5-text-primary">

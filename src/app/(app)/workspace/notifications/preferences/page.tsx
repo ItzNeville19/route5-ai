@@ -23,6 +23,10 @@ const COPY: Record<NotificationType, { title: string; description: string }> = {
     title: "Commitment overdue",
     description: "When a commitment passes its deadline.",
   },
+  chat_message: {
+    title: "Team chat message",
+    description: "When someone sends a new message in your direct or project channels.",
+  },
   escalation_fired: {
     title: "Escalation fired",
     description: "When an escalation is created for a commitment.",

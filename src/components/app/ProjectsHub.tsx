@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FolderOpen, Plus } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { isCompletedRow } from "@/lib/feed/group-commitments";
 
@@ -19,6 +20,7 @@ type ProjectCard = {
   id: string;
   name: string;
   iconEmoji: string | null | undefined;
+  memberUserIds: string[];
   rollup: ProjectRollup;
   health: number;
   pressure: number;
@@ -47,6 +49,7 @@ function healthToneClass(score: number): string {
 
 export default function ProjectsHub() {
   const { projects, loadingProjects } = useWorkspaceData();
+  const { displayName } = useMemberDirectory();
   const [commitments, setCommitments] = useState<OrgCommitmentRow[]>([]);
 
   useEffect(() => {
@@ -110,6 +113,7 @@ export default function ProjectsHub() {
             id: project.id,
             name: project.name,
             iconEmoji: project.iconEmoji,
+            memberUserIds: project.memberUserIds ?? [],
             rollup,
             health,
             pressure,
@@ -204,7 +208,7 @@ export default function ProjectsHub() {
             <li key={project.id}>
               <Link
                 href={`/projects/${project.id}`}
-                className="grid grid-cols-1 gap-[var(--r5-space-2)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover sm:grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(120px,1fr)] sm:items-center sm:gap-[var(--r5-space-3)]"
+                className="grid grid-cols-1 gap-[var(--r5-space-2)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover sm:grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(88px,0.7fr)_minmax(120px,1fr)] sm:items-center sm:gap-[var(--r5-space-3)]"
               >
                 <span className="min-w-0 flex items-center gap-[var(--r5-space-2)]">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
@@ -224,6 +228,26 @@ export default function ProjectsHub() {
                 </span>
 
                 <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary sm:text-right">{fmtDate(rollup.lastUpdated)}</span>
+                <span className="flex items-center justify-start gap-1 sm:justify-end">
+                  {project.memberUserIds.slice(0, 3).map((memberId) => {
+                    const label = displayName(memberId, undefined, "You");
+                    const initials = label
+                      .split(" ")
+                      .filter(Boolean)
+                      .slice(0, 2)
+                      .map((part) => part[0]?.toUpperCase() ?? "")
+                      .join("");
+                    return (
+                      <span
+                        key={`${project.id}-${memberId}`}
+                        title={label}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 text-[10px] font-semibold text-r5-text-secondary"
+                      >
+                        {initials || "•"}
+                      </span>
+                    );
+                  })}
+                </span>
                 <span className={`text-[12px] font-semibold sm:text-right ${healthToneClass(project.health)}`}>Health {project.health}%</span>
               </Link>
             </li>

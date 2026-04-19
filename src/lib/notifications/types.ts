@@ -2,6 +2,7 @@ export const NOTIFICATION_TYPES = [
   "commitment_assigned",
   "commitment_due_soon",
   "commitment_overdue",
+  "chat_message",
   "escalation_fired",
   "escalation_escalated",
   "payment_failed",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X, ListChecks, LayoutGrid, FolderOpen, BarChart3, Gauge, LineChart, FileBarChart, AlertTriangle, Users, Palette, LifeBuoy, Settings, CreditCard } from "lucide-react";
+import { X, ListChecks, LayoutGrid, FolderOpen, MessageSquare, BarChart3, Gauge, LineChart, FileBarChart, AlertTriangle, Users, Palette, LifeBuoy, Settings, CreditCard } from "lucide-react";
 
 type WorkspaceMobileSidebarProps = {
   open: boolean;
@@ -16,12 +16,13 @@ const NAV_SECTIONS = [
       { href: "/feed", label: "Feed", icon: ListChecks },
       { href: "/desk", label: "Capture", icon: LayoutGrid },
       { href: "/projects", label: "Projects", icon: FolderOpen },
+      { href: "/workspace/chat", label: "Chat", icon: MessageSquare },
     ],
   },
   {
     title: "Operations",
     items: [
-      { href: "/overview", label: "Leadership", icon: BarChart3 },
+      { href: "/leadership", label: "Leadership", icon: BarChart3 },
       { href: "/workspace/dashboard", label: "Execution", icon: Gauge },
       { href: "/team-insights", label: "Team insights", icon: LineChart },
       { href: "/reports", label: "Reports", icon: FileBarChart },
@@ -31,7 +32,7 @@ const NAV_SECTIONS = [
   {
     title: "Account",
     items: [
-      { href: "/workspace/team", label: "Team", icon: Users },
+      { href: "/workspace/organization", label: "Organization", icon: Users },
       { href: "/workspace/customize", label: "Customize", icon: Palette },
       { href: "/workspace/help", label: "Help", icon: LifeBuoy },
       { href: "/settings", label: "Settings", icon: Settings },

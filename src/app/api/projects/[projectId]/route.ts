@@ -10,6 +10,7 @@ import {
   listProjectsForUser,
   updateProjectForUser,
 } from "@/lib/workspace/store";
+import { listProjectMemberIds, replaceProjectMembers } from "@/lib/workspace/project-members";
 import { saveProjectBackupForUser } from "@/lib/workspace/project-backup";
 import {
   enforceRateLimits,
@@ -26,6 +27,7 @@ const projectPatchSchema = z
   .object({
     name: projectNameSchema.optional(),
     iconEmoji: z.union([iconEmojiSchema, z.null()]).optional(),
+    memberUserIds: z.array(z.string().min(1)).max(24).optional(),
   })
   .strict();
 
@@ -72,7 +74,10 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json({
-      project: detail.project,
+      project: {
+        ...detail.project,
+        memberUserIds: await listProjectMemberIds(projectId),
+      },
       extractions: detail.extractions,
     });
   } catch (e) {
@@ -117,21 +122,35 @@ export async function PATCH(
   if (!parsed.ok) return parsed.response;
   const patch = parsed.data;
 
-  if (patch.name === undefined && patch.iconEmoji === undefined) {
+  if (
+    patch.name === undefined &&
+    patch.iconEmoji === undefined &&
+    patch.memberUserIds === undefined
+  ) {
     return NextResponse.json(
-      { error: "Provide name and/or iconEmoji" },
+      { error: "Provide name, iconEmoji, and/or memberUserIds" },
       { status: 400 }
     );
   }
 
   try {
-    const project = await updateProjectForUser(userId, projectId, patch);
+    const project = await updateProjectForUser(userId, projectId, {
+      name: patch.name,
+      iconEmoji: patch.iconEmoji,
+    });
     if (!project) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    let memberUserIds = await listProjectMemberIds(projectId);
+    if (patch.memberUserIds) {
+      memberUserIds = await replaceProjectMembers(projectId, [
+        project.clerkUserId,
+        ...patch.memberUserIds,
+      ]);
+    }
     const latest = await listProjectsForUser(userId);
     await saveProjectBackupForUser(userId, latest);
-    return NextResponse.json({ project });
+    return NextResponse.json({ project: { ...project, memberUserIds } });
   } catch (e) {
     if (e instanceof Error && e.message === "INVALID_NAME") {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });

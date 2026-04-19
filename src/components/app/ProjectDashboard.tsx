@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Commitment } from "@/lib/commitment-types";
 import type { Project } from "@/lib/types";
+import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 
 type Props = { projectId: string };
 
@@ -35,6 +36,7 @@ function statusTone(status: Commitment["status"]): string {
 }
 
 type GroupKey = "overdue" | "at_risk" | "on_track" | "completed";
+type ProjectTab = "overview" | "commitments" | "activity" | "members" | "chat";
 const GROUP_ORDER: GroupKey[] = ["overdue", "at_risk", "on_track", "completed"];
 const GROUP_LABEL: Record<GroupKey, string> = {
   overdue: "OVERDUE",
@@ -60,9 +62,11 @@ function timeAgo(iso: string): string {
 
 export default function ProjectDashboard({ projectId }: Props) {
   const router = useRouter();
+  const { displayName } = useMemberDirectory();
   const [project, setProject] = useState<Project | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<ProjectTab>("overview");
 
   useEffect(() => {
     let cancelled = false;
@@ -165,12 +169,52 @@ export default function ProjectDashboard({ projectId }: Props) {
 
   return (
     <div className="space-y-[var(--r5-space-5)]">
+      <nav className="flex flex-wrap gap-2 rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/70 bg-r5-surface-secondary/25 p-2">
+        {(
+          [
+            ["overview", "Overview"],
+            ["commitments", "Commitments"],
+            ["activity", "Activity"],
+            ["members", "Members"],
+            ["chat", "Chat"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={`min-h-10 rounded-lg px-3 text-[13px] font-medium transition ${
+              tab === value
+                ? "bg-r5-surface-hover text-r5-text-primary"
+                : "text-r5-text-secondary hover:bg-r5-surface-hover/60 hover:text-r5-text-primary"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+
       <header className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-4)]">
         <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">Project</p>
         <h1 className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-heading)] font-semibold text-r5-text-primary">{project.name}</h1>
         <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-body)] text-r5-text-secondary">
           {commitments.length} commitments · <span className="text-r5-status-overdue">{summary.overdue} overdue</span> · <span className="text-r5-status-at-risk">{summary.atRisk} at risk</span> · <span className="text-r5-status-completed">{summary.onTrack} on track</span>
         </p>
+        {project.memberUserIds && project.memberUserIds.length > 0 ? (
+          <div className="mt-[var(--r5-space-3)] flex flex-wrap items-center gap-2">
+            {project.memberUserIds.slice(0, 8).map((memberId) => {
+              const label = displayName(memberId, undefined, "You");
+              return (
+                <span
+                  key={`${project.id}-${memberId}`}
+                  className="inline-flex min-h-8 items-center rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 px-3 text-[12px] text-r5-text-secondary"
+                >
+                  {label}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
         <div className="mt-[var(--r5-space-3)]">
           <button
             type="button"
@@ -182,7 +226,47 @@ export default function ProjectDashboard({ projectId }: Props) {
         </div>
       </header>
 
-      {sorted.length === 0 ? (
+      {tab === "members" ? (
+        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">Assigned members</h2>
+          {project.memberUserIds && project.memberUserIds.length > 0 ? (
+            <ul className="mt-[var(--r5-space-3)] space-y-2">
+              {project.memberUserIds.map((memberId) => (
+                <li
+                  key={memberId}
+                  className="rounded-lg border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2 text-[13px] text-r5-text-secondary"
+                >
+                  {displayName(memberId, undefined, "You")}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-[var(--r5-space-3)] text-[13px] text-r5-text-secondary">
+              No members assigned yet.
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      {tab === "chat" ? (
+        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">Project channel</h2>
+          <p className="mt-[var(--r5-space-2)] text-[13px] text-r5-text-secondary">
+            Every project has a shared channel in Team Chat for decisions, follow-ups, and mentions.
+          </p>
+          <div className="mt-[var(--r5-space-3)] flex gap-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("route5:chat-open"))}
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
+            >
+              Open project chat
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {(tab === "overview" || tab === "commitments") && (sorted.length === 0 ? (
         <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-5)] text-[length:var(--r5-font-subheading)] text-r5-text-secondary">
           No commitments in this project yet.
         </div>
@@ -223,9 +307,9 @@ export default function ProjectDashboard({ projectId }: Props) {
             );
           })}
         </div>
-      )}
+      ))}
 
-      {activityRows.length > 0 ? (
+      {(tab === "overview" || tab === "activity") && activityRows.length > 0 ? (
         <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
           <h2 className="text-[14px] font-semibold text-r5-text-primary">Project activity</h2>
           <ul className="mt-[var(--r5-space-2)] space-y-[var(--r5-space-2)]">

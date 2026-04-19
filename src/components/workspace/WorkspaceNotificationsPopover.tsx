@@ -16,6 +16,7 @@ import {
   Hourglass,
   Info,
   Mail,
+  MessageSquare,
   UserPlus,
   X,
   XCircle,
@@ -68,6 +69,8 @@ function iconForType(t: NotificationType): LucideIcon {
       return Clock;
     case "commitment_overdue":
       return AlertCircle;
+    case "chat_message":
+      return MessageSquare;
     case "escalation_fired":
       return AlertTriangle;
     case "escalation_escalated":
@@ -104,6 +107,8 @@ function resolveNotificationHref(n: OrgNotificationRow): string | null {
     case "team_invited":
       if (typeof m.signupUrl === "string" && m.signupUrl.length > 0) return m.signupUrl;
       return "/settings";
+    case "chat_message":
+      return "/workspace/chat";
     default:
       break;
   }

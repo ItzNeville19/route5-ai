@@ -227,7 +227,7 @@ export function buildPaletteItems(params: {
   const peopleItems: PaletteItem[] = people.map((p) => ({
     id: `person-${p.id}`,
     label: p.name,
-    href: "/workspace/team",
+    href: "/workspace/organization",
     description: p.email ? `Owner · ${p.email}` : "Owner",
     keywords: ["owner", "person", "assignee", p.name.toLowerCase(), (p.email ?? "").toLowerCase()],
     section: "account",
@@ -275,7 +275,7 @@ export function buildPaletteItems(params: {
     {
       id: "workspace-team",
       label: "Team",
-      href: "/workspace/team",
+      href: "/workspace/organization",
       description: "Org switcher & people who own commitments",
       keywords: ["team", "collaborators", "people", "members", "clerk", "organization"],
       section: "agent",
