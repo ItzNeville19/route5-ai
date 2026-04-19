@@ -329,6 +329,12 @@ export function CommandPaletteProvider({
     setSelectedIndex(0);
   }, []);
 
+  useEffect(() => {
+    const onExternalClose = () => close();
+    window.addEventListener("route5:palette-close", onExternalClose);
+    return () => window.removeEventListener("route5:palette-close", onExternalClose);
+  }, [close]);
+
   const openPalette = useCallback(() => setOpen(true), []);
   const toggle = useCallback(() => setOpen((o) => !o), []);
 

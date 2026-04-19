@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { MessageSquare, Search, Send, Users, X } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
 type ChatChannel = {
   id: string;
@@ -74,6 +75,7 @@ export default function WorkspaceChatPanel() {
   const [groupTitle, setGroupTitle] = useState("");
   const [groupMemberIds, setGroupMemberIds] = useState<string[]>([]);
   const { displayName: memberName } = useMemberDirectory();
+  const { pushToast } = useWorkspaceExperience();
 
   const loadChannels = useCallback(async () => {
     if (!userId) return;
@@ -224,38 +226,59 @@ export default function WorkspaceChatPanel() {
   async function sendMessage() {
     if (!selectedChannelId || (!composer.trim() && pendingAttachments.length === 0)) return;
     const body = composer;
+    const attachmentsSnapshot = pendingAttachments;
     setComposer("");
-    await fetch("/api/chat/messages", {
+    setPendingAttachments([]);
+    const res = await fetch("/api/chat/messages", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
       body: JSON.stringify({
         channelId: selectedChannelId,
         body,
-        attachments: pendingAttachments,
+        attachments: attachmentsSnapshot,
       }),
     });
-    setPendingAttachments([]);
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      pushToast(data.error ?? "Message could not be sent.", "error");
+      setComposer(body);
+      setPendingAttachments(attachmentsSnapshot);
+      return;
+    }
     await loadMessages(selectedChannelId);
     await loadChannels();
   }
 
   async function createDirect() {
-    if (!directTarget) return;
+    if (!directTarget) {
+      pushToast("Add teammates in Organization first, or pick someone from the list.", "info");
+      return;
+    }
     const res = await fetch("/api/chat/channels", {
       method: "POST",
       headers: { "content-type": "application/json" },
       credentials: "same-origin",
       body: JSON.stringify({ type: "direct", targetUserId: directTarget }),
     });
-    if (!res.ok) return;
-    const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel };
+    const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel; error?: string };
+    if (!res.ok) {
+      pushToast(data.error ?? "Could not open DM.", "error");
+      return;
+    }
     await loadChannels();
     if (data.channel?.id) setSelectedChannelId(data.channel.id);
   }
 
   async function createGroup() {
-    if (!groupTitle.trim() || groupMemberIds.length === 0) return;
+    if (!groupTitle.trim()) {
+      pushToast("Enter a group name (e.g. Marketing, HR).", "info");
+      return;
+    }
+    if (groupMemberIds.length === 0) {
+      pushToast("Select at least one teammate for the group.", "info");
+      return;
+    }
     const res = await fetch("/api/chat/channels", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -266,8 +289,11 @@ export default function WorkspaceChatPanel() {
         memberUserIds: groupMemberIds,
       }),
     });
-    if (!res.ok) return;
-    const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel };
+    const data = (await res.json().catch(() => ({}))) as { channel?: ChatChannel; error?: string };
+    if (!res.ok) {
+      pushToast(data.error ?? "Could not create group.", "error");
+      return;
+    }
     await loadChannels();
     if (data.channel?.id) {
       setSelectedChannelId(data.channel.id);
@@ -312,7 +338,11 @@ export default function WorkspaceChatPanel() {
                 <header className="flex items-center justify-between border-b border-r5-border-subtle px-4 py-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-r5-text-primary">Team chat</p>
-                    <p className="text-xs text-r5-text-secondary">Direct messages and project channels</p>
+                    <p className="text-xs text-r5-text-secondary">
+                      Each project has a channel automatically. Use <span className="font-medium">New DM</span>{" "}
+                      for 1:1 and <span className="font-medium">Create group</span> for teams (e.g. Marketing,
+                      HR).
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -446,7 +476,7 @@ export default function WorkspaceChatPanel() {
                     <div className="border-b border-r5-border-subtle px-4 py-3">
                       <p className="text-sm font-semibold text-r5-text-primary">
                         {selectedChannel
-                          ? selectedChannel.type === "project"
+                          ? selectedChannel.type === "project" || selectedChannel.type === "group"
                             ? `# ${selectedChannel.title}`
                             : memberName(dmPeerId(selectedChannel.title, userId) ?? "", userId, displayName)
                           : "Select a channel"}

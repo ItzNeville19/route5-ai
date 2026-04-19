@@ -274,6 +274,8 @@ export const en: Record<string, string> = {
   "modal.newProject.continue": "Continue",
   "modal.newProject.creating": "Creating…",
   "modal.newProject.create": "Create project",
+  "modal.newProject.errorNameRequired": "Enter a project name.",
+  "modal.newProject.previewNeedName": "Type a name above — required to create",
   "modal.newProject.errorCreate": "Could not create project.",
   "modal.newProject.projectLimitDefault": "Project limit reached.",
   "modal.newProject.errorLimit": "{error} Upgrade on Plans & billing for higher limits.",

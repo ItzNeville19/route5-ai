@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/require-user";
 import { createDirectChannel, createGroupChannel, listChannelsForUser } from "@/lib/chat/store";
+import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +41,18 @@ export async function POST(req: Request) {
     channel = await createDirectChannel(auth.userId, parsed.data.targetUserId ?? "");
   }
   if (!channel) {
-    return NextResponse.json({ error: "Unable to create channel" }, { status: 400 });
+    let msg = "Unable to create channel.";
+    if (!isSupabaseConfigured() && parsed.data.type === "group") {
+      msg =
+        "Group channels need Supabase. On Vercel, set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (service role), apply migrations from supabase/migrations, then redeploy.";
+    } else if (parsed.data.type === "direct") {
+      msg =
+        "Could not start a DM. Pick someone in your organization, or check that Supabase is configured on the server.";
+    } else if (parsed.data.type === "group") {
+      msg =
+        "Group needs you plus at least one teammate — select members from your organization (invite people under Organization if the list is empty).";
+    }
+    return NextResponse.json({ error: msg }, { status: 400 });
   }
   return NextResponse.json({ channel });
 }

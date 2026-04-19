@@ -20,6 +20,7 @@ import {
   BillingLimitQueryListener,
 } from "@/components/billing/BillingUpgradeProvider";
 import WorkspaceBillingBanner from "@/components/billing/WorkspaceBillingBanner";
+import WorkspacePersistenceBanner from "@/components/workspace/WorkspacePersistenceBanner";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesProvider";
 
@@ -29,6 +30,12 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  useEffect(() => {
+    const closeMobile = () => setMobileSidebarOpen(false);
+    window.addEventListener("route5:mobile-sidebar-close", closeMobile);
+    return () => window.removeEventListener("route5:mobile-sidebar-close", closeMobile);
+  }, []);
+
   useEffect(() => {
     if (!mobileSidebarOpen) return;
     const prev = document.body.style.overflow;
@@ -86,6 +93,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
             }}
           />
           <WorkspaceBillingBanner />
+          <WorkspacePersistenceBanner />
           <main className="min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0">
             <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
               {children}
