@@ -160,6 +160,11 @@ export default function WorkspaceOrganizationClient() {
         <p className="mt-2 text-[14px] text-r5-text-secondary">
           Manage team members, access roles, and shared ownership.
         </p>
+        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-r5-text-tertiary">
+          Invite people by email—they sign in with their own account and join this organization.
+          They inherit this org&apos;s plan and limits (what you see under Billing); admins assign which
+          projects each person can access.
+        </p>
       </div>
 
       <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/40 p-4">

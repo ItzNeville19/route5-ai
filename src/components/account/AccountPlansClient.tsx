@@ -28,6 +28,11 @@ export default function AccountPlansClient() {
         <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
           {tagline}
         </p>
+        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]/90">
+          Invited teammates share this workspace&apos;s plan and limits (the subscription tied to this
+          organization in Supabase). Project access is controlled separately by admins via project
+          membership.
+        </p>
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <a
             href="mailto:neville@rayze.xyz?subject=Route5%20Pricing"

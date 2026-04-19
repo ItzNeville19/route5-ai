@@ -37,26 +37,70 @@ export type OrgInvitationRow = {
 
 const INVITE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
+/**
+ * When a user has both a personal workspace org (organizations.clerk_user_id === user)
+ * and a shared org they joined via invite, billing and limits must follow the **shared**
+ * org (the admin's subscription). Prefer those memberships; otherwise fall back to personal.
+ */
+function pickPrimaryMembershipRow(
+  rows: Array<{
+    org_id: string;
+    user_id: string;
+    role: OrgRole;
+    status: OrgMemberStatus;
+    joined_at: string;
+    org_owner_clerk_id: string;
+  }>,
+  userId: string
+): (typeof rows)[number] | null {
+  if (rows.length === 0) return null;
+  if (rows.length === 1) return rows[0] ?? null;
+  const shared = rows.filter((r) => r.org_owner_clerk_id !== userId);
+  const pool = shared.length > 0 ? shared : rows;
+  return [...pool].sort(
+    (a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime()
+  )[0] ?? null;
+}
+
 export async function getActiveMembershipForUser(userId: string): Promise<OrgMembership | null> {
   if (isSupabaseConfigured()) {
     try {
       const supabase = getServiceClient();
-      const { data, error } = await supabase
+      const { data: memberRows, error: mErr } = await supabase
         .from("org_members")
         .select("org_id, user_id, role, status, joined_at")
         .eq("user_id", userId)
-        .eq("status", "active")
-        .order("joined_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) return null;
+        .eq("status", "active");
+      if (mErr) throw mErr;
+      const members = memberRows ?? [];
+      if (members.length === 0) return null;
+
+      const orgIds = [...new Set(members.map((m) => String(m.org_id)))];
+      const { data: orgRows, error: oErr } = await supabase
+        .from("organizations")
+        .select("id, clerk_user_id")
+        .in("id", orgIds);
+      if (oErr) throw oErr;
+      const ownerByOrgId = new Map(
+        (orgRows ?? []).map((o) => [String(o.id), String(o.clerk_user_id)])
+      );
+
+      const normalized = members.map((row) => ({
+        org_id: String(row.org_id),
+        user_id: String(row.user_id),
+        role: row.role as OrgRole,
+        status: row.status as OrgMemberStatus,
+        joined_at: String(row.joined_at),
+        org_owner_clerk_id: ownerByOrgId.get(String(row.org_id)) ?? userId,
+      }));
+      const picked = pickPrimaryMembershipRow(normalized, userId);
+      if (!picked) return null;
       return {
-        orgId: String(data.org_id),
-        userId: String(data.user_id),
-        role: data.role as OrgRole,
-        status: data.status as OrgMemberStatus,
-        joinedAt: String(data.joined_at),
+        orgId: picked.org_id,
+        userId: picked.user_id,
+        role: picked.role,
+        status: picked.status,
+        joinedAt: picked.joined_at,
       };
     } catch {
       return null;
@@ -64,30 +108,30 @@ export async function getActiveMembershipForUser(userId: string): Promise<OrgMem
   }
 
   const d = getSqliteHandle();
-  const row = d
+  const rows = d
     .prepare(
-      `SELECT org_id, user_id, role, status, joined_at
-       FROM org_members
-       WHERE user_id = ? AND status = 'active'
-       ORDER BY joined_at ASC
-       LIMIT 1`
+      `SELECT om.org_id, om.user_id, om.role, om.status, om.joined_at, o.clerk_user_id AS org_owner_clerk_id
+       FROM org_members om
+       JOIN organizations o ON o.id = om.org_id
+       WHERE om.user_id = ? AND om.status = 'active'
+       ORDER BY om.joined_at ASC`
     )
-    .get(userId) as
-    | {
-        org_id: string;
-        user_id: string;
-        role: OrgRole;
-        status: OrgMemberStatus;
-        joined_at: string;
-      }
-    | undefined;
-  if (!row) return null;
+    .all(userId) as Array<{
+      org_id: string;
+      user_id: string;
+      role: OrgRole;
+      status: OrgMemberStatus;
+      joined_at: string;
+      org_owner_clerk_id: string;
+    }>;
+  const picked = pickPrimaryMembershipRow(rows, userId);
+  if (!picked) return null;
   return {
-    orgId: row.org_id,
-    userId: row.user_id,
-    role: row.role,
-    status: row.status,
-    joinedAt: row.joined_at,
+    orgId: picked.org_id,
+    userId: picked.user_id,
+    role: picked.role,
+    status: picked.status,
+    joinedAt: picked.joined_at,
   };
 }
 

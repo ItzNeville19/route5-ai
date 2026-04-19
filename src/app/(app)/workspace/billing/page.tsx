@@ -30,6 +30,11 @@ export default function WorkspaceBillingPage() {
           Route5 plans are managed directly with our team so your rollout, pricing, and support
           are aligned from day one.
         </p>
+        <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          Everyone in your organization sees the same plan tier here: billing is stored per organization
+          (cloud-backed), and invited members use that org&apos;s subscription—not a separate personal
+          plan.
+        </p>
       </div>
 
       {loadingEntitlements ? (
