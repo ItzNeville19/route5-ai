@@ -288,6 +288,9 @@ export default function CapturePanel({
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  /** Prevents double-submit before React re-renders (rapid clicks / double-tap). */
+  const processingRef = useRef(false);
+  const committingRef = useRef(false);
 
   /* Intentionally depend only on `open`: this resets the panel when it opens; adding user
    * fields would re-trigger on Clerk profile refresh and could wipe in-progress capture. */
@@ -311,6 +314,8 @@ export default function CapturePanel({
     setSelectedCardKeys([]);
     setShowRecent(false);
     setSelectedTemplateKey("");
+    processingRef.current = false;
+    committingRef.current = false;
     if (selfId) {
       const me =
         user?.fullName?.trim() ||
@@ -449,7 +454,8 @@ export default function CapturePanel({
 
   const runProcess = useCallback(async () => {
     const raw = text.trim();
-    if (!raw || phase === "processing") return;
+    if (!raw || phase === "processing" || processingRef.current) return;
+    processingRef.current = true;
     setPhase("processing");
     setProcessNote(null);
     const minDelay = new Promise((r) => window.setTimeout(r, 480));
@@ -542,6 +548,8 @@ export default function CapturePanel({
     } catch {
       setPhase("input");
       setProcessNote("Something went wrong. Check your connection and try again.");
+    } finally {
+      processingRef.current = false;
     }
   }, [text, phase, prefs.extractionProviderId, captureHistory, selfId]);
 
@@ -661,7 +669,8 @@ export default function CapturePanel({
   }, [pushToast, triggerPastePulse]);
 
   const commitAll = useCallback(async () => {
-    if (!selfId || cards.length === 0 || phase === "committing") return;
+    if (!selfId || cards.length === 0 || phase === "committing" || committingRef.current) return;
+    committingRef.current = true;
     setCommitError(null);
     setPhase("committing");
     const items = cards.map((c) => ({
@@ -723,6 +732,8 @@ export default function CapturePanel({
     } catch {
       setPhase("review");
       setCommitError("Network error — try again.");
+    } finally {
+      committingRef.current = false;
     }
   }, [cards, selfId, phase, onClose, showUpgrade]);
 
