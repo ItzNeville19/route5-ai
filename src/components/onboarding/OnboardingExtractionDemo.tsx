@@ -167,7 +167,7 @@ export default function OnboardingExtractionDemo({
         </div>
         <p className={`text-[14px] leading-relaxed ${labelMuted}`}>
           Paste messy notes — Route5 turns them into a summary, decisions, and owned action items. This uses your workspace
-          project and writes a real record you&apos;ll see on Feed.
+          project and writes a real record you&apos;ll see on Desk.
         </p>
 
         <div className="grid grid-cols-3 gap-2">
@@ -307,7 +307,7 @@ export default function OnboardingExtractionDemo({
             </div>
           ) : null}
           <p className={`mt-3 text-[12px] ${labelMuted}`}>
-            Open <span className="font-medium text-zinc-200">Feed</span> to see this alongside the rest of your commitments.
+            Open <span className="font-medium text-zinc-200">Desk</span> to see this alongside the rest of your commitments.
           </p>
         </div>
       ) : null}

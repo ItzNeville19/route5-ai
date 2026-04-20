@@ -17,7 +17,7 @@ function OnboardingShellHeader() {
       <div className="mx-auto flex max-w-[720px] flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <Link
-            href="/feed"
+            href="/desk"
             className="text-[15px] font-semibold tracking-tight text-[var(--workspace-fg)]"
           >
             {PRODUCT_MISSION.name}

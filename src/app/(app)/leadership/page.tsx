@@ -4,10 +4,10 @@ import { requireOrgRole } from "@/lib/workspace/org-members";
 
 export default async function LeadershipAliasPage() {
   const userId = await getAuthUserIdSafe();
-  if (!userId) redirect("/feed");
+  if (!userId) redirect("/desk");
   const access = await requireOrgRole(userId, ["admin"]);
   if (!access.ok) {
-    redirect("/feed");
+    redirect("/desk");
   }
   redirect("/overview");
 }

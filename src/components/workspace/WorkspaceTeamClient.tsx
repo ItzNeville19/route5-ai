@@ -150,7 +150,7 @@ export default function WorkspaceTeamClient() {
   async function copyInviteLink() {
     try {
       const base = typeof window === "undefined" ? "" : window.location.origin;
-      const shareInviteLink = `${base}/sign-up?redirect_url=${encodeURIComponent("/feed")}`;
+      const shareInviteLink = `${base}/sign-up?redirect_url=${encodeURIComponent("/desk")}`;
       await navigator.clipboard.writeText(shareInviteLink);
       setInviteMessage("Invite link copied. Share it with your team.");
     } catch {
@@ -261,10 +261,10 @@ export default function WorkspaceTeamClient() {
 
       <div>
         <Link
-          href="/feed"
+          href="/desk"
           className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary"
         >
-          ← Feed
+          ← Desk
         </Link>
         <p className="mt-[var(--r5-space-3)] text-[length:var(--r5-font-caption)] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
           Collaboration
@@ -288,7 +288,7 @@ export default function WorkspaceTeamClient() {
           <OrganizationSwitcher
             hidePersonal={false}
             afterCreateOrganizationUrl="/workspace/team"
-            afterSelectOrganizationUrl="/feed"
+            afterSelectOrganizationUrl="/desk"
             organizationProfileMode="modal"
             createOrganizationMode="modal"
             appearance={ORG_SWITCHER_APPEARANCE}
@@ -362,7 +362,7 @@ export default function WorkspaceTeamClient() {
           </button>
         </div>
         <p className="mt-1 text-[length:var(--r5-font-body)] text-r5-text-tertiary">
-          Distinct owners in your org commitments (same workspace as Feed and Capture).
+          Distinct owners in your org commitments (same workspace as Desk and Capture).
         </p>
 
         {error ? (
@@ -375,7 +375,7 @@ export default function WorkspaceTeamClient() {
           </div>
         ) : rows.length === 0 ? (
           <p className="mt-4 text-[length:var(--r5-font-body)] text-r5-text-secondary">
-            No owners yet — assign a commitment in Feed or Capture to see people here.
+            No owners yet — assign a commitment on Desk or in Capture to see people here.
           </p>
         ) : (
           <ul className="mt-4 space-y-2">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 import { clerkClient } from "@clerk/nextjs/server";
 import { listAllOrganizationIds, fetchOrganizationName } from "@/lib/dashboard/store";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
@@ -84,13 +85,8 @@ function readWorkspaceTimezoneFromUser(user: { privateMetadata?: unknown }): str
  * Sends once in the 8:00-8:09 local-time window per org owner.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
 
   let sent = 0;
   let skipped = 0;
@@ -171,7 +167,7 @@ export async function GET(req: Request) {
           ? `Most important: ${focus.title} (due ${new Date(focus.deadline).toLocaleDateString()}).`
           : "Most important: No active commitments.",
       ].join("\n");
-      const link = `${appBaseUrl()}/feed?filter=mine`;
+      const link = `${appBaseUrl()}/desk?filter=mine`;
 
       try {
         await sendNotification({

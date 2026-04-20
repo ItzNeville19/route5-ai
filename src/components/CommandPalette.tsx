@@ -130,6 +130,8 @@ function rankPaletteItem(item: PaletteItem, query: string): number {
   const label = item.label.toLowerCase();
   const desc = (item.description ?? "").toLowerCase();
   const keys = (item.keywords ?? []).map((k) => k.toLowerCase());
+  const compactLabel = label.replace(/[\s/_-]+/g, "");
+  const compactQuery = query.replace(/[\s/_-]+/g, "");
   let score = 0;
 
   if (label === query) score += 220;
@@ -143,6 +145,19 @@ function rankPaletteItem(item: PaletteItem, query: string): number {
     if (k === query) score += 72;
     else if (k.startsWith(query)) score += 38;
     else if (k.includes(query)) score += 16;
+  }
+
+  // Tolerate users typing without spaces/punctuation.
+  if (compactQuery.length >= 3 && compactLabel.includes(compactQuery)) {
+    score += 42;
+  }
+  // Lightweight fuzzy path for "close enough" terms in the search bar.
+  if (score === 0 && compactQuery.length >= 3) {
+    let qi = 0;
+    for (let i = 0; i < compactLabel.length && qi < compactQuery.length; i++) {
+      if (compactLabel[i] === compactQuery[qi]) qi += 1;
+    }
+    if (qi === compactQuery.length) score += 20;
   }
 
   if (item.section === "agent") score += 18;
@@ -399,7 +414,7 @@ export function CommandPaletteProvider({
         }, 0);
         return;
       }
-      const href = item.href ?? "/feed";
+      const href = item.href ?? "/desk";
       close();
       const hashIdx = href.indexOf("#");
       window.requestAnimationFrame(() => {
@@ -476,7 +491,7 @@ export function CommandPaletteProvider({
   const agentShell = signedInEffective && inAppShell;
 
   const placeholder = agentShell
-    ? `Search — Feed, Capture, Marketplace, Team, Settings${displayName ? ` · ${displayName}` : ""}…`
+    ? `Search — Desk, Capture, Marketplace, Team, Settings${displayName ? ` · ${displayName}` : ""}…`
     : "Search Route5 — pages, workspace, legal…";
 
   const overlay = (
@@ -578,7 +593,7 @@ export function CommandPaletteProvider({
                       type="button"
                       onClick={() => {
                         setQuery("");
-                        router.push("/feed");
+                        router.push("/desk");
                         close();
                       }}
                       className="rounded-lg border border-black/10 bg-white/80 px-2.5 py-1.5 text-[12px] font-medium text-neutral-700 transition hover:bg-white"

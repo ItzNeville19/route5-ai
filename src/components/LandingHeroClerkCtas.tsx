@@ -10,7 +10,7 @@ export function LandingHeroClerkCtas() {
     <>
       <Show when="signed-in">
         <Link
-          href="/feed"
+          href="/desk"
           className="inline-flex rounded-full border border-violet-500/35 bg-violet-500/10 px-5 py-2.5 text-[13px] font-semibold text-violet-200 transition hover:border-violet-400/50 hover:bg-violet-500/20"
         >
           {t("marketing.hero.openFeed")}

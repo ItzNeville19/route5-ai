@@ -39,7 +39,7 @@ export default function WorkspaceMobileNav() {
       className="fixed inset-x-0 bottom-0 z-40 flex h-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] items-stretch border-t border-r5-border-subtle bg-r5-surface-primary/95 pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
       aria-label="Primary"
     >
-      <LinkTab href="/feed" label="Feed" icon={ListChecks} active={path === "/feed"} />
+      <LinkTab href="/desk" label="Desk" icon={ListChecks} active={path === "/desk" || path === "/feed"} />
       <button
         type="button"
         onClick={() => openCapture()}

@@ -83,7 +83,7 @@ export async function POST(req: Request) {
             currentPlan: plan,
             limitHit: "commitments" as const,
             recommendedPlan: recommendedPlanAfterLimit(plan, "commitments"),
-            message: `You’ve reached the commitment limit for ${planDisplayName(plan)}. Upgrade to add more.`,
+            message: `You’ve reached the commitment limit for ${planDisplayName(plan)}. Contact neville@rayze.xyz to continue.`,
           },
         },
         { status: 409 }

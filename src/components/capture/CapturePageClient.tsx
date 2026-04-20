@@ -46,10 +46,10 @@ export default function CapturePageClient() {
         from anywhere in the workspace.
       </p>
       <Link
-        href="/feed"
+        href="/desk"
         className="mt-10 text-[14px] font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"
       >
-        ← Back to Feed
+        ← Back to Desk
       </Link>
     </div>
   );

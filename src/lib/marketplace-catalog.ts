@@ -542,6 +542,16 @@ export const MARKETPLACE_INSTALLABLE: MarketplaceApp[] = [
     href: "/settings",
     learnMoreUrl: "https://obsidian.md",
   },
+  {
+    id: "supabase-backup",
+    name: "Supabase Backup",
+    subtitle: "Nightly workspace backup sync to Supabase storage for cross-device resilience.",
+    category: "actions",
+    kind: "installable",
+    brandId: "supabase",
+    href: "/settings",
+    manageUrl: "https://supabase.com/dashboard",
+  },
 
   // ── Memory ──
   {

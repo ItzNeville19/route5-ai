@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "Execution you can see — owned commitments, Feed, Desk, and integrations from your data.",
     id: "/",
-    start_url: "/feed",
+    start_url: "/desk",
     scope: "/",
     display: "standalone",
     orientation: "any",
@@ -35,7 +35,7 @@ export default function manifest(): MetadataRoute.Manifest {
       },
     ],
     shortcuts: [
-      { name: "Feed", short_name: "Feed", url: "/feed", description: "Org commitments" },
+      { name: "Desk", short_name: "Desk", url: "/desk", description: "Commitments & execution" },
       { name: "Capture", short_name: "Capture", url: "/capture", description: "Capture workspace" },
       { name: "Leadership", short_name: "Lead", url: "/overview", description: "Execution health" },
       { name: "Projects", short_name: "Projects", url: "/projects", description: "All projects" },

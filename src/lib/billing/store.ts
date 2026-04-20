@@ -72,6 +72,28 @@ export async function getOrganizationPlanColumn(orgId: string): Promise<string> 
   );
 }
 
+export async function getOrganizationCreatedAt(orgId: string): Promise<string | null> {
+  return withSqliteFallback(
+    async () => {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("created_at")
+        .eq("id", orgId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { created_at?: string } | null)?.created_at ?? null;
+    },
+    () => {
+      const d = getSqliteHandle();
+      const row = d.prepare(`SELECT created_at FROM organizations WHERE id = ?`).get(orgId) as
+        | { created_at: string }
+        | undefined;
+      return row?.created_at ?? null;
+    }
+  );
+}
+
 export async function updateOrganizationPlan(orgId: string, plan: string): Promise<void> {
   const now = new Date().toISOString();
   await withSqliteFallback(

@@ -1,11 +1,11 @@
 /** Normalize AI / legacy dashboard shortcut paths to real routes. */
 
 const HREF_FIXUPS: Record<string, string> = {
-  "/dashboard": "/feed",
-  "/workspace/dashboard": "/feed",
-  "/workspace": "/feed",
-  "/home": "/feed",
-  "/projects": "/feed",
+  "/dashboard": "/desk",
+  "/workspace/dashboard": "/desk",
+  "/workspace": "/desk",
+  "/home": "/desk",
+  "/projects": "/projects",
 };
 
 export function normalizeDashboardShortcutHref(href: string): string {

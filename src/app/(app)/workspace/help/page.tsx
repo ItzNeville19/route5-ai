@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 const cards = [
   {
     title: "Interactive onboarding",
-    body: "Organization name, interactive tour, live theme previews, and a guided path to Feed. Replay anytime.",
+    body: "Organization name, interactive tour, live theme previews, and a guided path to Desk. Replay anytime.",
     href: "/onboarding?replay=1",
     icon: PlayCircle,
     cta: "Replay tutorial",
@@ -18,13 +18,13 @@ const cards = [
   {
     title: "Command palette",
     body: "Desk, Leadership (Overview), Marketplace, themes, and dev tools — press ⌘K from anywhere in the app.",
-    href: "/feed",
+    href: "/desk",
     icon: Search,
     cta: "Open app (then ⌘K)",
   },
   {
     title: "Keyboard shortcuts",
-    body: "⌘K palette · ⌘J Capture · / focuses Feed search. More shortcuts ship with each surface.",
+    body: "⌘K palette · ⌘J Capture · / focuses commitment search on Desk. More shortcuts ship with each surface.",
     href: "/docs/product",
     icon: Keyboard,
     cta: "Product docs",
@@ -57,7 +57,7 @@ export default function WorkspaceHelpPage() {
           Learn Route5 in order
         </h1>
         <p className="max-w-2xl text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
-          The sidebar stays minimal on purpose: Feed, Projects, and account. Everything else — Desk, Overview,
+          The sidebar stays minimal on purpose: Desk, Projects, and account. Everything else — Overview,
           Marketplace, customization — is one search away with ⌘K, so your team isn’t buried in links.
         </p>
       </header>

@@ -48,7 +48,7 @@ export async function checkPlanLimit(
         upgrade: buildUpgrade(
           plan,
           "commitments",
-          `You’ve reached the commitment limit for ${planDisplayName(plan)} (${limits.commitments}). Upgrade to add more.`
+          `You’ve reached the commitment limit for ${planDisplayName(plan)} (${limits.commitments}). Contact neville@rayze.xyz to continue.`
         ),
       };
     }
@@ -64,7 +64,7 @@ export async function checkPlanLimit(
         upgrade: buildUpgrade(
           plan,
           "integrations",
-          `You’ve reached the integration limit for ${planDisplayName(plan)}. Upgrade to connect more tools.`
+          `You’ve reached the integration limit for ${planDisplayName(plan)}. Contact neville@rayze.xyz to continue.`
         ),
       };
     }
@@ -79,7 +79,7 @@ export async function checkPlanLimit(
         upgrade: buildUpgrade(
           plan,
           "export",
-          "Dashboard export is not included on Free. Upgrade to export scorecards and PDFs."
+          "Dashboard export is not included on Free. Contact neville@rayze.xyz to continue."
         ),
       };
     }
@@ -103,7 +103,7 @@ export async function checkPlanLimit(
         upgrade: buildUpgrade(
           plan,
           "seats",
-          `You’ve reached the seat limit for ${planDisplayName(plan)}. Upgrade or add seats in Stripe to invite more teammates.`
+          `You’ve reached the seat limit for ${planDisplayName(plan)}. Contact neville@rayze.xyz to continue.`
         ),
       };
     }

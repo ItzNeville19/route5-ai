@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
@@ -27,13 +28,8 @@ async function listTeamsOrgIds(): Promise<string[]> {
 }
 
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
 
   const secretState = process.env.TEAMS_GRAPH_SUBSCRIPTION_SECRET?.trim() ?? "dev-client-state";
   const notificationUrl = `${appBaseUrl()}/api/integrations/teams/webhook`;

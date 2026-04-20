@@ -31,6 +31,7 @@ function resolveClerkProxy(): NextMiddleware {
       "/projects(.*)",
       "/overview(.*)",
       "/feed(.*)",
+      "/desk(.*)",
     ]);
 
     clerkProxyHandler = clerkMiddleware(async (auth, req) => {

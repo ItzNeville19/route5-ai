@@ -80,7 +80,14 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   }, [exp, sidebarHidden]);
 
   useEffect(() => {
-    const core = ["/feed", "/projects", "/overview", "/workspace/escalations", "/workspace/dashboard"];
+    const core = [
+      "/desk",
+      "/feed",
+      "/projects",
+      "/overview",
+      "/workspace/escalations",
+      "/workspace/dashboard",
+    ];
     core.forEach((path) => router.prefetch(path));
   }, [router]);
 
@@ -99,12 +106,14 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <WorkspaceHeader
             onSidebarToggle={() => {
               if (typeof window === "undefined") return;
-              const isTouchFirst = window.matchMedia("(pointer: coarse)").matches;
-              if (isTouchFirst) {
+              const sidebar = document.querySelector<HTMLElement>('[data-route5-sidebar="desktop"]');
+              const desktopSidebarVisible =
+                !!sidebar && window.getComputedStyle(sidebar).display !== "none";
+              const desktopLayout = desktopSidebarVisible || window.innerWidth >= 768;
+              if (!desktopLayout) {
                 setMobileSidebarOpen((v) => !v);
                 return;
               }
-              // Desktop/laptop should always toggle the primary workspace sidebar.
               setMobileSidebarOpen(false);
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}

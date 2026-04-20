@@ -3,7 +3,7 @@
  */
 export function getWorkspacePageTitle(pathname: string): string {
   const p = pathname.split("?")[0] ?? pathname;
-  if (p === "/feed") return "Feed";
+  if (p === "/feed") return "Desk";
   if (p === "/capture") return "Capture";
   if (p === "/overview") return "Leadership";
   if (p === "/desk" || p.startsWith("/desk")) return "Desk";

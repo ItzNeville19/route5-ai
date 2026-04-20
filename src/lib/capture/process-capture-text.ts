@@ -20,6 +20,7 @@ Return ONLY valid JSON with this exact shape:
 
 Rules:
 - title: one clear sentence — what will be done (not "discuss X"), max 180 chars. Reminders-style: actionable, specific.
+- Keep work grouped by assignee: if one owner has multiple instructions in the same context, prefer one commitment title with a concise checklist-style phrase instead of many near-duplicate items.
 - ownerName: person named as responsible, or null if unclear.
 - ownerUserId: if ownerName matches a known org member, include exact user id; else null.
 - deadlineISO: resolve relative dates to real ISO datetime (next Friday, end of month, by Wednesday, EOD Tuesday, this week, ASAP, tomorrow) using TODAY date. If no date is mentioned, use null (the app will apply a default).
@@ -33,7 +34,7 @@ Rules:
 - sourceSnippet: short verbatim phrase from the input supporting this item (<= 240 chars).
 - sourceType: use "manual" when the source is generic notes or unclear; only use meeting/slack/email when cues match.
 - isImplied true only if the commitment is strongly implied but not explicit; include impliedReason.
-- Drop duplicates and vague items. Max 20 commitments. If none, {"commitments":[]}.`;
+- Drop duplicates and vague items. Max 60 commitments. If none, {"commitments":[]}.`;
 
 const aiCommitmentSchema = z.object({
   title: z.string(),

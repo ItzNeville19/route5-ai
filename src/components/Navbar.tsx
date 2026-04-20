@@ -23,6 +23,7 @@ export default function Navbar() {
   const navLinks = useMemo(
     () => [
       { href: "/product", label: t("marketing.nav.product") },
+      { href: "/benefits", label: "Benefits" },
       { href: "/pricing", label: t("marketing.nav.pricing") },
       { href: "/download", label: t("marketing.nav.download") },
       { href: "/contact", label: t("marketing.nav.contact") },
@@ -99,6 +100,7 @@ export default function Navbar() {
 
   function linkIsActive(href: string) {
     if (href === "/product") return pathname === "/product";
+    if (href === "/benefits") return pathname === "/benefits";
     if (href === "/pricing") return pathname === "/pricing";
     if (href === "/download") return pathname === "/download";
     if (href === "/contact") return pathname === "/contact";
@@ -185,7 +187,7 @@ export default function Navbar() {
               </Link>
             )}
             <Link
-              href="/feed"
+              href="/desk"
               onClick={() => setMobileOpen(false)}
               className={mobileLink}
             >
@@ -285,8 +287,8 @@ export default function Navbar() {
               </Link>
             )}
             <Link
-              href="/feed"
-              title="Signed-in workspace — Feed, projects, Overview"
+              href="/desk"
+              title="Signed-in workspace — Desk, projects, overview"
               className={
                 navUsesDarkChrome
                   ? "px-2 py-2 text-[13px] font-medium text-zinc-400 transition-colors hover:text-white"

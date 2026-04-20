@@ -340,7 +340,7 @@ export default function ExecutiveDashboard() {
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Link
-                  href="/feed"
+                  href="/desk"
                   className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
                 >
                   Open feed

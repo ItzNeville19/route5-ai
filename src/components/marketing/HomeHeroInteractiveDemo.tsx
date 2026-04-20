@@ -7,7 +7,7 @@ type TabId = "capture" | "feed" | "leadership";
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "capture", label: "Capture" },
-  { id: "feed", label: "Feed" },
+  { id: "feed", label: "Desk" },
   { id: "leadership", label: "Leadership" },
 ];
 
@@ -36,8 +36,8 @@ export default function HomeHeroInteractiveDemo() {
     return {
       title: "Run your day from one feed.",
       body: "Process commitments by priority and due date, update status, and keep everyone accountable in real time.",
-      ctaHref: "/feed",
-      ctaLabel: "Open Feed",
+      ctaHref: "/desk",
+      ctaLabel: "Open Desk",
       bullets: ["Overdue, Today, This Week grouping", "Inline updates without context switching", "Realtime sync across the team"],
     };
   }, [active]);

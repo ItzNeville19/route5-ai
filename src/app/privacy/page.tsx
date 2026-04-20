@@ -68,7 +68,7 @@ We do not collect or store the contents of your production databases, source cod
 - We conduct periodic security assessments and penetration tests.
 - We apply controls appropriate to our current deployment stage and iterate as we scale.
 
-Despite these measures, no system is completely secure. We encourage you to use strong passwords and to notify us immediately at contact@route5.ai if you suspect any unauthorized access.`,
+Despite these measures, no system is completely secure. We encourage you to use strong passwords and to notify us immediately at neville@rayze.xyz if you suspect any unauthorized access.`,
   },
   {
     title: "7. Your Rights",
@@ -81,7 +81,7 @@ Despite these measures, no system is completely secure. We encourage you to use 
 - **Objection**: Object to processing based on legitimate interests or for direct marketing.
 - **Restriction**: Request that we limit how we use your data pending a dispute.
 
-To exercise these rights, contact us at contact@route5.ai. We will respond within 30 days.`,
+To exercise these rights, contact us at neville@rayze.xyz. We will respond within 30 days.`,
   },
   {
     title: "8. Cookies and Tracking",
@@ -104,7 +104,7 @@ The date at the top of this page indicates when this policy was last updated.`,
     content: `If you have questions about this Privacy Policy or our data practices, please contact us:
 
 **Route5**
-contact@route5.ai`,
+neville@rayze.xyz`,
   },
 ];
 

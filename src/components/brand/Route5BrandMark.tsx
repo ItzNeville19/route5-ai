@@ -8,12 +8,12 @@ type Route5WordmarkLinkProps = {
 };
 
 /** Text-only wordmark — “Route” + gradient “5” (no separate icon tile). */
-export function Route5WordmarkLink({ href = "/feed", className = "" }: Route5WordmarkLinkProps) {
+export function Route5WordmarkLink({ href = "/desk", className = "" }: Route5WordmarkLinkProps) {
   return (
     <Link
       href={href}
       className={`workspace-brand-wordmark group flex min-w-0 items-center ${className}`.trim()}
-      title="Route5 — Feed"
+      title="Route5 — Desk"
     >
       <span className="min-w-0 font-semibold tracking-[-0.05em]">
         <span className="text-r5-text-primary">Route</span>

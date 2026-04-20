@@ -241,11 +241,11 @@ export function buildPaletteItems(params: {
   /** Primary rail lives in the sidebar; these are the “everywhere else” shortcuts. */
   const agent: PaletteItem[] = [
     {
-      id: "feed",
-      label: "Feed",
-      href: "/feed",
-      description: `${who} · every org commitment`,
-      keywords: ["feed", "home", "commitments", "tasks", "tracking", "workspace"],
+      id: "desk-home",
+      label: "Desk",
+      href: "/desk",
+      description: `${who} · commitments and execution (primary workspace)`,
+      keywords: ["desk", "feed", "home", "commitments", "tasks", "tracking", "workspace"],
       section: "agent",
     },
     {

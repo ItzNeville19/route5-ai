@@ -134,7 +134,7 @@ export default function WorkspaceProjectSwitcher() {
   const iconEmoji = stableCurrent?.iconEmoji?.trim();
 
   return (
-    <div ref={rootRef} className="relative min-w-0 max-w-[min(52vw,240px)] shrink-0 sm:max-w-[260px]">
+    <div ref={rootRef} className="relative min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]">
       <button
         type="button"
         onClick={() => {
@@ -146,9 +146,10 @@ export default function WorkspaceProjectSwitcher() {
             return next;
           });
         }}
-        className="flex max-w-[min(100%,240px)] min-h-8 items-center gap-1.5 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 py-1 text-left text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition hover:bg-r5-surface-hover"
+        className="flex max-w-[min(100%,340px)] min-h-8 items-center gap-1.5 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 py-1 text-left text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition hover:bg-r5-surface-hover"
         aria-expanded={open}
         aria-haspopup="listbox"
+        title={label}
       >
         {iconEmoji ? (
           <span className="shrink-0 text-[14px] leading-none" aria-hidden>
@@ -185,6 +186,7 @@ export default function WorkspaceProjectSwitcher() {
                   className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-r5-surface-hover ${
                     active ? "bg-r5-surface-secondary/80 text-r5-text-primary" : "text-r5-text-secondary"
                   }`}
+                  title={p.name}
                 >
                   <span className="w-5 shrink-0 text-center text-[14px]">{p.iconEmoji?.trim() || "◆"}</span>
                   <span className="min-w-0 flex-1 truncate">{p.name}</span>

@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Command, LayoutList, MessageSquarePlus, User
 const SLIDES = [
   {
     id: "feed",
-    title: "Feed — one queue for the org",
+    title: "Commitments — one queue for the org",
     body: "Every commitment rolls up by due date. Filter by owner, search across projects, and expand a row to edit owner, due date, or comments — without leaving the page.",
     icon: LayoutList,
     accent: "from-violet-500/20 to-fuchsia-500/10",
@@ -22,7 +22,7 @@ const SLIDES = [
   {
     id: "desk",
     title: "Desk — clear the oldest work first",
-    body: "Desk surfaces open actions so nothing stalls. Same data as Feed, tuned for triage — use whichever fits how you work.",
+    body: "Desk is your daily execution surface: open actions, filters, and project focus so the oldest risk clears first. Jump here with ⌘K or the sidebar.",
     icon: LayoutList,
     accent: "from-amber-500/15 to-orange-500/10",
   },
@@ -81,10 +81,10 @@ export default function OnboardingProductTour() {
                 </Link>
               ) : null}
               <Link
-                href="/feed"
+                href="/desk"
                 className="inline-flex items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/80 px-4 py-2 text-[length:var(--r5-font-body)] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
               >
-                Open Feed
+                Open Desk
               </Link>
             </div>
           </div>

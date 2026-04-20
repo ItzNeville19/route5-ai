@@ -15,13 +15,13 @@ type Tile = {
   className?: string;
 };
 
-/** Logged-out home: primary workspace surfaces (Feed, Overview, product story). */
+/** Logged-out home: primary workspace surfaces (Desk, Overview, product story). */
 export default function HomeProductShowcase() {
   const { t } = useI18n();
   const reduceMotion = useReducedMotion();
   const tiles: Tile[] = [
     {
-      href: "/feed",
+      href: "/desk",
       icon: <LayoutList className="h-6 w-6" strokeWidth={1.75} aria-hidden />,
       title: t("marketing.showcase.feedTitle"),
       body: t("marketing.showcase.feedBody"),

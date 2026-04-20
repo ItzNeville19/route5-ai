@@ -63,6 +63,33 @@ type ProjectOption = {
 const CAPTURE_HISTORY_KEY = "route5:capture-history-v1";
 const MAX_CAPTURE_HISTORY = 10;
 const MAX_CAPTURE_CHARS = 100_000;
+const CAPTURE_BATCH_SIZE = 25;
+
+function captureDraftKey(userId: string | null): string {
+  return `route5:capture-draft-v1:${userId ?? "anon"}`;
+}
+
+function loadCaptureDraft(userId: string | null): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(captureDraftKey(userId)) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function saveCaptureDraft(userId: string | null, text: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (!text.trim()) {
+      localStorage.removeItem(captureDraftKey(userId));
+      return;
+    }
+    localStorage.setItem(captureDraftKey(userId), text.slice(0, MAX_CAPTURE_CHARS));
+  } catch {
+    /* ignore */
+  }
+}
 
 /** Apple Reminders–style default when the model finds no date: one week out, 5pm local */
 function getDefaultCaptureDeadlineIso(): string {
@@ -262,10 +289,12 @@ export default function CapturePanel({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  /* Intentionally depend only on `open`: this resets the panel when it opens; adding user
+   * fields would re-trigger on Clerk profile refresh and could wipe in-progress capture. */
   useEffect(() => {
     if (!open) return;
     setPhase("input");
-    setText("");
+    setText(loadCaptureDraft(selfId));
     setCards([]);
     setProcessNote(null);
     setCommitError(null);
@@ -292,7 +321,13 @@ export default function CapturePanel({
     }
     const t = window.requestAnimationFrame(() => textareaRef.current?.focus());
     return () => window.cancelAnimationFrame(t);
-  }, [open, selfId, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see comment above
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    saveCaptureDraft(selfId, text);
+  }, [open, selfId, text]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -638,41 +673,48 @@ export default function CapturePanel({
       priority: c.priority,
     }));
     try {
-      const res = await fetch("/api/commitments/batch", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        count?: number;
-        upgrade?: UpgradePromptPayload;
-      };
-      if (res.status === 409 && data.upgrade) {
-        setPhase("review");
-        showUpgrade(data.upgrade);
-        return;
+      let committed = 0;
+      for (let i = 0; i < items.length; i += CAPTURE_BATCH_SIZE) {
+        const chunk = items.slice(i, i + CAPTURE_BATCH_SIZE);
+        const res = await fetch("/api/commitments/batch", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: chunk }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          count?: number;
+          upgrade?: UpgradePromptPayload;
+        };
+        if (res.status === 409 && data.upgrade) {
+          setPhase("review");
+          showUpgrade(data.upgrade);
+          return;
+        }
+        if (!res.ok) {
+          setPhase("review");
+          setCommitError(data.error ?? "Could not save commitments.");
+          return;
+        }
+        committed += data.count ?? chunk.length;
       }
-      if (!res.ok) {
-        setPhase("review");
-        setCommitError(data.error ?? "Could not save commitments.");
-        return;
-      }
-      setSuccessCount(data.count ?? items.length);
+
+      setSuccessCount(committed);
       setCaptureHistory((prev) => {
         if (prev.length === 0) return prev;
         const [first, ...rest] = prev;
         const next = [
           {
             ...first,
-            completedCount: data.count ?? items.length,
+            completedCount: committed,
           },
           ...rest,
         ];
         saveCaptureHistory(next);
         return next;
       });
+      saveCaptureDraft(selfId, "");
       setPhase("success");
       window.dispatchEvent(new Event("route5:commitments-changed"));
       window.setTimeout(() => {
@@ -809,6 +851,7 @@ export default function CapturePanel({
                       type="button"
                       onClick={() => {
                         setText("");
+                        saveCaptureDraft(selfId, "");
                         setCards([]);
                         setSelectedCardKeys([]);
                         setProcessNote(null);
@@ -981,7 +1024,7 @@ export default function CapturePanel({
                         {successCount} commitment{successCount === 1 ? "" : "s"} are now tracked
                       </p>
                       <p className="mt-1 text-[12px] text-r5-text-secondary">
-                        They appear in your Feed in real time.
+                        They appear on your Desk in real time.
                       </p>
                     </motion.div>
                   ) : (
@@ -1414,6 +1457,7 @@ export default function CapturePanel({
                           setPhase("input");
                           setCards([]);
                           setSelectedCardKeys([]);
+                          saveCaptureDraft(selfId, text);
                         }}
                         className="w-full py-2 text-[13px] font-medium text-r5-text-secondary hover:text-r5-text-primary"
                       >

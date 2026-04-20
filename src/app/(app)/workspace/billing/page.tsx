@@ -14,11 +14,11 @@ export default function WorkspaceBillingPage() {
     <div className="mx-auto w-full max-w-[min(100%,840px)] pb-24">
       <div className="mb-8">
         <Link
-          href="/feed"
+          href="/desk"
           className="group inline-flex items-center gap-1 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
           <span className="transition-transform group-hover:-translate-x-0.5">←</span>
-          Feed
+          Desk
         </Link>
         <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
           Workspace
@@ -28,7 +28,7 @@ export default function WorkspaceBillingPage() {
         </h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
           Route5 plans are managed directly with our team so your rollout, pricing, and support
-          are aligned from day one.
+          are aligned from day one. New workspaces include a 3-day cardless trial.
         </p>
         <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           Everyone in your organization sees the same plan tier here: billing is stored per organization
@@ -72,7 +72,8 @@ export default function WorkspaceBillingPage() {
             </h2>
             <p className="mt-2 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
               We work directly with teams on rollout scope, security reviews, and commercial terms.
-              No self-serve checkout flow is used in this workspace.
+              No self-serve checkout flow is used in this workspace. After trial, contact
+              neville@rayze.xyz to continue.
             </p>
           </section>
         </div>

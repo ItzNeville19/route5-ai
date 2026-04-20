@@ -11,6 +11,10 @@ import {
 } from "@/lib/notifications/types";
 
 const COPY: Record<NotificationType, { title: string; description: string }> = {
+  welcome_workspace: {
+    title: "Welcome",
+    description: "One-time welcome when your workspace is ready.",
+  },
   commitment_assigned: {
     title: "Commitment assigned",
     description: "When you are assigned or reassigned an org commitment.",

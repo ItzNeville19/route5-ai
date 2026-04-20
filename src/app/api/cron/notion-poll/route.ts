@@ -1,16 +1,12 @@
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 import { pollAllConnectedNotionOrgs } from "@/lib/integrations/notion-poll";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
   try {
     const r = await pollAllConnectedNotionOrgs();
     return NextResponse.json({ ok: true, ...r });

@@ -49,7 +49,7 @@ function healthToneClass(score: number): string {
 
 export default function ProjectsHub() {
   const { projects, loadingProjects } = useWorkspaceData();
-  const { displayName } = useMemberDirectory();
+  const { displayName, get } = useMemberDirectory();
   const [commitments, setCommitments] = useState<OrgCommitmentRow[]>([]);
 
   useEffect(() => {
@@ -189,7 +189,9 @@ export default function ProjectsHub() {
                 href={`/projects/${project.id}`}
                 className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/80 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
               >
-                <p className="truncate text-[13px] font-medium text-r5-text-primary">{project.name}</p>
+                <p title={project.name} className="truncate text-[13px] font-medium text-r5-text-primary">
+                  {project.name}
+                </p>
                 <p className="mt-[var(--r5-space-1)] text-[11px] text-r5-text-secondary">
                   {project.rollup.overdue} overdue · {project.rollup.atRisk} at risk · health{" "}
                   <span className={healthToneClass(project.health)}>{project.health}%</span>
@@ -214,7 +216,9 @@ export default function ProjectsHub() {
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
                     {project.iconEmoji?.trim() ? project.iconEmoji.trim() : <FolderOpen className="h-5 w-5 text-r5-text-secondary" />}
                   </span>
-                  <span className="truncate text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">{project.name}</span>
+                  <span title={project.name} className="truncate text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
+                    {project.name}
+                  </span>
                 </span>
 
                 <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{rollup.commitmentCount} commitments</span>
@@ -231,6 +235,7 @@ export default function ProjectsHub() {
                 <span className="flex items-center justify-start gap-1 sm:justify-end">
                   {project.memberUserIds.slice(0, 3).map((memberId) => {
                     const label = displayName(memberId, undefined, "You");
+                    const profile = get(memberId);
                     const initials = label
                       .split(" ")
                       .filter(Boolean)
@@ -241,9 +246,14 @@ export default function ProjectsHub() {
                       <span
                         key={`${project.id}-${memberId}`}
                         title={label}
-                        className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 text-[10px] font-semibold text-r5-text-secondary"
+                        className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full border border-r5-border-subtle bg-r5-surface-primary/70 text-[10px] font-semibold text-r5-text-secondary"
                       >
-                        {initials || "•"}
+                        {profile?.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={profile.imageUrl} alt={label} className="h-full w-full object-cover" />
+                        ) : (
+                          initials || "•"
+                        )}
                       </span>
                     );
                   })}

@@ -70,7 +70,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
           className="inline-flex h-[30px] items-center gap-1 rounded-full bg-neutral-100/80 px-3 text-[12px] font-semibold text-neutral-600 transition hover:bg-neutral-200 dark:bg-white/[0.08] dark:text-neutral-300 dark:hover:bg-white/[0.12]"
         >
           <CheckCircle2 className="h-3.5 w-3.5 text-green-500" aria-hidden />
-          Enabled
+          Installed
         </button>
         <AnimatePresence>
           {showUninstall && (
@@ -84,7 +84,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
                 e.preventDefault();
                 e.stopPropagation();
                 exp.uninstallMarketplaceApp(app.id);
-                exp.pushToast(`${app.name} disabled — related defaults reset when they were only used for this listing.`, "info");
+                exp.pushToast(`${app.name} removed from this workspace.`, "info");
                 setShowUninstall(false);
               }}
               className="inline-flex h-[30px] items-center gap-1 rounded-full bg-red-50 px-3 text-[12px] font-semibold text-red-600 transition hover:bg-red-100 dark:bg-red-950/40 dark:text-red-400"
@@ -109,7 +109,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
         setTimeout(() => {
           exp.installMarketplaceApp(app.id);
           exp.pushToast(
-            `${app.name} enabled — opening Settings so you can confirm AI model defaults.`,
+            `${app.name} installed and synced for this workspace.`,
             "success"
           );
           setBusy(false);
@@ -123,7 +123,7 @@ function InstallButton({ app }: { app: MarketplaceApp }) {
       ) : (
         <Download className="h-3.5 w-3.5" aria-hidden />
       )}
-      {busy ? "Enabling…" : "Enable"}
+      {busy ? "Installing…" : "Install"}
     </button>
   );
 }
@@ -365,7 +365,7 @@ export default function MarketplaceBrowse() {
               Marketplace
             </h1>
             <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-neutral-500 dark:text-[var(--ios-secondary)]">
-              Optional engines and provider shortcuts. Enable saves your choice in Settings (AI model defaults) and opens the right section — roadmap entries stay browse-only until shipped.
+              Optional engines and provider shortcuts. Install persists across refresh and devices for this workspace. Roadmap entries stay browse-only until shipped.
             </p>
           </div>
           <div className="hidden flex-wrap items-center justify-end gap-2 sm:flex">

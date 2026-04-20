@@ -137,7 +137,7 @@ export default function WorkspaceShortcuts() {
                   <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[11px] text-amber-100">
                     ⌘K
                   </kbd>{" "}
-                  opens the command palette — jump to Feed, Capture, Marketplace, Team, Settings, and more. Use{" "}
+                  opens the command palette — jump to Desk, Capture, Marketplace, Team, Settings, and more. Use{" "}
                   <kbd className="rounded border border-white/20 bg-black/35 px-1 py-0.5 font-mono text-[10px]">
                     ↑
                   </kbd>{" "}
@@ -153,7 +153,7 @@ export default function WorkspaceShortcuts() {
               </div>
 
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                On Feed
+                On Desk
               </p>
               <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">

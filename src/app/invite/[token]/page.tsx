@@ -92,7 +92,7 @@ export default function InviteAcceptPage() {
         setError(data.error ?? "Could not accept invitation.");
         return;
       }
-      router.replace("/feed?welcome=joined-org");
+      router.replace("/desk?welcome=joined-org");
     } catch {
       setError("Could not accept invitation.");
     } finally {
@@ -127,7 +127,7 @@ export default function InviteAcceptPage() {
                 </p>
               ) : invite.acceptedAt ? (
                 <p className="mt-4 rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">
-                  This invitation was already accepted. Continue to Feed.
+                  This invitation was already accepted. Continue to Desk.
                 </p>
               ) : null}
               <div className="mt-6 flex flex-wrap gap-2">
@@ -157,10 +157,10 @@ export default function InviteAcceptPage() {
                   </button>
                 )}
                 <Link
-                  href="/feed"
+                  href="/desk"
                   className="inline-flex min-h-11 items-center rounded-xl border border-white/20 px-4 text-sm font-medium text-white"
                 >
-                  Go to Feed
+                  Go to Desk
                 </Link>
               </div>
             </>

@@ -71,10 +71,10 @@ export default function HomeExecutionSnapshot() {
 
         <div className="mt-10 flex justify-center">
           <Link
-            href="/feed"
+            href="/desk"
             className="inline-flex items-center gap-2 rounded-full border border-violet-400/35 bg-violet-500/15 px-6 py-3 text-[14px] font-semibold text-violet-100 transition hover:border-violet-300/55 hover:bg-violet-500/25"
           >
-            Open Feed
+            Open Desk
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>

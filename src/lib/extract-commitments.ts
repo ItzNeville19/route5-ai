@@ -30,7 +30,7 @@ const LINE_PATTERNS = [/^(?:[-*•]\s*|TODO:?\s*|ACTION:?\s*)(.+)$/i, /^(?:\d+[.
 const OWNER_ACTION_RE =
   /\b([A-Z][a-z]+)\s+(will|needs to|need to|must|has to|committed to|is going to|said (?:he|she) would)\b/i;
 const OWNER_SPLIT_RE =
-  /(?:^|(?:\band\b)|(?:[—-])|(?:;))\s*([A-Z][a-z]+)\s+(will|needs to|need to|must|has to|committed to|is going to|said (?:he|she) would)\b/gi;
+  /(?:^|(?:[—-])|(?:;))\s*([A-Z][a-z]+)\s+(will|needs to|need to|must|has to|committed to|is going to|said (?:he|she) would)\b/gi;
 const IMPLIED_RE =
   /\b(needs to be done|should be done|must be done|to be completed|needs completion|action item|follow-up)\b/i;
 

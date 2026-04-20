@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 import { broadcastOrgDashboardEvent } from "@/lib/org-commitments/broadcast";
 import { listAllOrganizationIds, upsertExecutionSnapshotForOrg } from "@/lib/dashboard/store";
 
@@ -9,13 +10,8 @@ export const runtime = "nodejs";
  * Set CRON_SECRET and Authorization: Bearer in production.
  */
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
 
   try {
     const orgIds = await listAllOrganizationIds();

@@ -31,7 +31,7 @@ function saveOrgDashboardNote(orgName: string) {
   const org = orgName.trim() || "Your organization";
   saveWorkspacePrefs(
     mergeWorkspacePrefsPatch(loadWorkspacePrefs(), {
-      dashboardCompanyNote: `${org} — commitments tracked in Feed.`,
+      dashboardCompanyNote: `${org} — commitments tracked on Desk.`,
       companyPresetId: "custom",
     })
   );
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
   function finishOnboarding() {
     saveOrgDashboardNote(orgName);
     if (user?.id) markOnboardingComplete(user.id);
-    router.push("/feed");
+    router.push("/desk");
   }
 
   const canContinue = (() => {
@@ -98,10 +98,10 @@ export default function OnboardingPage() {
             ) : null}
           </p>
           <Link
-            href="/feed"
+            href="/desk"
             className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary"
           >
-            Skip to Feed
+            Skip to Desk
           </Link>
         </div>
         <div className="flex items-center gap-[var(--r5-space-2)] overflow-x-auto pb-1" aria-label="Onboarding progress">
@@ -214,14 +214,14 @@ export default function OnboardingPage() {
               <div className="flex flex-wrap gap-[var(--r5-space-2)]">
                 <button
                   type="button"
-                  onClick={() => router.push("/feed")}
+                  onClick={() => router.push("/desk")}
                   className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary"
                 >
-                  Continue to Feed
+                  Continue to Desk
                   <ChevronRight className="h-4 w-4" aria-hidden />
                 </button>
                 <p className="w-full text-[length:var(--r5-font-body)] text-r5-text-tertiary">
-                  On Feed, press{" "}
+                  On Desk, press{" "}
                   <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary/80 px-1 font-mono text-[12px]">
                     ⌘J
                   </kbd>{" "}
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
                 className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-surface-primary"
               >
                 <Check className="h-4 w-4" aria-hidden />
-                Go to Feed
+                Go to Desk
               </button>
             </div>
           ) : null}

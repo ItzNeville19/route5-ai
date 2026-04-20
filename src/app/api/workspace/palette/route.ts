@@ -92,7 +92,7 @@ export async function GET() {
       snippet: r.summarySnippet,
     }));
 
-    const top = commitments.slice(0, 36);
+    const top = commitments.slice(0, 120);
     const details = await Promise.all(
       top.map((c) => getOrgCommitmentDetail(userId, c.id).catch(() => null))
     );

@@ -11,6 +11,7 @@ import {
   AlertOctagon,
   AlertTriangle,
   ArrowUpRight,
+  CheckCircle2,
   ChevronRight,
   CircleUser,
   Clock,
@@ -67,6 +68,47 @@ const FILTER_DEF: { id: DeskFilter; label: string; icon: LucideIcon }[] = [
   { id: "unassigned", label: "No owner", icon: UserX },
 ];
 
+function parseDeskFilterFromSearchParams(sp: { get: (key: string) => string | null }): DeskFilter {
+  const raw = sp.get("filter");
+  if (!raw) return "all";
+  const normalized = raw === "mine" ? "my" : raw;
+  if (
+    normalized === "all" ||
+    normalized === "my" ||
+    normalized === "at_risk" ||
+    normalized === "overdue" ||
+    normalized === "unassigned"
+  ) {
+    return normalized;
+  }
+  return "all";
+}
+
+/** Same query shape as {@link deskUrl}, plus optional `filter` for deep links / email CTAs. */
+function deskHrefWithFilter(projectId: string, filter: DeskFilter): string {
+  const base = deskUrl({ projectId });
+  const u = new URL(base, "https://route5.local");
+  if (filter !== "all") u.searchParams.set("filter", filter);
+  else u.searchParams.delete("filter");
+  return `${u.pathname}${u.search}`;
+}
+
+/** Avoid router/replace loops when query-param ordering differs. */
+function pathAndQueryEquivalent(a: string, b: string): boolean {
+  const [pa, qa] = a.split("?");
+  const [pb, qb] = b.split("?");
+  if (pa !== pb) return false;
+  const spa = new URLSearchParams(qa ?? "");
+  const spb = new URLSearchParams(qb ?? "");
+  const keys = new Set([...spa.keys(), ...spb.keys()]);
+  for (const k of keys) {
+    const av = [...spa.getAll(k)].sort().join("\0");
+    const bv = [...spb.getAll(k)].sort().join("\0");
+    if (av !== bv) return false;
+  }
+  return true;
+}
+
 export default function CommitmentDesk() {
   const { user } = useUser();
   const { pushToast } = useWorkspaceExperience();
@@ -75,7 +117,6 @@ export default function CommitmentDesk() {
   const searchParams = useSearchParams();
 
   const [projectId, setProjectId] = useState("");
-  const [filter, setFilter] = useState<DeskFilter>("all");
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -91,6 +132,27 @@ export default function CommitmentDesk() {
   const [detailNote, setDetailNote] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const filter = useMemo(
+    () => parseDeskFilterFromSearchParams(searchParams),
+    [searchParams]
+  );
+
+  useEffect(() => {
+    const welcome = searchParams.get("welcome");
+    if (welcome !== "joined-org") return;
+    pushToast(
+      "Welcome to your organization. Shared projects and commitments are now available.",
+      "success"
+    );
+    try {
+      const next = new URL(window.location.href);
+      next.searchParams.delete("welcome");
+      window.history.replaceState({}, "", `${next.pathname}${next.search}${next.hash}`);
+    } catch {
+      /* ignore */
+    }
+  }, [searchParams, pushToast]);
+
   useEffect(() => {
     const pid = searchParams.get("projectId");
     if (pid && projects.some((p) => p.id === pid)) {
@@ -105,8 +167,13 @@ export default function CommitmentDesk() {
 
   useEffect(() => {
     if (!projectId) return;
-    router.replace(deskUrl({ projectId }), { scroll: false });
-  }, [projectId, router]);
+    const f = parseDeskFilterFromSearchParams(searchParams);
+    const target = deskHrefWithFilter(projectId, f);
+    if (typeof window === "undefined") return;
+    const cur = `${window.location.pathname}${window.location.search}`;
+    if (pathAndQueryEquivalent(cur, target)) return;
+    router.replace(target, { scroll: false });
+  }, [projectId, searchParams, router]);
 
   const loadCommitments = useCallback(async () => {
     if (!projectId) return;
@@ -277,12 +344,11 @@ export default function CommitmentDesk() {
     });
   }
 
-  async function patchCommitment(partial: Record<string, unknown>) {
-    if (!projectId || !selected) return;
-    setSaving(true);
+  async function patchCommitmentById(id: string, partial: Record<string, unknown>) {
+    if (!projectId) return null;
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/commitments/${selected.id}`,
+        `/api/projects/${projectId}/commitments/${id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -296,12 +362,24 @@ export default function CommitmentDesk() {
       };
       if (!res.ok || !data.commitment) {
         pushToast(data.error ?? "Could not save.", "error");
-        return;
+        return null;
       }
       setCommitments((prev) =>
         prev.map((c) => (c.id === data.commitment!.id ? data.commitment! : c))
       );
       await refreshAll();
+      return data.commitment;
+    } catch {
+      pushToast("Could not save.", "error");
+      return null;
+    }
+  }
+
+  async function patchCommitment(partial: Record<string, unknown>) {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      await patchCommitmentById(selected.id, partial);
     } finally {
       setSaving(false);
     }
@@ -312,6 +390,23 @@ export default function CommitmentDesk() {
     if (!note) return;
     await patchCommitment({ note });
     setDetailNote("");
+  }
+
+  async function completeVisibleCommitments() {
+    const todo = commitments.filter((c) => c.status !== "completed");
+    if (todo.length === 0) {
+      pushToast("Everything in this view is already completed.", "info");
+      return;
+    }
+    setSaving(true);
+    try {
+      for (const row of todo) {
+        await patchCommitmentById(row.id, { status: "completed" });
+      }
+      pushToast(`Marked ${todo.length} commitment${todo.length === 1 ? "" : "s"} complete.`, "success");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const unassignedCount = useMemo(
@@ -490,7 +585,10 @@ export default function CommitmentDesk() {
                   <button
                     key={id}
                     type="button"
-                    onClick={() => setFilter(id)}
+                    onClick={() => {
+                      if (!projectId) return;
+                      router.replace(deskHrefWithFilter(projectId, id), { scroll: false });
+                    }}
                     className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-semibold transition ${
                       on
                         ? "border-[var(--workspace-accent)]/45 bg-[var(--workspace-nav-active)] text-[var(--workspace-fg)] shadow-sm"
@@ -524,6 +622,15 @@ export default function CommitmentDesk() {
                     {loadingList ? "Loading…" : `${commitments.length} in this view`}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  disabled={saving || loadingList || commitments.length === 0}
+                  onClick={() => void completeVisibleCommitments()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/30 hover:bg-[var(--workspace-nav-hover)] disabled:opacity-40"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
+                  Checkmark all
+                </button>
               </div>
               <div className="max-h-[min(68vh,760px)] space-y-2.5 overflow-y-auto p-3 sm:p-4">
                 {!projectId ? (
@@ -652,11 +759,11 @@ export default function CommitmentDesk() {
 
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block text-[11px] font-semibold uppercase text-[var(--workspace-muted-fg)]">
-                      Owner (Clerk id)
+                      Owner ID (advanced)
                       <input
                         className="mt-1.5 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 font-mono text-[11px] text-[var(--workspace-fg)]"
                         value={selected.ownerUserId ?? ""}
-                        placeholder="Empty = unassigned"
+                        placeholder="Leave empty for unassigned"
                         onChange={(e) =>
                           setCommitments((prev) =>
                             prev.map((c) =>
@@ -672,7 +779,7 @@ export default function CommitmentDesk() {
                       />
                     </label>
                     <label className="block text-[11px] font-semibold uppercase text-[var(--workspace-muted-fg)]">
-                      Display name
+                      Owner label
                       <input
                         className="mt-1.5 w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
                         value={selected.ownerDisplayName ?? ""}

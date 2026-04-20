@@ -96,7 +96,7 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
               <SignIn
                 routing="hash"
                 signUpUrl="/sign-up"
-                fallbackRedirectUrl="/feed"
+                fallbackRedirectUrl="/desk"
                 signUpFallbackRedirectUrl="/onboarding"
                 appearance={{
                   ...route5ClerkAppearance,
@@ -140,18 +140,18 @@ function SignedInAppShell({
   const pathname = usePathname();
   const router = useRouter();
 
-  /** Client onboarding route: bounce to Feed when already done (unless replaying tutorial). */
+  /** Client onboarding route: bounce to Desk when already done (unless replaying tutorial). */
   useLayoutEffect(() => {
     if (pathname !== "/onboarding") return;
     const replay =
       typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).get("replay") === "1";
     if (isOnboardingComplete(userId) && !replay) {
-      router.replace("/feed");
+      router.replace("/desk");
     }
   }, [userId, pathname, router]);
 
-  // Keep Feed stable: onboarding is rendered inline in empty states, not as an auto-redirect overlay.
+  // Keep workspace stable: onboarding is rendered inline in empty states, not as an auto-redirect overlay.
 
   useEffect(() => {
     if (typeof window === "undefined") return;

@@ -17,11 +17,11 @@ import {
   LayoutGrid,
   LifeBuoy,
   LineChart,
-  ListChecks,
   MessageSquare,
   Palette,
   Plus,
   Settings,
+  Target,
   Users,
 } from "lucide-react";
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
@@ -119,14 +119,8 @@ export default function WorkspaceSidebar() {
           <div className="space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionWork")}</NavSectionTitle>
             <NavRow
-              href="/feed"
-              active={path === "/feed"}
-              icon={ListChecks}
-              label={t("sidebar.feed")}
-            />
-            <NavRow
               href="/desk"
-              active={path === "/desk"}
+              active={path === "/desk" || path === "/feed"}
               icon={LayoutGrid}
               label={t("sidebar.desk")}
             />
@@ -170,6 +164,12 @@ export default function WorkspaceSidebar() {
               active={path === "/workspace/dashboard"}
               icon={Gauge}
               label={t("sidebar.execution")}
+            />
+            <NavRow
+              href="/workspace/commitments"
+              active={path.startsWith("/workspace/commitments")}
+              icon={Target}
+              label="Commitments tracker"
             />
             <NavRow
               href="/team-insights"

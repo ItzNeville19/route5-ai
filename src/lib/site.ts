@@ -1,5 +1,7 @@
 /** Single source for public contact info (marketing, mailto, copy). */
-export const CONTACT_EMAIL = "contact@route5.ai" as const;
+export const CONTACT_EMAIL = "neville@rayze.xyz" as const;
+export const INSTAGRAM_URL =
+  "https://www.instagram.com/route5.ai?igsh=M2o3c2FoZXdldmM2" as const;
 
 export function mailtoHref(subject: string, body?: string): string {
   const q = new URLSearchParams();

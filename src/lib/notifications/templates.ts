@@ -44,6 +44,14 @@ export function buildNotificationEmailHtml(
   }
 
   switch (type) {
+    case "welcome_workspace": {
+      const ctaUrl = typeof meta.link === "string" ? meta.link : `${base}/desk`;
+      inner += `<div style="margin:14px 0 0;border:1px solid rgba(167,139,250,0.35);background:rgba(167,139,250,0.08);border-radius:12px;padding:12px;">`;
+      inner += `<p style="margin:0;font-size:13px;color:#ddd6fe;">Start in Desk, capture real work, assign owners, and keep execution visible every day.</p>`;
+      inner += `</div>`;
+      inner += primaryCta(ctaUrl, "Open Desk");
+      break;
+    }
     case "commitment_assigned": {
       const deadline = meta.deadline ? String(meta.deadline) : "";
       const priority = meta.priority ? String(meta.priority) : "";

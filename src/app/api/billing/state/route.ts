@@ -6,6 +6,7 @@ import {
   countActiveCommitments,
   countConnectedIntegrations,
   ensureSeatUsageInitialized,
+  getOrganizationCreatedAt,
   getLatestUsageValue,
   getOrgSubscription,
   listOrgInvoices,
@@ -28,6 +29,12 @@ export async function GET() {
     const commitments = await countActiveCommitments(orgId);
     const integrations = await countConnectedIntegrations(orgId);
     const seatsUsed = (await getLatestUsageValue(orgId, "seats")) ?? 1;
+    const orgCreatedAt = await getOrganizationCreatedAt(orgId);
+    const trialEndsAt =
+      orgCreatedAt && Number.isFinite(new Date(orgCreatedAt).getTime())
+        ? new Date(new Date(orgCreatedAt).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        : null;
+    const trialActive = trialEndsAt ? new Date(trialEndsAt).getTime() > Date.now() : false;
 
     const invoices = await listOrgInvoices(orgId);
 
@@ -61,6 +68,11 @@ export async function GET() {
       limits: {
         dashboardExport: limits.dashboardExport,
       },
+      trial: {
+        active: trialActive,
+        endsAt: trialEndsAt,
+        contactRequiredAfterTrial: true,
+      },
       invoices: invoices.map((inv) => ({
         id: inv.id,
         createdAt: inv.createdAt,
@@ -89,6 +101,11 @@ export async function GET() {
         },
         limits: {
           dashboardExport: limits.dashboardExport,
+        },
+        trial: {
+          active: false,
+          endsAt: null,
+          contactRequiredAfterTrial: true,
         },
         invoices: [],
       },

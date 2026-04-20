@@ -54,49 +54,14 @@ function UpgradeModal({
   onClose: () => void;
 }) {
   const titleId = useId();
-  const [annual, setAnnual] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const defaultPlan: "starter" | "growth" =
-    payload.recommendedPlan === "growth" ? "growth" : "starter";
-
-  const [selectedPlan, setSelectedPlan] = useState<"starter" | "growth">(defaultPlan);
-
-  async function startCheckout() {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/billing/create-checkout", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: selectedPlan,
-          billingPeriod: annual ? "annual" : "monthly",
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Could not start checkout.");
-        return;
-      }
-      if (data.url) {
-        window.location.href = data.url;
-      }
-    } catch {
-      setError("Something went wrong. Try again.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const isEnterprise = payload.currentPlan === "enterprise";
 
   return (
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       role="presentation"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget && !busy) onClose();
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-hidden />
@@ -133,7 +98,6 @@ function UpgradeModal({
           </div>
           <button
             type="button"
-            disabled={busy}
             onClick={onClose}
             className="rounded-lg p-1.5 text-[var(--workspace-muted-fg)] transition hover:bg-white/[0.06] hover:text-[var(--workspace-fg)] disabled:opacity-50"
             aria-label="Close"
@@ -144,16 +108,16 @@ function UpgradeModal({
 
         <div className="mt-5 space-y-3 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 p-3 text-[12px] text-[var(--workspace-muted-fg)]">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-            Compare plans
+            Plan model
           </p>
           <div className="grid gap-2 sm:grid-cols-3">
             <div>
               <p className="font-semibold text-[var(--workspace-fg)]">Starter</p>
-              <p className="mt-1">50 commitments · 5 seats · 2 integrations · Export</p>
+              <p className="mt-1">3-day trial baseline (no card) · contact to continue</p>
             </div>
             <div>
               <p className="font-semibold text-[var(--workspace-fg)]">Growth</p>
-              <p className="mt-1">Unlimited commitments · 25 seats · All integrations</p>
+              <p className="mt-1">Higher limits + rollout support via direct contact</p>
             </div>
             <div>
               <p className="font-semibold text-[var(--workspace-fg)]">Enterprise</p>
@@ -161,86 +125,35 @@ function UpgradeModal({
             </div>
           </div>
         </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">Bill yearly</span>
-          <button
-            type="button"
-            onClick={() => setAnnual(!annual)}
-            className={`relative h-7 w-12 rounded-full transition ${annual ? "bg-violet-600" : "bg-[var(--workspace-border)]"}`}
-            aria-pressed={annual}
-            aria-label="Toggle annual billing"
-          >
-            <span
-              className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
-                annual ? "translate-x-5" : ""
-              }`}
-            />
-          </button>
-          <span className="text-[12px] text-emerald-400/90">{annual ? "Save ~20% vs monthly" : ""}</span>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          <p className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">Checkout plan</p>
-          <div className="flex flex-wrap gap-2">
-            {(["starter", "growth"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setSelectedPlan(p)}
-                className={`rounded-xl border px-3 py-2 text-[13px] font-medium transition ${
-                  selectedPlan === p
-                    ? "border-violet-500/50 bg-violet-500/10 text-[var(--workspace-fg)]"
-                    : "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)] hover:border-[var(--workspace-accent)]/35"
-                }`}
-              >
-                {planDisplayName(p)}
-                <span className="ml-2 tabular-nums text-[11px] opacity-80">
-                  {p === "starter"
-                    ? annual
-                      ? "$2,990/yr"
-                      : "$299/mo"
-                    : annual
-                      ? "$7,990/yr"
-                      : "$799/mo"}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {error ? (
-          <p className="mt-3 text-[13px] text-red-400" role="alert">
-            {error}
+        {isEnterprise ? (
+          <p className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-200">
+            Enterprise workspace detected. Upgrade prompts should not block your workflow.
           </p>
         ) : null}
 
         <div className="mt-5 flex flex-wrap justify-end gap-2">
           <button
             type="button"
-            disabled={busy}
             onClick={onClose}
             className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-white/[0.04] disabled:opacity-50"
           >
             Not now
           </button>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void startCheckout()}
-            className="rounded-xl bg-violet-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-violet-500 disabled:opacity-50"
+          <a
+            href="mailto:neville@rayze.xyz?subject=Route5%20Plan%20Support"
+            className="rounded-xl bg-violet-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-violet-500"
           >
-            {busy ? "Redirecting…" : "Upgrade with Stripe"}
-          </button>
+            Contact to Continue
+          </a>
         </div>
 
         <p className="mt-3 text-[11px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          Enterprise?{" "}
+          Support:{" "}
           <a
-            href="mailto:sales@route5.ai?subject=Route5%20Enterprise"
+            href="mailto:neville@rayze.xyz?subject=Route5%20Support"
             className="font-medium text-[var(--workspace-accent)] hover:underline"
           >
-            Contact sales
+            neville@rayze.xyz
           </a>
         </p>
       </div>
@@ -272,6 +185,9 @@ function BillingLimitQuerySync() {
         if (!res.ok || cancelled) return;
         const data = (await res.json()) as { plan?: BillingPlanId };
         const current = data.plan ?? "free";
+        if (current === "enterprise") {
+          return;
+        }
         const hit = lim as UpgradePromptPayload["limitHit"];
         showUpgrade({
           currentPlan: current,

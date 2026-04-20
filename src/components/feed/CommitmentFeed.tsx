@@ -1031,7 +1031,7 @@ export default function CommitmentFeed() {
 
       if (lower === "g") {
         e.preventDefault();
-        window.location.assign("/feed");
+        window.location.assign("/desk");
         return;
       }
       if (lower === "t" && groupMode === "timeline") {
@@ -1841,7 +1841,7 @@ export default function CommitmentFeed() {
               </button>
             </div>
             <ul className="space-y-1 text-[13px] text-r5-text-primary">
-              <li><kbd className="font-mono">F</kbd> Next filter · <kbd className="font-mono">G</kbd> Feed · <kbd className="font-mono">C</kbd> Capture · <kbd className="font-mono">L</kbd> Leadership · <kbd className="font-mono">P</kbd> Projects</li>
+              <li><kbd className="font-mono">F</kbd> Next filter · <kbd className="font-mono">G</kbd> Desk · <kbd className="font-mono">C</kbd> Capture · <kbd className="font-mono">L</kbd> Leadership · <kbd className="font-mono">P</kbd> Projects</li>
               <li><kbd className="font-mono">J / K</kbd> Move row · <kbd className="font-mono">Enter</kbd> Expand</li>
               <li><kbd className="font-mono">E</kbd> Edit · <kbd className="font-mono">X</kbd> Complete · <kbd className="font-mono">R</kbd> Reassign · <kbd className="font-mono">D</kbd> Deadline</li>
               <li><kbd className="font-mono">/</kbd> Search · <kbd className="font-mono">T</kbd> Collapse groups · <kbd className="font-mono">⌘A</kbd> Select all · <kbd className="font-mono">?</kbd> This panel · <kbd className="font-mono">Esc</kbd> Close</li>

@@ -51,9 +51,9 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
             />
           </button>
           <Link
-            href="/feed"
+            href="/desk"
             className="mr-1 inline-flex shrink-0"
-            title="Route5 — Feed"
+            title="Route5 — Desk"
             aria-label="Route5 home"
           >
             <Route5WordmarkInline className="text-[13px]" />

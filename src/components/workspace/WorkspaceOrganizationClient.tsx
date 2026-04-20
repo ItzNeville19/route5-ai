@@ -175,8 +175,8 @@ export default function WorkspaceOrganizationClient() {
   return (
     <div className="mx-auto w-full max-w-[980px] space-y-5">
       <div>
-        <Link href="/feed" className="text-[13px] text-r5-text-secondary hover:text-r5-text-primary">
-          ← Feed
+        <Link href="/desk" className="text-[13px] text-r5-text-secondary hover:text-r5-text-primary">
+          ← Desk
         </Link>
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-r5-text-tertiary">
           Workspace

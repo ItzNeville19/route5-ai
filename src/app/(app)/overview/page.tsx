@@ -227,7 +227,7 @@ export default function LeadershipPage() {
           </div>
           <div className="flex items-center gap-[var(--r5-space-2)]">
             <Link
-              href="/feed"
+              href="/desk"
               className="rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/50 px-[var(--r5-space-3)] py-[var(--r5-space-1)] text-[12px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
             >
               Open feed

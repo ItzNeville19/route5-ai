@@ -85,25 +85,6 @@ export async function collectWeeklySummaryRecipients(orgId: string): Promise<str
   return [...new Set([...base, ...extra])];
 }
 
-function emailBody(params: {
-  title: string;
-  deadline: string;
-  severity: OrgEscalationSeverity;
-  commitmentId: string;
-}): string {
-  return [
-    "Action is required on a Route5 org commitment.",
-    "",
-    `Title: ${params.title}`,
-    `Deadline: ${formatDueDate(params.deadline)}`,
-    `Severity: ${params.severity}`,
-    "",
-    `Open commitment: ${commitmentLink(params.commitmentId)}`,
-    "",
-    "Please update the commitment status or complete the work before the deadline.",
-  ].join("\n");
-}
-
 function subjectForSeverity(
   severity: OrgEscalationSeverity,
   title: string,

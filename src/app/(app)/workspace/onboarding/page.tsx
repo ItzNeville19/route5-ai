@@ -15,7 +15,7 @@ const STEPS = [
   { id: "invite_team", title: "Team" },
   { id: "connect_integration", title: "Integrations" },
   { id: "first_commitment", title: "Capture" },
-  { id: "complete", title: "Feed" },
+  { id: "complete", title: "Desk" },
 ] as const;
 
 type IngestInfo = { webhookUrl?: string };
@@ -229,7 +229,7 @@ export default function WorkspaceOnboardingPage() {
           Route5 setup studio
           </p>
           <Link
-            href="/feed"
+            href="/desk"
             className="text-[12px] font-medium text-[var(--workspace-muted-fg)] underline-offset-2 transition hover:text-[var(--workspace-fg)] hover:underline"
           >
             Skip setup
@@ -272,8 +272,8 @@ export default function WorkspaceOnboardingPage() {
           </div>
           <h1 className="mt-2 text-[20px] font-semibold text-[var(--workspace-fg)]">Welcome, {first}</h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Name your organization and choose how you&apos;ll use Route5. This powers defaults and labels across Desk and
-            Feed.
+            Name your organization and choose how you&apos;ll use Route5. This powers defaults and labels across your
+            workspace.
           </p>
           <label className="mt-4 block text-[12px] font-medium text-[var(--workspace-muted-fg)]">
             Organization name
@@ -438,7 +438,7 @@ export default function WorkspaceOnboardingPage() {
           </p>
           <h2 className="mt-2 text-[18px] font-semibold text-[var(--workspace-fg)]">Paste notes and capture your first commitments</h2>
           <p className="mt-2 text-[14px] text-[var(--workspace-muted-fg)]">
-            This uses the same live flow as Capture and Feed. Once this succeeds, you&apos;re done.
+            This uses the same live flow as Capture and Desk. Once this succeeds, you&apos;re done.
           </p>
           <OnboardingExtractionDemo
             variant="workspace"
@@ -458,7 +458,7 @@ export default function WorkspaceOnboardingPage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-400" />
           <h2 className="mt-4 text-[18px] font-semibold text-[var(--workspace-fg)]">You&apos;re set up</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            You now have a configured workspace with integrations and real commitments in Feed. Press{" "}
+            You now have a configured workspace with integrations and real commitments on Desk. Press{" "}
             <kbd className="rounded border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-1.5 py-0.5 font-mono text-[12px]">
               ⌘J
             </kbd>{" "}
@@ -470,7 +470,7 @@ export default function WorkspaceOnboardingPage() {
             className="mt-6 w-full rounded-xl bg-[var(--workspace-accent)] px-4 py-3 text-[14px] font-semibold text-[var(--workspace-accent-fg)]"
             onClick={() => void finish()}
           >
-            Go to Feed
+            Go to Desk
           </button>
         </motion.section>
       ) : null}

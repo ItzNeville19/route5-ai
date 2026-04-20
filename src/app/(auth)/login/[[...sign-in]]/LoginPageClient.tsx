@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import { FEED_HREF } from "@/lib/app-routes";
+import { WORKSPACE_HOME_HREF } from "@/lib/app-routes";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
 
@@ -68,7 +68,7 @@ function LoginWithClerk() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? FEED_HREF : "/onboarding";
+    const next = isOnboardingComplete(userId) ? WORKSPACE_HOME_HREF : "/onboarding";
     router.replace(next);
   }, [isLoaded, userId, router]);
 
@@ -125,8 +125,8 @@ function LoginWithClerk() {
           <SignIn
             routing="hash"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl={FEED_HREF}
-            signUpFallbackRedirectUrl={FEED_HREF}
+            fallbackRedirectUrl={WORKSPACE_HOME_HREF}
+            signUpFallbackRedirectUrl={WORKSPACE_HOME_HREF}
             appearance={{
               ...route5ClerkAppearance,
               elements: {

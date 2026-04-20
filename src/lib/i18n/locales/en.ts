@@ -88,8 +88,8 @@ export const en: Record<string, string> = {
   "overview.openActionsStrip.badge": "Commitments",
   "overview.openActionsStrip.title": "{count} unfinished action(s) in queue",
   "overview.openActionsStrip.lead":
-    "Oldest commitments surface first on Feed — complete them there or in the project.",
-  "overview.openActionsStrip.cta": "Go to Feed",
+    "Oldest commitments surface first on Desk — complete them there or in the project.",
+  "overview.openActionsStrip.cta": "Go to Desk",
   "overview.openActionsStrip.caughtUp":
     "No open actions in your queue — checklists are clear. Capture the next client or program thread when you're ready.",
 
@@ -290,12 +290,12 @@ export const en: Record<string, string> = {
     "Route5.ai sits above the tools you already use. The MVP: paste meeting notes and messages, capture commitments, assign owners, and track accountability on Overview. Roadmap: automatic ingestion, agents, and org-wide execution health.",
   "marketing.hero.mono": "route5.ai · persistent accountability state",
   "marketing.hero.cardBody":
-    "Not a task manager or summarizer—the layer that holds persistent state: who owns what, what is at risk, and whether work moved. Feed, Capture, and Overview today; connectors expand from there.",
-  "marketing.hero.signedInTitle": "Signed in — Feed for commitments, Capture for raw text, Overview for health.",
+    "Not a task manager or summarizer—the layer that holds persistent state: who owns what, what is at risk, and whether work moved. Desk, Capture, and Overview today; connectors expand from there.",
+  "marketing.hero.signedInTitle": "Signed in — Desk for commitments, Capture for raw text, Overview for health.",
   "marketing.hero.signedInBody":
     "Projects, captured decisions, and commitments live in your workspace data—expand with connectors as you wire them.",
-  "marketing.hero.openDesk": "Open Feed",
-  "marketing.hero.openFeed": "Open Feed",
+  "marketing.hero.openDesk": "Open Desk",
+  "marketing.hero.openFeed": "Open Desk",
   "marketing.hero.marketplace": "Connections",
   "marketing.hero.signedOutTitle": "One flow: sign in → project → capture → process → prove completion.",
   "marketing.hero.signedOutBody": "Structured commitments, owned actions, and metrics from data you saved — not vibes.",
@@ -311,7 +311,7 @@ export const en: Record<string, string> = {
 
   "marketing.hero.previewKicker": "Communication in · execution out",
   "marketing.hero.previewAria":
-    "Preview of inputs from meetings, Slack, email, and calendar flowing through Route5 to Feed, Capture, Overview, and connectors.",
+    "Preview of inputs from meetings, Slack, email, and calendar flowing through Route5 to Desk, Capture, Overview, and connectors.",
   "marketing.hero.previewMeetings": "Meetings",
   "marketing.hero.previewSlack": "Slack",
   "marketing.hero.previewEmail": "Email",

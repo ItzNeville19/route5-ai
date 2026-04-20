@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireCronAuth } from "@/lib/cron-auth";
 import { listAllOrganizationIds, fetchOrganizationName } from "@/lib/dashboard/store";
 import { collectWeeklySummaryRecipients } from "@/lib/escalations/notify";
 import { generateWeeklyExecutiveSummaryHtml } from "@/lib/org-commitments/weekly-executive-summary";
@@ -7,13 +8,8 @@ import { sendNotificationToEmail } from "@/lib/notifications/service";
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  if (secret) {
-    const auth = req.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  }
+  const denied = requireCronAuth(req);
+  if (denied) return denied;
 
   let sent = 0;
   let skipped = 0;

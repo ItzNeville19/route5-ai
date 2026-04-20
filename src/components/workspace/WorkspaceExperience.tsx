@@ -72,6 +72,15 @@ export function WorkspaceExperienceProvider({
   const [prefs, setPrefsState] = useState<WorkspacePrefsV1>(() => loadWorkspacePrefs());
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [remoteReady, setRemoteReady] = useState(false);
+  const persistPrefsPatchNow = useCallback((patch: Partial<WorkspacePrefsV1>) => {
+    void fetch("/api/workspace/prefs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ prefs: patch }),
+    });
+  }, []);
+
   const appearanceTick = useAlignedMinuteTick();
 
   useEffect(() => {
@@ -196,13 +205,15 @@ export function WorkspaceExperienceProvider({
       cur.add(appId);
       const extractionSync = MARKETPLACE_INSTALL_TO_EXTRACTION[appId];
       const llmSync = MARKETPLACE_INSTALL_TO_LLM[appId];
-      return mergeWorkspacePrefsPatch(prev, {
+      const patch: Partial<WorkspacePrefsV1> = {
         installedMarketplaceAppIds: [...cur],
         ...(extractionSync ? { extractionProviderId: extractionSync } : {}),
         ...(llmSync ? { llmProviderId: llmSync } : {}),
-      });
+      };
+      if (remoteReady) persistPrefsPatchNow(patch);
+      return mergeWorkspacePrefsPatch(prev, patch);
     });
-  }, []);
+  }, [persistPrefsPatchNow, remoteReady]);
 
   const uninstallMarketplaceApp = useCallback((appId: string) => {
     setPrefsState((prev) => {
@@ -219,9 +230,10 @@ export function WorkspaceExperienceProvider({
       if (llmSync && prev.llmProviderId === llmSync) {
         patch.llmProviderId = "auto";
       }
+      if (remoteReady) persistPrefsPatchNow(patch);
       return mergeWorkspacePrefsPatch(prev, patch);
     });
-  }, []);
+  }, [persistPrefsPatchNow, remoteReady]);
 
   const isMarketplaceInstalled = useCallback(
     (appId: string) => Boolean(prefs.installedMarketplaceAppIds?.includes(appId)),

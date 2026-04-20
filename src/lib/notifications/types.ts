@@ -1,4 +1,5 @@
 export const NOTIFICATION_TYPES = [
+  "welcome_workspace",
   "commitment_assigned",
   "commitment_due_soon",
   "commitment_overdue",

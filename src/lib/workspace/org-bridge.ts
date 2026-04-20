@@ -2,6 +2,34 @@ import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import * as sqlite from "@/lib/workspace/sqlite";
 import { ensureOrgMember, getActiveMembershipForUser } from "@/lib/workspace/org-members";
+import { clerkClient } from "@clerk/nextjs/server";
+import { sendNotification } from "@/lib/notifications/service";
+
+async function sendWelcomeOnce(userId: string, orgId: string): Promise<void> {
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const meta = (user.privateMetadata ?? {}) as Record<string, unknown>;
+    if (meta.route5WelcomeSent === true) return;
+    await sendNotification({
+      orgId,
+      userId,
+      type: "welcome_workspace",
+      title: "Welcome to Route5",
+      body: "Capture your decisions, assign commitments, and run execution from one place.",
+      metadata: { link: "/desk" },
+      forceChannels: { inApp: true, email: true, slack: false },
+    });
+    await client.users.updateUser(userId, {
+      privateMetadata: {
+        ...meta,
+        route5WelcomeSent: true,
+      },
+    });
+  } catch {
+    /* best effort */
+  }
+}
 
 /**
  * Ensures a single organization row exists for this Clerk user (1:1 for now),
@@ -39,6 +67,7 @@ export async function ensureOrganizationForClerkUser(userId: string): Promise<st
         invitedBy: userId,
         status: "active",
       });
+      await sendWelcomeOnce(userId, orgId);
       return orgId;
     } catch (e) {
       console.error(
@@ -55,5 +84,6 @@ export async function ensureOrganizationForClerkUser(userId: string): Promise<st
     invitedBy: userId,
     status: "active",
   });
+  await sendWelcomeOnce(userId, orgId);
   return orgId;
 }

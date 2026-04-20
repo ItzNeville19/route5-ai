@@ -35,7 +35,7 @@ const NAV_SECTIONS = [
   {
     title: "Work",
     items: [
-      { href: "/feed", label: "Feed", icon: ListChecks },
+      { href: "/desk", label: "Desk", icon: ListChecks },
       { href: "/desk", label: "Capture", icon: LayoutGrid },
       { href: "/projects", label: "Projects", icon: FolderOpen },
       { href: "/workspace/chat", label: "Chat", icon: MessageSquare },

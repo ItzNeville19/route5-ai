@@ -1,17 +1,20 @@
 import Link from "next/link";
 import { ADVERTISING_DISCLOSURES } from "@/lib/advertising-disclosures";
 import PublicEmailSubscribe from "@/components/marketing/PublicEmailSubscribe";
+import { INSTAGRAM_URL } from "@/lib/site";
 
 const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
+  { href: "/benefits", label: "Benefits", title: "Why teams stay with Route5" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
   { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },
   { href: "/overview", label: "Overview", title: "Signed-in app — leadership health and load" },
   { href: "/login", label: "Log in", title: "Sign in with Clerk" },
 ];
 
-const company: { href: string; label: string; title: string }[] = [
+const company: { href: string; label: string; title: string; external?: boolean }[] = [
   { href: "/contact", label: "Contact", title: "Sales, support, and priorities" },
+  { href: INSTAGRAM_URL, label: "Instagram", title: "Route5 on Instagram", external: true },
   { href: "/download", label: "Download", title: "PWA and desktop install" },
   { href: "/trust", label: "Trust & compliance", title: "Security questionnaire, DPA, procurement" },
   { href: "/privacy", label: "Privacy Policy", title: "How we handle data — full policy" },
@@ -108,9 +111,21 @@ export default function Footer({ tone = "light" }: FooterProps) {
               <ul className="space-y-3">
                 {company.map((item) => (
                   <li key={item.href}>
-                    <Link href={item.href} title={item.title} className={linkHover}>
-                      {item.label}
-                    </Link>
+                    {item.external ? (
+                      <a
+                        href={item.href}
+                        title={item.title}
+                        className={linkHover}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link href={item.href} title={item.title} className={linkHover}>
+                        {item.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
