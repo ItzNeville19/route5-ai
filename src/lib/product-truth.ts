@@ -34,7 +34,7 @@ export const PRODUCT_HONEST = {
   howSteps: [
     "Create a project for a team, initiative, or thread of execution you need to track.",
     "Paste notes, tickets, or meeting text — capture decisions (AI when configured, or a fast offline process). Confirm commitments and owners.",
-    "Use Feed to track commitments org-wide; Capture/Desk to process raw text; Overview shows execution health, stale work, and load from saved data. Optional Linear/GitHub when you configure them.",
+    "Use Desk as the primary execution surface (Feed remains for org-wide commitment views); Capture to process raw text; Overview shows execution health, stale work, and load from saved data. Optional Linear/GitHub when you configure them.",
   ] as const,
   notThis:
     "There is no autonomous email sync. Slack: paste-to-capture paths work as documented; the Slack integration page and API are Pro+ (optional SLACK_BOT_TOKEN / SLACK_WEBHOOK_URL for deployment). Linear/GitHub paste-and-import flows are as documented on each screen.",
@@ -77,7 +77,7 @@ export const PRODUCT_VS_EPHEMERAL_CHAT = {
       label: "Follow-through in the UI",
       chat: "No workspace-wide queue of open commitments across projects.",
       route5:
-        "Feed surfaces commitments org-wide; Capture processes raw text; Overview shows execution health and what still needs an owner.",
+        "Desk is the primary execution surface; Feed surfaces commitments org-wide; Capture processes raw text; Overview shows execution health and what still needs an owner.",
     },
     {
       label: "Connectors (when configured)",
