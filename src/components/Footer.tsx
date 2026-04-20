@@ -5,6 +5,7 @@ import { INSTAGRAM_URL } from "@/lib/site";
 
 const platform: { href: string; label: string; title: string }[] = [
   { href: "/product", label: "What we ship", title: "Product scope — live vs roadmap" },
+  { href: "/docs", label: "Guides", title: "Executive brief, roadmap, boundaries — no sign-in required" },
   { href: "/benefits", label: "Benefits", title: "Why teams stay with Route5" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
   { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },

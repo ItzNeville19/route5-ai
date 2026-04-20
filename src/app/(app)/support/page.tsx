@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import WorkspaceOrProductBackLink from "@/components/navigation/WorkspaceOrProductBackLink";
 
 export const metadata: Metadata = {
   title: "Support — Route5",
@@ -9,12 +10,7 @@ export const metadata: Metadata = {
 export default function SupportPage() {
   return (
     <div className="mx-auto max-w-[640px] pb-20">
-      <Link
-        href="/overview"
-        className="inline-flex text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
-      >
-        ← Projects
-      </Link>
+      <WorkspaceOrProductBackLink signedInHref="/overview" signedInLabel="Workspace" />
       <h1 className="mt-8 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[32px]">
         Support
       </h1>

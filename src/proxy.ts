@@ -27,6 +27,10 @@ function resolveClerkProxy(): NextMiddleware {
       "/pricing(.*)",
       "/download(.*)",
       "/trust(.*)",
+      "/benefits(.*)",
+      /** Guides & support — readable signed out (see `PublicWorkspaceGuideShell`, `public-site-paths.ts`). */
+      "/docs(.*)",
+      "/support(.*)",
       /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
       "/projects(.*)",
       "/overview(.*)",

@@ -1,6 +1,6 @@
 # Route5
 
-**Execution layer for enterprise teams** — decisions become owned commitments with owners, deadlines, and accountability state across projects. Live site: [route5ai.vercel.app](https://route5ai.vercel.app). What ships today vs roadmap (honest scope): [`/product`](https://route5ai.vercel.app/product). Security and procurement: [`/trust`](https://route5ai.vercel.app/trust).
+**Execution layer for enterprise teams** — decisions become owned commitments with owners, deadlines, and accountability state across projects. Live site: [route5ai.vercel.app](https://route5ai.vercel.app). What ships today vs roadmap (honest scope): [`/product`](https://route5ai.vercel.app/product). Deeper walkthrough without signing in: [`/docs`](https://route5ai.vercel.app/docs). Security and procurement: [`/trust`](https://route5ai.vercel.app/trust).
 
 Stack: Next.js (App Router), Clerk, Supabase, Stripe, optional OpenAI for structured capture.
 

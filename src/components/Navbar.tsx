@@ -92,7 +92,10 @@ export default function Navbar() {
     pathname?.startsWith("/login/") ||
     pathname === "/sign-up" ||
     pathname?.startsWith("/sign-up/");
-  const navUsesDarkChrome = isCommandHome || isAuthPage;
+  /** Signed-out guides (/docs, /support) use the workspace theme — keep nav text light on dark. */
+  const isPublicGuideChrome =
+    pathname === "/support" || pathname === "/docs" || pathname?.startsWith("/docs/");
+  const navUsesDarkChrome = isCommandHome || isAuthPage || isPublicGuideChrome;
 
   const navLinkClass = navUsesDarkChrome
     ? "text-[13px] font-medium text-zinc-300 transition-colors duration-200 hover:text-white"

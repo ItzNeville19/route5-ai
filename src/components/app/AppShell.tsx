@@ -6,7 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { SignIn, useAuth } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 import OnboardingShell from "@/components/app/OnboardingShell";
+import PublicWorkspaceGuideShell from "@/components/app/PublicWorkspaceGuideShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
+import { isPublicWorkspaceGuidePath } from "@/lib/public-site-paths";
 import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
@@ -81,9 +83,14 @@ function ClerkConnectingSpinner() {
 /** Must only render when `ClerkProvider` is present (keys configured). */
 function AppShellWithClerk({ children }: { children: React.ReactNode }) {
   const { isLoaded, userId } = useAuth();
+  const pathname = usePathname();
 
   if (!isLoaded) {
     return <ClerkConnectingSpinner />;
+  }
+
+  if (!userId && isPublicWorkspaceGuidePath(pathname)) {
+    return <PublicWorkspaceGuideShell>{children}</PublicWorkspaceGuideShell>;
   }
 
   if (!userId) {

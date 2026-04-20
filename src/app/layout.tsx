@@ -20,16 +20,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Route5 | Structured intelligence from enterprise text",
+  title: "Route5 | Execution layer — decisions to owned commitments",
   description:
-    "Paste notes and tickets into projects; get AI-generated summaries, decisions, and action items you can track. Honest roadmap for legacy automation.",
+    "Route5 turns meetings, threads, and docs into owned commitments with deadlines and accountability—Desk, Capture, and leadership health in one workspace. Clear scope: see What we ship.",
   keywords: [
-    "enterprise AI",
-    "legacy modernization",
-    "MCP",
-    "AI agents",
-    "API generation",
-    "business capabilities",
+    "execution software",
+    "commitment management",
+    "enterprise accountability",
+    "decision tracking",
+    "operations",
+    "COO tools",
+    "Slack",
+    "Notion",
   ],
   appleWebApp: {
     capable: true,

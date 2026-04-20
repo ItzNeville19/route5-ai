@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import WorkspaceOrProductBackLink from "@/components/navigation/WorkspaceOrProductBackLink";
 
 export const metadata: Metadata = {
   title: "Guides — Route5",
@@ -42,12 +43,7 @@ const legal: { href: string; title: string; desc: string }[] = [
 export default function DocsIndexPage() {
   return (
     <div className="mx-auto max-w-[720px] pb-20">
-      <Link
-        href="/overview"
-        className="inline-flex text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
-      >
-        ← Workspace
-      </Link>
+      <WorkspaceOrProductBackLink signedInHref="/overview" signedInLabel="Workspace" />
       <h1 className="mt-8 text-[28px] font-semibold leading-tight tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[32px]">
         Guides
       </h1>
