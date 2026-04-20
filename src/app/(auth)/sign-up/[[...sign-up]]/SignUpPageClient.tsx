@@ -59,7 +59,7 @@ function SignUpWithClerk() {
   return (
     <div className="auth-route5-shell min-h-dvh">
       <Navbar />
-      <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-20 pt-24 sm:pt-28">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col px-4 pb-[max(5rem,calc(1.25rem+env(safe-area-inset-bottom,0px)))] pt-24 sm:pt-28">
         <p className="mb-6 text-center">
           <Link
             href="/"

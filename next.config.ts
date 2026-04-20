@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   /** Ship a Node server bundle for the Electron desktop app (`npm run electron:dist`). */
   output: "standalone",
   serverExternalPackages: ["better-sqlite3"],
+  experimental: {
+    /** Smaller client bundles for heavy animation/graph libs (see Next docs). */
+    optimizePackageImports: ["framer-motion", "recharts"],
+  },
   /** Prefer this repo as Turbopack root when multiple lockfiles exist on the machine. */
   turbopack: {
     root: projectRoot,

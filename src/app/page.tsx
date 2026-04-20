@@ -1,9 +1,34 @@
+import dynamic from "next/dynamic";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import Footer from "@/components/Footer";
 import { outfitLanding } from "@/lib/fonts-landing";
-import HomeExecutiveInteractive from "@/components/marketing/HomeExecutiveInteractive";
-import HomeDashboardShowcase from "@/components/marketing/HomeDashboardShowcase";
+
+const HomeDashboardShowcase = dynamic(
+  () => import("@/components/marketing/HomeDashboardShowcase"),
+  {
+    loading: () => (
+      <div
+        className="min-h-[280px] rounded-2xl border border-white/[0.08] bg-[#0c0c0e]/60"
+        aria-busy="true"
+        aria-label="Loading product preview"
+      />
+    ),
+  }
+);
+
+const HomeExecutiveInteractive = dynamic(
+  () => import("@/components/marketing/HomeExecutiveInteractive"),
+  {
+    loading: () => (
+      <div
+        className="min-h-[360px] rounded-[22px] border border-white/[0.08] bg-[#0c0c0e]/60"
+        aria-busy="true"
+        aria-label="Loading audience and FAQ"
+      />
+    ),
+  }
+);
 
 export default function Home() {
   return (
@@ -14,37 +39,41 @@ export default function Home() {
       <div className="agent-canvas min-h-dvh">
         <Navbar />
 
-        {/* Hero — readable in seconds */}
-        <section className="relative overflow-hidden border-b border-white/10 pt-28 pb-16 sm:pt-32 sm:pb-20">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(139,92,246,0.18),transparent),radial-gradient(circle_at_90%_60%,rgba(6,182,212,0.12),transparent_50%)]" />
-          <div className="relative mx-auto max-w-[1180px] px-5 sm:px-8 lg:px-12">
-            <div className="max-w-[820px]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+        {/* Hero — high-contrast headline + primary CTA in first viewport */}
+        <section
+          id="hero"
+          className="relative overflow-hidden border-b border-white/10 pb-14 pt-[calc(5.5rem+env(safe-area-inset-top,0px))] sm:pb-20 sm:pt-32"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(139,92,246,0.22),transparent),radial-gradient(circle_at_90%_60%,rgba(6,182,212,0.14),transparent_50%)]" />
+          <div className="relative mx-auto max-w-[1180px] px-4 sm:px-8 lg:px-12">
+            <div className="max-w-[880px]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400">
                 Execution infrastructure
               </p>
-              <h1 className="mt-4 text-[clamp(2.15rem,6.2vw,3.75rem)] font-semibold leading-[1.05] tracking-[-0.045em] text-white">
+              <h1 className="mt-4 text-balance text-[clamp(1.85rem,6.5vw,3.75rem)] font-semibold leading-[1.04] tracking-[-0.045em] text-white [text-shadow:0_1px_40px_rgba(0,0,0,0.35)]">
                 Decisions become commitments. Commitments get owners, dates, and follow-through.
               </h1>
-              <p className="mt-5 max-w-[680px] text-[clamp(1rem,1.9vw,1.15rem)] leading-relaxed text-zinc-400">
+              <p className="mt-5 max-w-[40rem] text-pretty text-[clamp(1rem,2.1vw,1.2rem)] leading-[1.55] text-zinc-300">
                 Route5 is the operating layer between conversation and delivery: capture what was decided,
                 assign ownership automatically, and keep leadership aligned until the work ships—without
                 chasing status in chat.
               </p>
-              <div className="mt-9 flex flex-wrap items-center gap-3">
+              <div className="mt-8 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
                 <Link
                   href="/sign-up"
-                  className="inline-flex min-h-11 items-center rounded-full bg-white px-7 py-3 text-[14px] font-semibold text-black transition hover:bg-zinc-100"
+                  className="inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-full bg-[#0071e3] px-8 text-[15px] font-semibold text-white shadow-[0_8px_32px_-8px_rgba(0,113,227,0.55)] ring-2 ring-white/15 transition hover:bg-[#0077ed] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 sm:w-auto"
                 >
-                  Request access
+                  Try Route5
                 </Link>
                 <a
                   href="mailto:neville@rayze.xyz?subject=Route5%20Sales"
-                  className="inline-flex min-h-11 items-center rounded-full border border-white/18 bg-white/[0.04] px-7 py-3 text-[14px] font-medium text-zinc-100 transition hover:border-white/30 hover:bg-white/[0.08]"
+                  className="inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-full border border-white/22 bg-white/[0.06] px-8 text-[15px] font-medium text-zinc-100 backdrop-blur-sm transition hover:border-white/35 hover:bg-white/[0.1] sm:w-auto"
                 >
                   Contact sales
                 </a>
               </div>
-              <div className="mt-10 flex flex-wrap gap-6 border-t border-white/[0.07] pt-8 text-[12px] text-zinc-500">
+              <p className="mt-3 text-[12px] text-zinc-500">Free to start · No card required for trial</p>
+              <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/[0.07] pt-8 text-[12px] text-zinc-500">
                 <span className="font-medium tracking-wide text-zinc-400">Capture</span>
                 <span className="text-zinc-700">·</span>
                 <span className="font-medium tracking-wide text-zinc-400">Assign</span>
@@ -233,18 +262,18 @@ export default function Home() {
                   checkout that fights enterprise procurement.
                 </p>
               </div>
-              <div className="mt-8 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0">
+              <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:w-auto sm:flex-row lg:mt-0">
                 <a
                   href="mailto:neville@rayze.xyz?subject=Route5%20Pricing"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-white px-8 py-3 text-[14px] font-semibold text-black transition hover:bg-zinc-100"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-[#0071e3] px-8 text-[15px] font-semibold text-white shadow-[0_8px_28px_-10px_rgba(0,113,227,0.5)] transition hover:bg-[#0077ed] sm:w-auto"
                 >
                   Talk to us
                 </a>
                 <Link
                   href="/sign-up"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/20 px-8 py-3 text-[14px] font-medium text-zinc-100 transition hover:border-white/35"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/22 bg-white/[0.06] px-8 text-[15px] font-medium text-zinc-100 transition hover:border-white/40 sm:w-auto"
                 >
-                  Request access
+                  Try Route5
                 </Link>
               </div>
             </div>

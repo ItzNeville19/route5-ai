@@ -45,6 +45,8 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#0c0c0e" },
     { media: "(prefers-color-scheme: light)", color: "#0c0c0e" },
   ],
+  /** Lets `env(safe-area-inset-*)` apply on notched phones (hero padding, auth footers). */
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

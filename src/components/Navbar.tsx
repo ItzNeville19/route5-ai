@@ -309,7 +309,15 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-0.5 lg:hidden">
+          <div className="flex items-center gap-1 lg:hidden">
+            {pathname === "/" ? (
+              <Link
+                href="/sign-up"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
+              >
+                Try Route5
+              </Link>
+            ) : null}
             <button
               type="button"
               onClick={() => {
