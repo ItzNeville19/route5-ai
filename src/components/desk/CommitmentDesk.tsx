@@ -435,14 +435,19 @@ export default function CommitmentDesk() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
-                Desk · execution surface
+                {currentProject?.name?.trim() ? (
+                  <>
+                    Project · <span className="text-[var(--workspace-fg)]">{currentProject.name}</span>
+                  </>
+                ) : (
+                  "Desk"
+                )}
               </p>
-              <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[22px]">
-                Own commitments, not chat logs
-              </h1>
-              <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Paste notes, propose owned commitments, commit once — accountability, not summaries. Counts below
-                are workspace-wide.
+              <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[20px]">
+                Commitments for this workspace
+              </h2>
+              <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-[var(--workspace-muted-fg)] sm:text-[13px]">
+                Paste to capture, assign owners, ship. Stats below are org-wide.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

@@ -20,9 +20,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Route5 | Execution layer — decisions to owned commitments",
+  title: "Route5 | Execution accountability for enterprise teams",
   description:
-    "Route5 turns meetings, threads, and docs into owned commitments with deadlines and accountability—Desk, Capture, and leadership health in one workspace. Clear scope: see What we ship.",
+    "System of record for decisions and commitments—owners, deadlines, live execution health. Built for operators and leadership.",
   keywords: [
     "execution software",
     "commitment management",
