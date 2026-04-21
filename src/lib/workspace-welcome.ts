@@ -259,6 +259,31 @@ export function getHeroHeadline(
   return pool[idx]!;
 }
 
+/** Desk bubble only: calm greeting by time of day — no rotating quips. */
+export function getDeskHeadline(first: string, timezone?: string): string {
+  const hour = hourInTimezone(timezone);
+  const f = first.trim() || "there";
+  if (hour < 5) return `Good early morning, ${f}`;
+  if (hour < 12) return `Good morning, ${f}`;
+  if (hour < 17) return `Good afternoon, ${f}`;
+  if (hour < 22) return `Good evening, ${f}`;
+  return `Good evening, ${f}`;
+}
+
+/**
+ * Desk bubble only: local clock and place. No tips, stats, or product lines.
+ */
+export function getDeskContextLine(
+  timezone: string | undefined,
+  regionKey: string | undefined,
+  locale: string = "en-US"
+): string {
+  const place = getDisplayLocationLabel(timezone, regionKey);
+  const clock = formatClockInTimezone(timezone, locale);
+  if (place) return `${clock} · ${place}`;
+  return clock;
+}
+
 /**
  * One warm subline under the hero: local time + place, then workspace-specific sentence.
  * Feels like a morning briefing, not marketing copy.

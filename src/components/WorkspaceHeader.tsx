@@ -15,7 +15,6 @@ import { useCapture } from "@/components/capture/CaptureProvider";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
-import WorkspaceHeaderGreeting from "@/components/app/WorkspaceHeaderGreeting";
 
 export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?: () => void }) {
   const pathname = usePathname() ?? "";
@@ -127,30 +126,6 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </div>
         </div>
       </div>
-
-      {pathname === "/desk" ? (
-        <div className="relative overflow-hidden border-t border-cyan-400/15 bg-gradient-to-r from-[#071018] via-[#0a1a24] to-[#14120e]">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.35]"
-            aria-hidden
-            style={{
-              background:
-                "radial-gradient(ellipse 90% 80% at 20% 0%, rgba(34, 211, 238, 0.09), transparent 50%), radial-gradient(ellipse 70% 60% at 85% 100%, rgba(251, 191, 36, 0.06), transparent 55%)",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute bottom-0 left-0 right-0 h-[3px] opacity-50"
-            aria-hidden
-            style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, rgba(125, 211, 252, 0.25) 25%, rgba(254, 243, 199, 0.12) 50%, rgba(125, 211, 252, 0.2) 75%, transparent 100%)",
-            }}
-          />
-          <div className="relative mx-auto max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-2.5 sm:px-[var(--r5-content-padding-x)] sm:py-3">
-            <WorkspaceHeaderGreeting variant="desk-bar" />
-          </div>
-        </div>
-      ) : null}
     </header>
   );
 }

@@ -38,6 +38,7 @@ import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { NativeDateInput } from "@/components/ui/native-datetime-fields";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 import { deskUrl } from "@/lib/desk-routes";
 import { formatRelativeLong } from "@/lib/relative-time";
 import { STATUS_ACCENT, STATUS_LABEL, STATUS_PILL } from "@/components/desk/desk-constants";
@@ -427,9 +428,11 @@ export default function CommitmentDesk() {
   const currentProject = projects.find((p) => p.id === projectId);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-5 pb-20">
-      {/* Workspace execution strip */}
-      <section className="relative overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-gradient-to-br from-[var(--workspace-surface)]/90 via-[var(--workspace-canvas)]/95 to-sky-950/20 p-1 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)]">
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-3 pb-20">
+      <DeskGreetingBubble />
+      <div className="flex min-w-0 flex-col gap-5">
+        {/* Workspace execution strip */}
+        <section className="relative overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-gradient-to-br from-[var(--workspace-surface)]/90 via-[var(--workspace-canvas)]/95 to-sky-950/20 p-1 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_0%,rgba(56,189,248,0.12),transparent_55%)] pointer-events-none" />
         <div className="relative flex flex-col gap-4 rounded-[18px] border border-white/5 bg-[var(--workspace-canvas)]/40 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -987,6 +990,7 @@ export default function CommitmentDesk() {
             </div>
           ) : null}
         </aside>
+      </div>
       </div>
 
       <AnimatePresence>
