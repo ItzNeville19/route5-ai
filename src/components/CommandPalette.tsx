@@ -126,6 +126,23 @@ function applyPalettePayload(
   );
 }
 
+const TOKEN_SPLIT = /[^a-z0-9]+/i;
+
+/** Longer query matches shorter stem (e.g. "customization" ↔ "customize") without a stemmer. */
+function overlapScore(
+  query: string,
+  chunk: string,
+  minStem = 4
+): number {
+  if (!chunk || chunk.length < minStem) return 0;
+  if (query === chunk) return 72;
+  if (chunk.startsWith(query)) return query.length >= 2 ? 48 : 0;
+  if (query.startsWith(chunk)) return 44;
+  if (chunk.includes(query) && query.length >= 4) return 28;
+  if (query.includes(chunk) && chunk.length >= 4) return 30;
+  return 0;
+}
+
 function rankPaletteItem(item: PaletteItem, query: string): number {
   const label = item.label.toLowerCase();
   const desc = (item.description ?? "").toLowerCase();
@@ -141,10 +158,20 @@ function rankPaletteItem(item: PaletteItem, query: string): number {
   if (desc.startsWith(query)) score += 40;
   else if (desc.includes(query)) score += 24;
 
+  for (const word of label.split(TOKEN_SPLIT)) {
+    const m = overlapScore(query, word, 4);
+    if (m) score += Math.min(m, 62);
+  }
+  for (const word of desc.split(TOKEN_SPLIT)) {
+    const m = overlapScore(query, word, 4);
+    if (m) score += Math.min(m, 22);
+  }
+
   for (const k of keys) {
     if (k === query) score += 72;
     else if (k.startsWith(query)) score += 38;
     else if (k.includes(query)) score += 16;
+    else score += overlapScore(query, k, 4);
   }
 
   // Tolerate users typing without spaces/punctuation.
@@ -275,6 +302,8 @@ export function CommandPaletteProvider({
       pathname.startsWith("/docs") ||
       pathname === "/settings" ||
       pathname === "/overview" ||
+      pathname === "/leadership" ||
+      pathname === "/team-insights" ||
       pathname === "/capture" ||
       pathname.startsWith("/account"));
   const signedInEffective = signedIn || likelyWorkspaceSession;
@@ -479,6 +508,8 @@ export function CommandPaletteProvider({
       pathname === "/feed" ||
       pathname === "/capture" ||
       pathname === "/overview" ||
+      pathname === "/leadership" ||
+      pathname === "/team-insights" ||
       pathname === "/desk" ||
       pathname === "/settings" ||
       pathname.startsWith("/onboarding") ||
