@@ -2758,6 +2758,17 @@ body {
   animation: desk-wave-drift 22s ease-in-out infinite;
 }
 
+/**
+ * Scaled “coastal calm” wash for signed-in main canvas (Desk, Overview, Feed, Projects).
+ * Keeps chrome readable; pairs with Desk greeting + panels.
+ */
+.workspace-coastal-main {
+  background-image:
+    radial-gradient(ellipse 115% 58% at 50% -14%, rgba(56, 189, 248, 0.075), transparent 56%),
+    radial-gradient(ellipse 75% 42% at 0% 8%, rgba(253, 186, 116, 0.06), transparent 52%),
+    radial-gradient(ellipse 70% 38% at 100% 12%, rgba(165, 243, 252, 0.055), transparent 50%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .desk-greeting-wave-drift {
     animation: none;

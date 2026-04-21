@@ -432,9 +432,12 @@ export default function CommitmentDesk() {
       <DeskGreetingBubble />
       <div className="flex min-w-0 flex-col gap-5">
         {/* Workspace execution strip */}
-        <section className="relative overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-gradient-to-br from-[var(--workspace-surface)]/90 via-[var(--workspace-canvas)]/95 to-sky-950/20 p-1 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_0%,rgba(56,189,248,0.12),transparent_55%)] pointer-events-none" />
-        <div className="relative flex flex-col gap-4 rounded-[18px] border border-white/5 bg-[var(--workspace-canvas)]/40 px-4 py-4 sm:px-5 sm:py-5">
+        <section className="relative overflow-hidden rounded-[24px] border border-sky-400/22 bg-gradient-to-br from-sky-950/35 via-[var(--workspace-canvas)]/50 to-indigo-950/35 p-[1px] shadow-[0_28px_90px_-42px_rgba(14,165,233,0.2),0_24px_80px_-40px_rgba(0,0,0,0.52)]">
+          <div
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_28%_-18%,rgba(254,215,170,0.1),transparent_52%),radial-gradient(ellipse_65%_55%_at_90%_5%,rgba(56,189,248,0.11),transparent_48%)]"
+            aria-hidden
+          />
+          <div className="relative flex flex-col gap-4 overflow-hidden rounded-[22px] border border-white/[0.08] bg-gradient-to-b from-[var(--workspace-canvas)]/45 via-[var(--workspace-surface)]/28 to-slate-950/25 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
@@ -525,12 +528,29 @@ export default function CommitmentDesk() {
             )}
           </div>
         </div>
-      </section>
+          <div
+            className="desk-greeting-wave-drift pointer-events-none absolute bottom-0 left-0 right-0 h-11 text-sky-300/40 sm:h-12"
+            aria-hidden
+          >
+            <svg className="h-full w-full" viewBox="0 0 1200 64" preserveAspectRatio="none">
+              <path
+                fill="currentColor"
+                fillOpacity={0.45}
+                d="M0,40 C200,24 400,56 600,40 C800,24 1000,56 1200,40 L1200,64 L0,64 Z"
+              />
+              <path
+                fill="currentColor"
+                fillOpacity={0.65}
+                d="M0,48 C240,58 480,34 720,50 C960,66 1080,42 1200,52 L1200,64 L0,64 Z"
+              />
+            </svg>
+          </div>
+        </section>
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Left rail */}
         <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[268px]">
-          <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/75 p-4 shadow-sm backdrop-blur-sm">
+          <div className="rounded-[20px] border border-sky-400/15 bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/55 p-4 shadow-[0_8px_36px_-18px_rgba(14,165,233,0.12)] backdrop-blur-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
               Project
             </p>
@@ -582,7 +602,7 @@ export default function CommitmentDesk() {
             )}
           </div>
 
-          <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/75 p-3 shadow-sm backdrop-blur-sm">
+          <div className="rounded-[20px] border border-sky-400/15 bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/55 p-3 shadow-[0_8px_36px_-18px_rgba(14,165,233,0.12)] backdrop-blur-sm">
             <p className="px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
               View
             </p>
@@ -613,7 +633,7 @@ export default function CommitmentDesk() {
         </aside>
 
         {/* Center + detail */}
-        <main className="min-w-0 flex-1 overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+        <main className="min-w-0 flex-1 overflow-hidden rounded-[22px] border border-sky-400/15 bg-gradient-to-br from-slate-950/35 via-[var(--workspace-canvas)]/48 to-sky-950/18 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_20px_50px_-28px_rgba(14,165,233,0.08)]">
           <div className="flex min-h-[520px] flex-col xl:flex-row">
             {/* List */}
             <div className="flex min-h-[360px] flex-1 flex-col border-[var(--workspace-border)] xl:w-[min(52%,640px)] xl:border-r">
@@ -878,7 +898,7 @@ export default function CommitmentDesk() {
 
         {/* Right intelligence */}
         <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
-          <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 p-4 shadow-sm">
+          <div className="rounded-[20px] border border-sky-400/15 bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_rgba(14,165,233,0.1)]">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/15 text-sky-200">
                 <Target className="h-4 w-4" aria-hidden />
@@ -915,7 +935,7 @@ export default function CommitmentDesk() {
           </div>
 
           {intel && intel.recentActivity.length > 0 ? (
-            <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 p-4 shadow-sm">
+            <div className="rounded-[20px] border border-sky-400/15 bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_rgba(14,165,233,0.1)]">
               <div className="flex items-center gap-2">
                 <Activity className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
@@ -941,7 +961,7 @@ export default function CommitmentDesk() {
           ) : null}
 
           {intel && intel.teamLoad.length > 0 ? (
-            <div className="rounded-[20px] border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/80 p-4 shadow-sm">
+            <div className="rounded-[20px] border border-sky-400/15 bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_rgba(14,165,233,0.1)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
                 Team load
               </p>
@@ -1213,18 +1233,18 @@ function StatChip({
 }) {
   const ring =
     tone === "sky"
-      ? "from-sky-500/25 to-sky-500/5"
+      ? "from-cyan-400/22 via-sky-500/18 to-slate-950/25"
       : tone === "red"
         ? "from-red-500/30 to-red-500/5"
         : tone === "amber"
           ? "from-amber-500/28 to-amber-500/5"
           : tone === "violet"
             ? "from-violet-500/25 to-violet-500/5"
-            : "from-emerald-500/25 to-emerald-500/5";
+            : "from-emerald-500/28 to-emerald-950/15";
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-[var(--workspace-border)]/70 bg-gradient-to-br ${ring} p-3 ${
+      className={`relative overflow-hidden rounded-2xl border border-sky-400/12 bg-gradient-to-br ${ring} p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
         pulse ? "ring-1 ring-amber-400/35" : ""
       }`}
     >
@@ -1249,7 +1269,7 @@ function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--workspace-border)] bg-[var(--workspace-surface)]/25 px-4 py-10 text-center">
+    <div className="rounded-2xl border border-dashed border-sky-400/25 bg-gradient-to-b from-[var(--workspace-surface)]/30 to-[var(--workspace-canvas)]/20 px-4 py-10 text-center">
       <p className="text-[14px] font-semibold text-[var(--workspace-fg)]">{title}</p>
       <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">{body}</p>
       {action}
