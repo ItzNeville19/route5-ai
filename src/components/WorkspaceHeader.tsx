@@ -126,6 +126,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </div>
         </div>
       </div>
+      <div className="route5-brand-header-accent pointer-events-none" aria-hidden />
     </header>
   );
 }

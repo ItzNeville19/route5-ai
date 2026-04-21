@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import WorkspaceHeader from "@/components/WorkspaceHeader";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
 import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
@@ -29,14 +29,6 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { shellModifierClass, prefs } = exp;
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
-  const pathname = usePathname() ?? "";
-  const coastalMainCanvas =
-    pathname === "/desk" ||
-    pathname === "/overview" ||
-    pathname === "/feed" ||
-    pathname === "/capture" ||
-    pathname === "/projects" ||
-    pathname.startsWith("/projects/");
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   useEffect(() => {
     const closeMobile = () => setMobileSidebarOpen(false);
@@ -110,7 +102,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex min-h-dvh w-full">
         <WorkspaceSidebar />
-        <div className="agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
+        <div className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
           <WorkspaceHeader
             onSidebarToggle={() => {
               if (typeof window === "undefined") return;
@@ -128,11 +120,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           />
           <WorkspaceBillingBanner />
           <WorkspacePersistenceBanner />
-          <main
-            className={`min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0 ${
-              coastalMainCanvas ? "workspace-coastal-main" : ""
-            }`.trim()}
-          >
+          <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0">
             <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-5)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
               {children}
             </div>

@@ -54,10 +54,7 @@ export default function OnboardingShell({
     <WorkspaceExperienceProvider>
       <OnboardingFlowProvider>
         <div className="theme-agent-shell theme-route5-command relative min-h-dvh text-[var(--workspace-fg)]">
-          <div
-            className="pointer-events-none fixed inset-0 z-0 bg-[var(--workspace-canvas)]"
-            aria-hidden
-          />
+          <div className="route5-brand-onboarding-canvas pointer-events-none fixed inset-0 z-0" aria-hidden />
           <OnboardingShellHeader />
           <div className="relative z-10 mx-auto w-full max-w-[720px] px-4 pb-16 pt-8 sm:px-6 sm:pt-10">
             {children}
