@@ -86,12 +86,6 @@ export default function WorkspaceSettingsPage() {
       >
         <div className="space-y-[var(--r5-space-3)]">
           <SettingsIngestWebhookCard />
-          <Link
-            href="/workspace/developer"
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-primary transition hover:bg-r5-surface-hover"
-          >
-            Open developer webhooks and API docs
-          </Link>
           <div className="grid gap-[var(--r5-space-2)] sm:grid-cols-3">
             {[
               { name: "Slack", href: "/integrations/slack" },

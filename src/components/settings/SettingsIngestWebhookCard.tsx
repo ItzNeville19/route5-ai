@@ -129,8 +129,8 @@ export default function SettingsIngestWebhookCard() {
         <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
       ) : !info.enabled ? (
         <div className="mt-4 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          Webhook endpoint is temporarily unavailable in this environment. Use email forwarding for now, or open
-          Developer for API docs and endpoint status.
+          Webhook endpoint is temporarily unavailable in this environment. Use email forwarding for now, or contact
+          support from the Help link if you need API access.
         </div>
       ) : (
         <div className="mt-4 space-y-3 text-[13px] leading-relaxed">

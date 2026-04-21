@@ -15,7 +15,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, RotateCw, Search } from "lucide-react";
+import { CornerDownLeft, RotateCw, TextSearch } from "lucide-react";
 import { paletteOverlay, palettePanel } from "@/lib/motion";
 import {
   buildPaletteItems,
@@ -47,7 +47,27 @@ type PaletteApiPayload = {
 };
 
 const PALETTE_CACHE_TTL_MS = 45_000;
-const PALETTE_MAX_RESULTS = 72;
+const PALETTE_MAX_RESULTS = 100;
+
+/** When the query is empty, surface primary navigation before recent activity noise. */
+const EMPTY_ORDER: Record<PaletteSection, number> = {
+  agent: 0,
+  workspace: 1,
+  projects: 2,
+  activity: 3,
+  account: 4,
+  site: 5,
+  legal: 6,
+};
+
+function sortDirectoryForBrowse(items: PaletteItem[]): PaletteItem[] {
+  return [...items].sort((a, b) => {
+    const da = EMPTY_ORDER[a.section];
+    const db = EMPTY_ORDER[b.section];
+    if (da !== db) return da - db;
+    return a.label.localeCompare(b.label);
+  });
+}
 let paletteCache: { at: number; payload: PaletteApiPayload } | null = null;
 
 export function useCommandPalette(): PaletteContextValue {
@@ -98,7 +118,6 @@ function applyPalettePayload(
   setters: {
     setSignedIn: (v: boolean) => void;
     setDisplayName: (v: string | null) => void;
-    setUserEmail: (v: string | null) => void;
     setProjects: (v: { id: string; name: string }[]) => void;
     setRecentRuns: (v: PaletteRecentRun[]) => void;
     setSearchCommitments: (v: PaletteSearchCommitment[]) => void;
@@ -108,11 +127,6 @@ function applyPalettePayload(
 ) {
   setters.setSignedIn(Boolean(payload.signedIn));
   setters.setDisplayName(payload.displayName ?? null);
-  setters.setUserEmail(
-    typeof payload.primaryEmail === "string" && payload.primaryEmail.trim()
-      ? payload.primaryEmail.trim()
-      : null
-  );
   setters.setProjects(Array.isArray(payload.projects) ? payload.projects : []);
   setters.setRecentRuns(Array.isArray(payload.recentRuns) ? payload.recentRuns : []);
   setters.setSearchCommitments(
@@ -193,6 +207,18 @@ function rankPaletteItem(item: PaletteItem, query: string): number {
   return score;
 }
 
+/** Multi-word queries require each token to match somewhere (e.g. “workspace billing”). */
+function rankPaletteItemForQuery(item: PaletteItem, rawQuery: string): number {
+  const normalized = rawQuery.trim().toLowerCase();
+  if (!normalized) return 1;
+  const tokens = normalized.split(/\s+/).filter((t) => t.length > 0);
+  if (tokens.length <= 1) return rankPaletteItem(item, normalized);
+
+  const scores = tokens.map((t) => rankPaletteItem(item, t));
+  if (scores.some((s) => s === 0)) return 0;
+  return scores.reduce((a, b) => a + b, 0) / scores.length;
+}
+
 export function CommandPaletteProvider({
   children,
 }: {
@@ -202,7 +228,6 @@ export function CommandPaletteProvider({
   const [query, setQuery] = useState("");
   const [signedIn, setSignedIn] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [recentRuns, setRecentRuns] = useState<PaletteRecentRun[]>([]);
   const [searchCommitments, setSearchCommitments] = useState<PaletteSearchCommitment[]>([]);
@@ -222,7 +247,6 @@ export function CommandPaletteProvider({
       applyPalettePayload(paletteCache.payload, {
         setSignedIn,
         setDisplayName,
-        setUserEmail,
         setProjects,
         setRecentRuns,
         setSearchCommitments,
@@ -246,7 +270,6 @@ export function CommandPaletteProvider({
       applyPalettePayload(data, {
         setSignedIn,
         setDisplayName,
-        setUserEmail,
         setProjects,
         setRecentRuns,
         setSearchCommitments,
@@ -257,7 +280,6 @@ export function CommandPaletteProvider({
       if (ctrl.signal.aborted) return;
       setSignedIn(false);
       setDisplayName(null);
-      setUserEmail(null);
       setProjects([]);
       setRecentRuns([]);
       setSearchCommitments([]);
@@ -313,7 +335,6 @@ export function CommandPaletteProvider({
       buildPaletteItems({
         signedIn: signedInEffective,
         displayName,
-        userEmail,
         projects,
         recentRuns,
         searchCommitments,
@@ -323,7 +344,6 @@ export function CommandPaletteProvider({
     [
       signedInEffective,
       displayName,
-      userEmail,
       projects,
       recentRuns,
       searchCommitments,
@@ -333,10 +353,12 @@ export function CommandPaletteProvider({
   );
 
   const filtered = useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase();
-    if (!q) return directory.slice(0, PALETTE_MAX_RESULTS);
-    const ranked = directory
-      .map((item) => ({ item, score: rankPaletteItem(item, q) }))
+    const q = deferredQuery.trim();
+    const qLower = q.toLowerCase();
+    const base = qLower ? directory : sortDirectoryForBrowse(directory);
+    if (!qLower) return base.slice(0, PALETTE_MAX_RESULTS);
+    const ranked = base
+      .map((item) => ({ item, score: rankPaletteItemForQuery(item, qLower) }))
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
       .slice(0, PALETTE_MAX_RESULTS)
@@ -522,8 +544,8 @@ export function CommandPaletteProvider({
   const agentShell = signedInEffective && inAppShell;
 
   const placeholder = agentShell
-    ? `Search — Desk, Capture, Marketplace, Team, Settings${displayName ? ` · ${displayName}` : ""}…`
-    : "Search Route5 — pages, workspace, legal…";
+    ? `Search pages, people, projects · ${displayName ?? "your workspace"}`
+    : "Search Route5 — pages, account, policies…";
 
   const overlay = (
     <AnimatePresence mode="wait">
@@ -566,7 +588,7 @@ export function CommandPaletteProvider({
                 Command palette
               </p>
               <div className="flex items-center gap-3">
-                <Search
+                <TextSearch
                   className={`h-5 w-5 flex-shrink-0 ${
                     agentShell ? "text-neutral-400" : "text-[#6e6e73]"
                   }`}
@@ -601,10 +623,10 @@ export function CommandPaletteProvider({
                 aria-live="polite"
               >
                 {loadingPalette
-                  ? "Refreshing live destinations..."
+                  ? "Updating…"
                   : query.trim()
-                  ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · opens the real page`
-                  : `${flatForNav.length} destinations · hidden screens are in “More screens”`}
+                  ? `${flatForNav.length} match${flatForNav.length === 1 ? "" : "es"} · titles, descriptions, and shortcuts`
+                  : `${flatForNav.length} places · type to filter, or use multiple words`}
               </p>
             </div>
             <ul
@@ -618,7 +640,7 @@ export function CommandPaletteProvider({
                     agentShell ? "text-neutral-500" : "text-[#6e6e73]"
                   }`}
                 >
-                  <p>No matches. Try another word.</p>
+                  <p>No matches — try a few letters, a person&apos;s name, or another word.</p>
                   <div className="mt-4 flex items-center justify-center gap-2">
                     <button
                       type="button"
@@ -629,7 +651,7 @@ export function CommandPaletteProvider({
                       }}
                       className="rounded-lg border border-black/10 bg-white/80 px-2.5 py-1.5 text-[12px] font-medium text-neutral-700 transition hover:bg-white"
                     >
-                      Open feed
+                      Open Desk
                     </button>
                     <button
                       type="button"

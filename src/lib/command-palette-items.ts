@@ -1,5 +1,4 @@
 import { deskUrl } from "@/lib/desk-routes";
-import { canAccessDeveloperTools } from "@/lib/feature-flags";
 
 export type WorkspacePaletteProject = { id: string; name: string };
 
@@ -117,8 +116,6 @@ const LEGAL: PaletteItem[] = [
 export function buildPaletteItems(params: {
   signedIn: boolean;
   displayName: string | null;
-  /** Primary sign-in email — used for founder dev-tools access. */
-  userEmail?: string | null;
   projects: WorkspacePaletteProject[];
   recentRuns?: PaletteRecentRun[];
   searchCommitments?: PaletteSearchCommitment[];
@@ -129,14 +126,12 @@ export function buildPaletteItems(params: {
   const {
     signedIn,
     displayName,
-    userEmail,
     projects,
     recentRuns = [],
     searchCommitments = [],
     people = [],
     openActionsCount = 0,
   } = params;
-  const showDeveloperTools = canAccessDeveloperTools(userEmail);
 
   if (!signedIn) {
     return filterLivePaletteItems([
@@ -315,7 +310,7 @@ export function buildPaletteItems(params: {
       id: "help-hub",
       label: "Help & tutorials",
       href: "/workspace/help",
-      description: "Onboarding replay, ⌘K tips, integrations, production checklist",
+      description: "Onboarding replay, shortcuts, and integrations",
       keywords: ["help", "tutorial", "onboarding", "replay", "support", "guide", "learn"],
       section: "agent",
     },
@@ -402,7 +397,6 @@ export function buildPaletteItems(params: {
         "palette",
         "dark",
         "light",
-        "hidden",
       ],
       section: "workspace",
     },
@@ -414,18 +408,6 @@ export function buildPaletteItems(params: {
       keywords: ["marketplace", "apps", "plugins", "catalog", "store", "library", "browse"],
       section: "workspace",
     },
-    ...(showDeveloperTools
-      ? [
-          {
-            id: "developer",
-            label: "Developer",
-            href: "/workspace/developer",
-            description: "Workspace developer tools",
-            keywords: ["developer", "dev", "debug", "api"],
-            section: "workspace" as const,
-          },
-        ]
-      : []),
     {
       id: "workspace-dashboard",
       label: "Analytics dashboard",

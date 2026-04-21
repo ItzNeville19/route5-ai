@@ -1,7 +1,6 @@
 import { createHmac, randomUUID } from "crypto";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
 import { sendNotification } from "@/lib/notifications/service";
-import { isDeveloperToolsEnabled } from "@/lib/feature-flags";
 import type { WebhookEventType } from "@/lib/public-api/types";
 import {
   getWebhookEndpoint,
@@ -140,7 +139,7 @@ export async function processWebhookDeliveryRetry(deliveryId: string): Promise<v
     await setWebhookEndpointEnabled(row.orgId, ep.id, false);
     const owner = await getOrganizationClerkUserId(row.orgId);
     if (owner) {
-      const link = isDeveloperToolsEnabled() ? "/workspace/developer" : "/settings";
+      const link = "/settings";
       void sendNotification({
         orgId: row.orgId,
         userId: owner,
