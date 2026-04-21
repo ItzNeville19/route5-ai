@@ -2743,7 +2743,25 @@ body {
   }
 }
 
+/** Desk greeting bubble — slow horizontal drift on wave band (ocean surface). */
+@keyframes desk-wave-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-4%);
+  }
+}
+
+.desk-greeting-wave-drift {
+  animation: desk-wave-drift 22s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .desk-greeting-wave-drift {
+    animation: none;
+  }
   .desk-capture-focus {
     animation: none;
   }

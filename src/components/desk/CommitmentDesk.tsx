@@ -428,7 +428,7 @@ export default function CommitmentDesk() {
   const currentProject = projects.find((p) => p.id === projectId);
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-3 pb-20">
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-10 pb-20 pt-1 sm:pt-2">
       <DeskGreetingBubble />
       <div className="flex min-w-0 flex-col gap-5">
         {/* Workspace execution strip */}
