@@ -17,9 +17,9 @@ export default async function PricingPage() {
   const userId = await getAuthUserIdSafe();
 
   return (
-    <main className="theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
+    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
       <Navbar />
-      <div className="container-apple pb-24 pt-28 md:pb-32 md:pt-32">
+      <div className="container-apple relative z-10 pb-24 pt-28 md:pb-32 md:pt-32">
         <div className="mx-auto max-w-[800px] text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
             Pricing
@@ -35,7 +35,9 @@ export default async function PricingPage() {
 
         <PublicPlansGrid signedIn={Boolean(userId)} />
       </div>
-      <Footer tone="command" />
+      <div className="relative z-10">
+        <Footer tone="command" />
+      </div>
     </main>
   );
 }

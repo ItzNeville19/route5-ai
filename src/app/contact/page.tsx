@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="theme-glass-site relative min-h-screen">
+    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
       <Navbar />
-      <div className="pb-16 pt-24 md:pb-24 md:pt-28">
+      <div className="relative z-10 pb-16 pt-24 md:pb-24 md:pt-28">
         <ContactForm />
       </div>
       <Footer />

@@ -354,6 +354,12 @@ export default function Navbar() {
           </div>
         </div>
       </motion.nav>
+      <div
+        className={`route5-brand-nav-accent-bar absolute bottom-0 left-0 right-0 ${
+          navUsesDarkChrome ? "route5-brand-nav-accent-bar--dark" : "route5-brand-nav-accent-bar--light"
+        }`}
+        aria-hidden
+      />
       {typeof document !== "undefined"
         ? createPortal(mobileMenu, document.body)
         : null}

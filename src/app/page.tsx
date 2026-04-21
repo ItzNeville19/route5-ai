@@ -58,7 +58,7 @@ export default function Home() {
           id="hero"
           className="relative overflow-hidden border-b border-white/10 pb-16 pt-[calc(5.5rem+env(safe-area-inset-top,0px))] sm:pb-24 sm:pt-32"
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_-30%,rgba(56,189,248,0.12),transparent),radial-gradient(circle_at_100%_60%,rgba(99,102,241,0.08),transparent_45%)]" />
+          <div className="route5-landing-hero-mesh pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_-30%,rgba(56,189,248,0.14),transparent),radial-gradient(circle_at_100%_60%,rgba(99,102,241,0.09),transparent_45%),radial-gradient(ellipse_60%_40%_at_0%_80%,rgba(251,191,36,0.06),transparent)]" />
           <div className="relative mx-auto max-w-[1040px] px-4 sm:px-8 lg:px-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-500">
               Enterprise execution
@@ -73,13 +73,13 @@ export default function Home() {
             <div className="mt-9 flex max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/sign-up"
-                className="inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-full bg-[#0071e3] px-8 text-[15px] font-semibold text-white shadow-[0_8px_32px_-8px_rgba(0,113,227,0.55)] ring-1 ring-white/15 transition hover:bg-[#0077ed] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 sm:w-auto"
+                className="route5-brand-lift-card inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-full bg-[#0071e3] px-8 text-[15px] font-semibold text-white shadow-[0_8px_32px_-8px_rgba(0,113,227,0.55)] ring-1 ring-white/15 transition hover:bg-[#0077ed] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400 active:scale-[0.98] sm:w-auto"
               >
                 Try Route5
               </Link>
               <Link
                 href="/product"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/18 bg-white/[0.05] px-8 text-[15px] font-medium text-zinc-100 transition hover:border-white/30 hover:bg-white/[0.09] sm:w-auto"
+                className="route5-brand-lift-card inline-flex min-h-12 w-full items-center justify-center rounded-full border border-white/18 bg-white/[0.05] px-8 text-[15px] font-medium text-zinc-100 transition hover:border-sky-300/35 hover:bg-white/[0.09] active:scale-[0.99] sm:w-auto"
               >
                 What we ship
               </Link>
@@ -112,7 +112,7 @@ export default function Home() {
               {PILLARS.map((p) => (
                 <li
                   key={p.title}
-                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5"
+                  className="route5-brand-lift-card rounded-2xl border border-sky-400/10 bg-white/[0.03] p-5"
                 >
                   <p className="text-[13px] font-semibold text-white">{p.title}</p>
                   <p className="mt-2 text-[12px] leading-relaxed text-zinc-500">{p.body}</p>
@@ -141,7 +141,7 @@ export default function Home() {
 
         <section className="border-t border-white/10 bg-gradient-to-b from-[#08080a] to-black">
           <div className="mx-auto max-w-[1180px] px-5 py-14 sm:px-8 sm:py-16 lg:px-12">
-            <div className="rounded-[22px] border border-white/[0.08] bg-[#0d0d10] p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-10">
+            <div className="route5-brand-lift-card rounded-[22px] border border-sky-400/12 bg-[#0d0d10] p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-10">
               <div className="max-w-md">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
                   Next step

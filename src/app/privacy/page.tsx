@@ -110,7 +110,7 @@ neville@rayze.xyz`,
 
 export default function PrivacyPage() {
   return (
-    <div className="theme-glass-site min-h-screen text-[#1d1d1f]">
+    <div className="route5-brand-marketing-page theme-glass-site min-h-screen text-[#1d1d1f]">
       <PrivacyHashScroll />
       <nav className="border-b border-black/[0.08] bg-white/45 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">

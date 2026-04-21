@@ -38,9 +38,9 @@ const questionnaireSections = [
 
 export default function TrustPage() {
   return (
-    <main className="theme-glass-site relative min-h-screen">
+    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
       <Navbar />
-      <div className="container-apple pb-24 pt-28 md:pb-32 md:pt-32">
+      <div className="container-apple relative z-10 pb-24 pt-28 md:pb-32 md:pt-32">
         <div className="mx-auto max-w-[720px]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45">
             Trust &amp; compliance

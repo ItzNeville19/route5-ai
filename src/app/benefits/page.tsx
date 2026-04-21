@@ -31,9 +31,9 @@ export const metadata: Metadata = {
 
 export default function BenefitsPage() {
   return (
-    <main className="theme-glass-site relative min-h-screen">
+    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
       <Navbar />
-      <article className="mx-auto max-w-[860px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
+      <article className="relative z-10 mx-auto max-w-[860px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45">
           Route5 · benefits
         </p>

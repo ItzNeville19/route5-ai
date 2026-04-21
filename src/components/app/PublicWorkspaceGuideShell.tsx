@@ -13,7 +13,9 @@ export default function PublicWorkspaceGuideShell({ children }: Props) {
   return (
     <div className="theme-agent-shell theme-route5-command relative min-h-dvh text-[var(--workspace-fg)]">
       <Navbar />
-      <main className="mx-auto w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6 sm:pt-8">{children}</main>
+      <main className="route5-brand-canvas mx-auto w-full max-w-[1280px] px-4 pb-12 pt-6 sm:px-6 sm:pt-8">
+        {children}
+      </main>
       <footer className="border-t border-[var(--workspace-border)] px-4 py-8 sm:px-6">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">

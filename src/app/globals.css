@@ -188,11 +188,12 @@ body {
   min-height: 100dvh;
   color: #fafafa;
   background-color: #050505;
-  background-image: radial-gradient(
-    ellipse 90% 60% at 50% -30%,
-    rgba(255, 255, 255, 0.06),
-    transparent 55%
-  );
+  /* Route5 coastal — auth matches product shell recognition */
+  background-image:
+    radial-gradient(ellipse 100% 65% at 50% -25%, rgba(56, 189, 248, 0.14), transparent 58%),
+    radial-gradient(ellipse 70% 50% at 15% 40%, rgba(253, 186, 116, 0.08), transparent 52%),
+    radial-gradient(ellipse 60% 45% at 95% 25%, rgba(147, 197, 253, 0.07), transparent 50%),
+    radial-gradient(ellipse 90% 60% at 50% -30%, rgba(255, 255, 255, 0.05), transparent 55%);
 }
 
 /* Clerk v7 theme tokens — fallback so sign-in/up stay readable if SDK variable mapping shifts */
@@ -2828,7 +2829,120 @@ body {
     radial-gradient(ellipse 80% 50% at 88% 20%, rgba(147, 197, 253, 0.08), transparent 50%);
 }
 
+/** Light marketing pages (product, contact, …): top coastal halo over theme-glass-site */
+.route5-brand-marketing-page {
+  position: relative;
+}
+
+.route5-brand-marketing-page::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: min(52vh, 520px);
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 110% 70% at 50% -15%, rgba(56, 189, 248, 0.1), transparent 58%),
+    radial-gradient(ellipse 80% 55% at 0% 20%, rgba(253, 186, 116, 0.075), transparent 52%);
+  opacity: 0.95;
+}
+
+/** Pricing + dark marketing: ambient depth */
+.route5-brand-dark-marketing-shell {
+  position: relative;
+}
+
+.route5-brand-dark-marketing-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(56, 189, 248, 0.11), transparent 55%),
+    radial-gradient(ellipse 70% 45% at 100% 30%, rgba(251, 191, 36, 0.05), transparent 50%);
+}
+
+/** Home hero mesh — slow “breathing” light (disabled when reduced motion) */
+@keyframes route5-brand-mesh-breathe {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(1.03);
+  }
+}
+
+.route5-landing-hero-mesh {
+  animation: route5-brand-mesh-breathe 32s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .route5-landing-hero-mesh {
+    animation: none;
+  }
+}
+
+/** Public nav — hairline gradient (dark vs light chrome) */
+.route5-brand-nav-accent-bar {
+  height: 2px;
+  width: 100%;
+  pointer-events: none;
+}
+
+.route5-brand-nav-accent-bar--dark {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.55) 18%,
+    rgba(251, 191, 36, 0.35) 52%,
+    rgba(14, 165, 233, 0.5) 85%,
+    transparent 100%
+  );
+  opacity: 0.85;
+}
+
+.route5-brand-nav-accent-bar--light {
+  background: linear-gradient(90deg, transparent 0%, rgba(0, 113, 227, 0.35) 45%, transparent 100%);
+  opacity: 0.65;
+}
+
+/** Command footer — coastal top edge */
+.route5-brand-footer-command-edge {
+  box-shadow:
+    inset 0 1px 0 rgba(56, 189, 248, 0.2),
+    0 -24px 48px -32px rgba(14, 165, 233, 0.08);
+}
+
+/** Marketing pillar / CTA cards — Fortune-grade lift */
+.route5-brand-lift-card {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease,
+    border-color 0.3s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .route5-brand-lift-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 24px 48px -28px rgba(56, 189, 248, 0.22),
+      0 0 0 1px rgba(56, 189, 248, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route5-brand-lift-card {
+    transition: border-color 0.2s ease;
+  }
+  .route5-brand-lift-card:hover {
+    transform: none;
+  }
   .desk-greeting-wave-drift {
     animation: none;
   }
