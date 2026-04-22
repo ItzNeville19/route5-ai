@@ -44,7 +44,13 @@ import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperien
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { deskUrl } from "@/lib/desk-routes";
+import {
+  deskHrefWithProjectFilter,
+  executionMetricFallbackHrefs,
+  orgCommitmentsHref,
+} from "@/lib/workspace/commitment-links";
 import { formatRelativeLong } from "@/lib/relative-time";
 import { STATUS_ACCENT, STATUS_LABEL, STATUS_PILL } from "@/components/desk/desk-constants";
 
@@ -126,11 +132,7 @@ function parseDatetimeLocalToIso(v: string): string | null {
 
 /** Same query shape as {@link deskUrl}, plus optional `filter` for deep links / email CTAs. */
 function deskHrefWithFilter(projectId: string, filter: DeskFilter): string {
-  const base = deskUrl({ projectId });
-  const u = new URL(base, "https://route5.local");
-  if (filter !== "open") u.searchParams.set("filter", filter);
-  else u.searchParams.delete("filter");
-  return `${u.pathname}${u.search}`;
+  return deskHrefWithProjectFilter(projectId, filter);
 }
 
 /** Avoid router/replace loops when query-param ordering differs. */
@@ -151,6 +153,7 @@ function pathAndQueryEquivalent(a: string, b: string): boolean {
 
 export default function CommitmentDesk() {
   const { user } = useUser();
+  const { t } = useI18n();
   const { map: memberMap, displayName: memberDisplayName, get: getMember } = useMemberDirectory();
   const { pushToast } = useWorkspaceExperience();
   const { projects, loadingProjects, refreshAll } = useWorkspaceData();
@@ -550,12 +553,32 @@ export default function CommitmentDesk() {
 
   const currentProject = projects.find((p) => p.id === projectId);
 
+  /** Metric tiles → filtered Desk or org tracker when no project exists yet. */
+  const statLinks = useMemo(() => {
+    const pid = projectId || projects[0]?.id;
+    if (!pid) return executionMetricFallbackHrefs();
+    return {
+      active: deskHrefWithProjectFilter(pid, "open"),
+      overdue: deskHrefWithProjectFilter(pid, "overdue"),
+      atRisk: deskHrefWithProjectFilter(pid, "at_risk"),
+      unassigned: deskHrefWithProjectFilter(pid, "unassigned"),
+      weekClosed: deskHrefWithProjectFilter(pid, "history"),
+    };
+  }, [projectId, projects]);
+
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-10 pb-20 pt-1 sm:pt-2">
       <DeskGreetingBubble />
       <div className="flex min-w-0 flex-col gap-5">
         {/* Workspace execution strip */}
-        <section className="relative overflow-hidden rounded-[24px] border border-[color-mix(in_srgb,var(--workspace-accent)_30%,var(--workspace-border))] bg-gradient-to-br from-[color-mix(in_srgb,var(--workspace-accent)_12%,var(--workspace-canvas))] via-[var(--workspace-canvas)]/50 to-[color-mix(in_srgb,var(--workspace-accent)_10%,var(--workspace-canvas))] p-[1px] shadow-[0_28px_90px_-42px_color-mix(in_srgb,var(--workspace-accent)_18%,transparent),0_24px_80px_-40px_rgba(0,0,0,0.52)]">
+        <motion.section
+          layout
+          initial={{ opacity: 0.92, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 140, damping: 22 }}
+          style={{ perspective: "1200px" }}
+          className="relative overflow-hidden rounded-[24px] border border-[color-mix(in_srgb,var(--workspace-accent)_30%,var(--workspace-border))] bg-gradient-to-br from-[color-mix(in_srgb,var(--workspace-accent)_12%,var(--workspace-canvas))] via-[var(--workspace-canvas)]/50 to-[color-mix(in_srgb,var(--workspace-accent)_10%,var(--workspace-canvas))] p-[1px] shadow-[0_28px_90px_-42px_color-mix(in_srgb,var(--workspace-accent)_18%,transparent),0_24px_80px_-40px_rgba(0,0,0,0.52)]"
+        >
           <div
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_28%_-18%,rgba(254,215,170,0.1),transparent_52%),radial-gradient(ellipse_65%_55%_at_90%_5%,rgba(56,189,248,0.11),transparent_48%)]"
             aria-hidden
@@ -566,17 +589,18 @@ export default function CommitmentDesk() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
                 {currentProject?.name?.trim() ? (
                   <>
-                    Project · <span className="text-[var(--workspace-fg)]">{currentProject.name}</span>
+                    {t("desk.strip.projectPrefix")}{" "}
+                    <span className="text-[var(--workspace-fg)]">{currentProject.name}</span>
                   </>
                 ) : (
-                  "Desk"
+                  t("desk.strip.deskFallback")
                 )}
               </p>
               <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[20px]">
-                Commitments for this workspace
+                {t("desk.strip.title")}
               </h2>
               <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-[var(--workspace-muted-fg)] sm:text-[13px]">
-                Paste to capture, assign owners, ship. Stats below are org-wide.
+                {t("desk.strip.subtitle")}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -586,13 +610,13 @@ export default function CommitmentDesk() {
                 className="inline-flex items-center gap-2 rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg shadow-black/20 transition hover:opacity-95"
               >
                 <Sparkles className="h-4 w-4" aria-hidden />
-                Add decision
+                {t("desk.strip.addDecision")}
               </button>
               <Link
                 href="/overview"
                 className="inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)]"
               >
-                Overview
+                {t("desk.strip.overview")}
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
               </Link>
             </div>
@@ -611,45 +635,80 @@ export default function CommitmentDesk() {
             ) : intel ? (
               <>
                 <StatChip
-                  label="Active"
+                  label={t("commitment.metrics.active")}
                   value={intel.summary.activeTotal}
-                  sub="open"
+                  sub={t("desk.stats.sub.open")}
                   tone="sky"
+                  href={statLinks.active}
+                  ariaTemplate={t("desk.stats.aria")}
+                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
-                  label="Overdue"
+                  label={t("commitment.metrics.overdue")}
                   value={intel.summary.overdueCount}
-                  sub="past due"
+                  sub={t("desk.stats.sub.pastDue")}
                   tone="red"
                   pulse={intel.summary.overdueCount > 0}
+                  href={statLinks.overdue}
+                  ariaTemplate={t("desk.stats.aria")}
+                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
-                  label="At risk"
+                  label={t("commitment.metrics.atRisk")}
                   value={intel.summary.atRiskCount}
-                  sub="stale / flagged"
+                  sub={t("desk.stats.sub.stale")}
                   tone="amber"
                   pulse={intel.summary.atRiskCount > 0}
+                  href={statLinks.atRisk}
+                  ariaTemplate={t("desk.stats.aria")}
+                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
-                  label="Unassigned"
+                  label={t("commitment.metrics.unassigned")}
                   value={intel.summary.unassignedCount}
-                  sub="no owner"
+                  sub={t("desk.stats.sub.noOwner")}
                   tone="violet"
                   pulse={intel.summary.unassignedCount > 0}
+                  href={statLinks.unassigned}
+                  ariaTemplate={t("desk.stats.aria")}
+                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
-                  label="Week closed"
+                  label={t("desk.stats.weekClosed")}
                   value={`${Math.round(intel.summary.pctCompletedThisWeek)}%`}
-                  sub="completed (7d)"
+                  sub={t("desk.stats.sub.completed7d")}
                   tone="emerald"
+                  href={statLinks.weekClosed}
+                  ariaTemplate={t("desk.stats.ariaPct")}
+                  openListHint={t("commitment.openList")}
                 />
               </>
             ) : (
               <p className="col-span-full text-[13px] text-[var(--workspace-muted-fg)]">
-                Execution data unavailable.
+                {t("desk.stats.unavailable")}
               </p>
             )}
           </div>
+
+          {intel && !loadingIntel ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.08 }}
+              className="flex flex-col gap-2 border-t border-white/[0.06] pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  href={orgCommitmentsHref()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_35%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-[var(--workspace-accent)]/55 hover:bg-[color-mix(in_srgb,var(--workspace-accent)_18%,transparent)]"
+                >
+                  {t("desk.fixQueue.cta")}
+                  <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
+                </Link>
+                <span className="text-[11px] text-[var(--workspace-muted-fg)]">{t("desk.fixQueue.hint")}</span>
+              </div>
+            </motion.div>
+          ) : null}
         </div>
           <div
             className="desk-greeting-wave-drift pointer-events-none absolute bottom-0 left-0 right-0 h-11 text-[color-mix(in_srgb,var(--workspace-accent)_45%,#7dd3fc)]/50 sm:h-12"
@@ -668,7 +727,7 @@ export default function CommitmentDesk() {
               />
             </svg>
           </div>
-        </section>
+        </motion.section>
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
         {/* Left rail */}
@@ -1655,12 +1714,18 @@ function StatChip({
   sub,
   tone,
   pulse,
+  href,
+  ariaTemplate,
+  openListHint,
 }: {
   label: string;
   value: string | number;
   sub: string;
   tone: "sky" | "red" | "amber" | "violet" | "emerald";
   pulse?: boolean;
+  href: string;
+  ariaTemplate: string;
+  openListHint: string;
 }) {
   const ring =
     tone === "sky"
@@ -1673,12 +1738,9 @@ function StatChip({
             ? "from-violet-500/25 to-violet-500/5"
             : "from-emerald-500/28 to-emerald-950/15";
 
-  return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--workspace-accent)_20%,var(--workspace-border))] bg-gradient-to-br ${ring} p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${
-        pulse ? "ring-1 ring-amber-400/35" : ""
-      }`}
-    >
+  const ariaLabel = `${label}: ${value}. ${sub}. ${ariaTemplate}`;
+  const inner = (
+    <>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
         {label}
       </p>
@@ -1686,7 +1748,29 @@ function StatChip({
         {value}
       </p>
       <p className="text-[10px] text-[var(--workspace-muted-fg)]">{sub}</p>
-    </div>
+      <p className="mt-1 text-[10px] font-semibold text-[var(--workspace-accent)]/95">{openListHint}</p>
+    </>
+  );
+
+  const shellCls = `relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--workspace-accent)_20%,var(--workspace-border))] bg-gradient-to-br ${ring} p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-[transform,box-shadow] duration-200 ease-out [transform-style:preserve-3d] ${
+    pulse ? "ring-1 ring-amber-400/35" : ""
+  }`;
+
+  return (
+    <motion.div
+      whileHover={{ y: -3, rotateX: 3, rotateY: -2, scale: 1.015 }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      <Link
+        href={href}
+        aria-label={ariaLabel}
+        className={`block outline-none focus-visible:ring-2 focus-visible:ring-[var(--workspace-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--workspace-canvas)] ${shellCls} hover:shadow-[0_14px_40px_-24px_color-mix(in_srgb,var(--workspace-accent)_35%,transparent)]`}
+      >
+        {inner}
+      </Link>
+    </motion.div>
   );
 }
 

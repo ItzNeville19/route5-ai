@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Commitment } from "@/lib/commitment-types";
 import type { Project } from "@/lib/types";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 type Props = { projectId: string };
 
@@ -63,6 +64,7 @@ function timeAgo(iso: string): string {
 export default function ProjectDashboard({ projectId }: Props) {
   const router = useRouter();
   const { displayName } = useMemberDirectory();
+  const { t } = useI18n();
   const [project, setProject] = useState<Project | null>(null);
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -262,23 +264,26 @@ export default function ProjectDashboard({ projectId }: Props) {
 
       {tab === "chat" ? (
         <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/20 p-[var(--r5-space-4)]">
-          <h2 className="text-[14px] font-semibold text-r5-text-primary">Stay aligned</h2>
-          <p className="mt-[var(--r5-space-2)] text-[13px] text-r5-text-secondary">
-            Your daily digest and escalation queue summarize what changed — better for async execution than juggling
-            another inbox. Prefer live chat? Open workspace chat when you need it.
-          </p>
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">{t("project.tab.chat.title")}</h2>
+          <p className="mt-[var(--r5-space-2)] text-[13px] text-r5-text-secondary">{t("project.tab.chat.body")}</p>
           <div className="mt-[var(--r5-space-3)] flex flex-wrap gap-2">
             <Link
-              href="/workspace/digest"
+              href="/workspace/commitments"
               className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/70 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
             >
-              Open daily digest
+              {t("sidebar.commitmentTracker")}
             </Link>
             <Link
               href="/workspace/chat"
               className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle bg-transparent px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
             >
-              Workspace chat
+              {t("project.tab.chat.workspaceChat")}
+            </Link>
+            <Link
+              href="/workspace/digest"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-transparent px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-tertiary underline-offset-4 transition hover:text-r5-text-secondary hover:underline"
+            >
+              {t("project.tab.chat.digestHint")}
             </Link>
           </div>
         </section>

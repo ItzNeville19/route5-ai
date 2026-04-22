@@ -17,7 +17,6 @@ import {
   LifeBuoy,
   ListChecks,
   LineChart,
-  Newspaper,
   Palette,
   Plus,
   CheckCircle2,
@@ -153,10 +152,10 @@ export default function WorkspaceSidebar() {
               label={t("sidebar.projects")}
             />
             <NavRow
-              href="/workspace/digest"
-              active={path === "/workspace/digest"}
-              icon={Newspaper}
-              label={t("sidebar.digest")}
+              href="/workspace/commitments"
+              active={path === "/workspace/commitments"}
+              icon={Target}
+              label={t("sidebar.commitmentTracker")}
             />
             <button
               type="button"

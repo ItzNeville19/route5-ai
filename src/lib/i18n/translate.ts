@@ -6,8 +6,9 @@ export function translate(
   key: string,
   vars?: Record<string, string | number>
 ): string {
-  const pack = MESSAGE_PACKS[code] ?? MESSAGE_PACKS.en;
-  let s = pack[key] ?? MESSAGE_PACKS.en[key] ?? key;
+  const base = MESSAGE_PACKS.en;
+  const overlay = code === "en" ? undefined : MESSAGE_PACKS[code];
+  let s = (overlay?.[key] ?? base[key]) ?? key;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
       s = s.replaceAll(`{${k}}`, String(v));

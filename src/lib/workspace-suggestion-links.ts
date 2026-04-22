@@ -20,7 +20,12 @@ export function learnMoreForHref(href: string): string {
   if (href === "/settings" || href.startsWith("/settings#")) return DOCS_PRODUCT;
   if (href === "/reports" || href === "/team-insights") return DOCS_PRODUCT;
   if (href.startsWith("/desk") || href === "/overview") return DOCS_PRODUCT;
-  if (href === "/workspace/digest" || href === "/workspace/customize" || href === "/workspace/apps") {
+  if (
+    href === "/workspace/digest" ||
+    href === "/workspace/commitments" ||
+    href === "/workspace/customize" ||
+    href === "/workspace/apps"
+  ) {
     return DOCS_PRODUCT;
   }
   if (href === "/account/plans") return "/account/plans";

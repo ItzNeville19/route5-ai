@@ -8,7 +8,6 @@ import {
   X,
   ListChecks,
   FolderOpen,
-  Newspaper,
   BarChart3,
   Gauge,
   LineChart,
@@ -19,6 +18,7 @@ import {
   LifeBuoy,
   Settings,
   CreditCard,
+  Target,
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -73,7 +73,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
         items: [
           { href: "/desk", label: "Desk", icon: ListChecks },
           { href: "/projects", label: t("sidebar.projects"), icon: FolderOpen },
-          { href: "/workspace/digest", label: t("sidebar.digest"), icon: Newspaper },
+          { href: "/workspace/commitments", label: t("sidebar.commitmentTracker"), icon: Target },
         ],
       },
       ...OPS_AND_ACCOUNT,
@@ -121,7 +121,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                     (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||
                     (item.href === "/projects" && pathname.startsWith("/projects/")) ||
                     (item.href === "/workspace/escalations" && pathname.startsWith("/workspace/escalations")) ||
-                    (item.href === "/workspace/digest" && pathname.startsWith("/workspace/digest"));
+                    (item.href === "/workspace/commitments" && pathname.startsWith("/workspace/commitments"));
                   return (
                     <Link
                       key={`${section.title}-${item.label}`}

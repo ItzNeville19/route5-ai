@@ -20,3 +20,31 @@ export function deskFilteredHref(filter: "unassigned" | "overdue" | "at_risk" | 
   u.searchParams.set("filter", filter);
   return `${u.pathname}${u.search}`;
 }
+
+/** Desk filter query values (matches CommitmentDesk /api filter chips). */
+export type DeskFilterParam = "open" | "my" | "at_risk" | "overdue" | "unassigned" | "history";
+
+export function deskHrefWithProjectFilter(projectId: string | undefined, filter: DeskFilterParam): string {
+  const base = deskUrl(projectId ? { projectId } : {});
+  const u = new URL(base, "https://route5.local");
+  if (filter !== "open") u.searchParams.set("filter", filter);
+  else u.searchParams.delete("filter");
+  return `${u.pathname}${u.search}`;
+}
+
+/** When no project exists yet, send users to org tracker instead of empty desk filters. */
+export function executionMetricFallbackHrefs(): {
+  active: string;
+  overdue: string;
+  atRisk: string;
+  unassigned: string;
+  weekClosed: string;
+} {
+  return {
+    active: ORG_COMMITMENTS,
+    overdue: orgCommitmentsHref("overdue"),
+    atRisk: orgCommitmentsHref("at_risk"),
+    unassigned: ORG_COMMITMENTS,
+    weekClosed: orgCommitmentsHref("completed"),
+  };
+}
