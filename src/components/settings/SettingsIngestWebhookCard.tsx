@@ -88,7 +88,7 @@ export default function SettingsIngestWebhookCard() {
       </div>
 
       {err ? (
-        <p className="mt-4 text-[13px] text-amber-200/90" role="status">
+        <p className="mt-4 text-[13px] text-[color-mix(in_srgb,var(--workspace-danger-fg)_92%,var(--workspace-fg))]" role="status">
           {err}
         </p>
       ) : null}

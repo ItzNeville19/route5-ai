@@ -10,12 +10,12 @@ export const ORG_STATUS_LABEL: Record<OrgCommitmentStatus, string> = {
 };
 
 export const ORG_STATUS_PILL: Record<OrgCommitmentStatus, string> = {
-  not_started: "bg-zinc-500/20 text-zinc-100 border-zinc-400/30",
-  in_progress: "bg-sky-500/20 text-sky-100 border-sky-400/30",
-  on_track: "bg-emerald-500/20 text-emerald-100 border-emerald-400/30",
-  at_risk: "bg-amber-500/20 text-amber-100 border-amber-400/35",
-  overdue: "bg-red-500/20 text-red-100 border-red-400/35",
-  completed: "bg-emerald-500/20 text-emerald-100 border-emerald-400/30",
+  not_started: "border border-zinc-400/30 bg-zinc-500/15 text-[var(--workspace-fg)]",
+  in_progress: "border border-sky-400/35 bg-sky-500/15 text-[var(--workspace-fg)]",
+  on_track: "border border-emerald-400/35 bg-emerald-500/15 text-[var(--workspace-fg)]",
+  at_risk: "border border-amber-400/35 bg-amber-500/15 text-[var(--workspace-fg)]",
+  overdue: "border border-red-400/35 bg-red-500/15 text-[var(--workspace-fg)]",
+  completed: "border border-emerald-400/35 bg-emerald-500/15 text-[var(--workspace-fg)]",
 };
 
 export const ORG_PRIORITY_LABEL: Record<OrgCommitmentPriority, string> = {
@@ -26,8 +26,8 @@ export const ORG_PRIORITY_LABEL: Record<OrgCommitmentPriority, string> = {
 };
 
 export const ORG_PRIORITY_PILL: Record<OrgCommitmentPriority, string> = {
-  critical: "bg-red-500/25 text-red-100 border-red-400/35",
-  high: "bg-orange-500/20 text-orange-100 border-orange-400/30",
-  medium: "bg-sky-500/20 text-sky-100 border-sky-400/30",
-  low: "bg-zinc-500/20 text-zinc-100 border-zinc-400/25",
+  critical: "border border-red-400/35 bg-red-500/20 text-[var(--workspace-fg)]",
+  high: "border border-orange-400/35 bg-orange-500/15 text-[var(--workspace-fg)]",
+  medium: "border border-sky-400/35 bg-sky-500/15 text-[var(--workspace-fg)]",
+  low: "border border-zinc-400/25 bg-zinc-500/15 text-[var(--workspace-fg)]",
 };

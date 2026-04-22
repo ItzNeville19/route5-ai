@@ -79,7 +79,7 @@ export default function ProjectDashboard({ projectId }: Props) {
       try {
         const [projRes, commitmentsRes] = await Promise.all([
           fetch(`/api/projects/${projectId}`, fetchOpts),
-          fetch(`/api/projects/${projectId}/commitments?filter=all`, fetchOpts),
+          fetch(`/api/projects/${projectId}/commitments`, fetchOpts),
         ]);
 
         const projData = (await projRes.json().catch(() => ({}))) as ProjectDetailResponse;

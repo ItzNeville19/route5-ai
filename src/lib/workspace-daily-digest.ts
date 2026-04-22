@@ -117,8 +117,8 @@ export function buildDailyDigestListItems(input: {
       });
     }
     items.push({
-      title: "Full daily rundown",
-      body: `Today: ${dueTodayCount} due · ${s.overdueCount} overdue · ${s.atRiskCount} at risk · ${s.unassignedCount} unassigned. Open desk in order: ${topAttention.map((row) => row.title).join(" → ") || "No priority blockers right now."}`,
+      title: "Full rundown",
+      body: `Tap for the dated digest page — ${dueTodayCount} due today · ${s.overdueCount} overdue · ${s.atRiskCount} at risk.`,
       href: "/workspace/digest",
       tone: s.overdueCount > 0 || s.atRiskCount > 0 ? "warn" : undefined,
     });

@@ -1600,6 +1600,42 @@ body {
     linear-gradient(195deg, #fff7ed 0%, #ffedd5 40%, #fed7aa 100%);
 }
 
+/* Ember — crimson twilight after golden hour (readable red-leaning light palette). */
+.theme-route5-command.theme-agent-shell.workspace-theme-ember {
+  color-scheme: light;
+  color: #431407;
+  --workspace-fg: #431407;
+  --workspace-muted-fg: #78350f;
+  --workspace-border: rgba(67, 20, 7, 0.13);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fff1f2;
+  --workspace-mission-bg: rgba(255, 247, 247, 0.93);
+  --workspace-nav-hover: rgba(225, 29, 72, 0.07);
+  --workspace-nav-active: rgba(225, 29, 72, 0.11);
+  --workspace-nav-chip: rgba(67, 20, 7, 0.06);
+  --workspace-accent: #dc2626;
+  --workspace-accent-hover: #b91c1c;
+  --workspace-sidebar: rgba(255, 250, 250, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-info-surface: rgba(225, 29, 72, 0.12);
+  --workspace-info-border: rgba(225, 29, 72, 0.26);
+  --workspace-danger-fg: #991b1b;
+  --workspace-success-fg: #047857;
+  --ios-label: #431407;
+  --ios-secondary: #78350f;
+  --ios-separator: rgba(67, 20, 7, 0.1);
+  --ios-group-bg: rgba(255, 251, 251, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-ember .agent-canvas {
+  background-color: #ffe4e6;
+  background-image:
+    radial-gradient(ellipse 110% 92% at 52% -12%, rgba(239, 68, 68, 0.34), transparent 53%),
+    radial-gradient(ellipse 78% 58% at 0% 92%, rgba(251, 113, 133, 0.22), transparent 56%),
+    radial-gradient(ellipse 85% 52% at 100% 78%, rgba(76, 29, 149, 0.14), transparent 54%),
+    linear-gradient(198deg, #fff5f5 0%, #ffe4e6 42%, #fecdd3 100%);
+}
+
 /* Studio — warm stone paper + ink (auto mid-morning). */
 .theme-route5-command.theme-agent-shell.workspace-theme-studio {
   color-scheme: light;
@@ -1703,11 +1739,288 @@ body {
 }
 
 .theme-route5-command.theme-agent-shell.workspace-theme-ocean .agent-canvas {
-  background-color: #e0f2fe;
+  background-color: #075985;
   background-image:
-    radial-gradient(ellipse 100% 88% at 50% -18%, rgba(56, 189, 248, 0.28), transparent 56%),
-    radial-gradient(ellipse 80% 60% at 0% 100%, rgba(14, 165, 233, 0.14), transparent 54%),
-    linear-gradient(185deg, #f0f9ff 0%, #e0f2fe 40%, #bae6fd 100%);
+    radial-gradient(ellipse 110% 85% at 50% -12%, rgba(186, 230, 253, 0.55), transparent 52%),
+    radial-gradient(ellipse 90% 55% at 15% 95%, rgba(8, 145, 178, 0.45), transparent 58%),
+    radial-gradient(ellipse 85% 50% at 88% 88%, rgba(14, 116, 144, 0.38), transparent 55%),
+    linear-gradient(183deg, #ecfeff 0%, #38bdf8 28%, #0369a1 52%, #0c4a6e 78%, #082f49 100%);
+}
+
+/* Laguna Beach — Pacific teal glass (light). */
+.theme-route5-command.theme-agent-shell.workspace-theme-lagunabeach {
+  color-scheme: light;
+  color: #134e4a;
+  --workspace-fg: #134e4a;
+  --workspace-muted-fg: #0f766e;
+  --workspace-border: rgba(19, 78, 74, 0.12);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #ecfdf5;
+  --workspace-mission-bg: rgba(236, 253, 245, 0.94);
+  --workspace-nav-hover: rgba(15, 118, 110, 0.08);
+  --workspace-nav-active: rgba(15, 118, 110, 0.12);
+  --workspace-nav-chip: rgba(19, 78, 74, 0.05);
+  --workspace-accent: #0d9488;
+  --workspace-accent-hover: #0f766e;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #047857;
+  --workspace-info-surface: rgba(13, 148, 136, 0.11);
+  --workspace-info-border: rgba(13, 148, 136, 0.24);
+  --ios-label: #134e4a;
+  --ios-secondary: #0f766e;
+  --ios-separator: rgba(19, 78, 74, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-lagunabeach .agent-canvas {
+  background-color: #ccfbf1;
+  background-image:
+    radial-gradient(ellipse 100% 75% at 48% -10%, rgba(204, 251, 241, 0.95), transparent 54%),
+    radial-gradient(ellipse 85% 55% at 100% 85%, rgba(45, 212, 191, 0.28), transparent 54%),
+    linear-gradient(188deg, #f0fdfa 0%, #ccfbf1 38%, #5eead4 72%, #0f766e 100%);
+}
+
+/* San Francisco — fog & bay steel (light). */
+.theme-route5-command.theme-agent-shell.workspace-theme-sanfrancisco {
+  color-scheme: light;
+  color: #334155;
+  --workspace-fg: #334155;
+  --workspace-muted-fg: #64748b;
+  --workspace-border: rgba(51, 65, 85, 0.11);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #eef2ff;
+  --workspace-mission-bg: rgba(238, 242, 255, 0.94);
+  --workspace-nav-hover: rgba(79, 70, 229, 0.07);
+  --workspace-nav-active: rgba(79, 70, 229, 0.11);
+  --workspace-nav-chip: rgba(51, 65, 85, 0.05);
+  --workspace-accent: #6366f1;
+  --workspace-accent-hover: #4f46e5;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #047857;
+  --workspace-info-surface: rgba(99, 102, 241, 0.1);
+  --workspace-info-border: rgba(99, 102, 241, 0.22);
+  --ios-label: #334155;
+  --ios-secondary: #64748b;
+  --ios-separator: rgba(51, 65, 85, 0.09);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sanfrancisco .agent-canvas {
+  background-color: #e0e7ff;
+  background-image:
+    repeating-linear-gradient(
+      185deg,
+      transparent,
+      transparent 42px,
+      rgba(148, 163, 184, 0.06) 42px,
+      rgba(148, 163, 184, 0.06) 43px
+    ),
+    radial-gradient(ellipse 110% 90% at 50% -15%, rgba(199, 210, 254, 0.65), transparent 56%),
+    radial-gradient(ellipse 70% 45% at 20% 100%, rgba(148, 163, 184, 0.28), transparent 54%),
+    linear-gradient(185deg, #f8fafc 0%, #e0e7ff 45%, #cbd5e1 100%);
+}
+
+/* Nevada — high desert sand (light). */
+.theme-route5-command.theme-agent-shell.workspace-theme-nevada {
+  color-scheme: light;
+  color: #78350f;
+  --workspace-fg: #78350f;
+  --workspace-muted-fg: #92400e;
+  --workspace-border: rgba(120, 53, 15, 0.11);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fef3c7;
+  --workspace-mission-bg: rgba(254, 243, 199, 0.94);
+  --workspace-nav-hover: rgba(234, 88, 12, 0.08);
+  --workspace-nav-active: rgba(234, 88, 12, 0.12);
+  --workspace-nav-chip: rgba(120, 53, 15, 0.05);
+  --workspace-accent: #ea580c;
+  --workspace-accent-hover: #c2410c;
+  --workspace-sidebar: rgba(255, 251, 235, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(234, 88, 12, 0.11);
+  --workspace-info-border: rgba(234, 88, 12, 0.24);
+  --ios-label: #78350f;
+  --ios-secondary: #92400e;
+  --ios-separator: rgba(120, 53, 15, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-nevada .agent-canvas {
+  background-color: #fde68a;
+  background-image:
+    radial-gradient(ellipse 100% 70% at 18% 8%, rgba(253, 230, 138, 0.85), transparent 54%),
+    radial-gradient(ellipse 90% 60% at 88% 40%, rgba(217, 119, 6, 0.22), transparent 52%),
+    linear-gradient(190deg, #fffbeb 0%, #fde68a 42%, #d97706 100%);
+}
+
+/* Mumbai — warm ivory & spice (light). */
+.theme-route5-command.theme-agent-shell.workspace-theme-mumbai {
+  color-scheme: light;
+  color: #78350f;
+  --workspace-fg: #78350f;
+  --workspace-muted-fg: #b45309;
+  --workspace-border: rgba(120, 53, 15, 0.11);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #fffbeb;
+  --workspace-mission-bg: rgba(255, 251, 235, 0.94);
+  --workspace-nav-hover: rgba(217, 119, 6, 0.08);
+  --workspace-nav-active: rgba(217, 119, 6, 0.12);
+  --workspace-nav-chip: rgba(120, 53, 15, 0.05);
+  --workspace-accent: #d97706;
+  --workspace-accent-hover: #b45309;
+  --workspace-sidebar: rgba(255, 252, 245, 0.98);
+  --workspace-on-accent: #ffffff;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(217, 119, 6, 0.11);
+  --workspace-info-border: rgba(217, 119, 6, 0.24);
+  --ios-label: #78350f;
+  --ios-secondary: #b45309;
+  --ios-separator: rgba(120, 53, 15, 0.1);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-mumbai .agent-canvas {
+  background-color: #fef3c7;
+  background-image:
+    radial-gradient(ellipse 95% 70% at 12% 0%, rgba(254, 243, 199, 0.95), transparent 54%),
+    radial-gradient(ellipse 80% 55% at 95% 85%, rgba(245, 158, 11, 0.22), transparent 54%),
+    linear-gradient(185deg, #fffbeb 0%, #fef3c7 48%, #fcd34d 100%);
+}
+
+/* Columbia — parchment & evergreen (light). */
+.theme-route5-command.theme-agent-shell.workspace-theme-columbia {
+  color-scheme: light;
+  color: #292524;
+  --workspace-fg: #292524;
+  --workspace-muted-fg: #78716c;
+  --workspace-border: rgba(41, 37, 36, 0.11);
+  --workspace-surface: rgba(255, 255, 255, 0.94);
+  --workspace-canvas: #faf7f2;
+  --workspace-mission-bg: rgba(250, 247, 242, 0.94);
+  --workspace-nav-hover: rgba(87, 83, 78, 0.07);
+  --workspace-nav-active: rgba(87, 83, 78, 0.1);
+  --workspace-nav-chip: rgba(41, 37, 36, 0.05);
+  --workspace-accent: #57534e;
+  --workspace-accent-hover: #44403c;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
+  --workspace-on-accent: #fafaf9;
+  --workspace-danger-fg: #b91c1c;
+  --workspace-success-fg: #15803d;
+  --workspace-info-surface: rgba(87, 83, 78, 0.1);
+  --workspace-info-border: rgba(87, 83, 78, 0.22);
+  --ios-label: #292524;
+  --ios-secondary: #78716c;
+  --ios-separator: rgba(41, 37, 36, 0.09);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-columbia .agent-canvas {
+  background-color: #f5f5f4;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 31px,
+      rgba(41, 37, 36, 0.035) 31px,
+      rgba(41, 37, 36, 0.035) 32px
+    ),
+    radial-gradient(ellipse 55% 40% at 8% 95%, rgba(22, 101, 52, 0.11), transparent 58%),
+    radial-gradient(ellipse 95% 75% at 40% -10%, rgba(214, 211, 209, 0.45), transparent 54%),
+    radial-gradient(ellipse 70% 50% at 100% 90%, rgba(22, 101, 52, 0.14), transparent 54%),
+    linear-gradient(185deg, #fafaf9 0%, #faf7f2 42%, #e7e5e4 100%);
+}
+
+/* Las Vegas — neon strip night (dark). */
+.theme-route5-command.theme-agent-shell.workspace-theme-vegas {
+  color-scheme: dark;
+  color: #faf5ff;
+  --workspace-fg: #faf5ff;
+  --workspace-muted-fg: #e9d5ff;
+  --workspace-border: rgba(233, 213, 255, 0.16);
+  --workspace-surface: rgba(26, 10, 46, 0.92);
+  --workspace-canvas: #1a0a2e;
+  --workspace-mission-bg: rgba(26, 10, 46, 0.9);
+  --workspace-nav-hover: rgba(232, 121, 249, 0.1);
+  --workspace-nav-active: rgba(232, 121, 249, 0.16);
+  --workspace-nav-chip: rgba(250, 245, 255, 0.07);
+  --workspace-accent: #e879f9;
+  --workspace-accent-hover: #f0abfc;
+  --workspace-sidebar: rgba(15, 5, 28, 0.94);
+  --workspace-on-accent: #1a0a2e;
+  --workspace-danger-fg: #fca5a5;
+  --workspace-success-fg: #86efac;
+  --workspace-info-surface: rgba(232, 121, 249, 0.14);
+  --workspace-info-border: rgba(232, 121, 249, 0.32);
+  --ios-label: #faf5ff;
+  --ios-secondary: #e9d5ff;
+  --ios-separator: rgba(233, 213, 255, 0.14);
+  --ios-group-bg: rgba(26, 10, 46, 0.88);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-vegas .agent-canvas {
+  background-color: #1a0a2e;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 72px,
+      rgba(236, 72, 153, 0.055) 72px,
+      rgba(236, 72, 153, 0.055) 73px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 140px,
+      rgba(34, 211, 238, 0.04) 140px,
+      rgba(34, 211, 238, 0.04) 141px
+    ),
+    radial-gradient(ellipse 120% 55% at 50% 115%, rgba(250, 204, 21, 0.07), transparent 52%),
+    radial-gradient(ellipse 100% 80% at 50% -10%, rgba(168, 85, 247, 0.38), transparent 56%),
+    radial-gradient(ellipse 70% 50% at 0% 100%, rgba(236, 72, 153, 0.22), transparent 54%),
+    radial-gradient(ellipse 75% 55% at 100% 75%, rgba(34, 211, 238, 0.18), transparent 52%),
+    linear-gradient(185deg, #2e1065 0%, #1a0a2e 45%, #0f0518 100%);
+}
+
+/* New York City — midnight harbor (dark). */
+.theme-route5-command.theme-agent-shell.workspace-theme-nyc {
+  color-scheme: dark;
+  color: #f8fafc;
+  --workspace-fg: #f8fafc;
+  --workspace-muted-fg: #94a3b8;
+  --workspace-border: rgba(148, 163, 184, 0.18);
+  --workspace-surface: rgba(15, 23, 42, 0.92);
+  --workspace-canvas: #0f172a;
+  --workspace-mission-bg: rgba(15, 23, 42, 0.9);
+  --workspace-nav-hover: rgba(56, 189, 248, 0.08);
+  --workspace-nav-active: rgba(56, 189, 248, 0.14);
+  --workspace-nav-chip: rgba(248, 250, 252, 0.06);
+  --workspace-accent: #38bdf8;
+  --workspace-accent-hover: #7dd3fc;
+  --workspace-sidebar: rgba(10, 15, 28, 0.94);
+  --workspace-on-accent: #0f172a;
+  --workspace-danger-fg: #fca5a5;
+  --workspace-success-fg: #86efac;
+  --workspace-info-surface: rgba(56, 189, 248, 0.12);
+  --workspace-info-border: rgba(56, 189, 248, 0.28);
+  --ios-label: #f8fafc;
+  --ios-secondary: #94a3b8;
+  --ios-separator: rgba(148, 163, 184, 0.14);
+  --ios-group-bg: rgba(15, 23, 42, 0.85);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-nyc .agent-canvas {
+  background-color: #0f172a;
+  background-image:
+    radial-gradient(ellipse 110% 75% at 50% -12%, rgba(56, 189, 248, 0.22), transparent 56%),
+    radial-gradient(ellipse 65% 45% at 15% 100%, rgba(251, 191, 36, 0.12), transparent 54%),
+    linear-gradient(185deg, #1e293b 0%, #0f172a 48%, #020617 100%);
 }
 
 /* Light — neutral chrome. */
@@ -1880,6 +2193,10 @@ body {
   background-color: #ffedd5 !important;
 }
 
+.theme-route5-command.theme-agent-shell.workspace-theme-ember.workspace-no-gradients .agent-canvas {
+  background-color: #ffe4e6 !important;
+}
+
 .theme-route5-command.theme-agent-shell.workspace-theme-light.workspace-no-gradients .agent-canvas {
   background-color: #fafafa !important;
 }
@@ -1897,7 +2214,35 @@ body {
 }
 
 .theme-route5-command.theme-agent-shell.workspace-theme-ocean.workspace-no-gradients .agent-canvas {
-  background-color: #e0f2fe !important;
+  background-color: #f0f9ff !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-lagunabeach.workspace-no-gradients .agent-canvas {
+  background-color: #ecfdf5 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-sanfrancisco.workspace-no-gradients .agent-canvas {
+  background-color: #eef2ff !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-nevada.workspace-no-gradients .agent-canvas {
+  background-color: #fef3c7 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-mumbai.workspace-no-gradients .agent-canvas {
+  background-color: #fffbeb !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-columbia.workspace-no-gradients .agent-canvas {
+  background-color: #faf7f2 !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-vegas.workspace-no-gradients .agent-canvas {
+  background-color: #1a0a2e !important;
+}
+
+.theme-route5-command.theme-agent-shell.workspace-theme-nyc.workspace-no-gradients .agent-canvas {
+  background-color: #0f172a !important;
 }
 
 .theme-route5-command.theme-agent-shell.workspace-theme-cosmic.workspace-no-gradients .agent-canvas {
@@ -2762,6 +3107,57 @@ body {
   animation: desk-wave-drift 22s ease-in-out infinite;
 }
 
+@keyframes desk-wave-drift-2 {
+  0%,
+  100% {
+    transform: translateX(-1.5%);
+  }
+  50% {
+    transform: translateX(3.5%);
+  }
+}
+
+.desk-greeting-wave-drift-2 {
+  animation: desk-wave-drift-2 31s ease-in-out infinite;
+}
+
+@keyframes desk-wave-foam {
+  0%,
+  100% {
+    opacity: 0.72;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.desk-greeting-foam {
+  animation: desk-wave-foam 14s ease-in-out infinite;
+}
+
+/** Moon — gentle dip toward horizon (loops; reduced-motion disables below). */
+@keyframes desk-moon-to-sea {
+  0%,
+  100% {
+    transform: translateY(-6%);
+    opacity: 1;
+  }
+  45% {
+    transform: translateY(18%);
+    opacity: 0.94;
+  }
+}
+
+.desk-greeting-moon-sink {
+  animation: desk-moon-to-sea 92s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-greeting-moon-sink {
+    animation: none;
+  }
+}
+
 /**
  * Route5 coastal brand — signed-in scroll canvas (entire workspace).
  * Alias: .workspace-coastal-main.
@@ -2907,6 +3303,19 @@ body {
   opacity: 0.85;
 }
 
+/** Marketing home — crisp lane stripe (athletic / arena board, not purple-glass AI) */
+.route5-brand-nav-accent-bar--athletic {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(20, 184, 166, 0.55) 22%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(59, 130, 246, 0.45) 78%,
+    transparent 100%
+  );
+  opacity: 0.95;
+}
+
 .route5-brand-nav-accent-bar--light {
   background: linear-gradient(90deg, transparent 0%, rgba(0, 113, 227, 0.35) 45%, transparent 100%);
   opacity: 0.65;
@@ -2943,7 +3352,10 @@ body {
   .route5-brand-lift-card:hover {
     transform: none;
   }
-  .desk-greeting-wave-drift {
+  .desk-greeting-wave-drift,
+  .desk-greeting-wave-drift-2,
+  .desk-greeting-foam,
+  .desk-greeting-moon-sink {
     animation: none;
   }
   .desk-capture-focus {
@@ -2952,6 +3364,72 @@ body {
   .desk-capture-import-glow {
     animation: none;
   }
+}
+
+/* Athletic B2B marketing — display font + hero shell (uses next/font variable on <main>) */
+.font-landing-display {
+  font-family: var(--font-barlow-condensed-landing), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.route5-landing-hero-athletic {
+  position: relative;
+  isolation: isolate;
+}
+
+.route5-landing-hero-athletic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(165deg, rgba(2, 6, 23, 0.06) 0%, transparent 42%),
+    repeating-linear-gradient(
+      -16deg,
+      transparent 0,
+      transparent 14px,
+      rgba(45, 212, 191, 0.045) 14px,
+      rgba(45, 212, 191, 0.045) 15px
+    ),
+    radial-gradient(ellipse 90% 70% at 100% 0%, rgba(59, 130, 246, 0.11), transparent 55%),
+    radial-gradient(ellipse 70% 55% at 0% 100%, rgba(20, 184, 166, 0.09), transparent 50%);
+  pointer-events: none;
+}
+
+.route5-landing-hero-athletic::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  right: -15%;
+  width: min(72vw, 680px);
+  height: 140%;
+  z-index: 0;
+  transform: rotate(-8deg);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(45, 212, 191, 0.07) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  mask-image: linear-gradient(120deg, black 20%, transparent 78%);
+  -webkit-mask-image: linear-gradient(120deg, black 20%, transparent 78%);
+}
+
+.route5-landing-hero-athletic > * {
+  position: relative;
+  z-index: 1;
+}
+
+.route5-landing-trust-strip {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.35), rgba(3, 7, 18, 0.65));
+}
+
+.route5-landing-section-label {
+  font-family: var(--font-barlow-condensed-landing), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.22em;
 }
 
 .no-scrollbar {
@@ -3114,6 +3592,27 @@ body.theme-glass-site:has(main.landing-premium) {
   }
   .r5-float-card:hover {
     transform: none;
+  }
+}
+
+/* Marketing home — editorial marquee (duplicate inner content for seamless loop). */
+@keyframes landing-fortune-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.landing-fortune-marquee-track {
+  animation: landing-fortune-marquee 48s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-fortune-marquee-track {
+    animation: none;
   }
 }
 

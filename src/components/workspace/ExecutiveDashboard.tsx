@@ -45,13 +45,13 @@ type EscalationApiRow = {
 function severityPillClass(sev: EscalationApiRow["severity"]): string {
   switch (sev) {
     case "warning":
-      return "border-amber-300/50 bg-amber-500/15 text-amber-100";
+      return "border-amber-300/50 bg-amber-500/15 text-[var(--workspace-fg)]";
     case "urgent":
-      return "border-orange-400/40 bg-orange-500/15 text-orange-100";
+      return "border-orange-400/40 bg-orange-500/15 text-[var(--workspace-fg)]";
     case "critical":
-      return "border-red-400/50 bg-red-500/15 text-red-100";
+      return "border-red-400/50 bg-red-500/15 text-[var(--workspace-fg)]";
     case "overdue":
-      return "border-rose-900/60 bg-rose-950/50 text-rose-100";
+      return "border-rose-900/60 bg-rose-950/50 text-rose-50";
     default:
       return "border-[var(--workspace-border)] text-[var(--workspace-muted-fg)]";
   }
@@ -402,7 +402,9 @@ export default function ExecutiveDashboard() {
               >
                 {healthDisplay}
               </p>
-              <p className="mt-1 text-[11px] text-[var(--workspace-muted-fg)]">Last 30d on-time / due</p>
+              <p className="mt-1 text-[11px] text-[var(--workspace-muted-fg)]">
+                Same formula as Leadership — open load with heavier weight on overdue and at-risk
+              </p>
             </div>
             <MetricChip label="Active" value={metrics.activeCount} />
             <MetricChip label="On track" value={metrics.onTrackCount} />

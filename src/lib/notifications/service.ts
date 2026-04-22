@@ -22,6 +22,19 @@ export type SendNotificationParams = {
   forceChannels?: Partial<{ inApp: boolean; email: boolean; slack: boolean }>;
 };
 
+function defaultChannelsForType(type: NotificationType): { inApp: boolean; email: boolean; slack: boolean } {
+  if (
+    type === "commitment_assigned" ||
+    type === "commitment_due_soon" ||
+    type === "commitment_overdue" ||
+    type === "escalation_fired" ||
+    type === "escalation_escalated"
+  ) {
+    return { inApp: true, email: false, slack: true };
+  }
+  return { inApp: true, email: true, slack: true };
+}
+
 async function getEffectiveChannels(
   orgId: string,
   userId: string,
@@ -30,7 +43,7 @@ async function getEffectiveChannels(
   const prefs = await listPreferencesForUser(orgId, userId);
   const row = prefs.find((p) => p.type === type);
   if (!row) {
-    return { inApp: true, email: true, slack: true };
+    return defaultChannelsForType(type);
   }
   return { inApp: row.inApp, email: row.email, slack: row.slack };
 }

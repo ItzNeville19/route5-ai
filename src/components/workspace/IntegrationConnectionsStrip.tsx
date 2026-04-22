@@ -42,8 +42,8 @@ export default function IntegrationConnectionsStrip({ readiness }: Props) {
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-black/[0.06] bg-white/70 shadow-sm dark:border-white/[0.08] dark:bg-[var(--workspace-surface)]/80">
-      <div className="border-b border-black/[0.05] px-4 py-3 dark:border-white/[0.06]">
+    <div className="overflow-hidden rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/85 shadow-sm">
+      <div className="border-b border-[var(--workspace-border)] px-4 py-3">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
           Connections
         </p>
@@ -51,12 +51,12 @@ export default function IntegrationConnectionsStrip({ readiness }: Props) {
           Configure tools in one place. Same links as Settings → Integrations.
         </p>
       </div>
-      <ul className="divide-y divide-black/[0.05] dark:divide-white/[0.06]">
+      <ul className="divide-y divide-[var(--workspace-border)]">
         {rows.map((row) => (
           <li key={row.href}>
             <Link
               href={row.href}
-              className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+              className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--workspace-nav-hover)]"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -65,8 +65,8 @@ export default function IntegrationConnectionsStrip({ readiness }: Props) {
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         row.badgeTone === "on"
-                          ? "bg-emerald-500/15 text-emerald-800 dark:text-emerald-200"
-                          : "bg-amber-500/12 text-amber-900 dark:text-amber-100"
+                          ? "bg-emerald-500/15 text-[var(--workspace-fg)]"
+                          : "bg-amber-500/12 text-[var(--workspace-fg)]"
                       }`}
                     >
                       {row.badge}

@@ -8,7 +8,7 @@ import { Check, ChevronRight } from "lucide-react";
 import OnboardingProductTour from "@/components/onboarding/OnboardingProductTour";
 import { useOnboardingFlow } from "@/components/onboarding/OnboardingFlowContext";
 import WorkspaceThemeSection from "@/components/workspace/WorkspaceThemeSection";
-import { markOnboardingComplete } from "@/lib/onboarding-storage";
+import { isOnboardingComplete, markOnboardingComplete } from "@/lib/onboarding-storage";
 import {
   loadWorkspacePrefs,
   mergeWorkspacePrefsPatch,
@@ -53,6 +53,13 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (replay) setStep(0);
   }, [replay]);
+
+  useEffect(() => {
+    if (!user?.id || replay) return;
+    if (isOnboardingComplete(user.id)) {
+      router.replace("/desk");
+    }
+  }, [user?.id, replay, router]);
 
   const firstName = useMemo(
     () => user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "there",

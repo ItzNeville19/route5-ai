@@ -187,7 +187,7 @@ export default function ReportsPage() {
           </div>
           <div className="flex flex-col items-end gap-2">
             {!loadingEntitlements && !exportFull ? (
-              <p className="max-w-[280px] text-right text-[11px] leading-relaxed text-amber-100/90">
+              <p className="max-w-[280px] text-right text-[11px] leading-relaxed text-[var(--workspace-muted-fg)]">
                 Full exports are a Pro feature — limits in{" "}
                 <Link href="/settings" className="font-medium text-[var(--workspace-accent)] hover:underline">
                   Settings

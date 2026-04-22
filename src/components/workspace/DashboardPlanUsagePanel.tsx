@@ -93,7 +93,7 @@ function UsageBar({
               / {formatPlanCap(cap)} {suffix}
             </>
           ) : (
-            <span className="text-emerald-600/90 dark:text-emerald-400/90"> · Unlimited</span>
+            <span className="text-[var(--workspace-accent)]"> · Unlimited</span>
           )}
         </span>
       </div>
@@ -159,12 +159,12 @@ export default function DashboardPlanUsagePanel() {
               Plan &amp; capacity
             </p>
             {!loadingEntitlements && paid ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-fg)]">
                 <Crown className="h-3 w-3" strokeWidth={2} aria-hidden />
                 Active
               </span>
             ) : !loadingEntitlements ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/35 bg-amber-500/[0.08] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-fg)]">
                 Free
               </span>
             ) : null}
@@ -236,7 +236,7 @@ export default function DashboardPlanUsagePanel() {
                 checks as Desk and project creation.
               </p>
               {!paid && isNearOrOverLimit(usage.extractionsThisMonth, limits.maxExtractionsPerMonth) ? (
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-[13px] leading-relaxed text-amber-950 dark:text-amber-100">
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
                   You&apos;re close to this month&apos;s capture cap on Free.{" "}
                   <Link href={upgradeHref} className="font-semibold text-[var(--workspace-accent)] hover:underline">
                     Upgrade
@@ -260,7 +260,7 @@ export default function DashboardPlanUsagePanel() {
                   <span
                     className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
                       on
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                        ? "bg-emerald-500/15 text-[var(--workspace-fg)]"
                         : "bg-[var(--workspace-border)]/60 text-[var(--workspace-muted-fg)]"
                     }`}
                   >

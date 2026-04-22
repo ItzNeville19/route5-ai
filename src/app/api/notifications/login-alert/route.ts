@@ -50,14 +50,18 @@ export async function POST(req: Request) {
     const alreadySent = await hasRecentNotificationByType({
       userId,
       type: "security_login_alert",
-      withinMinutes: 240,
+      withinMinutes: 60 * 24 * 30,
     });
     if (alreadySent) {
       return NextResponse.json({ ok: true, skipped: true });
     }
 
     const orgId = await ensureOrganizationForClerkUser(userId);
-    const userAgent = req.headers.get("user-agent") ?? "";
+    const body = (await req.json().catch(() => ({}))) as {
+      userAgent?: string;
+      platform?: string;
+    };
+    const userAgent = body.userAgent?.trim() || req.headers.get("user-agent") || "";
     const forwardedFor = req.headers.get("x-forwarded-for") ?? "";
     const firstIp = forwardedFor.split(",")[0] ?? "";
     const signInAt = new Date().toLocaleString();

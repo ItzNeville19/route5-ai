@@ -130,7 +130,7 @@ export default function ProjectsHub() {
 
   if (loadingProjects) {
     return (
-      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]" aria-busy="true">
+      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-7)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]" aria-busy="true">
         <div className="h-8 w-48 animate-pulse rounded-[var(--r5-radius-card)] bg-r5-border-subtle/35" />
         <div className="mt-[var(--r5-space-6)] space-y-[var(--r5-space-3)]">
           {[1, 2, 3].map((i) => (
@@ -143,7 +143,7 @@ export default function ProjectsHub() {
 
   if (projects.length === 0) {
     return (
-      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+      <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-7)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
         <h1 className="text-[length:var(--r5-font-heading)] font-semibold tracking-tight text-r5-text-primary">Projects</h1>
         <p className="mt-[var(--r5-space-2)] max-w-md text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
           No projects yet — create one to organize commitments.
@@ -161,7 +161,7 @@ export default function ProjectsHub() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-6)] sm:px-[var(--r5-content-padding-x)]">
+    <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-7)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
       <div className="flex flex-wrap items-end justify-between gap-[var(--r5-space-4)]">
         <div>
           <h1 className="text-[length:var(--r5-font-heading)] font-semibold tracking-tight text-r5-text-primary">Projects</h1>
@@ -189,11 +189,11 @@ export default function ProjectsHub() {
                 href={`/projects/${project.id}`}
                 className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/80 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
               >
-                <p title={project.name} className="truncate text-[13px] font-medium text-r5-text-primary">
+                <p title={project.name} className="line-clamp-2 break-words text-[13px] font-medium text-r5-text-primary">
                   {project.name}
                 </p>
                 <p className="mt-[var(--r5-space-1)] text-[11px] text-r5-text-secondary">
-                  {project.rollup.overdue} overdue · {project.rollup.atRisk} at risk · health{" "}
+                  {project.rollup.overdue} overdue · {project.rollup.atRisk} at risk · project health{" "}
                   <span className={healthToneClass(project.health)}>{project.health}%</span>
                 </p>
               </Link>
@@ -216,7 +216,7 @@ export default function ProjectsHub() {
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
                     {project.iconEmoji?.trim() ? project.iconEmoji.trim() : <FolderOpen className="h-5 w-5 text-r5-text-secondary" />}
                   </span>
-                  <span title={project.name} className="truncate text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
+                  <span title={project.name} className="line-clamp-2 break-words text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
                     {project.name}
                   </span>
                 </span>
@@ -258,7 +258,7 @@ export default function ProjectsHub() {
                     );
                   })}
                 </span>
-                <span className={`text-[12px] font-semibold sm:text-right ${healthToneClass(project.health)}`}>Health {project.health}%</span>
+                <span className={`text-[12px] font-semibold sm:text-right ${healthToneClass(project.health)}`}>Project health {project.health}%</span>
               </Link>
             </li>
           );

@@ -63,10 +63,10 @@ export default function GoogleIntegrationPage() {
 
         <div className="dashboard-pro-card mt-8 p-6 sm:p-7">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-3 py-1 text-[11px] text-emerald-100">
+            <span className="rounded-full border border-emerald-500/35 bg-emerald-500/12 px-3 py-1 text-[11px] text-[var(--workspace-fg)]">
               Import-only now
             </span>
-            <span className="rounded-full border border-amber-500/35 bg-amber-500/12 px-3 py-1 text-[11px] text-amber-100">
+            <span className="rounded-full border border-amber-500/35 bg-amber-500/12 px-3 py-1 text-[11px] text-[var(--workspace-fg)]">
               OAuth waitlist
             </span>
           </div>

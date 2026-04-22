@@ -1211,6 +1211,64 @@ export function insertCommitmentRow(params: {
   return { id };
 }
 
+export function insertCommitmentRowsBatch(
+  rows: Array<{
+    projectId: string;
+    userId: string;
+    title: string;
+    description: string | null;
+    ownerUserId: string | null;
+    ownerDisplayName: string | null;
+    source: string;
+    sourceReference: string;
+    status: string;
+    priority: string;
+    dueDate: string | null;
+    activityLogJson: string;
+  }>
+): Array<{ id: string }> {
+  if (rows.length === 0) return [];
+  const d = getDb();
+  const insertStmt = d.prepare(
+    `INSERT INTO commitments (
+      id, project_id, clerk_user_id, title, description,
+      owner_user_id, owner_display_name, source, source_reference,
+      status, priority, created_at, due_date, last_updated_at, activity_log, archived_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const updateProjectStmt = d.prepare(`UPDATE projects SET updated_at = ? WHERE id = ?`);
+  const run = d.transaction(() => {
+    const now = new Date().toISOString();
+    const out: Array<{ id: string }> = [];
+    for (const row of rows) {
+      const id = crypto.randomUUID();
+      insertStmt.run(
+        id,
+        row.projectId,
+        row.userId,
+        row.title,
+        row.description,
+        row.ownerUserId,
+        row.ownerDisplayName,
+        row.source,
+        row.sourceReference,
+        row.status,
+        row.priority,
+        now,
+        row.dueDate,
+        now,
+        row.activityLogJson,
+        null
+      );
+      updateProjectStmt.run(now, row.projectId);
+      out.push({ id });
+    }
+    return out;
+  });
+  return run();
+}
+
+
 export function getCommitmentRow(
   userId: string,
   projectId: string,

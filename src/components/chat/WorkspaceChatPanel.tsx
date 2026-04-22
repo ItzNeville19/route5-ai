@@ -98,14 +98,19 @@ function ChannelCategory({ label }: { label: string }) {
   );
 }
 
-export default function WorkspaceChatPanel() {
+type WorkspaceChatPanelProps = {
+  defaultOpen?: boolean;
+  hideLauncher?: boolean;
+};
+
+export default function WorkspaceChatPanel({ defaultOpen = false, hideLauncher = false }: WorkspaceChatPanelProps) {
   const { user } = useUser();
   const userId = user?.id ?? "";
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "You";
   const rootRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [loadingChannels, setLoadingChannels] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [channels, setChannels] = useState<ChatChannel[]>([]);
@@ -345,6 +350,10 @@ export default function WorkspaceChatPanel() {
   }, [open, selectedChannelId, loadMessages, loadChannels]);
 
   useEffect(() => {
+    if (defaultOpen) setOpen(true);
+  }, [defaultOpen]);
+
+  useEffect(() => {
     const openPanel = () => setOpen(true);
     window.addEventListener("route5:chat-open", openPanel);
     return () => window.removeEventListener("route5:chat-open", openPanel);
@@ -537,21 +546,23 @@ export default function WorkspaceChatPanel() {
 
   return (
     <div className="relative" ref={rootRef}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        aria-label="Open team chat"
-      >
-        <MessageSquare className="h-4 w-4" strokeWidth={2} aria-hidden />
-        {hasUnread ? (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-[var(--r5-radius-pill)] bg-r5-status-overdue px-[var(--r5-space-1)] text-[length:var(--r5-font-kbd)] font-semibold text-r5-text-primary">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        ) : null}
-      </button>
+      {hideLauncher ? null : (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          aria-label="Open workspace threads"
+        >
+          <MessageSquare className="h-4 w-4" strokeWidth={2} aria-hidden />
+          {hasUnread ? (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-[var(--r5-radius-pill)] bg-r5-status-overdue px-[var(--r5-space-1)] text-[length:var(--r5-font-kbd)] font-semibold text-r5-text-primary">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          ) : null}
+        </button>
+      )}
       {open
         ? createPortal(
             <>
@@ -568,16 +579,16 @@ export default function WorkspaceChatPanel() {
                     : "inset-y-0 right-0 w-[min(100vw,480px)] border-l border-white/10 sm:w-[min(100vw,520px)] md:w-[min(100vw,560px)]"
                 }`}
                 role="dialog"
-                aria-label="Workspace chat"
+                aria-label="Workspace decision threads"
                 aria-modal="true"
               >
                 <header className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[#2c2c2e]/90 px-3 py-2 backdrop-blur-md md:px-4 md:py-2.5">
                   <div className="min-w-0">
-                    <p className="text-[14px] font-semibold leading-tight text-white">Messages</p>
+                    <p className="text-[14px] font-semibold leading-tight text-white">Decision threads</p>
                     <p className="mt-0.5 hidden text-[11px] text-white/50 sm:block">
                       {chatFullscreen
-                        ? "Fullscreen — use the button to dock as a side panel."
-                        : "Docked panel — expand for fullscreen."}
+                        ? "Executive-coordination surface — dock when you need Desk beside threads."
+                        : "Recorded workspace dialogue — safer than shadow IT chat for operating reviews."}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-0.5">

@@ -271,6 +271,30 @@ export async function softDeleteNotification(id: string, userId: string): Promis
   return r.changes > 0;
 }
 
+export async function softDeleteAllNotifications(userId: string): Promise<number> {
+  const now = new Date().toISOString();
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .update({ deleted_at: now })
+        .eq("user_id", userId)
+        .is("deleted_at", null)
+        .select("id");
+      if (error) throw error;
+      return data?.length ?? 0;
+    } catch (e) {
+      console.error("[notifications] Supabase clear-all failed, using SQLite", e);
+    }
+  }
+  const d = getSqliteHandle();
+  const r = d
+    .prepare(`UPDATE org_notifications SET deleted_at = ? WHERE user_id = ? AND deleted_at IS NULL`)
+    .run(now, userId);
+  return r.changes;
+}
+
 export async function listPreferencesForUser(orgId: string, userId: string): Promise<NotificationPreferenceRow[]> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
@@ -361,7 +385,14 @@ export function defaultPreferencesForOrg(orgId: string, userId: string): Notific
     userId,
     type,
     inApp: true,
-    email: true,
+    email:
+      !(
+        type === "commitment_assigned" ||
+        type === "commitment_due_soon" ||
+        type === "commitment_overdue" ||
+        type === "escalation_fired" ||
+        type === "escalation_escalated"
+      ),
     slack: true,
     createdAt: now,
     updatedAt: now,

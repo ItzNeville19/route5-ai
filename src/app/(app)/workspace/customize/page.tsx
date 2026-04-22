@@ -16,7 +16,7 @@ export default function WorkspaceCustomizePage() {
         </Link>
         <h1 className="sr-only">Customize workspace</h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          Choose how the workspace looks, set a custom Overview subtitle, and add quick links. Preferences save to your
+          Choose how the workspace looks, set a custom Overview headline, and add quick links. Preferences save to your
           account when you&apos;re signed in.{" "}
           <Link href="/marketplace" className="font-medium text-[var(--workspace-accent)] hover:underline">
             Library

@@ -219,6 +219,21 @@ function rankPaletteItemForQuery(item: PaletteItem, rawQuery: string): number {
   return scores.reduce((a, b) => a + b, 0) / scores.length;
 }
 
+/** When scores are close, prefer workspace shortcuts over generic sidebar routes. */
+function sectionSearchOrder(section: PaletteSection): number {
+  const order: PaletteSection[] = [
+    "workspace",
+    "agent",
+    "activity",
+    "projects",
+    "account",
+    "site",
+    "legal",
+  ];
+  const i = order.indexOf(section);
+  return i === -1 ? 99 : i;
+}
+
 export function CommandPaletteProvider({
   children,
 }: {
@@ -360,7 +375,14 @@ export function CommandPaletteProvider({
     const ranked = base
       .map((item) => ({ item, score: rankPaletteItemForQuery(item, qLower) }))
       .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+      .sort((a, b) => {
+        const diff = b.score - a.score;
+        if (Math.abs(diff) > 55) return diff;
+        const sa = sectionSearchOrder(a.item.section);
+        const sb = sectionSearchOrder(b.item.section);
+        if (sa !== sb) return sa - sb;
+        return a.item.label.localeCompare(b.item.label);
+      })
       .slice(0, PALETTE_MAX_RESULTS)
       .map((x) => x.item);
     return ranked;

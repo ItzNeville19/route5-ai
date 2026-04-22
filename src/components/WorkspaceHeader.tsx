@@ -68,7 +68,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           >
             <WorkspaceProjectSwitcher />
           </Suspense>
-          <h1 className="min-w-0 flex-1 truncate text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary max-sm:max-w-[min(100%,120px)] sm:max-w-[min(100%,320px)]">
+          <h1 className="min-w-0 flex-1 max-sm:max-w-[min(100%,min(72vw,200px))] line-clamp-2 break-words text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary sm:max-w-[min(100%,320px)]">
             {pageTitle}
           </h1>
         </div>

@@ -182,19 +182,7 @@ export async function notifyEscalationCreated(ctx: EscalationNotifyContext): Pro
       metadata: baseMeta,
     });
     notifiedOwnerAt = now;
-
-    if (severity === "warning" || severity === "urgent" || severity === "critical") {
-      const window =
-        severity === "warning" ? "72 hours" : severity === "urgent" ? "48 hours" : "24 hours";
-      await sendNotification({
-        orgId: ctx.orgId,
-        userId: ownerId,
-        type: "commitment_due_soon",
-        title: `Due soon: ${title.slice(0, 70)}`,
-        body: `Your commitment is due within ${window}.`,
-        metadata: { ...baseMeta, window, link },
-      });
-    }
+    /** Avoid duplicate inbox noise: escalation_fired already explains due-soon urgency. */
   }
 
   if (severity === "critical") {

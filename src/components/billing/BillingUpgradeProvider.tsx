@@ -113,7 +113,7 @@ function UpgradeModal({
           <div className="grid gap-2 sm:grid-cols-3">
             <div>
               <p className="font-semibold text-[var(--workspace-fg)]">Starter</p>
-              <p className="mt-1">3-day trial baseline (no card) · contact to continue</p>
+              <p className="mt-1">14-day trial baseline (no card) · contact to continue</p>
             </div>
             <div>
               <p className="font-semibold text-[var(--workspace-fg)]">Growth</p>

@@ -69,19 +69,19 @@ export default function SlackIntegrationPage() {
         <div
           className={`mt-6 rounded-2xl border px-4 py-3 text-[13px] leading-relaxed ${
             slackEnabled
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"
-              : "border-amber-500/25 bg-amber-500/[0.07] text-amber-100"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-[var(--workspace-fg)]"
+              : "border-amber-500/25 bg-amber-500/[0.07] text-[var(--workspace-fg)]"
           }`}
         >
           {slackEnabled ? (
             <>
-              <span className="font-semibold text-emerald-50">{entitlements.tierLabel}</span> — Slack features are
+              <span className="font-semibold">{entitlements.tierLabel}</span> — Slack features are
               included on your plan. {entitlements.tierTagline}
             </>
           ) : (
             <>
               <span className="font-semibold">Free plan</span> — Slack connector unlocks on{" "}
-              <Link href="/account/plans" className="font-medium text-violet-300 underline-offset-2 hover:underline">
+              <Link href="/account/plans" className="font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline">
                 Pro
               </Link>
               . You can still paste any text into Desk.

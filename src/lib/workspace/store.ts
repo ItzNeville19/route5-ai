@@ -935,7 +935,7 @@ export async function insertCommitmentsFromDrafts(
   if (!owned) throw new Error("NOT_FOUND");
   const out: Commitment[] = [];
   const logBody = opts?.createdLogBody?.trim() || "Created from captured input";
-  for (const d of drafts) {
+  const normalized = drafts.map((d) => {
     const fromDraft =
       d.ownerUserId !== undefined && d.ownerUserId !== null && String(d.ownerUserId).trim() !== ""
         ? String(d.ownerUserId).trim()
@@ -945,47 +945,62 @@ export async function insertCommitmentsFromDrafts(
     const ownerDisplayName = d.ownerName?.trim() || null;
     const log = initialActivityLog(userId, logBody);
     const logJson = serializeActivityLog(log);
-    if (isSupabaseConfigured()) {
+    return {
+      draft: d,
+      assign,
+      ownerDisplayName,
+      log,
+      logJson,
+    };
+  });
+
+  if (isSupabaseConfigured()) {
+    for (const row of normalized) {
       const supabase = getServiceClient();
       const { data, error } = await supabase
         .from("commitments")
         .insert({
           project_id: projectId,
           clerk_user_id: userId,
-          title: d.title.slice(0, 2000),
-          description: d.description ?? null,
-          owner_user_id: assign,
-          owner_display_name: ownerDisplayName,
-          source: d.source,
-          source_reference: d.sourceReference ?? "",
+          title: row.draft.title.slice(0, 2000),
+          description: row.draft.description ?? null,
+          owner_user_id: row.assign,
+          owner_display_name: row.ownerDisplayName,
+          source: row.draft.source,
+          source_reference: row.draft.sourceReference ?? "",
           status: "active",
-          priority: d.priority,
-          due_date: d.dueDate ?? null,
-          activity_log: log,
+          priority: row.draft.priority,
+          due_date: row.draft.dueDate ?? null,
+          activity_log: row.log,
           archived_at: null,
         })
         .select("*")
         .single();
       if (error) throw error;
       if (data) out.push(mapRowToCommitment(data as Parameters<typeof mapRowToCommitment>[0]));
-    } else {
-      const { id } = sqlite.insertCommitmentRow({
-        projectId,
-        userId,
-        title: d.title.slice(0, 2000),
-        description: d.description ?? null,
-        ownerUserId: assign,
-        ownerDisplayName: ownerDisplayName,
-        source: d.source,
-        sourceReference: d.sourceReference ?? "",
-        status: "active",
-        priority: d.priority,
-        dueDate: d.dueDate ?? null,
-        activityLogJson: logJson,
-      });
-      const row = sqlite.getCommitmentRow(userId, projectId, id);
-      if (row) out.push(mapRowToCommitment(row));
     }
+    return out;
+  }
+
+  const inserted = sqlite.insertCommitmentRowsBatch(
+    normalized.map((row) => ({
+      projectId,
+      userId,
+      title: row.draft.title.slice(0, 2000),
+      description: row.draft.description ?? null,
+      ownerUserId: row.assign,
+      ownerDisplayName: row.ownerDisplayName,
+      source: row.draft.source,
+      sourceReference: row.draft.sourceReference ?? "",
+      status: "active",
+      priority: row.draft.priority,
+      dueDate: row.draft.dueDate ?? null,
+      activityLogJson: row.logJson,
+    }))
+  );
+  for (const { id } of inserted) {
+    const row = sqlite.getCommitmentRow(userId, projectId, id);
+    if (row) out.push(mapRowToCommitment(row));
   }
   return out;
 }

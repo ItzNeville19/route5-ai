@@ -61,7 +61,7 @@ export default function Navbar() {
     if (pathname !== "/") return;
 
     const observers = new Map<string, IntersectionObserver>();
-    const ids = ["showcase", "story", "contact"];
+    const ids = ["platform", "story", "audiences", "contact"];
 
     ids.forEach((id) => {
       const element = document.getElementById(id);
@@ -113,7 +113,7 @@ export default function Navbar() {
   function linkIsHighlighted(link: (typeof navLinks)[0]) {
     if (linkIsActive(link.href)) return true;
     if (pathname !== "/") return false;
-    if (link.href === "/product" && ["showcase", "story"].includes(activeHomeSection ?? ""))
+    if (link.href === "/product" && ["platform", "story"].includes(activeHomeSection ?? ""))
       return true;
     if (link.href === "/contact" && activeHomeSection === "contact")
       return true;
@@ -356,7 +356,11 @@ export default function Navbar() {
       </motion.nav>
       <div
         className={`route5-brand-nav-accent-bar absolute bottom-0 left-0 right-0 ${
-          navUsesDarkChrome ? "route5-brand-nav-accent-bar--dark" : "route5-brand-nav-accent-bar--light"
+          pathname === "/"
+            ? "route5-brand-nav-accent-bar--athletic"
+            : navUsesDarkChrome
+              ? "route5-brand-nav-accent-bar--dark"
+              : "route5-brand-nav-accent-bar--light"
         }`}
         aria-hidden
       />

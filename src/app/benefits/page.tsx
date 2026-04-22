@@ -64,7 +64,7 @@ export default function BenefitsPage() {
             Continue after trial
           </h2>
           <p className="mt-3 text-[16px] leading-relaxed text-[#1d1d1f]">
-            Every workspace gets a 3-day free trial with no card required. After that, contact us
+            Every workspace gets a 14-day free trial with no card required. After that, contact us
             to continue on the right plan.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">

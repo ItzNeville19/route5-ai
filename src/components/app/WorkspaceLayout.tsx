@@ -101,7 +101,9 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       </Suspense>
 
       <div className="flex min-h-dvh w-full">
-        <WorkspaceSidebar />
+        <Suspense fallback={null}>
+          <WorkspaceSidebar />
+        </Suspense>
         <div className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
           <WorkspaceHeader
             onSidebarToggle={() => {

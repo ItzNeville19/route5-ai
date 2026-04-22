@@ -31,17 +31,17 @@ export default function TeamInsightsContent() {
         </div>
       ) : null}
       {!loadingEntitlements && entitlements && !fullTeam ? (
-        <div className="mt-8 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-[13px] leading-relaxed text-amber-100">
-          <span className="font-semibold text-amber-50">Free snapshot</span> — you see live counts;{" "}
-          <Link href="/account/plans" className="font-medium text-violet-300 underline-offset-2 hover:underline">
+        <div className="mt-8 rounded-2xl border border-amber-500/25 bg-amber-500/[0.07] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
+          <span className="font-semibold">Free snapshot</span> — you see live counts;{" "}
+          <Link href="/account/plans" className="font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline">
             Pro
           </Link>{" "}
           adds Slack, full exports, and priority support. Numbers are the same — packaging is what upgrades.
         </div>
       ) : null}
       {!loadingEntitlements && entitlements && fullTeam ? (
-        <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 text-[13px] leading-relaxed text-emerald-100">
-          <span className="font-semibold text-emerald-50">{entitlements.tierLabel}</span> — full team insights
+        <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3 text-[13px] leading-relaxed text-[var(--workspace-fg)]">
+          <span className="font-semibold">{entitlements.tierLabel}</span> — full team insights
           treatment: exports, connectors, and Slack are included on your plan.
         </div>
       ) : null}
@@ -101,13 +101,13 @@ export default function TeamInsightsContent() {
         </div>
         <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
           <p className="text-[11px] text-[var(--workspace-muted-fg)]">At risk</p>
-          <p className="text-[16px] font-semibold text-amber-200">
+          <p className="text-[16px] font-semibold text-[color-mix(in_srgb,#d97706_78%,var(--workspace-fg))]">
             {executionOverview?.summary.atRiskCount ?? "—"}
           </p>
         </div>
         <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
           <p className="text-[11px] text-[var(--workspace-muted-fg)]">Overdue</p>
-          <p className="text-[16px] font-semibold text-rose-200">
+          <p className="text-[16px] font-semibold text-[color-mix(in_srgb,var(--workspace-danger-fg)_88%,var(--workspace-fg))]">
             {executionOverview?.summary.overdueCount ?? "—"}
           </p>
         </div>

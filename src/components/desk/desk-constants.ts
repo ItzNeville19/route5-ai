@@ -1,11 +1,11 @@
 import type { CommitmentStatus } from "@/lib/commitment-types";
 
-/** Pill / badge chrome */
+/** Pill chrome — tinted chip + workspace foreground so light AND dark palettes stay readable */
 export const STATUS_PILL: Record<CommitmentStatus, string> = {
-  active: "bg-sky-500/20 text-sky-100 border-sky-400/30",
-  at_risk: "bg-amber-500/20 text-amber-100 border-amber-400/35",
-  overdue: "bg-red-500/20 text-red-100 border-red-400/35",
-  completed: "bg-emerald-500/20 text-emerald-100 border-emerald-400/30",
+  active: "border border-sky-400/35 bg-sky-500/15 text-[var(--workspace-fg)]",
+  at_risk: "border border-amber-400/35 bg-amber-500/15 text-[var(--workspace-fg)]",
+  overdue: "border border-red-400/35 bg-red-500/15 text-[var(--workspace-fg)]",
+  completed: "border border-emerald-400/35 bg-emerald-500/15 text-[var(--workspace-fg)]",
 };
 
 /** Left accent on list cards */

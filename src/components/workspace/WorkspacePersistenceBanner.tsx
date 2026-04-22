@@ -72,11 +72,11 @@ export default function WorkspacePersistenceBanner() {
 
   if (state.serviceConfigured && !state.anonConfigured) {
     return (
-      <div className="border-b border-amber-500/25 bg-amber-500/10 px-4 py-2 text-[13px] text-amber-100">
+      <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-[13px] text-[var(--workspace-fg)]">
         <div className="mx-auto flex max-w-[min(100%,1440px)] flex-wrap items-center gap-2 sm:px-8">
-          <Radio className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+          <Radio className="h-4 w-4 shrink-0 text-amber-500" aria-hidden />
           <span className="font-medium">Chat live updates limited</span>
-          <span className="text-amber-100/90">
+          <span className="opacity-95">
             Add <code className="rounded bg-black/15 px-1">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> next to
             your public Supabase URL so unread badges refresh instantly. Messages still save via the API.
           </span>

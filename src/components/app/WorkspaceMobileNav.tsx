@@ -53,7 +53,7 @@ export default function WorkspaceMobileNav() {
         <span className="max-w-full truncate">Capture</span>
       </button>
       <LinkTab href="/projects" label="Projects" icon={FolderOpen} active={path === "/projects" || path.startsWith("/projects/")} />
-      <LinkTab href="/workspace/chat" label="Chat" icon={MessageSquare} active={path === "/workspace/chat"} />
+      <LinkTab href="/workspace/chat" label="Threads" icon={MessageSquare} active={path === "/workspace/chat"} />
       <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
     </nav>
   );

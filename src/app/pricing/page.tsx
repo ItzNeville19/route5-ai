@@ -3,11 +3,12 @@ import { getAuthUserIdSafe } from "@/lib/auth/require-user";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PublicPlansGrid from "@/components/marketing/PublicPlansGrid";
+import { PRICING_INTRO, TRIAL_BODY } from "@/lib/marketing-copy";
 
 export const metadata: Metadata = {
   title: "Pricing — Route5",
   description:
-    "Enterprise Route5 pricing is offered through direct sales conversations.",
+    "Route5 pricing is tailored per workspace. 14-day free trial with no credit card—contact sales to continue after trial.",
 };
 
 /** Clerk `auth()` reads request headers; must not be statically prerendered. */
@@ -25,11 +26,13 @@ export default async function PricingPage() {
             Pricing
           </p>
           <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.4rem)] font-semibold tracking-[-0.03em] text-white">
-            Contact us for enterprise pricing
+            Plans built around how your org buys software
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-300">
-            Route5 is for teams that treat execution as a strategic advantage. We tailor pricing to
-            your organization, rollout scope, and support model.
+            {PRICING_INTRO}
+          </p>
+          <p className="mx-auto mt-4 max-w-2xl text-[14px] leading-relaxed text-zinc-400">
+            {TRIAL_BODY}
           </p>
         </div>
 

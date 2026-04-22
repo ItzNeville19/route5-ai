@@ -431,9 +431,17 @@ export default function OrgCommitmentTracker() {
     }
   }
 
+  const rowsForList = useMemo(() => {
+    if (statusFilter) return rows;
+    return rows.filter((r) => r.status !== "completed");
+  }, [rows, statusFilter]);
+
   const sortedForDisplay = useMemo(
-    () => (attentionOnly ? rows.filter((r) => r.status === "overdue" || r.status === "at_risk") : rows),
-    [rows, attentionOnly]
+    () =>
+      attentionOnly
+        ? rowsForList.filter((r) => r.status === "overdue" || r.status === "at_risk")
+        : rowsForList,
+    [rowsForList, attentionOnly]
   );
 
   return (
@@ -525,7 +533,7 @@ export default function OrgCommitmentTracker() {
                 onChange={(e) => setStatusFilter(e.target.value)}
                 className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2 text-[13px] text-[var(--workspace-fg)]"
               >
-                <option value="">All statuses</option>
+                <option value="">Active</option>
                 {STATUSES.map((s) => (
                   <option key={s} value={s}>
                     {ORG_STATUS_LABEL[s]}
@@ -584,7 +592,7 @@ export default function OrgCommitmentTracker() {
                 onClick={() => setAttentionOnly((v) => !v)}
                 className={`rounded-xl border px-3 py-2 text-[12px] font-semibold ${
                   attentionOnly
-                    ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
+                    ? "border-amber-400/40 bg-amber-500/10 text-[var(--workspace-fg)]"
                     : "border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 text-[var(--workspace-fg)]"
                 }`}
               >

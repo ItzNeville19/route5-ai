@@ -35,7 +35,7 @@ function statusPill(status: Availability): { label: string; className: string } 
   if (status === "live") {
     return {
       label: "Live",
-      className: "border-emerald-500/35 bg-emerald-500/15 text-emerald-200",
+      className: "border-emerald-500/35 bg-emerald-500/15 text-[var(--workspace-fg)]",
     };
   }
   if (status === "import") {
@@ -46,7 +46,7 @@ function statusPill(status: Availability): { label: string; className: string } 
   }
   return {
     label: "Waitlist",
-    className: "border-amber-500/30 bg-amber-500/10 text-amber-100",
+    className: "border-amber-500/30 bg-amber-500/10 text-[var(--workspace-fg)]",
   };
 }
 
@@ -82,13 +82,13 @@ export default function IntegrationsDirectoryGrid({
   return (
     <>
       <div className="mt-4 flex flex-wrap gap-2">
-        <span className="rounded-full border border-emerald-500/35 bg-emerald-500/15 px-3 py-1 text-[12px] text-emerald-200">
+        <span className="rounded-full border border-emerald-500/35 bg-emerald-500/15 px-3 py-1 text-[12px] text-[var(--workspace-fg)]">
           {normalized.totals.live} live
         </span>
         <span className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/60 px-3 py-1 text-[12px] text-[var(--workspace-muted-fg)]">
           {normalized.totals.import} import-only
         </span>
-        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[12px] text-amber-100">
+        <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[12px] text-[var(--workspace-fg)]">
           {normalized.totals.waitlist} waitlist
         </span>
       </div>

@@ -24,8 +24,8 @@ export default function DownloadPage() {
           Download & install
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-          Use Route5 in the browser, add it to your home screen, or run the desktop shell. Signing out
-          always returns you to the secure sign-in flow — not a random marketing page.
+          Use Route5 in the browser, install to mobile home screen, or run the desktop shell.
+          Signing out always returns you to the secure sign-in flow — not a random marketing page.
         </p>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
@@ -42,6 +42,10 @@ export default function DownloadPage() {
             <strong className="font-semibold">Add to Home Screen</strong> when prompted — the workspace
             sidebar may show <span className="font-medium">Install app</span> when the browser supports
             it.
+          </p>
+          <p className="mt-4 text-[15px] leading-relaxed text-[#6e6e73]">
+            On iPhone or Android, use Share → <strong className="font-semibold">Add to Home Screen</strong>.
+            The installed app keeps the same workspace, notifications, and Desk links as web.
           </p>
         </section>
 
@@ -84,6 +88,16 @@ npm run electron:dist`}
               to point at a release artifact.
             </p>
           )}
+        </section>
+
+        <section className="mt-14 border-t border-black/[0.08] pt-12">
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
+            Marketplace install behavior
+          </h2>
+          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
+            Installing from marketplace adds the integration connection into your existing workspace account.
+            It does not create a separate app instance, so your Desk, commitments, and digest remain in sync.
+          </p>
         </section>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">

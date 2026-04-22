@@ -5,7 +5,9 @@ import { z } from "zod";
 import type { Commitment } from "@/lib/commitment-types";
 import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { extractCommitments } from "@/lib/extract-commitments";
+import { processCaptureText } from "@/lib/capture/process-capture-text";
 import { notifyProjectDeskAssignment } from "@/lib/org-commitments/notify-assignment";
+import { sendNotification } from "@/lib/notifications/service";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import {
   insertCommitmentsFromDrafts,
@@ -67,22 +69,85 @@ const postBodySchema = z
   })
   .strict();
 
+function cleanDraftTitle(raw: string): string {
+  return raw
+    .replace(/[*_`#]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isSectionHeaderTitle(title: string): boolean {
+  const t = title.trim().toLowerCase().replace(/[:\s]+$/g, "");
+  if (!t) return true;
+  return (
+    t === "kpis" ||
+    t === "tasks" ||
+    t === "notes" ||
+    t === "risk" ||
+    t === "status" ||
+    t === "owner" ||
+    t === "due date"
+  );
+}
+
+function dedupeAndCapDrafts(drafts: ExtractedCommitmentDraft[], max = 12): ExtractedCommitmentDraft[] {
+  const seen = new Set<string>();
+  const out: ExtractedCommitmentDraft[] = [];
+  for (const row of drafts) {
+    const title = cleanDraftTitle(row.title ?? "");
+    if (!title || title.length < 6) continue;
+    if (isSectionHeaderTitle(title)) continue;
+    if (/^(?:task|tasks?)[:\s-]*$/i.test(title)) continue;
+    const key = title.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ ...row, title });
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function resolveDeadlineIsoFromDueDate(raw: string | null | undefined): string {
+  if (!raw) return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const parsed = new Date(raw);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toISOString();
+  }
+  const dayOnly = new Date(`${raw}T17:00:00.000Z`);
+  if (!Number.isNaN(dayOnly.getTime())) {
+    return dayOnly.toISOString();
+  }
+  return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
 function filterCommitments(
   list: Commitment[],
   filter: string,
   clerkUserId: string
 ): Commitment[] {
+  const notDone = (c: (typeof list)[number]) => c.status !== "completed";
+
   switch (filter) {
     case "my":
-      return list.filter((c) => c.ownerUserId === clerkUserId);
+      return list.filter((c) => c.ownerUserId === clerkUserId && notDone(c));
     case "at_risk":
       return list.filter((c) => c.status === "at_risk");
     case "overdue":
       return list.filter((c) => c.status === "overdue");
     case "unassigned":
-      return list.filter((c) => !c.ownerUserId && !c.ownerDisplayName?.trim());
+      return list.filter(
+        (c) =>
+          !c.ownerUserId &&
+          !c.ownerDisplayName?.trim() &&
+          notDone(c)
+      );
+    case "history":
+      return list.filter((c) => c.status === "completed");
+    case "open":
+    case "all":
+      return list.filter(notDone);
     default:
-      return list;
+      return list.filter(notDone);
   }
 }
 
@@ -108,14 +173,21 @@ export async function GET(
   }
 
   const url = new URL(req.url);
-  const filter = url.searchParams.get("filter") ?? "all";
+  const rawFilter = url.searchParams.get("filter") ?? "open";
+  const filter = rawFilter === "all" ? "open" : rawFilter;
 
   try {
     const list = await listCommitmentsForProject(userId, projectId);
     const commitments = filterCommitments(list, filter, userId);
     return NextResponse.json({ commitments });
   } catch (e) {
-    return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
+    const payload: { error: string; debug?: { message: string; name: string } } = {
+      error: publicWorkspaceError(e),
+    };
+    if (process.env.NODE_ENV === "development" && e instanceof Error) {
+      payload.debug = { message: e.message, name: e.name };
+    }
+    return NextResponse.json(payload, { status: 503 });
   }
 }
 
@@ -166,8 +238,26 @@ export async function POST(
           { status: 400 }
         );
       }
-      const drafts = extractCommitments(body.extractFrom);
-      return NextResponse.json({ drafts });
+      const ai = await processCaptureText(body.extractFrom, undefined, { userId });
+      const aiDrafts: ExtractedCommitmentDraft[] = ai.commitments.map((c) => ({
+        title: c.title,
+        description: null,
+        ownerName: c.ownerName ?? null,
+        ownerUserId: c.ownerUserId ?? null,
+        source: c.source,
+        sourceReference: `capture:${nanoid(10)}`,
+        priority: c.priority === "high" || c.priority === "low" ? c.priority : "medium",
+        dueDate: c.dueDateIso ?? null,
+        sourceSnippet: c.sourceSnippet ?? c.title,
+        dueDatePhrase: c.deadlineOriginalPhrase ?? null,
+        confidence: c.confidence,
+        isImplied: c.isImplied,
+        impliedReason: c.impliedReason,
+      }));
+      const offlineDrafts = extractCommitments(body.extractFrom);
+      const structuredBlock = /(^|\n)\s*commitment:\s*/i.test(body.extractFrom) && /(^|\n)\s*tasks:\s*/i.test(body.extractFrom);
+      const drafts = dedupeAndCapDrafts([...offlineDrafts, ...aiDrafts], structuredBlock ? 3 : 12);
+      return NextResponse.json({ drafts, mode: ai.mode, error: ai.error });
     }
 
     if (body.commitDrafts?.length) {
@@ -186,9 +276,7 @@ export async function POST(
       });
       const orgId = await ensureOrganizationForClerkUser(userId);
       for (const c of commitments) {
-        const deadline = c.dueDate
-          ? new Date(`${c.dueDate}T17:00:00.000Z`).toISOString()
-          : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+        const deadline = resolveDeadlineIsoFromDueDate(c.dueDate);
         const row = await createOrgCommitment(userId, {
           title: c.title,
           description: c.description,
@@ -199,20 +287,42 @@ export async function POST(
         });
         broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
       }
+      const byOwner = new Map<string, Commitment[]>();
+      for (const c of commitments) {
+        if (!c.ownerUserId || c.ownerUserId === userId) continue;
+        const list = byOwner.get(c.ownerUserId) ?? [];
+        list.push(c);
+        byOwner.set(c.ownerUserId, list);
+      }
       await Promise.all(
-        commitments
-          .filter((c) => c.ownerUserId && c.ownerUserId !== userId)
-          .map((c) =>
-            notifyProjectDeskAssignment({
+        [...byOwner.entries()].map(async ([ownerClerkId, rows]) => {
+          if (rows.length === 1) {
+            const one = rows[0]!;
+            return notifyProjectDeskAssignment({
               orgId,
-              ownerClerkId: c.ownerUserId!,
-              title: c.title,
+              ownerClerkId,
+              title: one.title,
               projectId,
-              commitmentId: c.id,
-              dueLabel: c.dueDate ? c.dueDate.slice(0, 10) : "Not set",
-              priority: c.priority,
-            })
-          )
+              commitmentId: one.id,
+              dueLabel: one.dueDate ? one.dueDate.slice(0, 16).replace("T", " ") : "Not set",
+              priority: one.priority,
+            });
+          }
+          const link = `/desk?projectId=${encodeURIComponent(projectId)}`;
+          await sendNotification({
+            orgId,
+            userId: ownerClerkId,
+            type: "commitment_assigned",
+            title: `${rows.length} commitments assigned`,
+            body: `You were assigned ${rows.length} commitments in one batch. Open Desk to review due dates and priorities.`,
+            metadata: {
+              projectId,
+              commitmentCount: rows.length,
+              commitmentIds: rows.map((r) => r.id),
+              link,
+            },
+          });
+        })
       );
       return NextResponse.json({ commitments });
     }
@@ -246,9 +356,7 @@ export async function POST(
     );
     const orgId = await ensureOrganizationForClerkUser(userId);
     for (const c of commitments) {
-      const deadline = c.dueDate
-        ? new Date(`${c.dueDate}T17:00:00.000Z`).toISOString()
-        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      const deadline = resolveDeadlineIsoFromDueDate(c.dueDate);
       const row = await createOrgCommitment(userId, {
         title: c.title,
         description: c.description,
@@ -264,6 +372,12 @@ export async function POST(
     if (e instanceof Error && e.message === "NOT_FOUND") {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
+    const payload: { error: string; debug?: { message: string; name: string } } = {
+      error: publicWorkspaceError(e),
+    };
+    if (process.env.NODE_ENV === "development" && e instanceof Error) {
+      payload.debug = { message: e.message, name: e.name };
+    }
+    return NextResponse.json(payload, { status: 503 });
   }
 }

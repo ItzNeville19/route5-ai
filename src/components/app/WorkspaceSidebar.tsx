@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import type { LucideIcon } from "lucide-react";
@@ -14,12 +14,13 @@ import {
   FolderOpen,
   Gauge,
   Keyboard,
-  LayoutGrid,
   LifeBuoy,
+  ListChecks,
   LineChart,
   MessageSquare,
   Palette,
   Plus,
+  CheckCircle2,
   Settings,
   Target,
   Users,
@@ -73,13 +74,24 @@ function NavRow({
 
   if (onClick) {
     return (
-      <button type="button" title={label} onClick={onClick} className={`${base} ${state}`}>
+      <button
+        type="button"
+        title={label}
+        aria-current={active ? "page" : undefined}
+        onClick={onClick}
+        className={`${base} ${state}`}
+      >
         {inner}
       </button>
     );
   }
   return (
-    <Link href={href!} title={label} className={`${base} ${state}`}>
+    <Link
+      href={href!}
+      title={label}
+      aria-current={active ? "page" : undefined}
+      className={`${base} ${state}`}
+    >
       {inner}
     </Link>
   );
@@ -87,6 +99,8 @@ function NavRow({
 
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const deskFilter = searchParams.get("filter");
   const { user } = useUser();
   const { entitlements } = useWorkspaceData();
   const { t } = useI18n();
@@ -120,9 +134,17 @@ export default function WorkspaceSidebar() {
             <NavSectionTitle>{t("sidebar.sectionWork")}</NavSectionTitle>
             <NavRow
               href="/desk"
-              active={path === "/desk" || path === "/feed"}
-              icon={LayoutGrid}
+              active={
+                (path === "/desk" || path === "/feed") && deskFilter !== "history"
+              }
+              icon={ListChecks}
               label={t("sidebar.desk")}
+            />
+            <NavRow
+              href="/desk?filter=history"
+              active={path === "/desk" && deskFilter === "history"}
+              icon={CheckCircle2}
+              label="Completed"
             />
             <NavRow
               href="/projects"
@@ -133,7 +155,7 @@ export default function WorkspaceSidebar() {
             <NavRow
               active={path === "/workspace/chat"}
               icon={MessageSquare}
-              label="Chat"
+              label="Threads"
               onClick={() => window.dispatchEvent(new Event("route5:chat-open"))}
             />
             <button

@@ -371,6 +371,24 @@ export default function WorkspaceNotificationsPopover() {
     }
   }
 
+  async function clearAllNotifications() {
+    try {
+      const res = await fetch("/api/notifications/clear-all", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      if (!res.ok) {
+        pushToast("Could not clear notifications", "error");
+        return;
+      }
+      setNotifList([]);
+      setUnreadCount(0);
+      pushToast("Notifications cleared", "success");
+    } catch {
+      pushToast("Could not clear notifications", "error");
+    }
+  }
+
   async function onClickNotification(n: OrgNotificationRow) {
     await markOneRead(n.id);
     const hrefRaw = resolveNotificationHref(n);
@@ -447,13 +465,22 @@ export default function WorkspaceNotificationsPopover() {
             Inbox
           </p>
           {unreadCount > 0 ? (
-            <button
-              type="button"
-              onClick={() => void markAllRead()}
-              className="text-[length:var(--r5-font-kbd)] font-medium text-r5-accent hover:underline"
-            >
-              Mark all as read
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void markAllRead()}
+                className="text-[length:var(--r5-font-kbd)] font-medium text-r5-accent hover:underline"
+              >
+                Mark all as read
+              </button>
+              <button
+                type="button"
+                onClick={() => void clearAllNotifications()}
+                className="text-[length:var(--r5-font-kbd)] font-medium text-r5-text-secondary hover:text-r5-text-primary hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
           ) : null}
         </div>
       ) : (
@@ -537,34 +564,43 @@ export default function WorkspaceNotificationsPopover() {
   );
 
   const digestBody = (
-    <div
-      className={`overflow-y-auto px-2 py-2 min-h-0 flex-1`}
-    >
+    <div className={`min-h-0 flex-1 space-y-2 overflow-y-auto px-2 py-3`}>
       {digestItems.map((item, i) => {
+        const isHero = i === 0;
         const expanded = Boolean(digestExpanded[i]);
-        const longBody = item.body.length > 160;
+        const longBody = item.body.length > 180;
         const bodyText =
           longBody && !expanded
-            ? `${item.body.slice(0, 160).replace(/\s+\S*$/, "")}…`
+            ? `${item.body.slice(0, 180).replace(/\s+\S*$/, "")}…`
             : item.body;
         return (
           <div
             key={i}
-            className={`rounded-xl px-3 py-2.5 ${
-              item.tone === "warn" ? "bg-r5-status-at-risk/10" : "hover:bg-r5-surface-hover/40"
+            className={`rounded-2xl border px-3 py-3 transition-colors ${
+              isHero
+                ? "border-r5-border-subtle bg-r5-surface-secondary/80"
+                : item.tone === "warn"
+                  ? "border-r5-status-at-risk/25 bg-r5-status-at-risk/[0.07]"
+                  : "border-transparent bg-r5-surface-hover/25 hover:bg-r5-surface-hover/40"
             }`}
           >
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-r5-text-secondary">{item.title}</p>
+            <p
+              className={`text-[11px] font-semibold uppercase tracking-wide ${
+                isHero ? "text-r5-accent" : "text-r5-text-secondary"
+              }`}
+            >
+              {item.title}
+            </p>
             {item.href ? (
               <Link
                 href={item.href}
                 onClick={() => handleOpenChange(false)}
-                className="mt-1 block text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-primary transition hover:text-r5-text-primary"
+                className="mt-1.5 block text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-primary"
               >
                 {bodyText}
               </Link>
             ) : (
-              <p className="mt-1 text-[length:var(--r5-font-subheading)] leading-snug text-r5-text-secondary">{bodyText}</p>
+              <p className="mt-1.5 text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">{bodyText}</p>
             )}
             {longBody ? (
               <button
@@ -575,15 +611,17 @@ export default function WorkspaceNotificationsPopover() {
                     [i]: !expanded,
                   }))
                 }
-                className="mt-1 text-[11px] font-medium text-r5-accent hover:underline"
+                className="mt-2 text-[11px] font-medium text-r5-accent hover:underline"
               >
-                {expanded ? "Show less" : "Expand"}
+                {expanded ? "Show less" : "Show more"}
               </button>
             ) : null}
           </div>
         );
       })}
-      {loadingSummary ? <p className="px-3 py-4 text-[length:var(--r5-font-subheading)] text-r5-text-secondary">Loading summary…</p> : null}
+      {loadingSummary ? (
+        <p className="px-3 py-4 text-[length:var(--r5-font-subheading)] text-r5-text-secondary">Loading summary…</p>
+      ) : null}
     </div>
   );
 

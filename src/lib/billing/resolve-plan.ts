@@ -5,7 +5,7 @@ import {
   getOrgSubscription,
 } from "@/lib/billing/store";
 
-const CONTACT_ONLY_TRIAL_DAYS = 3;
+const CONTACT_ONLY_TRIAL_DAYS = 14;
 
 /**
  * Effective billing plan for workspace limits and UI.
@@ -24,7 +24,7 @@ export async function resolveEffectiveBillingPlan(orgId: string): Promise<Billin
   if (sub && ["active", "trialing", "past_due"].includes(sub.status)) {
     return sub.plan;
   }
-  // Contact-first onboarding: all workspaces start with a 3-day cardless trial.
+  // Contact-first onboarding: all workspaces start with a 14-day cardless trial.
   const createdAt = await getOrganizationCreatedAt(orgId);
   if (createdAt) {
     const createdMs = new Date(createdAt).getTime();

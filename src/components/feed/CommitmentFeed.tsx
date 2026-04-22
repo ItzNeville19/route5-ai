@@ -697,33 +697,52 @@ export default function CommitmentFeed() {
     return m;
   }, [projects]);
 
-  const visibleRows = useMemo(() => feedVisibleRows(rows), [rows]);
+  const baseFeedRows = useMemo(() => feedVisibleRows(rows), [rows]);
 
-  const filterOnlyRows = useMemo(
-    () => applyFeedFilter(visibleRows, feedFilter, selfId),
-    [visibleRows, feedFilter, selfId]
+  const filterOnlyRowsFull = useMemo(
+    () => applyFeedFilter(baseFeedRows, feedFilter, selfId),
+    [baseFeedRows, feedFilter, selfId]
   );
 
-  const searchFiltered = useMemo(() => {
-    const q = deferredFeedSearch.trim().toLowerCase();
-    const base = !q
-      ? filterOnlyRows
-      : filterOnlyRows.filter((r) => {
-      if (r.title.toLowerCase().includes(q)) return true;
-      if (r.description?.toLowerCase().includes(q)) return true;
-      const pn = r.projectId ? projectNameById.get(r.projectId) : undefined;
-      if (pn?.toLowerCase().includes(q)) return true;
-      return false;
-    });
-    if (feedSort !== "risk") return base;
-    return [...base].sort((a, b) => {
-      const ar = isLikelyAtRisk(a);
-      const br = isLikelyAtRisk(b);
-      if (ar.risky !== br.risky) return ar.risky ? -1 : 1;
-      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-    });
-  }, [filterOnlyRows, deferredFeedSearch, projectNameById, feedSort]);
+  const filterOnlyRows = useMemo(() => {
+    if (completedOpen) return filterOnlyRowsFull;
+    return filterOnlyRowsFull.filter((r) => !isCompletedRow(r));
+  }, [filterOnlyRowsFull, completedOpen]);
 
+  const applyFeedSearchAndRiskSort = useCallback(
+    (input: OrgCommitmentRow[]) => {
+      const q = deferredFeedSearch.trim().toLowerCase();
+      const base = !q
+        ? input
+        : input.filter((r) => {
+            if (r.title.toLowerCase().includes(q)) return true;
+            if (r.description?.toLowerCase().includes(q)) return true;
+            const pn = r.projectId ? projectNameById.get(r.projectId) : undefined;
+            if (pn?.toLowerCase().includes(q)) return true;
+            return false;
+          });
+      if (feedSort !== "risk") return base;
+      return [...base].sort((a, b) => {
+        const ar = isLikelyAtRisk(a);
+        const br = isLikelyAtRisk(b);
+        if (ar.risky !== br.risky) return ar.risky ? -1 : 1;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      });
+    },
+    [deferredFeedSearch, projectNameById, feedSort]
+  );
+
+  const searchFilteredFull = useMemo(
+    () => applyFeedSearchAndRiskSort(filterOnlyRowsFull),
+    [applyFeedSearchAndRiskSort, filterOnlyRowsFull]
+  );
+
+  const searchFiltered = useMemo(
+    () => applyFeedSearchAndRiskSort(filterOnlyRows),
+    [applyFeedSearchAndRiskSort, filterOnlyRows]
+  );
+
+  const groupedFull = useMemo(() => groupFeedRows(searchFilteredFull), [searchFilteredFull]);
   const grouped = useMemo(() => groupFeedRows(searchFiltered), [searchFiltered]);
   const groupedByOwner = useMemo(() => {
     const m = new Map<string, OrgCommitmentRow[]>();
@@ -1714,7 +1733,8 @@ export default function CommitmentFeed() {
       ) : (
         <div className="space-y-8">
           {FEED_BUCKETS.map((bucket) => {
-            const list = grouped[bucket];
+            const list =
+              bucket === "completed" ? groupedFull.completed : grouped[bucket];
             if (list.length === 0) return null;
 
             if (bucket === "completed") {

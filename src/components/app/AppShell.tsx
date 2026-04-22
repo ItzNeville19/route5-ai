@@ -169,12 +169,22 @@ function SignedInAppShell({
 
   useEffect(() => {
     if (typeof window === "undefined" || !userId) return;
-    const guardKey = `route5:login-alert:${userId}`;
-    if (window.sessionStorage.getItem(guardKey) === "1") return;
-    window.sessionStorage.setItem(guardKey, "1");
+    const deviceKey = [
+      navigator.userAgent || "ua",
+      navigator.platform || "platform",
+      navigator.language || "lang",
+    ].join("|");
+    const guardKey = `route5:login-alert:${userId}:${deviceKey}`;
+    if (window.localStorage.getItem(guardKey) === "1") return;
+    window.localStorage.setItem(guardKey, "1");
     void fetch("/api/notifications/login-alert", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       credentials: "same-origin",
+      body: JSON.stringify({
+        userAgent: navigator.userAgent ?? "",
+        platform: navigator.platform ?? "",
+      }),
     }).catch(() => {
       /* non-fatal */
     });

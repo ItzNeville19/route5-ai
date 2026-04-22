@@ -49,6 +49,15 @@ function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
           <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-[#fff7ed] shadow-sm ring-1 ring-orange-200/55" />
         </div>
       );
+    case "ember":
+      return (
+        <div className={`${base} border-rose-300/70 bg-[#ffe4e6]`}>
+          <div
+            className={`${inner} bg-[linear-gradient(198deg,rgba(255,245,245,0.98)_0%,rgba(254,205,211,0.92)_45%,rgba(127,29,29,0.18)_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-[#fff1f2] shadow-sm ring-1 ring-rose-300/55" />
+        </div>
+      );
     case "studio":
       return (
         <div className={`${base} border-stone-300/70 bg-[#f5f5f4]`}>
@@ -69,11 +78,74 @@ function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
       );
     case "ocean":
       return (
-        <div className={`${base} border-sky-200/80 bg-[#e0f2fe]`}>
+        <div className={`${base} border-cyan-600/30 bg-[#0369a1]`}>
           <div
-            className={`${inner} bg-[radial-gradient(ellipse_100%_85%_at_50%_-15%,rgba(56,189,248,0.35),transparent_56%),linear-gradient(185deg,#f0f9ff_0%,#e0f2fe_42%,#bae6fd_100%)]`}
+            className={`${inner} bg-[radial-gradient(ellipse_100%_80%_at_50%_-10%,rgba(186,230,253,0.5),transparent_55%),linear-gradient(185deg,#ecfeff_0%,#0ea5e9_45%,#0c4a6e_100%)]`}
           />
-          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-white/95 shadow-sm ring-1 ring-sky-200/65" />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-cyan-100/90 shadow-sm ring-1 ring-cyan-500/40" />
+        </div>
+      );
+    case "lagunabeach":
+      return (
+        <div className={`${base} border-teal-400/50 bg-[#ccfbf1]`}>
+          <div
+            className={`${inner} bg-[linear-gradient(165deg,#f0fdfa_0%,#5eead4_55%,#0f766e_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-emerald-50/95 shadow-sm ring-1 ring-teal-400/45" />
+        </div>
+      );
+    case "sanfrancisco":
+      return (
+        <div className={`${base} border-slate-400/50 bg-[#e0e7ff]`}>
+          <div
+            className={`${inner} bg-[linear-gradient(175deg,#f8fafc_0%,#cbd5e1_55%,#64748b_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-slate-100/90 shadow-sm ring-1 ring-slate-400/45" />
+        </div>
+      );
+    case "nevada":
+      return (
+        <div className={`${base} border-amber-300/60 bg-[#fde68a]`}>
+          <div
+            className={`${inner} bg-[linear-gradient(188deg,#fffbeb_0%,#fbbf24_50%,#b45309_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-amber-50/95 shadow-sm ring-1 ring-amber-300/55" />
+        </div>
+      );
+    case "mumbai":
+      return (
+        <div className={`${base} border-amber-400/55 bg-[#fef3c7]`}>
+          <div
+            className={`${inner} bg-[radial-gradient(ellipse_90%_70%_at_20%_0%,rgba(251,191,36,0.35),transparent_54%),linear-gradient(185deg,#fffbeb_0%,#fcd34d_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-amber-50/95 shadow-sm ring-1 ring-amber-400/50" />
+        </div>
+      );
+    case "columbia":
+      return (
+        <div className={`${base} border-stone-400/55 bg-[#faf7f2]`}>
+          <div
+            className={`${inner} bg-[linear-gradient(185deg,#fafaf9_0%,#e7e5e4_55%,#57534e_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-stone-50/95 shadow-sm ring-1 ring-stone-400/45" />
+        </div>
+      );
+    case "vegas":
+      return (
+        <div className={`${base} border-fuchsia-500/35 bg-[#1a0a2e]`}>
+          <div
+            className={`${inner} bg-[radial-gradient(ellipse_100%_85%_at_50%_-15%,rgba(168,85,247,0.55),transparent_56%),linear-gradient(185deg,#581c87_0%,#1a0a2e_60%,#0f0518_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-purple-950/90 ring-1 ring-fuchsia-500/35" />
+        </div>
+      );
+    case "nyc":
+      return (
+        <div className={`${base} border-sky-500/35 bg-[#0f172a]`}>
+          <div
+            className={`${inner} bg-[radial-gradient(ellipse_100%_75%_at_50%_-12%,rgba(56,189,248,0.35),transparent_55%),linear-gradient(185deg,#1e293b_0%,#0f172a_55%,#020617_100%)]`}
+          />
+          <div className="absolute bottom-1 left-1 right-1 h-3 rounded bg-slate-900/90 ring-1 ring-sky-500/30" />
         </div>
       );
     case "pink":

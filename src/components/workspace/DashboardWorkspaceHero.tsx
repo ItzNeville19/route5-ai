@@ -204,8 +204,8 @@ export default function DashboardWorkspaceHero({
                         ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-900 hover:border-emerald-600/50"
                         : "border-amber-500/40 bg-amber-500/10 text-amber-950 hover:border-amber-600/50"
                       : !loadingEntitlements && entitlements?.isPaidTier
-                        ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/50"
-                        : "border-amber-400/35 bg-amber-500/15 text-amber-100 hover:border-amber-300/50"
+                        ? "border-emerald-400/35 bg-emerald-500/15 text-emerald-50 hover:border-emerald-300/50"
+                        : "border-amber-400/35 bg-amber-500/15 text-amber-50 hover:border-amber-300/50"
                   }`}
                 >
                   {loadingEntitlements ? "Plan…" : entitlements?.tierLabel ?? "Free"}

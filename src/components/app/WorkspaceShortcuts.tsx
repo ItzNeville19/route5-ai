@@ -134,7 +134,7 @@ export default function WorkspaceShortcuts() {
               <div className="mt-5 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.14] to-transparent px-4 py-3.5">
                 <p className="text-[12px] font-semibold text-zinc-100">Search everything</p>
                 <p className="mt-1.5 text-[12px] leading-snug text-zinc-300">
-                  <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[11px] text-[var(--workspace-fg)]">
                     ⌘K
                   </kbd>{" "}
                   opens the command palette — jump to Desk, Capture, Marketplace, Team, Settings, and more. Use{" "}
@@ -158,63 +158,63 @@ export default function WorkspaceShortcuts() {
               <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Focus search</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="shrink-0 rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     /
                   </kbd>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Cycle filters</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     F
                   </kbd>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Move active row</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       J
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       K
                     </kbd>
                   </span>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Expand active row</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     Enter
                   </kbd>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Complete active row</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     X
                   </kbd>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Reassign / due date</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       R
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       D
                     </kbd>
                   </span>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Collapse/expand feed groups</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     T
                   </kbd>
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Select all visible</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       ⌘A
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       Ctrl+A
                     </kbd>
                   </span>
@@ -227,17 +227,17 @@ export default function WorkspaceShortcuts() {
               <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Command palette</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     ⌘K
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Capture panel</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       ⌘J
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       Ctrl+J
                     </kbd>
                   </span>
@@ -245,50 +245,50 @@ export default function WorkspaceShortcuts() {
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Updates &amp; digest</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       ⌘⇧U
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       Ctrl+Shift+U
                     </kbd>
                   </span>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">New project</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     ⌘N
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Toggle sidebar</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       ⌘\
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       Ctrl+\
                     </kbd>
                   </span>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">This shortcuts sheet</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     ?
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Palette (alternate)</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                     ⌘Space
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Save popover edits</span>
                   <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       ⌘Enter
                     </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-amber-100">
+                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
                       Ctrl+Enter
                     </kbd>
                   </span>

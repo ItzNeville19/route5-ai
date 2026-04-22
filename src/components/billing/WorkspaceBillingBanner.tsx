@@ -47,15 +47,15 @@ export default function WorkspaceBillingBanner() {
 
   return (
     <div
-      className="border-b border-amber-500/25 bg-amber-500/10 px-4 py-2.5 text-[13px] text-amber-100"
+      className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-[13px] text-[var(--workspace-fg)]"
     >
       <div className="mx-auto flex max-w-[min(100%,1440px)] flex-wrap items-center gap-2 sm:px-8">
-        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-300" aria-hidden />
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" aria-hidden />
         <span className="font-medium">{banner.title}</span>
-        <span className="text-amber-100/90">{banner.message}</span>
+        <span className="opacity-95">{banner.message}</span>
         <Link
           href={banner.href}
-          className="ml-auto font-semibold text-amber-200 underline-offset-2 hover:underline"
+          className="ml-auto font-semibold text-[var(--workspace-fg)] underline underline-offset-2 hover:opacity-90"
         >
           {banner.cta}
         </Link>

@@ -1,5 +1,8 @@
 /** Pure metrics from org_commitments rows (non-deleted). */
 
+import type { OrgCommitmentRow, OrgCommitmentStatus } from "@/lib/org-commitment-types";
+import { computeWorkspaceExecutionHealth } from "@/lib/execution-health";
+
 export type MetricCommitmentRow = {
   id: string;
   status: string;
@@ -45,7 +48,7 @@ function parseMs(iso: string): number {
   return new Date(iso).getTime();
 }
 
-/** Health: (completed on time in due window / total due in window) × 100; no due → 100. */
+/** Legacy on-time closure ratio (30-day due window). Kept for analytics; Executive Dashboard uses {@link computeWorkspaceExecutionHealth} via metrics rows. */
 export function computeHealthScore(rows: MetricCommitmentRow[], nowMs: number = Date.now()): number {
   const start30 = nowMs - 30 * 24 * 60 * 60 * 1000;
   const dueWindow = rows.filter((r) => {
@@ -60,6 +63,40 @@ export function computeHealthScore(rows: MetricCommitmentRow[], nowMs: number = 
   return Math.round((onTime / dueWindow.length) * 100);
 }
 
+const ORG_STATUSES: readonly OrgCommitmentStatus[] = [
+  "not_started",
+  "in_progress",
+  "on_track",
+  "at_risk",
+  "overdue",
+  "completed",
+];
+
+function normalizeOrgStatus(raw: string): OrgCommitmentStatus {
+  return ORG_STATUSES.includes(raw as OrgCommitmentStatus) ? (raw as OrgCommitmentStatus) : "on_track";
+}
+
+/** Maps metric store rows to org commitment shape for shared execution health with Leadership / Overview. */
+export function metricRowsToOrgCommitments(rows: MetricCommitmentRow[]): OrgCommitmentRow[] {
+  const now = new Date().toISOString();
+  return rows.map((r) => ({
+    id: r.id,
+    orgId: "",
+    title: r.title,
+    description: null,
+    ownerId: r.owner_id,
+    projectId: null,
+    deadline: r.deadline,
+    priority: "medium",
+    status: normalizeOrgStatus(r.status),
+    createdAt: r.created_at,
+    updatedAt: now,
+    completedAt: r.completed_at,
+    lastActivityAt: r.created_at,
+    deletedAt: null,
+  }));
+}
+
 export function healthTier(score: number): "green" | "yellow" | "red" {
   if (score >= 80) return "green";
   if (score >= 60) return "yellow";
@@ -72,7 +109,7 @@ export function computeLiveDashboardMetrics(
   nowMs: number = Date.now()
 ): LiveDashboardMetrics {
   const active = rows.filter((r) => !r.completed_at);
-  const healthScore = computeHealthScore(rows, nowMs);
+  const healthScore = computeWorkspaceExecutionHealth(metricRowsToOrgCommitments(rows));
 
   const weekStart = new Date(nowMs);
   weekStart.setUTCHours(0, 0, 0, 0);

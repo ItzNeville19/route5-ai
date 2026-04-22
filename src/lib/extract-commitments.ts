@@ -33,6 +33,10 @@ const OWNER_SPLIT_RE =
   /(?:^|(?:[—-])|(?:;))\s*([A-Z][a-z]+)\s+(will|needs to|need to|must|has to|committed to|is going to|said (?:he|she) would)\b/gi;
 const IMPLIED_RE =
   /\b(needs to be done|should be done|must be done|to be completed|needs completion|action item|follow-up)\b/i;
+const SECTION_ONLY_RE =
+  /^(?:\*{0,2}\s*)?(kpis?|tasks?|notes?|risk|status|owner|due date|baseline|target|training)(?:\s*\*{0,2})?:?\s*$/i;
+const STRUCTURED_TASK_RE =
+  /^\s*(.+?)\s+[—-]\s+owner:\s*([^—-]+?)\s+[—-]\s+due:\s*(.+)\s*$/i;
 
 function guessSource(text: string): CommitmentSource {
   const t = text.toLowerCase();
@@ -207,10 +211,15 @@ function confidenceBucket(score: number): "high" | "medium" | "low" {
 
 function titleCaseAction(action: string): string {
   return action
+    .replace(/[*_`#]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\s+[.]+$/, "")
     .replace(/\s+(?:and|then|,)\s*$/i, "");
+}
+
+function isSectionOnlyLine(line: string): boolean {
+  return SECTION_ONLY_RE.test(line.trim());
 }
 
 function buildOwnerActionDraft(
@@ -266,6 +275,51 @@ function splitOwnerSegments(sentence: string): string[] {
   return spans.map((s) => sentence.slice(s.start, s.end).trim()).filter(Boolean);
 }
 
+function parseStructuredCommitmentBlock(
+  text: string,
+  source: CommitmentSource,
+  ref: string
+): ExtractedCommitmentDraft[] {
+  const lines = splitLines(text);
+  const hasCommitment = lines.some((line) => /^commitment:/i.test(line));
+  const hasTasks = lines.some((line) => /^tasks:/i.test(line));
+  if (!hasCommitment || !hasTasks) return [];
+
+  const out: ExtractedCommitmentDraft[] = [];
+  for (const line of lines) {
+    const task = line.match(STRUCTURED_TASK_RE);
+    if (!task) continue;
+    const action = titleCaseAction(task[1] ?? "");
+    const ownerName = (task[2] ?? "").trim() || null;
+    const duePhraseRaw = (task[3] ?? "").trim();
+    if (action.length < 6 || isSectionOnlyLine(action)) continue;
+
+    const due = parseDueDateFromText(`by ${duePhraseRaw}`);
+    const fallbackDue = (() => {
+      const d = new Date(duePhraseRaw);
+      return Number.isNaN(d.getTime()) ? null : endOfUtcDay(d);
+    })();
+    const confidenceScore = ownerName ? 0.94 : 0.82;
+    out.push({
+      title: action.slice(0, 500),
+      description: null,
+      ownerName,
+      ownerUserId: null,
+      source,
+      sourceReference: ref,
+      priority: inferPriority(line),
+      dueDate: due.iso ?? fallbackDue,
+      dueDatePhrase: due.phrase ?? duePhraseRaw,
+      sourceSnippet: line.slice(0, 600),
+      confidenceScore,
+      confidence: confidenceBucket(confidenceScore),
+      isImplied: !ownerName,
+      impliedReason: !ownerName ? "Owner is not explicitly named in this task." : null,
+    });
+  }
+  return out.slice(0, 3);
+}
+
 /**
  * Placeholder extraction — deterministic, no external AI.
  * Turns bullet lines and TODO patterns into commitments; assigns tentative owner names when present.
@@ -276,6 +330,8 @@ export function extractCommitments(text: string): ExtractedCommitmentDraft[] {
 
   const source = guessSource(trimmed);
   const ref = `extract:${nanoid(8)}`;
+  const structured = parseStructuredCommitmentBlock(trimmed, source, ref);
+  if (structured.length > 0) return structured;
   const lines = splitLines(trimmed);
   const out: ExtractedCommitmentDraft[] = [];
   const seen = new Set<string>();
@@ -301,12 +357,15 @@ export function extractCommitments(text: string): ExtractedCommitmentDraft[] {
     if (!matched && lines.length > 1 && body.length < 3) continue;
     if (!matched && !ownerName) continue;
     if (body.length < 4) continue;
+    if (isSectionOnlyLine(body)) continue;
 
-    const key = body.slice(0, 120).toLowerCase();
+    const normalizedBody = titleCaseAction(body);
+    if (normalizedBody.length < 4 || isSectionOnlyLine(normalizedBody)) continue;
+    const key = normalizedBody.slice(0, 120).toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const item = buildOwnerActionDraft(source, ref, line, ownerName, body, line);
+    const item = buildOwnerActionDraft(source, ref, line, ownerName, normalizedBody, line);
     if (item) out.push(item);
   }
 
@@ -334,6 +393,7 @@ export function extractCommitments(text: string): ExtractedCommitmentDraft[] {
     for (const seg of segments) {
       const parsed = stripOwnerPrefix(seg);
       if (!parsed.owner) continue;
+      if (isSectionOnlyLine(parsed.action)) continue;
       const key = `${parsed.owner}:${parsed.action}`.toLowerCase().slice(0, 200);
       if (seen.has(key)) continue;
       seen.add(key);

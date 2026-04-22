@@ -6,7 +6,6 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import {
   X,
   ListChecks,
-  LayoutGrid,
   FolderOpen,
   MessageSquare,
   BarChart3,
@@ -36,9 +35,8 @@ const NAV_SECTIONS = [
     title: "Work",
     items: [
       { href: "/desk", label: "Desk", icon: ListChecks },
-      { href: "/desk", label: "Capture", icon: LayoutGrid },
       { href: "/projects", label: "Projects", icon: FolderOpen },
-      { href: "/workspace/chat", label: "Chat", icon: MessageSquare },
+      { href: "/workspace/chat", label: "Threads", icon: MessageSquare },
     ],
   },
   {
@@ -107,11 +105,12 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                   const Icon = item.icon;
                   const active =
                     pathname === item.href ||
+                    (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||
                     (item.href === "/projects" && pathname.startsWith("/projects/")) ||
                     (item.href === "/workspace/escalations" && pathname.startsWith("/workspace/escalations"));
                   return (
                     <Link
-                      key={item.href}
+                      key={`${section.title}-${item.label}`}
                       href={item.href}
                       onClick={onClose}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] ${

@@ -181,6 +181,12 @@ export async function GET(req: Request) {
             dueTodayCount: dueToday.length,
             overdueCount: overdue.length,
             atRiskCount: atRisk.length,
+            topAttention: topAttention.map((row) => ({
+              id: row.id,
+              title: row.title,
+              deadline: row.deadline,
+              priority: row.priority,
+            })),
             focusCommitmentId: focus?.id ?? null,
             focusCommitmentTitle: focus?.title ?? null,
             link,

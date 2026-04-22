@@ -75,8 +75,8 @@ function SparkArea() {
           <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Rolling 90 days</p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] text-zinc-500">vs. prior quarter</p>
-          <p className="text-[13px] font-semibold tabular-nums text-emerald-400/95">+12.4%</p>
+          <p className="text-[10px] text-zinc-500">Marketing preview</p>
+          <p className="text-[13px] font-medium text-zinc-400">Illustrative trend</p>
         </div>
       </div>
       <svg
@@ -88,8 +88,8 @@ function SparkArea() {
       >
         <defs>
           <linearGradient id="home-area-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgb(139, 92, 246)" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="rgb(139, 92, 246)" stopOpacity="0" />
+            <stop offset="0%" stopColor="rgb(45, 212, 191)" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
           </linearGradient>
         </defs>
         {[0, 0.25, 0.5, 0.75, 1].map((t) => (
@@ -107,7 +107,7 @@ function SparkArea() {
         <motion.path
           d={lineD}
           fill="none"
-          stroke="rgb(167, 139, 250)"
+          stroke="rgb(94, 234, 212)"
           strokeWidth="2.25"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -127,16 +127,17 @@ function StatusMix() {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-8% 0px" });
+  /** Equal-weight stripes — visual sample only, not live org data. */
   const rows = [
-    { label: "On track", pct: 62, color: "bg-blue-500/90" },
-    { label: "At risk", pct: 21, color: "bg-amber-500/90" },
-    { label: "Overdue", pct: 12, color: "bg-red-500/85" },
-    { label: "Done", pct: 5, color: "bg-emerald-500/85" },
+    { label: "On track", pct: 28, color: "bg-blue-500/90" },
+    { label: "At risk", pct: 28, color: "bg-amber-500/90" },
+    { label: "Overdue", pct: 22, color: "bg-red-500/85" },
+    { label: "Done", pct: 22, color: "bg-emerald-500/85" },
   ];
   return (
     <div ref={ref} className="rounded-2xl border border-white/[0.08] bg-[#0c0c0e] p-4 sm:p-5">
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Commitment mix</p>
-      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Organization snapshot</p>
+      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Illustrative layout</p>
       <div className="mt-4 h-3 w-full overflow-hidden rounded-full bg-white/[0.06]">
         <motion.div
           className="flex h-full w-full"
@@ -162,7 +163,7 @@ function StatusMix() {
               <span className={`h-2 w-2 rounded-full ${r.color}`} />
               {r.label}
             </span>
-            <span className="tabular-nums text-zinc-200">{r.pct}%</span>
+            <span className="text-[11px] tabular-nums text-zinc-500">sample</span>
           </li>
         ))}
       </ul>
@@ -174,13 +175,13 @@ function WorkloadBars() {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-8% 0px" });
-  /** Pixel heights inside a 104px track (illustrative). */
+  /** Pixel heights — decorative only, not real owner loads. */
   const bars = [48, 82, 64, 96, 40, 72];
   const track = 104;
   return (
     <div ref={ref} className="rounded-2xl border border-white/[0.08] bg-[#0c0c0e] p-4 sm:p-5">
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Owner load</p>
-      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Open commitments by lead</p>
+      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Illustrative bars by lead</p>
       <div className="mt-5 flex h-[128px] items-end gap-2 sm:gap-3">
         {bars.map((px, i) => (
           <div key={i} className="flex h-[128px] min-h-0 flex-1 flex-col items-center justify-end gap-2">
@@ -211,7 +212,7 @@ function CadenceHeat() {
   return (
     <div ref={ref} className="rounded-2xl border border-white/[0.08] bg-[#0c0c0e] p-4 sm:p-5">
       <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Decision intake</p>
-      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Captured volume (daily)</p>
+      <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Sample activity grid (not live)</p>
       <div className="mt-4 grid grid-cols-7 gap-1.5">
         {grid.map((o, i) => (
           <motion.div
@@ -237,8 +238,8 @@ function MiniTable() {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[#0c0c0e] p-0">
       <div className="border-b border-white/[0.06] px-4 py-3 sm:px-5">
-        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Live commitments</p>
-        <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Highest signal first</p>
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">Example desk rows</p>
+        <p className="mt-0.5 text-[13px] font-medium text-zinc-200">Not your workspace data</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-[12px]">
@@ -280,10 +281,10 @@ export default function HomeDashboardShowcase() {
   return (
     <div className="relative">
       <div
-        className="pointer-events-none absolute -inset-4 rounded-[28px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(139,92,246,0.14),transparent_55%)]"
+        className="pointer-events-none absolute -inset-4 rounded-[28px] bg-[radial-gradient(ellipse_at_50%_0%,rgba(45,212,191,0.12),transparent_55%)]"
         aria-hidden
       />
-      <div className="relative overflow-hidden rounded-[24px] border border-white/[0.1] bg-gradient-to-b from-[#121214]/95 to-[#0a0a0c] shadow-[0_24px_80px_-32px_rgba(0,0,0,0.85)] backdrop-blur-xl">
+      <div className="relative overflow-hidden rounded-[24px] border border-teal-500/15 bg-gradient-to-b from-[#0c1525]/98 to-[#070b14] shadow-[0_28px_90px_-36px_rgba(15,118,110,0.35)] backdrop-blur-xl">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-[11px] font-semibold tracking-tight text-white">
@@ -291,7 +292,7 @@ export default function HomeDashboardShowcase() {
             </div>
             <div>
               <p className="text-[13px] font-semibold tracking-tight text-zinc-100">Workspace</p>
-              <p className="text-[11px] text-zinc-500">Production · all projects</p>
+              <p className="text-[11px] text-zinc-500">Product preview · not connected to your org</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -306,10 +307,10 @@ export default function HomeDashboardShowcase() {
           <div className="space-y-3 sm:space-y-4">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {[
-                ["Closure rate", "94%", "+3.1%", "positive"],
-                ["Avg. time to owner", "6.2h", "−1.4h", "positive"],
-                ["Overdue (org)", "12", "−4", "positive"],
-                ["Escalations (7d)", "3", "+1", "neutral"],
+                ["Closure signal", "—", "Live after sign-in", "neutral"],
+                ["Time to owner", "—", "Per org", "neutral"],
+                ["Overdue (org)", "—", "Desk + Leadership", "neutral"],
+                ["Escalations", "—", "Rules you configure", "neutral"],
               ].map(([label, v, d, kind]) => (
                 <div
                   key={String(label)}

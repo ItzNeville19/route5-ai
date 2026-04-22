@@ -28,7 +28,7 @@ export default function WorkspaceBillingPage() {
         </h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
           Route5 plans are managed directly with our team so your rollout, pricing, and support
-          are aligned from day one. New workspaces include a 3-day cardless trial.
+          are aligned from day one. New workspaces include a 14-day cardless trial.
         </p>
         <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
           Everyone in your organization sees the same plan tier here: billing is stored per organization

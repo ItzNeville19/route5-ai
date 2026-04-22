@@ -52,9 +52,7 @@ export default function DashboardCustomizeSection() {
         setCtx(data.note.slice(0, 500));
       }
       setSavedFlash(
-        data.shortcuts?.length
-          ? "Overview subtitle and quick links updated."
-          : "Subtitle saved."
+        data.shortcuts?.length ? "Overview headline and quick links updated." : "Headline saved."
       );
       window.setTimeout(() => setSavedFlash(null), 3200);
     } catch {
@@ -71,7 +69,7 @@ export default function DashboardCustomizeSection() {
     });
     setCtx("");
     setError(null);
-    setSavedFlash("Overview subtitle and quick links cleared.");
+    setSavedFlash("Overview headline and quick links cleared.");
     window.setTimeout(() => setSavedFlash(null), 3200);
   }, [exp]);
 
@@ -89,17 +87,17 @@ export default function DashboardCustomizeSection() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1 text-center sm:text-left">
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--workspace-muted-fg)]">
-              Overview
+              Customize
             </p>
             <h2
               id="dash-custom-heading"
               className="mt-1 text-[clamp(1.1rem,2.6vw,1.35rem)] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]"
             >
-              Overview subtitle
+              Overview headline &amp; quick links
             </h2>
             <p className="mx-auto mt-2 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)] sm:mx-0">
-              Describe your org, workflow, and tools. Route5 can suggest a cleaner subtitle and a few quick
-              links for the Overview page.
+              Describe your org and workflow — we&apos;ll suggest a concise headline for Overview plus shortcuts your
+              team uses every day.
             </p>
             <p className="mx-auto mt-3 max-w-2xl text-[12px] text-[var(--workspace-muted-fg)] sm:mx-0">
               <Link href="/settings#workspace-lang" className="font-medium text-[var(--workspace-accent)] hover:underline">
@@ -159,7 +157,7 @@ export default function DashboardCustomizeSection() {
             onClick={saveNote}
             className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-2.5 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)]"
           >
-            Save subtitle
+            Save headline
           </button>
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2 border-t border-[var(--workspace-border)]/80 pt-4 sm:justify-start">

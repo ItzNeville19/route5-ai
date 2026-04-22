@@ -67,6 +67,29 @@ export function buildNotificationEmailHtml(
       inner += `<p style="margin:12px 0 0;font-size:13px;color:#f87171;">This commitment is overdue.</p>`;
       break;
     }
+    case "daily_morning_digest": {
+      const dueToday = Number(meta.dueTodayCount ?? 0);
+      const overdue = Number(meta.overdueCount ?? 0);
+      const atRisk = Number(meta.atRiskCount ?? 0);
+      const topAttention = Array.isArray(meta.topAttention)
+        ? (meta.topAttention as Array<{ title?: unknown; deadline?: unknown; priority?: unknown }>)
+        : [];
+      inner += `<div style="margin:14px 0 0;border:1px solid rgba(167,139,250,0.35);background:rgba(167,139,250,0.08);border-radius:12px;padding:12px;">`;
+      inner += `<p style="margin:0;font-size:13px;color:#ddd6fe;">Due today: <strong>${dueToday}</strong> · Overdue: <strong>${overdue}</strong> · At risk: <strong>${atRisk}</strong></p>`;
+      inner += `</div>`;
+      if (topAttention.length > 0) {
+        inner += `<ul style="margin:14px 0 0;padding-left:18px;">`;
+        for (const row of topAttention.slice(0, 5)) {
+          const title = typeof row.title === "string" ? row.title : "Commitment";
+          const deadline = typeof row.deadline === "string" ? row.deadline : "";
+          const priority = typeof row.priority === "string" ? row.priority : "";
+          const deadlineLabel = deadline ? new Date(deadline).toLocaleString() : "No due time";
+          inner += `<li style="margin:0 0 8px;color:#e4e4e7;"><span style="font-weight:600;color:#fafafa;">${escapeHtml(title)}</span><br/><span style="font-size:12px;color:#a1a1aa;">Due ${escapeHtml(deadlineLabel)} · Priority ${escapeHtml(priority || "medium")}</span></li>`;
+        }
+        inner += `</ul>`;
+      }
+      break;
+    }
     case "escalation_fired":
     case "escalation_escalated": {
       const sev = meta.severity ? String(meta.severity) : "";
