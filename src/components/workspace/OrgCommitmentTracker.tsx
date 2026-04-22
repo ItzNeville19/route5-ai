@@ -108,6 +108,13 @@ export default function OrgCommitmentTracker() {
     if (user?.id) setCOwner(user.id);
   }, [user?.id]);
 
+  useEffect(() => {
+    const s = searchParams.get("status");
+    if (s && (STATUSES as readonly string[]).includes(s)) {
+      setStatusFilter(s);
+    }
+  }, [searchParams]);
+
   const queryString = useMemo(() => {
     const p = new URLSearchParams();
     if (q.trim()) p.set("q", q.trim());

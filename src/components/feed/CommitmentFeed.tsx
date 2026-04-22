@@ -96,7 +96,22 @@ const FEED_FILTER_OPTIONS: readonly { value: FeedFilter; label: string; hint: st
   { value: "team", label: "My Team", hint: "Commitments owned by teammates" },
   { value: "unassigned", label: "Unassigned", hint: "No owner set yet" },
   { value: "overdue", label: "Overdue", hint: "Past deadline and not done" },
+  { value: "at_risk", label: "At risk", hint: "Stale or flagged attention" },
 ];
+
+const FEED_FILTER_FROM_URL = new Set<FeedFilter>([
+  "all",
+  "mine",
+  "team",
+  "unassigned",
+  "overdue",
+  "at_risk",
+]);
+
+function feedFilterFromSearchParam(raw: string | null): FeedFilter | null {
+  if (!raw) return null;
+  return FEED_FILTER_FROM_URL.has(raw as FeedFilter) ? (raw as FeedFilter) : null;
+}
 
 function sortApiParams(ui: FeedSortUi): { sort: OrgCommitmentListSort; order: "asc" | "desc" } {
   switch (ui) {
@@ -374,6 +389,13 @@ export default function CommitmentFeed() {
       /* ignore */
     }
   }, [searchParams, pushToast]);
+
+  useEffect(() => {
+    const f = feedFilterFromSearchParam(searchParams.get("filter"));
+    if (f) setFeedFilter(f);
+    const completed = searchParams.get("completed");
+    if (completed === "open" || completed === "1") setCompletedOpen(true);
+  }, [searchParams]);
 
   const loadList = useCallback(async () => {
     const prev = listAbortRef.current;

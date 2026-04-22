@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { AlertTriangle, ArrowUpRight, CircleDot, Target, UserX } from "lucide-react";
 import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
 import { deskUrl } from "@/lib/desk-routes";
+import { deskFilteredHref, orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
 function assigneeLabel(r: CommitmentRiskItem, currentUserId: string | undefined): string {
   const name = r.ownerDisplayName?.trim();
@@ -83,9 +84,12 @@ export default function DashboardCommitmentSnapshot({ overview, loading }: Props
       <div className="mt-5">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
           <span>Open commitments by status</span>
-          <span className="tabular-nums text-[var(--workspace-fg)]/80">
+          <Link
+            href={orgCommitmentsHref()}
+            className="tabular-nums text-[var(--workspace-fg)]/80 underline-offset-2 hover:text-[var(--workspace-fg)] hover:underline"
+          >
             {summary.pctCompletedThisWeek}% closed this week
-          </span>
+          </Link>
         </div>
         {summary.activeTotal === 0 ? (
           <div className="h-3 w-full rounded-full bg-[var(--workspace-border)]/40 ring-1 ring-white/5" />
@@ -117,24 +121,54 @@ export default function DashboardCommitmentSnapshot({ overview, loading }: Props
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-[var(--workspace-muted-fg)]">
           <li className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-sky-500" aria-hidden />
-            On track ({onTrackCount})
+            <Link href={orgCommitmentsHref("on_track")} className="underline-offset-2 hover:text-[var(--workspace-fg)] hover:underline">
+              On track ({onTrackCount})
+            </Link>
           </li>
           <li className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-amber-400" aria-hidden />
-            At risk ({summary.atRiskCount})
+            <Link href={orgCommitmentsHref("at_risk")} className="underline-offset-2 hover:text-[var(--workspace-fg)] hover:underline">
+              At risk ({summary.atRiskCount})
+            </Link>
           </li>
           <li className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-red-500" aria-hidden />
-            Overdue ({summary.overdueCount})
+            <Link href={orgCommitmentsHref("overdue")} className="underline-offset-2 hover:text-[var(--workspace-fg)] hover:underline">
+              Overdue ({summary.overdueCount})
+            </Link>
           </li>
         </ul>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Metric icon={Target} label="Active" value={summary.activeTotal} warn={false} />
-        <Metric icon={AlertTriangle} label="Overdue" value={summary.overdueCount} warn={summary.overdueCount > 0} />
-        <Metric icon={CircleDot} label="At risk" value={summary.atRiskCount} warn={summary.atRiskCount > 0} />
-        <Metric icon={UserX} label="No owner" value={summary.unassignedCount} warn={summary.unassignedCount > 0} />
+        <Metric
+          icon={Target}
+          label="Active"
+          value={summary.activeTotal}
+          warn={false}
+          href={orgCommitmentsHref()}
+        />
+        <Metric
+          icon={AlertTriangle}
+          label="Overdue"
+          value={summary.overdueCount}
+          warn={summary.overdueCount > 0}
+          href={orgCommitmentsHref("overdue")}
+        />
+        <Metric
+          icon={CircleDot}
+          label="At risk"
+          value={summary.atRiskCount}
+          warn={summary.atRiskCount > 0}
+          href={orgCommitmentsHref("at_risk")}
+        />
+        <Metric
+          icon={UserX}
+          label="No owner"
+          value={summary.unassignedCount}
+          warn={summary.unassignedCount > 0}
+          href={deskFilteredHref("unassigned")}
+        />
       </div>
 
       {!hasWork ? (
@@ -227,26 +261,43 @@ function Metric({
   label,
   value,
   warn,
+  href,
 }: {
   icon: typeof Target;
   label: string;
   value: number;
   warn: boolean;
+  href?: string;
 }) {
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      className={`rounded-2xl border px-3 py-3 transition ${
-        warn
-          ? "border-amber-500/35 bg-amber-500/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-          : "border-[var(--workspace-border)]/80 bg-[var(--workspace-canvas)]/40"
-      }`}
-    >
+  const cls = `rounded-2xl border px-3 py-3 text-left transition ${
+    warn
+      ? "border-amber-500/35 bg-amber-500/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
+      : "border-[var(--workspace-border)]/80 bg-[var(--workspace-canvas)]/40"
+  } ${href ? "cursor-pointer hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]" : ""}`;
+  const inner = (
+    <>
       <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
         <Icon className="h-3.5 w-3.5 opacity-80" strokeWidth={2} aria-hidden />
         {label}
       </div>
       <p className="mt-1.5 text-[22px] font-semibold tabular-nums text-[var(--workspace-fg)]">{value}</p>
+      {href ? (
+        <p className="mt-1 text-[10px] font-medium text-[var(--workspace-accent)]">View →</p>
+      ) : null}
+    </>
+  );
+  if (href) {
+    return (
+      <motion.div whileHover={{ y: -2 }}>
+        <Link href={href} className={`block ${cls}`} aria-label={`${label}: ${value}. Open filtered list.`}>
+          {inner}
+        </Link>
+      </motion.div>
+    );
+  }
+  return (
+    <motion.div whileHover={{ y: -2 }} className={cls}>
+      {inner}
     </motion.div>
   );
 }

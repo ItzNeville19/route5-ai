@@ -410,4 +410,13 @@ export const en: Record<string, string> = {
   "marketing.nav.openMenu": "Open menu",
   "marketing.nav.mobileNav": "Mobile",
   "marketing.nav.route5Home": "Route5 home",
+
+  "commitment.metrics.active": "Active",
+  "commitment.metrics.onTrack": "On track",
+  "commitment.metrics.atRisk": "At risk",
+  "commitment.metrics.overdue": "Overdue",
+  "commitment.metrics.unassigned": "Unassigned",
+  "commitment.metrics.doneWeek": "Done (week)",
+  "commitment.metrics.doneMonth": "Done (month)",
+  "commitment.openList": "Open list",
 };

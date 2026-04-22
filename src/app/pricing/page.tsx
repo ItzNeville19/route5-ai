@@ -8,7 +8,7 @@ import { PRICING_INTRO, TRIAL_BODY } from "@/lib/marketing-copy";
 export const metadata: Metadata = {
   title: "Pricing — Route5",
   description:
-    "Route5 pricing is tailored per workspace. 14-day free trial with no credit card—contact sales to continue after trial.",
+    "Route5 plans are scoped per organization: trial first, then seats, integrations, and security. 14-day trial, no card—contact us to continue after trial.",
 };
 
 /** Clerk `auth()` reads request headers; must not be statically prerendered. */

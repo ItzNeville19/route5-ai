@@ -4,10 +4,13 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { AlertTriangle, ArrowRight, FileJson, Users } from "lucide-react";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { deskUrl } from "@/lib/desk-routes";
+import { deskFilteredHref, orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
 export default function TeamInsightsContent() {
+  const { t } = useI18n();
   const { entitlements, loadingEntitlements, summary, loadingSummary, executionOverview } = useWorkspaceData();
   const r = summary.readiness;
   const fullTeam = entitlements?.features.teamInsightsFull ?? false;
@@ -93,30 +96,50 @@ export default function TeamInsightsContent() {
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-4">
-        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
-          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Active</p>
+        <Link
+          href={orgCommitmentsHref()}
+          className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]"
+          aria-label={`${t("commitment.metrics.active")}: ${executionOverview?.summary.activeTotal ?? "—"}`}
+        >
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">{t("commitment.metrics.active")}</p>
           <p className="text-[16px] font-semibold text-[var(--workspace-fg)]">
             {executionOverview?.summary.activeTotal ?? "—"}
           </p>
-        </div>
-        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
-          <p className="text-[11px] text-[var(--workspace-muted-fg)]">At risk</p>
+          <p className="mt-1 text-[10px] font-medium text-[var(--workspace-accent)]">{t("commitment.openList")}</p>
+        </Link>
+        <Link
+          href={orgCommitmentsHref("at_risk")}
+          className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]"
+          aria-label={`${t("commitment.metrics.atRisk")}: ${executionOverview?.summary.atRiskCount ?? "—"}`}
+        >
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">{t("commitment.metrics.atRisk")}</p>
           <p className="text-[16px] font-semibold text-[color-mix(in_srgb,#d97706_78%,var(--workspace-fg))]">
             {executionOverview?.summary.atRiskCount ?? "—"}
           </p>
-        </div>
-        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
-          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Overdue</p>
+          <p className="mt-1 text-[10px] font-medium text-[var(--workspace-accent)]">{t("commitment.openList")}</p>
+        </Link>
+        <Link
+          href={orgCommitmentsHref("overdue")}
+          className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]"
+          aria-label={`${t("commitment.metrics.overdue")}: ${executionOverview?.summary.overdueCount ?? "—"}`}
+        >
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">{t("commitment.metrics.overdue")}</p>
           <p className="text-[16px] font-semibold text-[color-mix(in_srgb,var(--workspace-danger-fg)_88%,var(--workspace-fg))]">
             {executionOverview?.summary.overdueCount ?? "—"}
           </p>
-        </div>
-        <div className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2">
-          <p className="text-[11px] text-[var(--workspace-muted-fg)]">Unassigned</p>
+          <p className="mt-1 text-[10px] font-medium text-[var(--workspace-accent)]">{t("commitment.openList")}</p>
+        </Link>
+        <Link
+          href={deskFilteredHref("unassigned")}
+          className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]"
+          aria-label={`${t("commitment.metrics.unassigned")}: ${executionOverview?.summary.unassignedCount ?? "—"}`}
+        >
+          <p className="text-[11px] text-[var(--workspace-muted-fg)]">{t("commitment.metrics.unassigned")}</p>
           <p className="text-[16px] font-semibold text-[var(--workspace-fg)]">
             {executionOverview?.summary.unassignedCount ?? "—"}
           </p>
-        </div>
+          <p className="mt-1 text-[10px] font-medium text-[var(--workspace-accent)]">{t("commitment.openList")}</p>
+        </Link>
       </div>
 
       <section className="mt-4 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/55 p-4">

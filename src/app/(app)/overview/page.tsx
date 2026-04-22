@@ -8,6 +8,7 @@ import { isCompletedRow } from "@/lib/feed/group-commitments";
 import { computeWorkspaceExecutionHealth } from "@/lib/execution-health";
 import { clerkDisplayName } from "@/components/feed/feed-user-display";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
+import { orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
 type OwnerRollup = {
   ownerId: string;
@@ -245,18 +246,33 @@ export default function LeadershipPage() {
       </section>
 
       <section className="grid gap-[var(--r5-space-3)] sm:grid-cols-3">
-        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+        <Link
+          href={orgCommitmentsHref()}
+          className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)] transition hover:border-r5-accent/35 hover:bg-r5-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-r5-accent"
+          aria-label={`On track commitments: ${onTrackCount}`}
+        >
           <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">On track</p>
           <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-completed">{onTrackCount}</p>
-        </div>
-        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+          <p className="mt-2 text-[11px] font-medium text-r5-accent">View commitments →</p>
+        </Link>
+        <Link
+          href={orgCommitmentsHref("at_risk")}
+          className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)] transition hover:border-r5-accent/35 hover:bg-r5-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-r5-accent"
+          aria-label={`At risk commitments: ${atRiskCount}`}
+        >
           <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">At risk</p>
           <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-at-risk">{atRiskCount}</p>
-        </div>
-        <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
+          <p className="mt-2 text-[11px] font-medium text-r5-accent">View commitments →</p>
+        </Link>
+        <Link
+          href={orgCommitmentsHref("overdue")}
+          className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)] transition hover:border-r5-accent/35 hover:bg-r5-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-r5-accent"
+          aria-label={`Overdue commitments: ${overdueRows.length}`}
+        >
           <p className="text-[length:var(--r5-font-caption)] uppercase tracking-[0.14em] text-r5-text-secondary">Overdue</p>
           <p className="mt-[var(--r5-space-2)] text-[length:var(--r5-font-stat)] font-semibold text-r5-status-overdue">{overdueRows.length}</p>
-        </div>
+          <p className="mt-2 text-[11px] font-medium text-r5-accent">View commitments →</p>
+        </Link>
       </section>
 
       <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">

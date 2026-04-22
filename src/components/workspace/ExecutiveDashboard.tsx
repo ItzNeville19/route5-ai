@@ -28,6 +28,8 @@ import {
 import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
 type TeamRow = LiveDashboardMetrics["teamBreakdown"][number];
 
@@ -100,6 +102,7 @@ function healthColorClass(tier: "green" | "yellow" | "red"): string {
 type SortKey = keyof Pick<TeamRow, "displayName" | "total" | "completedOnTime" | "completionRate" | "overdueCount">;
 
 export default function ExecutiveDashboard() {
+  const { t } = useI18n();
   const { showUpgrade } = useBillingUpgrade();
   const [orgId, setOrgId] = useState<string | null>(null);
   const [metrics, setMetrics] = useState<LiveDashboardMetrics | null>(null);
@@ -406,12 +409,38 @@ export default function ExecutiveDashboard() {
                 Same formula as Leadership — open load with heavier weight on overdue and at-risk
               </p>
             </div>
-            <MetricChip label="Active" value={metrics.activeCount} />
-            <MetricChip label="On track" value={metrics.onTrackCount} />
-            <MetricChip label="At risk" value={metrics.atRiskCount} warn={metrics.atRiskCount > 0} />
-            <MetricChip label="Overdue" value={metrics.overdueCount} danger={metrics.overdueCount > 0} />
-            <MetricChip label="Done (week)" value={metrics.completedWeekCount} />
-            <MetricChip label="Done (month)" value={metrics.completedMonthCount} />
+            <MetricChip
+              label={t("commitment.metrics.active")}
+              value={metrics.activeCount}
+              href={orgCommitmentsHref()}
+            />
+            <MetricChip
+              label={t("commitment.metrics.onTrack")}
+              value={metrics.onTrackCount}
+              href={orgCommitmentsHref("on_track")}
+            />
+            <MetricChip
+              label={t("commitment.metrics.atRisk")}
+              value={metrics.atRiskCount}
+              warn={metrics.atRiskCount > 0}
+              href={orgCommitmentsHref("at_risk")}
+            />
+            <MetricChip
+              label={t("commitment.metrics.overdue")}
+              value={metrics.overdueCount}
+              danger={metrics.overdueCount > 0}
+              href={orgCommitmentsHref("overdue")}
+            />
+            <MetricChip
+              label={t("commitment.metrics.doneWeek")}
+              value={metrics.completedWeekCount}
+              href={orgCommitmentsHref("completed")}
+            />
+            <MetricChip
+              label={t("commitment.metrics.doneMonth")}
+              value={metrics.completedMonthCount}
+              href={orgCommitmentsHref("completed")}
+            />
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
@@ -719,22 +748,34 @@ function MetricChip({
   value,
   warn,
   danger,
+  href,
 }: {
   label: string;
   value: number;
   warn?: boolean;
   danger?: boolean;
+  href?: string;
 }) {
-  return (
-    <div
-      className={`rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 p-3 ${
-        danger ? "ring-1 ring-red-400/35" : warn ? "ring-1 ring-amber-400/30" : ""
-      }`}
-    >
+  const cls = `rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 p-3 text-left transition ${
+    danger ? "ring-1 ring-red-400/35" : warn ? "ring-1 ring-amber-400/30" : ""
+  } ${href ? "cursor-pointer hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--workspace-accent)]" : ""}`;
+  const inner = (
+    <>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">{label}</p>
       <p className="mt-1 text-[22px] font-semibold tabular-nums text-[var(--workspace-fg)]">{value}</p>
-    </div>
+      {href ? (
+        <p className="mt-2 text-[10px] font-medium text-[var(--workspace-accent)]">View →</p>
+      ) : null}
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className={cls} aria-label={`${label}: ${value}. Open filtered list.`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={cls}>{inner}</div>;
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
