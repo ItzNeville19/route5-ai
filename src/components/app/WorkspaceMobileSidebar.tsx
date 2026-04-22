@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import {
   X,
   ListChecks,
   FolderOpen,
-  MessageSquare,
+  Newspaper,
   BarChart3,
   Gauge,
   LineChart,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 const tierLabel =
   process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
@@ -30,15 +32,10 @@ type WorkspaceMobileSidebarProps = {
   onClose: () => void;
 };
 
-const NAV_SECTIONS = [
-  {
-    title: "Work",
-    items: [
-      { href: "/desk", label: "Desk", icon: ListChecks },
-      { href: "/projects", label: "Projects", icon: FolderOpen },
-      { href: "/workspace/chat", label: "Threads", icon: MessageSquare },
-    ],
-  },
+const OPS_AND_ACCOUNT: {
+  title: string;
+  items: { href: string; label: string; icon: (typeof ListChecks) }[];
+}[] = [
   {
     title: "Operations",
     items: [
@@ -59,14 +56,30 @@ const NAV_SECTIONS = [
       { href: "/workspace/billing", label: "Billing", icon: CreditCard },
     ],
   },
-] as const;
+];
 
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
   const { entitlements } = useWorkspaceData();
+  const { t } = useI18n();
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+
+  const navSections = useMemo(
+    () => [
+      {
+        title: "Work",
+        items: [
+          { href: "/desk", label: "Desk", icon: ListChecks },
+          { href: "/projects", label: t("sidebar.projects"), icon: FolderOpen },
+          { href: "/workspace/digest", label: t("sidebar.digest"), icon: Newspaper },
+        ],
+      },
+      ...OPS_AND_ACCOUNT,
+    ],
+    [t]
+  );
 
   return (
     <div
@@ -95,7 +108,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
         </div>
 
         <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3">
-          {NAV_SECTIONS.map((section) => (
+          {navSections.map((section) => (
             <div key={section.title} className="mb-4">
               <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
                 {section.title}
@@ -107,7 +120,8 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                     pathname === item.href ||
                     (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||
                     (item.href === "/projects" && pathname.startsWith("/projects/")) ||
-                    (item.href === "/workspace/escalations" && pathname.startsWith("/workspace/escalations"));
+                    (item.href === "/workspace/escalations" && pathname.startsWith("/workspace/escalations")) ||
+                    (item.href === "/workspace/digest" && pathname.startsWith("/workspace/digest"));
                   return (
                     <Link
                       key={`${section.title}-${item.label}`}

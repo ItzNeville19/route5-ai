@@ -266,4 +266,82 @@ export const es: Record<string, string> = {
   "marketing.nav.openMenu": "Abrir menú",
   "marketing.nav.mobileNav": "Móvil",
   "marketing.nav.route5Home": "Inicio Route5",
+
+  "sidebar.digest": "Resumen diario",
+
+  "marketing.home.hero.kicker": "Route5",
+  "marketing.home.hero.subkicker": "Registro de ejecución",
+  "marketing.home.hero.titleTop": "Claridad que sobrevive",
+  "marketing.home.hero.titleAccent": "a la semana siguiente a la reunión.",
+  "marketing.home.hero.lead":
+    "No es un clon de chat de equipo: un registro defendible de quién debe qué y cuándo — para que operaciones, finanzas y dirección se alineen con hechos.",
+  "marketing.home.hero.ctaPrimary": "Abrir espacio de trabajo",
+  "marketing.home.hero.ctaSales": "Hablar con ventas",
+  "marketing.home.hero.ctaProduct": "Descripción del producto",
+  "marketing.home.marquee.m1": "Compromisos auditables",
+  "marketing.home.marquee.m2": "Despliegue por fases",
+  "marketing.home.marquee.m3": "Exportaciones legibles",
+  "marketing.home.marquee.m4": "Propiedad sin tableros de estado",
+  "marketing.home.marquee.m5": "Menos paneles, más hechos",
+  "marketing.home.marquee.m6": "Humanos + IA que usted controla",
+  "marketing.home.flow.s1": "Captura desde el trabajo real",
+  "marketing.home.flow.s2": "Escritorio como cola de ejecución",
+  "marketing.home.flow.s3": "Señal ejecutiva desde el registro",
+  "marketing.home.stage.label": "Capa operativa",
+  "marketing.home.stage.title": "Una columna vertebral para compromisos",
+  "marketing.home.stage.body":
+    "Siguientes pasos con propietarios y fechas — no tickets pegados al caos del chat.",
+  "marketing.home.stage.row1": "Propiedad y plazos",
+  "marketing.home.stage.row2": "Finalización y escalaciones",
+  "marketing.home.stage.disclaimer":
+    "Las cifras provienen de su espacio tras iniciar sesión — sin métricas inventadas.",
+  "marketing.home.platform.kicker": "Plataforma",
+  "marketing.home.platform.title": "De entradas desordenadas a evidencia sólida",
+  "marketing.home.platform.subtitle":
+    "Pensado para revisiones operativas y diligencia — no paneles vacíos ni otro inbox de chat.",
+  "marketing.home.tile.capture.title": "Captura",
+  "marketing.home.tile.capture.body":
+    "Convierta correos y notas en compromisos con títulos, propietarios y fechas.",
+  "marketing.home.tile.desk.title": "Escritorio",
+  "marketing.home.tile.desk.body":
+    "Una cola entre proyectos — asignaciones, vencidos y escalaciones sin hojas de cálculo.",
+  "marketing.home.tile.signal.title": "Señal",
+  "marketing.home.tile.signal.body":
+    "La dirección ve carga y riesgo desde el registro — antes de que la narrativa lo reemplace.",
+  "marketing.home.tile.integrations.title": "Integraciones",
+  "marketing.home.tile.integrations.body":
+    "Slack, Google, Linear, GitHub, Notion y más — todo alimenta la misma columna vertebral.",
+  "marketing.home.tile.identity.title": "Identidad y despliegue",
+  "marketing.home.tile.identity.body":
+    "Autenticación con Clerk y camino SSO empresarial — incorporación por fases.",
+  "marketing.home.tile.evidence.title": "Primero la evidencia",
+  "marketing.home.tile.evidence.body":
+    "Exportaciones y trazas para revisiones y adquisiciones — no gráficos vanidosos.",
+  "marketing.home.story.kicker": "Por qué Route5",
+  "marketing.home.story.title": "Hecho para el escrutinio — no para teatro de paneles",
+  "marketing.home.story.lead":
+    "Operadores tienen un escritorio usable; ejecutivos obtienen señal oportuna; compras obtienen un proveedor que entiende el despliegue.",
+  "marketing.home.pillar.p1.title": "Propiedad clara",
+  "marketing.home.pillar.p1.body": "Cada compromiso tiene propietario y fecha.",
+  "marketing.home.pillar.p2.title": "Señal ejecutiva",
+  "marketing.home.pillar.p2.body": "Salud y carga para juntas y revisiones — basada en registros.",
+  "marketing.home.pillar.p3.title": "Una sola capa",
+  "marketing.home.pillar.p3.body": "Proyectos, roles y automatización ligados a los mismos compromisos.",
+  "marketing.home.audience.kicker": "Para quién es",
+  "marketing.home.audience.title": "Los mismos compromisos. Diferente altitud.",
+  "marketing.home.audience.lead": "Dirección, operaciones y entrega usan un solo registro.",
+  "marketing.home.audience.leadership.title": "Dirección",
+  "marketing.home.audience.leadership.body": "Claridad con propietarios y fechas — sin reconstruir la historia.",
+  "marketing.home.audience.operators.title": "Operadores",
+  "marketing.home.audience.operators.body":
+    "Un escritorio diario — enrutamiento y plazos con trazabilidad.",
+  "marketing.home.audience.procurement.title": "Compras e IT",
+  "marketing.home.audience.procurement.body":
+    "Cuestionarios y controles alineados con cómo su organización compra software.",
+  "marketing.home.cta.kicker": "Siguiente paso",
+  "marketing.home.cta.title": "Alinear despliegue, seguridad y plan",
+  "marketing.home.cta.body":
+    "Cuéntenos cómo compran — apoyamos cuestionarios y la cadencia que esperan legal e IT.",
+  "marketing.home.cta.primary": "Contactar",
+  "marketing.home.cta.secondary": "Abrir espacio de trabajo",
 };

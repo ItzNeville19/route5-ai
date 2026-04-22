@@ -20,9 +20,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Route5 | Execution accountability for enterprise teams",
+  title: "Route5 | Execution clarity for teams that ship under scrutiny",
   description:
-    "System of record for decisions and commitments—owners, deadlines, live execution health. 14-day free trial, no credit card; contact us to continue on the right plan.",
+    "Committed owners, deadlines, and traceable completion—not another team chat inbox. 14-day trial, no card; contact us to align rollout and plan.",
   keywords: [
     "execution software",
     "commitment management",

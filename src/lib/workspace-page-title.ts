@@ -13,6 +13,7 @@ export function getWorkspacePageTitle(pathname: string): string {
   if (p === "/marketplace" || p.startsWith("/marketplace/")) return "Marketplace";
   if (p === "/integrations" || p.startsWith("/integrations/")) return "Integrations";
   if (p === "/workspace/help") return "Help";
+  if (p === "/workspace/digest") return "Daily digest";
   if (p === "/workspace/chat") return "Chat";
   if (p === "/workspace/team" || p === "/workspace/organization") return "Organization";
   if (p.startsWith("/workspace/billing")) return "Billing";

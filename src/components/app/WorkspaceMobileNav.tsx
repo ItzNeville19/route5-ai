@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderOpen, ListChecks, MessageSquare, Plus, Settings } from "lucide-react";
+import { FolderOpen, ListChecks, Newspaper, Plus, Settings } from "lucide-react";
 import { useCapture } from "@/components/capture/CaptureProvider";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 function LinkTab({
   href,
@@ -33,6 +34,7 @@ export default function WorkspaceMobileNav() {
   const pathname = usePathname() ?? "";
   const path = pathname.split("?")[0] ?? pathname;
   const { open: openCapture, isOpen: captureOpen } = useCapture();
+  const { t } = useI18n();
 
   return (
     <nav
@@ -53,7 +55,12 @@ export default function WorkspaceMobileNav() {
         <span className="max-w-full truncate">Capture</span>
       </button>
       <LinkTab href="/projects" label="Projects" icon={FolderOpen} active={path === "/projects" || path.startsWith("/projects/")} />
-      <LinkTab href="/workspace/chat" label="Threads" icon={MessageSquare} active={path === "/workspace/chat"} />
+      <LinkTab
+        href="/workspace/digest"
+        label={t("sidebar.digest")}
+        icon={Newspaper}
+        active={path === "/workspace/digest"}
+      />
       <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
     </nav>
   );

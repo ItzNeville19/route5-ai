@@ -17,7 +17,7 @@ import {
   LifeBuoy,
   ListChecks,
   LineChart,
-  MessageSquare,
+  Newspaper,
   Palette,
   Plus,
   CheckCircle2,
@@ -153,10 +153,10 @@ export default function WorkspaceSidebar() {
               label={t("sidebar.projects")}
             />
             <NavRow
-              active={path === "/workspace/chat"}
-              icon={MessageSquare}
-              label="Threads"
-              onClick={() => window.dispatchEvent(new Event("route5:chat-open"))}
+              href="/workspace/digest"
+              active={path === "/workspace/digest"}
+              icon={Newspaper}
+              label={t("sidebar.digest")}
             />
             <button
               type="button"

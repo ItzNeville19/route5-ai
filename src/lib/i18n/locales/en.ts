@@ -419,4 +419,84 @@ export const en: Record<string, string> = {
   "commitment.metrics.doneWeek": "Done (week)",
   "commitment.metrics.doneMonth": "Done (month)",
   "commitment.openList": "Open list",
+
+  "sidebar.digest": "Daily digest",
+
+  "marketing.home.hero.kicker": "Route5",
+  "marketing.home.hero.subkicker": "Execution system of record",
+  "marketing.home.hero.titleTop": "Clarity that survives",
+  "marketing.home.hero.titleAccent": "the week after the meeting.",
+  "marketing.home.hero.lead":
+    "Not a team chat clone: a defensible record of who owns what, by when—so operations, finance, and leadership align on facts, not recreated slide decks.",
+  "marketing.home.hero.ctaPrimary": "Start a workspace",
+  "marketing.home.hero.ctaSales": "Talk to sales",
+  "marketing.home.hero.ctaProduct": "Product overview",
+  "marketing.home.marquee.m1": "Audit-ready commitments",
+  "marketing.home.marquee.m2": "Designed for phased rollout",
+  "marketing.home.marquee.m3": "Exports your lawyers can read",
+  "marketing.home.marquee.m4": "Ownership without chasing status decks",
+  "marketing.home.marquee.m5": "Fewer dashboards, more facts",
+  "marketing.home.marquee.m6": "Humans plus AI workflows you control",
+  "marketing.home.flow.s1": "Capture intent from real work",
+  "marketing.home.flow.s2": "Desk as the execution queue",
+  "marketing.home.flow.s3": "Executive signal from the record",
+  "marketing.home.stage.label": "Operating layer",
+  "marketing.home.stage.title": "One spine for commitments",
+  "marketing.home.stage.body":
+    "Structured next steps tied to owners and deadlines—not tickets bolted onto chat chaos. Teams keep context; Route5 keeps proof.",
+  "marketing.home.stage.row1": "Ownership & deadlines",
+  "marketing.home.stage.row2": "Completion & escalation trails",
+  "marketing.home.stage.disclaimer":
+    "Figures populate from your workspace after sign-in — no fabricated charts or hero metrics.",
+  "marketing.home.platform.kicker": "Platform",
+  "marketing.home.platform.title": "From messy inputs to evidence you stand behind",
+  "marketing.home.platform.subtitle":
+    "Purpose-built for operating reviews and diligence—not vanity dashboards or another chat inbox.",
+  "marketing.home.tile.capture.title": "Capture",
+  "marketing.home.tile.capture.body":
+    "Turn emails, decks, and notes into commitments with titles, owners, and deadlines—automatically routed for review.",
+  "marketing.home.tile.desk.title": "Desk",
+  "marketing.home.tile.desk.body":
+    "Operators run one queue across projects—assignments, overdue, and escalation without spreadsheet archaeology.",
+  "marketing.home.tile.signal.title": "Signal",
+  "marketing.home.tile.signal.body":
+    "Leadership sees load, risk, and completion from the record—before narrative replaces reality.",
+  "marketing.home.tile.integrations.title": "Integrations",
+  "marketing.home.tile.integrations.body":
+    "Slack, Google, Linear, GitHub, Notion, and more—your tools feed the same execution spine.",
+  "marketing.home.tile.identity.title": "Identity & rollout",
+  "marketing.home.tile.identity.body":
+    "Clerk-backed auth with an enterprise SSO path—phased onboarding when legal and IT are ready.",
+  "marketing.home.tile.evidence.title": "Evidence-first",
+  "marketing.home.tile.evidence.body":
+    "Exports and trails suitable for operating reviews, diligence, and procurement—not vanity charts.",
+  "marketing.home.story.kicker": "Why Route5",
+  "marketing.home.story.title": "Built for scrutiny—not dashboard theater",
+  "marketing.home.story.lead":
+    "Operators get a desk they can run; executives get timely signal; procurement gets a vendor that understands paperwork and rollout.",
+  "marketing.home.pillar.p1.title": "Clear ownership",
+  "marketing.home.pillar.p1.body": "Every commitment has an owner and a deadline—nothing floats unnamed.",
+  "marketing.home.pillar.p2.title": "Executive signal",
+  "marketing.home.pillar.p2.body": "Health and load surface for boards and reviews—grounded in records.",
+  "marketing.home.pillar.p3.title": "One layer",
+  "marketing.home.pillar.p3.body": "Projects, roles, and automation tied to the same commitments your teams execute.",
+  "marketing.home.audience.kicker": "Who it is for",
+  "marketing.home.audience.title": "Same commitments. Different altitude.",
+  "marketing.home.audience.lead":
+    "Leadership, operations, and delivery each work from one system of record—no duplicate spreadsheets.",
+  "marketing.home.audience.leadership.title": "Leadership",
+  "marketing.home.audience.leadership.body":
+    "Board-ready clarity on owners, dates, and risk—without rebuilding story from decks after the quarter.",
+  "marketing.home.audience.operators.title": "Operators",
+  "marketing.home.audience.operators.body":
+    "A desk teams can run daily—routing, escalations, and deadlines grounded in one traceable record.",
+  "marketing.home.audience.procurement.title": "Procurement & IT",
+  "marketing.home.audience.procurement.body":
+    "Questionnaires, phased onboarding, and controls aligned with how your organization actually buys software.",
+  "marketing.home.cta.kicker": "Next step",
+  "marketing.home.cta.title": "Align rollout, security, and the right plan",
+  "marketing.home.cta.body":
+    "Tell us how your organization buys—we support questionnaires, phased onboarding, and the cadence legal and IT expect.",
+  "marketing.home.cta.primary": "Contact us",
+  "marketing.home.cta.secondary": "Open workspace",
 };
