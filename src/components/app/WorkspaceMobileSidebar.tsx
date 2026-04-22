@@ -18,7 +18,7 @@ import {
   LifeBuoy,
   Settings,
   CreditCard,
-  Target,
+  ListTodo,
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -73,7 +73,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
         items: [
           { href: "/desk", label: "Desk", icon: ListChecks },
           { href: "/projects", label: t("sidebar.projects"), icon: FolderOpen },
-          { href: "/workspace/commitments", label: t("sidebar.commitmentTracker"), icon: Target },
+          { href: "/workspace/commitments", label: t("sidebar.commitmentTracker"), icon: ListTodo },
         ],
       },
       ...OPS_AND_ACCOUNT,

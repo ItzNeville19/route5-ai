@@ -295,6 +295,10 @@ export const es: Record<string, string> = {
 
   "header.commitments.open": "Abrir resumen de compromisos",
   "header.commitments.dialogTitle": "Compromisos",
+  "header.commitments.remindersTitle": "Compromisos",
+  "header.commitments.remindersSubtitle": "Lista del espacio — escritorio org + rastreador.",
+  "header.commitments.countsSection": "Resumen",
+  "header.commitments.attentionSection": "Atención",
   "header.commitments.dialogSubtitle":
     "Señal del escritorio y compromisos org de un vistazo — claridad tipo Recordatorios, trazabilidad Route5.",
   "header.commitments.loading": "Actualizando…",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderOpen, ListChecks, Plus, Settings, Target } from "lucide-react";
+import { FolderOpen, ListChecks, ListTodo, Plus, Settings } from "lucide-react";
 import { useCapture } from "@/components/capture/CaptureProvider";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
@@ -58,7 +58,7 @@ export default function WorkspaceMobileNav() {
       <LinkTab
         href="/workspace/commitments"
         label={t("sidebar.commitmentTracker")}
-        icon={Target}
+        icon={ListTodo}
         active={path.startsWith("/workspace/commitments")}
       />
       <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />

@@ -448,6 +448,10 @@ export const en: Record<string, string> = {
 
   "header.commitments.open": "Open commitments snapshot",
   "header.commitments.dialogTitle": "Commitments",
+  "header.commitments.remindersTitle": "Commitments",
+  "header.commitments.remindersSubtitle": "Your workspace checklist — Desk execution + org tracker.",
+  "header.commitments.countsSection": "Overview",
+  "header.commitments.attentionSection": "Attention",
   "header.commitments.dialogSubtitle": "Desk signal and org commitments in one glance — Apple Reminders clarity, Route5 proof.",
   "header.commitments.loading": "Refreshing…",
   "header.commitments.unavailable": "Could not load execution overview.",

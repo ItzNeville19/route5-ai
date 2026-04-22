@@ -62,4 +62,18 @@ export const nl: Record<string, string> = {
   "prefs.appearanceIntro": "Thema’s, voorbeelden en mesh-opties staan onder",
   "prefs.signedInSync":
     "Ingelogd — werkruimtevoorkeuren synchroniseren via uw account tussen apparaten.",
+
+  "sidebar.commitmentTracker": "Toezeggingen",
+  "commitment.metrics.active": "Actief",
+  "commitment.metrics.overdue": "Te laat",
+  "commitment.metrics.atRisk": "Risico",
+  "commitment.metrics.unassigned": "Niet toegewezen",
+  "header.commitments.open": "Toezeggingen openen",
+  "header.commitments.remindersTitle": "Toezeggingen",
+  "header.commitments.remindersSubtitle": "Workspace-checklist — Desk + org-tracker.",
+  "header.commitments.countsSection": "Overzicht",
+  "header.commitments.attentionSection": "Aandacht",
+  "header.commitments.loading": "Bijwerken…",
+  "header.commitments.openFullTracker": "Org-tracker openen",
+  "header.commitments.openDesk": "Desk",
 };

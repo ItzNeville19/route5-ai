@@ -61,4 +61,25 @@ export const fr: Record<string, string> = {
   "prefs.appearanceIntro": "Thèmes, aperçus et options de maillage : voir",
   "prefs.signedInSync":
     "Connecté — les préférences se synchronisent entre appareils via votre compte.",
+
+  "sidebar.commitmentTracker": "Engagements",
+  "commitment.metrics.active": "Actif",
+  "commitment.metrics.overdue": "En retard",
+  "commitment.metrics.atRisk": "À risque",
+  "commitment.metrics.unassigned": "Non assigné",
+  "header.commitments.open": "Ouvrir les engagements",
+  "header.commitments.remindersTitle": "Engagements",
+  "header.commitments.remindersSubtitle":
+    "Liste du workspace — Desk + suivi organisationnel.",
+  "header.commitments.countsSection": "Synthèse",
+  "header.commitments.attentionSection": "À traiter",
+  "header.commitments.loading": "Mise à jour…",
+  "header.commitments.unavailable": "Impossible de charger le résumé.",
+  "header.commitments.openFullTracker": "Ouvrir le suivi org",
+  "header.commitments.openDesk": "Desk",
+  "header.commitments.allClear": "Rien d’urgent",
+  "header.commitments.more": "Raccourcis",
+  "header.commitments.linkOverdue": "Org · en retard",
+  "header.commitments.linkAtRisk": "Org · à risque",
+  "header.commitments.linkChat": "Chat workspace",
 };

@@ -62,4 +62,19 @@ export const it: Record<string, string> = {
   "prefs.appearanceIntro": "Temi, anteprime e opioni mesh sono in",
   "prefs.signedInSync":
     "Accesso effettuato — le preferenze dello spazio di lavoro si sincronizzano tra i dispositivi tramite il tuo account.",
+
+  "sidebar.commitmentTracker": "Impegni",
+  "commitment.metrics.active": "Attivi",
+  "commitment.metrics.overdue": "In ritardo",
+  "commitment.metrics.atRisk": "A rischio",
+  "commitment.metrics.unassigned": "Non assegnati",
+  "header.commitments.open": "Apri impegni",
+  "header.commitments.remindersTitle": "Impegni",
+  "header.commitments.remindersSubtitle":
+    "Lista del workspace — Desk e tracker organizzativo.",
+  "header.commitments.countsSection": "Panoramica",
+  "header.commitments.attentionSection": "Attenzione",
+  "header.commitments.loading": "Aggiornamento…",
+  "header.commitments.openFullTracker": "Apri tracker org",
+  "header.commitments.openDesk": "Desk",
 };

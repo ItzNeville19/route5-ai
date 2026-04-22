@@ -62,4 +62,19 @@ export const hi: Record<string, string> = {
   "prefs.appearanceIntro": "थीम, पूर्वावलोकन और मेश विकल्प यहाँ हैं:",
   "prefs.signedInSync":
     "साइन इन — वर्कस्पेस प्राथमिकताएँ आपके खाते से डिवाइसों पर सिंक होती हैं।",
+
+  "sidebar.commitmentTracker": "प्रतिबद्धताएँ",
+  "commitment.metrics.active": "सक्रिय",
+  "commitment.metrics.overdue": "अतिदेय",
+  "commitment.metrics.atRisk": "जोखिम",
+  "commitment.metrics.unassigned": "अनसौंपित",
+  "header.commitments.open": "प्रतिबद्धताएँ खोलें",
+  "header.commitments.remindersTitle": "प्रतिबद्धताएँ",
+  "header.commitments.remindersSubtitle":
+    "वर्कस्पेस चेकलिस्ट — डेस्क + संगठन ट्रैकर।",
+  "header.commitments.countsSection": "अवलोकन",
+  "header.commitments.attentionSection": "ध्यान दें",
+  "header.commitments.loading": "रीफ़्रेश हो रहा है…",
+  "header.commitments.openFullTracker": "संगठन ट्रैकर खोलें",
+  "header.commitments.openDesk": "डेस्क",
 };

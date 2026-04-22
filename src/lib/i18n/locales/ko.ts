@@ -62,4 +62,19 @@ export const ko: Record<string, string> = {
   "prefs.appearanceIntro": "테마, 미리보기, 메시 옵션은",
   "prefs.signedInSync":
     "로그인됨 — 작업 공간 설정이 계정을 통해 기기 간에 동기화됩니다.",
+
+  "sidebar.commitmentTracker": "커밋",
+  "commitment.metrics.active": "활성",
+  "commitment.metrics.overdue": "기한 초과",
+  "commitment.metrics.atRisk": "위험",
+  "commitment.metrics.unassigned": "미할당",
+  "header.commitments.open": "커밋 열기",
+  "header.commitments.remindersTitle": "커밋",
+  "header.commitments.remindersSubtitle":
+    "워크스페이스 체크리스트 — 데스크 + 조직 트래커.",
+  "header.commitments.countsSection": "개요",
+  "header.commitments.attentionSection": "주의",
+  "header.commitments.loading": "새로 고치는 중…",
+  "header.commitments.openFullTracker": "조직 트래커 열기",
+  "header.commitments.openDesk": "데스크",
 };

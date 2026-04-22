@@ -62,4 +62,19 @@ export const pl: Record<string, string> = {
   "prefs.appearanceIntro": "Motywy, podglądy i opcje siatki znajdują się w",
   "prefs.signedInSync":
     "Zalogowano — preferencje obszaru roboczego synchronizują się między urządzeniami przez konto.",
+
+  "sidebar.commitmentTracker": "Zobowiązania",
+  "commitment.metrics.active": "Aktywne",
+  "commitment.metrics.overdue": "Po terminie",
+  "commitment.metrics.atRisk": "Ryzyko",
+  "commitment.metrics.unassigned": "Bez właściciela",
+  "header.commitments.open": "Otwórz zobowiązania",
+  "header.commitments.remindersTitle": "Zobowiązania",
+  "header.commitments.remindersSubtitle":
+    "Lista kontrolna workspace — Desk i tracker organizacji.",
+  "header.commitments.countsSection": "Przegląd",
+  "header.commitments.attentionSection": "Uwaga",
+  "header.commitments.loading": "Odświeżanie…",
+  "header.commitments.openFullTracker": "Otwórz tracker org",
+  "header.commitments.openDesk": "Desk",
 };

@@ -267,4 +267,19 @@ export const pt: Record<string, string> = {
   "marketing.nav.openMenu": "Abrir menu",
   "marketing.nav.mobileNav": "Celular",
   "marketing.nav.route5Home": "Início Route5",
+
+  "sidebar.commitmentTracker": "Compromissos",
+  "commitment.metrics.active": "Ativos",
+  "commitment.metrics.overdue": "Atrasados",
+  "commitment.metrics.atRisk": "Em risco",
+  "commitment.metrics.unassigned": "Sem responsável",
+  "header.commitments.open": "Abrir compromissos",
+  "header.commitments.remindersTitle": "Compromissos",
+  "header.commitments.remindersSubtitle":
+    "Lista do workspace — Mesa + rastreador da organização.",
+  "header.commitments.countsSection": "Visão geral",
+  "header.commitments.attentionSection": "Atenção",
+  "header.commitments.loading": "Atualizando…",
+  "header.commitments.openFullTracker": "Abrir rastreador org",
+  "header.commitments.openDesk": "Mesa",
 };

@@ -267,4 +267,18 @@ export const ja: Record<string, string> = {
   "marketing.nav.openMenu": "メニューを開く",
   "marketing.nav.mobileNav": "モバイル",
   "marketing.nav.route5Home": "Route5 ホーム",
+
+  "sidebar.commitmentTracker": "コミット",
+  "commitment.metrics.active": "アクティブ",
+  "commitment.metrics.overdue": "期限超過",
+  "commitment.metrics.atRisk": "リスク",
+  "commitment.metrics.unassigned": "未割当",
+  "header.commitments.open": "コミットを開く",
+  "header.commitments.remindersTitle": "コミット",
+  "header.commitments.remindersSubtitle": "ワークスペースのチェックリスト — デスクと組織トラッカー。",
+  "header.commitments.countsSection": "概要",
+  "header.commitments.attentionSection": "注目",
+  "header.commitments.loading": "更新中…",
+  "header.commitments.openFullTracker": "組織トラッカーを開く",
+  "header.commitments.openDesk": "デスク",
 };

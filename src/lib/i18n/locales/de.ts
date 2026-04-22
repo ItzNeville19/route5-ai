@@ -59,4 +59,35 @@ export const de: Record<string, string> = {
   "prefs.appearanceSection": "Erscheinungsbild",
   "prefs.appearanceIntro": "Designs, Vorschau und Mesh-Optionen unter",
   "prefs.signedInSync": "Angemeldet — Einstellungen werden über Ihr Konto synchronisiert.",
+
+  "sidebar.commitmentTracker": "Commitments",
+  "commitment.metrics.active": "Aktiv",
+  "commitment.metrics.overdue": "Überfällig",
+  "commitment.metrics.atRisk": "Risiko",
+  "commitment.metrics.unassigned": "Ohne Owner",
+  "desk.strip.title": "Commitments für diesen Workspace",
+  "desk.strip.subtitle":
+    "Einfügen, Owner setzen, liefern. Die Zahlen unten sind org-weit.",
+  "header.commitments.open": "Commitments öffnen",
+  "header.commitments.dialogTitle": "Commitments",
+  "header.commitments.remindersTitle": "Commitments",
+  "header.commitments.remindersSubtitle":
+    "Ihre Workspace-Checkliste — Desk-Ausführung + Org-Tracker.",
+  "header.commitments.countsSection": "Überblick",
+  "header.commitments.attentionSection": "Aufmerksamkeit",
+  "header.commitments.loading": "Aktualisiere…",
+  "header.commitments.unavailable": "Ausführungsübersicht konnte nicht geladen werden.",
+  "header.commitments.openFullTracker": "Org-Tracker öffnen",
+  "header.commitments.openDesk": "Desk",
+  "header.commitments.allClear": "Nichts Dringendes",
+  "header.commitments.allClearHint":
+    "Arbeit auf dem Desk voranbringen — Risiko erscheint hier automatisch.",
+  "header.commitments.more": "Shortcuts",
+  "header.commitments.linkOverdue": "Org · überfällig",
+  "header.commitments.linkAtRisk": "Org · Risiko",
+  "header.commitments.linkChat": "Workspace-Chat",
+  "tracker.hero.title": "Commitment-Tracker",
+  "tracker.hero.body":
+    "Commitments Ihrer Organisation (ein Org pro Konto). Filter und Suche auf Live-Daten.",
+  "tracker.filters.searchPlaceholder": "Titel oder Beschreibung suchen…",
 };

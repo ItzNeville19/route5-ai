@@ -225,15 +225,21 @@ export default function CommitmentDesk() {
     });
   }, [searchParams, projects]);
 
+  /** Keep Desk URL canonical without racing client navigations: prefer projectId from the URL when valid. */
   useEffect(() => {
-    if (!projectId) return;
+    const fromUrl = searchParams.get("projectId")?.trim();
+    const effectiveProjectId =
+      fromUrl && projects.some((p) => p.id === fromUrl)
+        ? fromUrl
+        : projectId || "";
+    if (!effectiveProjectId) return;
     const f = parseDeskFilterFromSearchParams(searchParams);
-    const target = deskHrefWithFilter(projectId, f);
+    const target = deskHrefWithFilter(effectiveProjectId, f);
     if (typeof window === "undefined") return;
     const cur = `${window.location.pathname}${window.location.search}`;
     if (pathAndQueryEquivalent(cur, target)) return;
     router.replace(target, { scroll: false });
-  }, [projectId, searchParams, router]);
+  }, [projectId, projects, searchParams, router]);
 
   const loadCommitments = useCallback(async () => {
     if (!projectId) return;
@@ -641,7 +647,6 @@ export default function CommitmentDesk() {
                   tone="sky"
                   href={statLinks.active}
                   ariaTemplate={t("desk.stats.aria")}
-                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
                   label={t("commitment.metrics.overdue")}
@@ -651,7 +656,6 @@ export default function CommitmentDesk() {
                   pulse={intel.summary.overdueCount > 0}
                   href={statLinks.overdue}
                   ariaTemplate={t("desk.stats.aria")}
-                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
                   label={t("commitment.metrics.atRisk")}
@@ -661,7 +665,6 @@ export default function CommitmentDesk() {
                   pulse={intel.summary.atRiskCount > 0}
                   href={statLinks.atRisk}
                   ariaTemplate={t("desk.stats.aria")}
-                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
                   label={t("commitment.metrics.unassigned")}
@@ -671,7 +674,6 @@ export default function CommitmentDesk() {
                   pulse={intel.summary.unassignedCount > 0}
                   href={statLinks.unassigned}
                   ariaTemplate={t("desk.stats.aria")}
-                  openListHint={t("commitment.openList")}
                 />
                 <StatChip
                   label={t("desk.stats.weekClosed")}
@@ -680,7 +682,6 @@ export default function CommitmentDesk() {
                   tone="emerald"
                   href={statLinks.weekClosed}
                   ariaTemplate={t("desk.stats.ariaPct")}
-                  openListHint={t("commitment.openList")}
                 />
               </>
             ) : (
@@ -1716,7 +1717,6 @@ function StatChip({
   pulse,
   href,
   ariaTemplate,
-  openListHint,
 }: {
   label: string;
   value: string | number;
@@ -1725,52 +1725,40 @@ function StatChip({
   pulse?: boolean;
   href: string;
   ariaTemplate: string;
-  openListHint: string;
 }) {
-  const ring =
+  /** Neutral “Reminders card” surfaces — readable on any workspace tint (no pink-on-pink). */
+  const surface =
     tone === "sky"
-      ? "from-[color-mix(in_srgb,var(--workspace-accent)_22%,transparent)] via-[color-mix(in_srgb,var(--workspace-accent)_14%,var(--workspace-canvas))] to-[color-mix(in_srgb,var(--workspace-canvas)_90%,#020617)]"
+      ? "border-zinc-200/90 bg-white text-zinc-900 shadow-sm"
       : tone === "red"
-        ? "from-red-500/30 to-red-500/5"
+        ? "border-red-200/90 bg-white text-zinc-900 shadow-sm"
         : tone === "amber"
-          ? "from-amber-500/28 to-amber-500/5"
+          ? "border-amber-200/90 bg-white text-zinc-900 shadow-sm"
           : tone === "violet"
-            ? "from-violet-500/25 to-violet-500/5"
-            : "from-emerald-500/28 to-emerald-950/15";
+            ? "border-violet-200/90 bg-white text-zinc-900 shadow-sm"
+            : "border-emerald-200/90 bg-white text-zinc-900 shadow-sm";
 
   const ariaLabel = `${label}: ${value}. ${sub}. ${ariaTemplate}`;
   const inner = (
     <>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
-        {label}
-      </p>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-[var(--workspace-fg)]">
-        {value}
-      </p>
-      <p className="text-[10px] text-[var(--workspace-muted-fg)]">{sub}</p>
-      <p className="mt-1 text-[10px] font-semibold text-[var(--workspace-accent)]/95">{openListHint}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
+      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-zinc-950">{value}</p>
+      <p className="text-[10px] text-zinc-500">{sub}</p>
     </>
   );
 
-  const shellCls = `relative overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--workspace-accent)_20%,var(--workspace-border))] bg-gradient-to-br ${ring} p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-[transform,box-shadow] duration-200 ease-out [transform-style:preserve-3d] ${
-    pulse ? "ring-1 ring-amber-400/35" : ""
+  const shellCls = `relative overflow-hidden rounded-2xl border p-3 transition-[box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 ${surface} ${
+    pulse ? "ring-2 ring-amber-400/40" : ""
   }`;
 
   return (
-    <motion.div
-      whileHover={{ y: -3, rotateX: 3, rotateY: -2, scale: 1.015 }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-      style={{ transformStyle: "preserve-3d" }}
+    <Link
+      href={href}
+      aria-label={ariaLabel}
+      className={`block outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${shellCls}`}
     >
-      <Link
-        href={href}
-        aria-label={ariaLabel}
-        className={`block outline-none focus-visible:ring-2 focus-visible:ring-[var(--workspace-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--workspace-canvas)] ${shellCls} hover:shadow-[0_14px_40px_-24px_color-mix(in_srgb,var(--workspace-accent)_35%,transparent)]`}
-      >
-        {inner}
-      </Link>
-    </motion.div>
+      {inner}
+    </Link>
   );
 }
 

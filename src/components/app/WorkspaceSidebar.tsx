@@ -16,6 +16,7 @@ import {
   Keyboard,
   LifeBuoy,
   ListChecks,
+  ListTodo,
   LineChart,
   Palette,
   Plus,
@@ -154,7 +155,7 @@ export default function WorkspaceSidebar() {
             <NavRow
               href="/workspace/commitments"
               active={path === "/workspace/commitments"}
-              icon={Target}
+              icon={ListTodo}
               label={t("sidebar.commitmentTracker")}
             />
             <button

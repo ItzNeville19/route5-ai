@@ -60,4 +60,18 @@ export const zhHans: Record<string, string> = {
   "prefs.appearanceSection": "外观",
   "prefs.appearanceIntro": "主题、预览与网格选项见",
   "prefs.signedInSync": "已登录 — 工作区偏好通过您的账户在设备间同步。",
+
+  "sidebar.commitmentTracker": "承诺",
+  "commitment.metrics.active": "进行中",
+  "commitment.metrics.overdue": "已逾期",
+  "commitment.metrics.atRisk": "有风险",
+  "commitment.metrics.unassigned": "未分配",
+  "header.commitments.open": "打开承诺",
+  "header.commitments.remindersTitle": "承诺",
+  "header.commitments.remindersSubtitle": "工作区清单 — 桌面与组织跟踪。",
+  "header.commitments.countsSection": "概览",
+  "header.commitments.attentionSection": "需关注",
+  "header.commitments.loading": "正在更新…",
+  "header.commitments.openFullTracker": "打开组织跟踪",
+  "header.commitments.openDesk": "桌面",
 };
