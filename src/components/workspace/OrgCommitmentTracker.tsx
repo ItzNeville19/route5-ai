@@ -29,6 +29,7 @@ import {
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
 import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
@@ -50,6 +51,7 @@ function ownerLabel(ownerId: string, selfId: string | undefined) {
 }
 
 export default function OrgCommitmentTracker() {
+  const { t } = useI18n();
   const { user } = useUser();
   const { showUpgrade } = useBillingUpgrade();
   const router = useRouter();
@@ -453,53 +455,52 @@ export default function OrgCommitmentTracker() {
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-5 pb-20">
-      <section className="relative overflow-hidden rounded-[22px] border border-[var(--workspace-border)] bg-gradient-to-br from-[var(--workspace-surface)]/90 via-[var(--workspace-canvas)]/95 to-sky-950/20 p-1 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.55)]">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_0%,rgba(56,189,248,0.12),transparent_55%)] pointer-events-none" />
-        <div className="relative flex flex-col gap-4 rounded-[18px] border border-white/5 bg-[var(--workspace-canvas)]/40 px-4 py-4 sm:px-5 sm:py-5">
+      <section className="rounded-[22px] border border-zinc-200/90 bg-[#fafafa] p-[1px] shadow-[0_10px_40px_-24px_rgba(0,0,0,0.25)]">
+        <div className="relative flex flex-col gap-4 rounded-[20px] bg-[#fafafa] px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
-                Commitments · org tracker
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                {t("tracker.hero.kicker")}
               </p>
-              <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[22px]">
-                Commitment tracker
+              <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.03em] text-zinc-950 sm:text-[22px]">
+                {t("tracker.hero.title")}
               </h1>
-              <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                Owned commitments for your workspace (one org per account). Filters and search operate on live data.
+              <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-zinc-600">
+                {t("tracker.hero.body")}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => setCreateOpen(true)}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--workspace-fg)] px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-canvas)] shadow-lg shadow-black/20 transition hover:opacity-95 sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-zinc-900 px-4 py-2.5 text-[13px] font-semibold text-white shadow-md transition hover:bg-zinc-800 sm:w-auto"
               >
                 <Plus className="h-4 w-4" aria-hidden />
-                New commitment
+                {t("tracker.hero.new")}
               </button>
               <Link
                 href="/desk"
-                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/80 px-4 py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] transition hover:border-[var(--workspace-accent)]/35 hover:bg-[var(--workspace-nav-hover)] sm:w-auto"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full border border-zinc-300 bg-white px-4 py-2.5 text-[13px] font-semibold text-zinc-900 shadow-sm transition hover:bg-zinc-50 sm:w-auto"
               >
-                Desk
+                {t("tracker.hero.desk")}
                 <ArrowUpRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
               </Link>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/40 p-3">
+          <div className="flex flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-sm">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 px-3 py-1 text-[11px] text-[var(--workspace-muted-fg)]">
-                {trackerStats.open} open
+              <span className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-[12px] font-medium text-zinc-900">
+                {trackerStats.open} {t("tracker.stats.open")}
               </span>
-              <span className="rounded-full border border-red-400/35 bg-red-500/12 px-3 py-1 text-[11px] text-red-200">
-                {trackerStats.overdue} overdue
+              <span className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-[12px] font-semibold text-red-900">
+                {trackerStats.overdue} {t("tracker.stats.overdue")}
               </span>
-              <span className="rounded-full border border-amber-400/35 bg-amber-500/12 px-3 py-1 text-[11px] text-amber-200">
-                {trackerStats.atRisk} at risk
+              <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] font-semibold text-amber-950">
+                {trackerStats.atRisk} {t("tracker.stats.atRisk")}
               </span>
-              <span className="rounded-full border border-sky-400/35 bg-sky-500/12 px-3 py-1 text-[11px] text-sky-200">
-                {trackerStats.dueSoon} due in 72h
+              <span className="rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-[12px] font-semibold text-sky-950">
+                {trackerStats.dueSoon} {t("tracker.stats.dueSoon")}
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -508,8 +509,8 @@ export default function OrgCommitmentTracker() {
                 <input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search title or description…"
-                  className="w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 py-2.5 pl-10 pr-3 text-[13px] text-[var(--workspace-fg)] outline-none ring-0 placeholder:text-[var(--workspace-muted-fg)] focus:border-[var(--workspace-accent)]/40"
+                  placeholder={t("tracker.filters.searchPlaceholder")}
+                  className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-[13px] text-zinc-900 outline-none ring-0 placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10"
                 />
               </div>
               <button
@@ -647,17 +648,17 @@ export default function OrgCommitmentTracker() {
                 return (
                   <li key={c.id}>
                     <div
-                      className={`rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/50 p-3 transition ${
-                        selectedId === c.id ? "border-[var(--workspace-accent)]/40 bg-[var(--workspace-nav-active)]" : ""
-                      } ${overdue ? "ring-1 ring-red-400/40" : ""} ${risk && !overdue ? "ring-1 ring-amber-400/35" : ""}`}
+                      className={`rounded-2xl border bg-white p-3 shadow-sm transition ${
+                        selectedId === c.id ? "border-zinc-900 ring-2 ring-zinc-900/15" : "border-zinc-200"
+                      } ${overdue ? "border-l-4 border-l-red-600" : ""} ${risk && !overdue ? "border-l-4 border-l-amber-500" : ""}`}
                     >
                       <button
                         type="button"
                         onClick={() => openDetail(c.id)}
-                        className="flex w-full flex-col gap-2 rounded-xl p-1 text-left transition hover:bg-[var(--workspace-nav-hover)]"
+                        className="flex w-full flex-col gap-2 rounded-xl p-1 text-left transition hover:bg-zinc-50"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-2">
-                          <p className="text-[14px] font-semibold leading-snug text-[var(--workspace-fg)]">{c.title}</p>
+                          <p className="text-[14px] font-semibold leading-snug text-zinc-950">{c.title}</p>
                           <div className="flex flex-wrap gap-1.5">
                             <span
                               className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_STATUS_PILL[c.status]}`}
@@ -671,7 +672,7 @@ export default function OrgCommitmentTracker() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-[12px] text-[var(--workspace-muted-fg)]">
+                        <div className="flex flex-wrap items-center gap-4 text-[12px] text-zinc-600">
                           <span className="inline-flex items-center gap-1.5">
                             <User className="h-3.5 w-3.5 opacity-80" aria-hidden />
                             {ownerLabel(c.ownerId, user?.id)}
@@ -681,15 +682,15 @@ export default function OrgCommitmentTracker() {
                             {new Date(c.deadline).toLocaleString()}
                           </span>
                           {overdue ? (
-                            <span className="inline-flex items-center gap-1 text-red-300">
+                            <span className="inline-flex items-center gap-1 font-medium text-red-700">
                               <Clock className="h-3.5 w-3.5" aria-hidden />
-                              Overdue
+                              {t("commitment.metrics.overdue")}
                             </span>
                           ) : null}
                           {risk && !overdue ? (
-                            <span className="inline-flex items-center gap-1 text-amber-200">
+                            <span className="inline-flex items-center gap-1 font-medium text-amber-800">
                               <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
-                              At risk
+                              {t("commitment.metrics.atRisk")}
                             </span>
                           ) : null}
                         </div>
@@ -700,10 +701,10 @@ export default function OrgCommitmentTracker() {
                             type="button"
                             disabled={saving}
                             onClick={() => void markCompleteFromList(c.id)}
-                            className="inline-flex items-center gap-1 rounded-full border border-emerald-400/35 bg-emerald-500/12 px-3 py-1 text-[11px] font-semibold text-emerald-100 disabled:opacity-50"
+                            className="inline-flex items-center gap-1 rounded-full border border-emerald-600/30 bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white shadow-sm disabled:opacity-50"
                           >
                             <CheckCircle2 className="h-3.5 w-3.5" aria-hidden />
-                            Complete
+                            {t("tracker.list.complete")}
                           </button>
                         </div>
                       ) : null}

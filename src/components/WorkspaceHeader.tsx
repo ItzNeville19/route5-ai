@@ -7,7 +7,7 @@ import { PanelLeft, Plus, Search } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
-import WorkspaceChatPanel from "@/components/chat/WorkspaceChatPanel";
+import WorkspaceCommitmentsHeaderPanel from "@/components/workspace/WorkspaceCommitmentsHeaderPanel";
 import WorkspaceProjectSwitcher from "@/components/workspace/WorkspaceProjectSwitcher";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -92,7 +92,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </button>
 
           <WorkspaceNotificationsPopover />
-          <WorkspaceChatPanel />
+          <WorkspaceCommitmentsHeaderPanel />
 
           <button
             type="button"
