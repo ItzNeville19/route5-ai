@@ -12,18 +12,21 @@ import { nl } from "@/lib/i18n/locales/nl";
 import { pl } from "@/lib/i18n/locales/pl";
 import { hi } from "@/lib/i18n/locales/hi";
 
-/** Full translations for every selectable UI locale. */
+/**
+ * Every non-English pack is merged on top of `en` so all keys exist and the UI
+ * never shows raw message ids; missing per-locale strings fall back to English.
+ */
 export const MESSAGE_PACKS: Record<UiLocaleCode, Record<string, string>> = {
   en,
-  es,
-  fr,
-  de,
-  pt,
-  it,
-  ja,
-  "zh-Hans": zhHans,
-  ko,
-  nl,
-  pl,
-  hi,
+  es: { ...en, ...es },
+  fr: { ...en, ...fr },
+  de: { ...en, ...de },
+  pt: { ...en, ...pt },
+  it: { ...en, ...it },
+  ja: { ...en, ...ja },
+  "zh-Hans": { ...en, ...zhHans },
+  ko: { ...en, ...ko },
+  nl: { ...en, ...nl },
+  pl: { ...en, ...pl },
+  hi: { ...en, ...hi },
 };

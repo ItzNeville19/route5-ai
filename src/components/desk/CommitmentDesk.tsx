@@ -131,22 +131,6 @@ function deskHrefWithFilter(projectId: string, filter: DeskFilter): string {
   return deskHrefWithProjectFilter(projectId, filter);
 }
 
-/** Avoid router/replace loops when query-param ordering differs. */
-function pathAndQueryEquivalent(a: string, b: string): boolean {
-  const [pa, qa] = a.split("?");
-  const [pb, qb] = b.split("?");
-  if (pa !== pb) return false;
-  const spa = new URLSearchParams(qa ?? "");
-  const spb = new URLSearchParams(qb ?? "");
-  const keys = new Set([...spa.keys(), ...spb.keys()]);
-  for (const k of keys) {
-    const av = [...spa.getAll(k)].sort().join("\0");
-    const bv = [...spb.getAll(k)].sort().join("\0");
-    if (av !== bv) return false;
-  }
-  return true;
-}
-
 export default function CommitmentDesk() {
   const { user } = useUser();
   const { t } = useI18n();
@@ -220,22 +204,6 @@ export default function CommitmentDesk() {
       return projects[0]?.id ?? "";
     });
   }, [searchParams, projects]);
-
-  /** Keep Desk URL canonical without racing client navigations: prefer projectId from the URL when valid. */
-  useEffect(() => {
-    const fromUrl = searchParams.get("projectId")?.trim();
-    const effectiveProjectId =
-      fromUrl && projects.some((p) => p.id === fromUrl)
-        ? fromUrl
-        : projectId || "";
-    if (!effectiveProjectId) return;
-    const f = parseDeskFilterFromSearchParams(searchParams);
-    const target = deskHrefWithFilter(effectiveProjectId, f);
-    if (typeof window === "undefined") return;
-    const cur = `${window.location.pathname}${window.location.search}`;
-    if (pathAndQueryEquivalent(cur, target)) return;
-    router.replace(target, { scroll: false });
-  }, [projectId, projects, searchParams, router]);
 
   const loadCommitments = useCallback(async () => {
     if (!projectId) return;

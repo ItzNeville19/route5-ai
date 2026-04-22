@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowUpRight, Calendar, CheckCircle2, Circle, ListTodo, Loader2, X } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
-import { deskHrefWithProjectFilter } from "@/lib/workspace/commitment-links";
+import { deskHrefWithProjectFilter, orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
 function deskFilterForRisk(r: CommitmentRiskItem): "overdue" | "unassigned" | "at_risk" {
   if (r.riskReason === "overdue") return "overdue";
@@ -17,6 +18,8 @@ function deskFilterForRisk(r: CommitmentRiskItem): "overdue" | "unassigned" | "a
 /** iOS Reminders–inspired panel: neutral grays, rounded groups, checklist rows, no “notification” badge. */
 export default function WorkspaceCommitmentsHeaderPanel() {
   const { t, intlLocale } = useI18n();
+  const pathname = usePathname();
+  const onDesk = pathname === "/desk" || pathname?.startsWith("/desk/");
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -121,38 +124,48 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             value={summary.activeTotal}
                             label={t("commitment.metrics.active")}
                             ring="border-zinc-300/90 text-[#1c1c1e]"
+                            href={orgCommitmentsHref()}
+                            onNavigate={() => setOpen(false)}
                           />
                           <RemindersCountRing
                             value={summary.overdueCount}
                             label={t("commitment.metrics.overdue")}
                             ring="border-orange-300/90 text-[#c2410c]"
+                            href={orgCommitmentsHref("overdue")}
+                            onNavigate={() => setOpen(false)}
                           />
                           <RemindersCountRing
                             value={summary.atRiskCount}
                             label={t("commitment.metrics.atRisk")}
                             ring="border-amber-300/90 text-[#a16207]"
+                            href={orgCommitmentsHref("at_risk")}
+                            onNavigate={() => setOpen(false)}
                           />
                           <RemindersCountRing
                             value={summary.unassignedCount}
                             label={t("commitment.metrics.unassigned")}
                             ring="border-violet-300/90 text-[#5b21b6]"
+                            href={orgCommitmentsHref()}
+                            onNavigate={() => setOpen(false)}
                           />
                         </div>
                         <div className="mt-3 flex gap-2 border-t border-black/[0.06] pt-3">
                           <Link
                             href="/workspace/commitments"
                             onClick={() => setOpen(false)}
-                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#007aff] px-3 text-[15px] font-medium text-white transition active:opacity-90"
+                            className={`flex min-h-[44px] items-center justify-center rounded-[10px] bg-[#007aff] px-3 text-[15px] font-medium text-white transition active:opacity-90 ${onDesk ? "w-full flex-1" : "flex-1"}`}
                           >
                             {t("header.commitments.openFullTracker")}
                           </Link>
-                          <Link
-                            href="/desk"
-                            onClick={() => setOpen(false)}
-                            className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#e5e5ea] px-3 text-[15px] font-semibold text-[#000000] transition hover:bg-[#d1d1d6]"
-                          >
-                            {t("header.commitments.openDesk")}
-                          </Link>
+                          {!onDesk ? (
+                            <Link
+                              href="/desk"
+                              onClick={() => setOpen(false)}
+                              className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#e5e5ea] px-3 text-[15px] font-semibold text-[#000000] transition hover:bg-[#d1d1d6]"
+                            >
+                              {t("header.commitments.openDesk")}
+                            </Link>
+                          ) : null}
                         </div>
                       </section>
 
@@ -260,19 +273,34 @@ function RemindersCountRing({
   value,
   label,
   ring,
+  href,
+  onNavigate,
 }: {
   value: number;
   label: string;
   ring: string;
+  href: string;
+  onNavigate: () => void;
 }) {
-  return (
-    <div className="flex flex-col items-center gap-1">
+  const inner = (
+    <>
       <div
-        className={`flex h-[52px] w-[52px] items-center justify-center rounded-full border-[2.5px] bg-[#fafafa] text-[20px] font-semibold tabular-nums ${ring}`}
+        className={`flex h-[52px] w-[52px] items-center justify-center rounded-full border-[2.5px] bg-[#fafafa] text-[20px] font-semibold tabular-nums transition hover:bg-[#f0f0f0] active:scale-[0.98] ${ring}`}
       >
         {value > 99 ? "99+" : value}
       </div>
       <span className="max-w-[72px] text-center text-[10px] font-medium leading-tight text-[#8e8e93]">{label}</span>
+    </>
+  );
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="flex flex-col items-center gap-1 rounded-[14px] outline-none ring-[#007aff]/40 transition hover:opacity-95 focus-visible:ring-2"
+      >
+        {inner}
+      </Link>
     </div>
   );
 }
