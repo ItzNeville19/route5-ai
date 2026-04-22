@@ -46,11 +46,7 @@ import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvide
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { deskUrl } from "@/lib/desk-routes";
-import {
-  deskHrefWithProjectFilter,
-  executionMetricFallbackHrefs,
-  orgCommitmentsHref,
-} from "@/lib/workspace/commitment-links";
+import { deskHrefWithProjectFilter, executionMetricFallbackHrefs } from "@/lib/workspace/commitment-links";
 import { formatRelativeLong } from "@/lib/relative-time";
 import { STATUS_ACCENT, STATUS_LABEL, STATUS_PILL } from "@/components/desk/desk-constants";
 
@@ -690,26 +686,6 @@ export default function CommitmentDesk() {
               </p>
             )}
           </div>
-
-          {intel && !loadingIntel ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.08 }}
-              className="flex flex-col gap-2 border-t border-white/[0.06] pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-3"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <Link
-                  href={orgCommitmentsHref()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_35%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] px-3 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition hover:border-[var(--workspace-accent)]/55 hover:bg-[color-mix(in_srgb,var(--workspace-accent)_18%,transparent)]"
-                >
-                  {t("desk.fixQueue.cta")}
-                  <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden />
-                </Link>
-                <span className="text-[11px] text-[var(--workspace-muted-fg)]">{t("desk.fixQueue.hint")}</span>
-              </div>
-            </motion.div>
-          ) : null}
         </div>
           <div
             className="desk-greeting-wave-drift pointer-events-none absolute bottom-0 left-0 right-0 h-11 text-[color-mix(in_srgb,var(--workspace-accent)_45%,#7dd3fc)]/50 sm:h-12"
@@ -1726,36 +1702,60 @@ function StatChip({
   href: string;
   ariaTemplate: string;
 }) {
-  /** Neutral “Reminders card” surfaces — readable on any workspace tint (no pink-on-pink). */
+  /** Soft tinted tiles (Reminders-style) — color in the fill, enough contrast for the big number. */
   const surface =
     tone === "sky"
-      ? "border-zinc-200/90 bg-white text-zinc-900 shadow-sm"
+      ? "border-sky-300/80 bg-gradient-to-br from-sky-200/50 via-sky-100/80 to-white shadow-sm ring-1 ring-sky-400/25"
       : tone === "red"
-        ? "border-red-200/90 bg-white text-zinc-900 shadow-sm"
+        ? "border-rose-300/85 bg-gradient-to-br from-rose-200/45 via-red-50/95 to-orange-50/70 shadow-sm ring-1 ring-rose-400/25"
         : tone === "amber"
-          ? "border-amber-200/90 bg-white text-zinc-900 shadow-sm"
+          ? "border-amber-300/85 bg-gradient-to-br from-amber-200/50 via-amber-50/95 to-orange-50/80 shadow-sm ring-1 ring-amber-400/25"
           : tone === "violet"
-            ? "border-violet-200/90 bg-white text-zinc-900 shadow-sm"
-            : "border-emerald-200/90 bg-white text-zinc-900 shadow-sm";
+            ? "border-violet-300/85 bg-gradient-to-br from-violet-200/45 via-violet-50/95 to-fuchsia-50/70 shadow-sm ring-1 ring-violet-400/25"
+            : "border-emerald-300/85 bg-gradient-to-br from-emerald-200/45 via-teal-50/90 to-green-50/75 shadow-sm ring-1 ring-emerald-400/25";
+
+  const labelCls =
+    tone === "sky"
+      ? "text-sky-900/75"
+      : tone === "red"
+        ? "text-rose-900/75"
+        : tone === "amber"
+          ? "text-amber-950/75"
+          : tone === "violet"
+            ? "text-violet-950/75"
+            : "text-emerald-950/75";
+
+  const subCls =
+    tone === "sky"
+      ? "text-sky-800/65"
+      : tone === "red"
+        ? "text-rose-900/60"
+        : tone === "amber"
+          ? "text-amber-950/65"
+          : tone === "violet"
+            ? "text-violet-900/60"
+            : "text-emerald-950/65";
+
+  const valueCls = "text-[22px] font-semibold tabular-nums tracking-tight text-zinc-950";
 
   const ariaLabel = `${label}: ${value}. ${sub}. ${ariaTemplate}`;
   const inner = (
     <>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-1 text-[22px] font-semibold tabular-nums tracking-tight text-zinc-950">{value}</p>
-      <p className="text-[10px] text-zinc-500">{sub}</p>
+      <p className={`text-[10px] font-semibold uppercase tracking-wide ${labelCls}`}>{label}</p>
+      <p className={`mt-1 ${valueCls}`}>{value}</p>
+      <p className={`text-[10px] ${subCls}`}>{sub}</p>
     </>
   );
 
-  const shellCls = `relative overflow-hidden rounded-2xl border p-3 transition-[box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 ${surface} ${
-    pulse ? "ring-2 ring-amber-400/40" : ""
+  const shellCls = `relative overflow-hidden rounded-2xl border p-3 transition-[box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 ${surface} ${
+    pulse ? "ring-2 ring-amber-500/45" : ""
   }`;
 
   return (
     <Link
       href={href}
       aria-label={ariaLabel}
-      className={`block outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/25 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${shellCls}`}
+      className={`block outline-none focus-visible:ring-2 focus-visible:ring-zinc-900/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${shellCls}`}
     >
       {inner}
     </Link>
