@@ -94,29 +94,29 @@ export default function AssignTaskPage() {
   return (
     <div className="mx-auto w-full max-w-[760px] space-y-4 pb-16">
       <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-950/55">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-r5-text-secondary">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 dark:text-slate-300">
           ADMIN WORKSPACE
         </p>
-        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em] text-r5-text-primary">Assign Task</h1>
-        <p className="mt-1 text-[13px] text-r5-text-secondary">
+        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-slate-100">Assign Task</h1>
+        <p className="mt-1 text-[13px] text-slate-600 dark:text-slate-300">
           Create a commitment and send it directly to a member.
         </p>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-950/55">
         {loading ? (
-          <div className="flex items-center gap-2 text-[13px] text-r5-text-secondary">
+          <div className="flex items-center gap-2 text-[13px] text-slate-600 dark:text-slate-300">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading members…
           </div>
         ) : (
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">Member</label>
+              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-300">Member</label>
               <select
                 value={ownerId}
                 onChange={(e) => setOwnerId(e.target.value)}
-                className="mt-1.5 min-h-11 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-3 text-[14px] text-r5-text-primary"
+                className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
               >
                 {members?.map((m) => (
                   <option key={m.userId} value={m.userId}>
@@ -126,30 +126,30 @@ export default function AssignTaskPage() {
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">Task</label>
+              <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-300">Task</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Type the task"
-                className="mt-1.5 min-h-11 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-3 text-[14px] text-r5-text-primary"
+                className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500"
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">Deadline</label>
+                <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-300">Deadline</label>
                 <input
                   type="datetime-local"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="mt-1.5 min-h-11 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-3 text-[14px] text-r5-text-primary"
+                  className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">Priority</label>
+                <label className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-600 dark:text-slate-300">Priority</label>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as Priority)}
-                  className="mt-1.5 min-h-11 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-3 text-[14px] text-r5-text-primary"
+                  className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -161,12 +161,12 @@ export default function AssignTaskPage() {
             <button
               type="submit"
               disabled={!canSend || saving}
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-r5-text-primary px-4 text-[14px] font-semibold text-r5-surface-primary disabled:opacity-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[14px] font-semibold text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
             >
               <Send className="h-4 w-4" />
               {saving ? "Sending…" : "Send"}
             </button>
-            {notice ? <p className="text-[12px] text-r5-text-secondary">{notice}</p> : null}
+            {notice ? <p className="text-[12px] text-slate-600 dark:text-slate-300">{notice}</p> : null}
           </form>
         )}
       </section>
