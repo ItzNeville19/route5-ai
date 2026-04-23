@@ -11,7 +11,7 @@ import { getWorkspaceIanaTimeZone } from "@/lib/workspace-regions";
 import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
 import {
   PHOTO_FALLBACK_PUBLIC,
-  WORKSPACE_THEME_PHOTO,
+  pickWorkspaceThemePhoto,
   workspacePhotoUrl,
 } from "@/lib/workspace-theme-photos";
 
@@ -56,11 +56,14 @@ export default function DeskGreetingBubble() {
     return getDeskContextLine(effectiveIana, exp.prefs.workspaceRegionKey, intlLocale);
   }, [effectiveIana, exp.prefs.workspaceRegionKey, intlLocale, minuteClockTick]);
 
-  const placePhoto = WORKSPACE_THEME_PHOTO[liveTheme.resolvedId];
+  /** One photograph + light bottom fade for text — no decorative mesh overlays. Rotates daily per theme pool. */
+  const placePhoto = useMemo(
+    () => pickWorkspaceThemePhoto(liveTheme.resolvedId, new Date()),
+    [liveTheme.resolvedId, minuteClockTick]
+  );
+
   const placePhotoUrl = workspacePhotoUrl(placePhoto.path, 960);
   const imgSrc = photoFailed ? PHOTO_FALLBACK_PUBLIC : placePhotoUrl;
-  const useDeskPhotography =
-    (exp.prefs.workspaceCanvasBackground ?? "gradient") === "photo";
 
   useEffect(() => {
     setPhotoFailed(false);
@@ -73,53 +76,29 @@ export default function DeskGreetingBubble() {
         aria-label={`${headline} ${contextLine}`}
       >
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
-          {useDeskPhotography ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imgSrc}
-                alt=""
-                className="h-full min-h-[12.5rem] w-full scale-105 object-cover object-center"
-                decoding="async"
-                onError={() => setPhotoFailed(true)}
-              />
-              <div
-                className="absolute inset-0"
-                aria-hidden
-                style={{
-                  backgroundImage: placePhoto.scrim,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-slate-950/50"
-                aria-hidden
-              />
-            </>
-          ) : (
-            <>
-              <div
-                className="absolute inset-0 min-h-[12.5rem] bg-gradient-to-br from-[#1e1b4b] via-[#0f172a] to-[#064e3b]"
-                aria-hidden
-              />
-              <div
-                className="absolute inset-0 opacity-95"
-                aria-hidden
-                style={{
-                  backgroundImage: [
-                    "radial-gradient(ellipse 85% 65% at 12% -8%,rgba(139,92,246,0.38),transparent 56%)",
-                    "radial-gradient(ellipse 72% 58% at 94% 12%,rgba(163,230,53,0.22),transparent 54%)",
-                    "radial-gradient(ellipse 55% 45% at 48% 100%,rgba(59,130,246,0.14),transparent 58%)",
-                  ].join(","),
-                }}
-              />
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-slate-950/82 via-slate-950/35 to-slate-900/55"
-                aria-hidden
-              />
-            </>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgSrc}
+            alt=""
+            className="h-full min-h-[12.5rem] w-full scale-105 object-cover object-center"
+            decoding="async"
+            loading="eager"
+            onError={() => setPhotoFailed(true)}
+          />
+          <div
+            className="absolute inset-0"
+            aria-hidden
+            style={{
+              backgroundImage: placePhoto.scrim,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          {/* Single legibility ramp — text only */}
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-slate-950/[0.82] via-slate-950/35 to-transparent"
+            aria-hidden
+          />
         </div>
 
         <div className="relative z-[6] px-7 pb-11 pt-9 text-center sm:px-9 sm:pb-12 sm:pt-10">

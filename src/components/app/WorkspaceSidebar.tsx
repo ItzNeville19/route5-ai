@@ -93,7 +93,7 @@ function NavRow({
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const { entitlements, orgUiPolicy, orgRole } = useWorkspaceData();
+  const { entitlements, orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
   const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
   const { t } = useI18n();
   const path = pathname ?? "";
@@ -144,15 +144,17 @@ export default function WorkspaceSidebar() {
             />
           </div>
 
-          <div className="mt-1 space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>{t("sidebar.sectionPeople")}</NavSectionTitle>
-            <NavRow
-              href="/workspace/organization"
-              active={path === "/workspace/team" || path === "/workspace/organization"}
-              icon={Users}
-              label="Organization"
-            />
-          </div>
+          {loadingOrganization || show("organization") ? (
+            <div className="mt-1 space-y-[var(--r5-space-1)]">
+              <NavSectionTitle>{t("sidebar.sectionPeople")}</NavSectionTitle>
+              <NavRow
+                href="/workspace/organization"
+                active={path === "/workspace/team" || path === "/workspace/organization"}
+                icon={Users}
+                label="Organization"
+              />
+            </div>
+          ) : null}
 
           <div
             className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"

@@ -15,12 +15,12 @@ import {
 import {
   PHOTO_FALLBACK_PUBLIC,
   WORKSPACE_THEME_AUTO_PREVIEW_PATH,
-  WORKSPACE_THEME_PHOTO,
+  pickWorkspaceThemePhoto,
   workspacePhotoUrl,
 } from "@/lib/workspace-theme-photos";
 
 function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
-  const spec = WORKSPACE_THEME_PHOTO[id];
+  const spec = pickWorkspaceThemePhoto(id, new Date());
   const remote = workspacePhotoUrl(spec.path, 520);
   const [src, setSrc] = useState(remote);
 

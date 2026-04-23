@@ -15,7 +15,8 @@ export const PHOTO_FALLBACK_PUBLIC = "/images/workspace/photo-fallback.jpg";
 export const WORKSPACE_THEME_AUTO_PREVIEW_PATH = "photo-1500534314209-a25ddb2bd429";
 
 export function workspacePhotoUrl(path: string, width: number): string {
-  return `https://images.unsplash.com/${path}?auto=format&fit=crop&w=${width}&q=82&fm=jpg`;
+  const clean = path.replace(/^\//, "");
+  return `https://images.unsplash.com/${clean}?ixlib=rb-4.1.0&auto=format&fit=crop&w=${width}&q=82&fm=jpg`;
 }
 
 export type WorkspacePhotoSpec = {
@@ -219,6 +220,59 @@ export const WORKSPACE_THEME_PHOTO: Record<
   ),
 };
 
+/** Rotating pools — same mood per theme, different shots by calendar day. */
+export const WORKSPACE_THEME_PHOTO_VARIANTS: Record<
+  Exclude<WorkspaceThemeId, "auto">,
+  WorkspacePhotoSpec[]
+> = {
+  sunrise: [WORKSPACE_THEME_PHOTO.sunrise, WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.daytime],
+  morning: [WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.sunrise, WORKSPACE_THEME_PHOTO.forest],
+  daytime: [WORKSPACE_THEME_PHOTO.daytime, WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.studio],
+  sunset: [WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.ember, WORKSPACE_THEME_PHOTO.sunrise],
+  ember: [WORKSPACE_THEME_PHOTO.ember, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.evening],
+  ocean: [WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.lagunabeach, WORKSPACE_THEME_PHOTO.daytime],
+  lagunabeach: [WORKSPACE_THEME_PHOTO.lagunabeach, WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.sunset],
+  sanfrancisco: [WORKSPACE_THEME_PHOTO.sanfrancisco, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
+  nevada: [WORKSPACE_THEME_PHOTO.nevada, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.sunrise],
+  mumbai: [WORKSPACE_THEME_PHOTO.mumbai, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
+  columbia: [WORKSPACE_THEME_PHOTO.columbia, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.morning],
+  studio: [WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.light, WORKSPACE_THEME_PHOTO.daytime],
+  forest: [WORKSPACE_THEME_PHOTO.forest, WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.ocean],
+  pink: [WORKSPACE_THEME_PHOTO.pink, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.lagunabeach],
+  cosmic: [WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.nyc, WORKSPACE_THEME_PHOTO.vegas],
+  vegas: [WORKSPACE_THEME_PHOTO.vegas, WORKSPACE_THEME_PHOTO.nyc, WORKSPACE_THEME_PHOTO.evening],
+  nyc: [WORKSPACE_THEME_PHOTO.nyc, WORKSPACE_THEME_PHOTO.evening, WORKSPACE_THEME_PHOTO.cosmic],
+  oled: [WORKSPACE_THEME_PHOTO.oled, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.night],
+  evening: [WORKSPACE_THEME_PHOTO.evening, WORKSPACE_THEME_PHOTO.vegas, WORKSPACE_THEME_PHOTO.nyc],
+  night: [WORKSPACE_THEME_PHOTO.night, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.evening],
+  light: [WORKSPACE_THEME_PHOTO.light, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
+  dark: [WORKSPACE_THEME_PHOTO.dark, WORKSPACE_THEME_PHOTO.oled, WORKSPACE_THEME_PHOTO.evening],
+  classic: [WORKSPACE_THEME_PHOTO.classic, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.night],
+};
+
+/** Stable index per local calendar day so photography rotates daily but stays consistent intraday. */
+export function dailyPhotoPoolIndex(themeKey: string, poolLength: number, date = new Date()): number {
+  if (poolLength <= 1) return 0;
+  const day = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+  let h = 2166136261;
+  const s = `${themeKey}:${day}`;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h) % poolLength;
+}
+
+export function pickWorkspaceThemePhoto(
+  id: Exclude<WorkspaceThemeId, "auto">,
+  date = new Date()
+): WorkspacePhotoSpec {
+  const pool = WORKSPACE_THEME_PHOTO_VARIANTS[id];
+  const list = pool?.length ? pool : [WORKSPACE_THEME_PHOTO[id]];
+  const idx = dailyPhotoPoolIndex(id, list.length, date);
+  return list[idx] ?? WORKSPACE_THEME_PHOTO[id];
+}
+
 export const OVERVIEW_HERO_PHOTO: Record<OverviewHeroPeriod, WorkspacePhotoSpec> = {
   morning: spec(
     "photo-1472214103451-9374bd1c798e",
@@ -375,7 +429,7 @@ export function overviewHeroMeshStyle(
 export function workspaceThemePhotoStyle(
   resolved: Exclude<WorkspaceThemeId, "auto">
 ): CSSProperties {
-  const p = WORKSPACE_THEME_PHOTO[resolved];
+  const p = pickWorkspaceThemePhoto(resolved, new Date());
   const url = workspacePhotoUrl(p.path, 1920);
   return {
     backgroundColor: p.fallback,

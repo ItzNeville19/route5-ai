@@ -9,7 +9,7 @@ import {
   requireOrgRole,
   type OrgRole,
 } from "@/lib/workspace/org-members";
-import { listOrgCommitmentsForOrgId } from "@/lib/org-commitments/repository";
+import { countActiveCommitmentsByOwnerForOrg } from "@/lib/org-commitments/active-counts-by-owner";
 import {
   getOrganizationProfile,
   updateOrganizationProfile,
@@ -84,17 +84,12 @@ export async function GET() {
   }
 
   try {
-    const [members, pendingInvitations, org, commitmentPage] = await Promise.all([
+    const [members, pendingInvitations, org, activeCountByUser] = await Promise.all([
       listOrganizationMembers(orgId),
       listPendingOrganizationInvitations(orgId),
       getOrganizationProfile(orgId),
-      listOrgCommitmentsForOrgId(orgId, { limit: 5000, offset: 0 }),
+      countActiveCommitmentsByOwnerForOrg(orgId),
     ]);
-    const activeCountByUser = new Map<string, number>();
-    for (const row of commitmentPage.rows) {
-      if (row.status === "completed") continue;
-      activeCountByUser.set(row.ownerId, (activeCountByUser.get(row.ownerId) ?? 0) + 1);
-    }
     const clerk = await clerkClient();
     const dto: MemberDto[] = await Promise.all(
       members.map(async (member) => {

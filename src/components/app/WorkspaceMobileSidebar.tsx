@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { isNavKeyVisible } from "@/lib/org-ui-policy";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 const tierLabel =
@@ -36,13 +37,18 @@ type NavItem =
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements } = useWorkspaceData();
+  const { entitlements, orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
   const { t } = useI18n();
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
-  const navSections = useMemo(
-    () => [
+  const navSections = useMemo(() => {
+    const showOrg =
+      loadingOrganization || isNavKeyVisible("organization", orgUiPolicy, orgRole);
+    const sections: Array<{
+      title: string;
+      items: NavItem[];
+    }> = [
       {
         title: "Work",
         items: [
@@ -51,10 +57,14 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           { href: "/workspace/commitments", label: "Task tracker", icon: ListTodo },
         ],
       },
-      {
+    ];
+    if (showOrg) {
+      sections.push({
         title: "People",
         items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
-      },
+      });
+    }
+    sections.push(
       {
         title: t("sidebar.sectionShortcuts"),
         items: [{ href: "__shortcuts__" as const, label: t("sidebar.shortcuts"), icon: Keyboard }],
@@ -67,10 +77,10 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           { href: "/settings", label: "Settings", icon: Settings },
           { href: "/workspace/billing", label: "Billing", icon: CreditCard },
         ],
-      },
-    ],
-    [t]
-  );
+      }
+    );
+    return sections;
+  }, [t, loadingOrganization, orgUiPolicy, orgRole]);
 
   const openShortcuts = () => {
     window.dispatchEvent(new Event("route5:shortcuts-open"));
