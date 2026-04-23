@@ -1,7 +1,7 @@
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { orgUiPolicyToStorageJson, parseOrgUiPolicy, type OrgUiPolicy } from "@/lib/org-ui-policy";
-import { getSqliteHandle } from "@/lib/workspace/sqlite";
+import { ensureSqliteOrganizationMirror, getSqliteHandle } from "@/lib/workspace/sqlite";
 
 export async function updateOrganizationProfile(
   orgId: string,
@@ -9,31 +9,44 @@ export async function updateOrganizationProfile(
     name?: string;
     primaryUseCase?: string | null;
     uiPolicy?: OrgUiPolicy | null;
+    actorUserId?: string;
   }
 ): Promise<void> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const row: Record<string, unknown> = { updated_at: now };
-    if (fields.name !== undefined) row.name = fields.name;
-    if (fields.primaryUseCase !== undefined) row.primary_use_case = fields.primaryUseCase;
-    if (fields.uiPolicy !== undefined) {
-      if (fields.uiPolicy === null) row.ui_policy = null;
-      else {
-        const s = orgUiPolicyToStorageJson(fields.uiPolicy);
-        row.ui_policy = s === null ? null : (JSON.parse(s) as object);
+    try {
+      const supabase = getServiceClient();
+      const row: Record<string, unknown> = { updated_at: now };
+      if (fields.name !== undefined) row.name = fields.name;
+      if (fields.primaryUseCase !== undefined) row.primary_use_case = fields.primaryUseCase;
+      if (fields.uiPolicy !== undefined) {
+        if (fields.uiPolicy === null) row.ui_policy = null;
+        else {
+          const s = orgUiPolicyToStorageJson(fields.uiPolicy);
+          row.ui_policy = s === null ? null : (JSON.parse(s) as object);
+        }
       }
+      const { error } = await supabase.from("organizations").update(row).eq("id", orgId);
+      if (error) throw error;
+      return;
+    } catch (error) {
+      console.warn("[organizations-update] Supabase update failed; falling back to SQLite", error);
     }
-    const { error } = await supabase.from("organizations").update(row).eq("id", orgId);
-    if (error) throw error;
-    return;
   }
   const d = getSqliteHandle();
-  const cur = d
+  let cur = d
     .prepare(`SELECT name, primary_use_case, ui_policy FROM organizations WHERE id = ?`)
     .get(orgId) as
     | { name: string; primary_use_case: string | null; ui_policy: string | null }
     | undefined;
+  if (!cur && fields.actorUserId) {
+    ensureSqliteOrganizationMirror(orgId, fields.actorUserId);
+    cur = d
+      .prepare(`SELECT name, primary_use_case, ui_policy FROM organizations WHERE id = ?`)
+      .get(orgId) as
+      | { name: string; primary_use_case: string | null; ui_policy: string | null }
+      | undefined;
+  }
   if (!cur) throw new Error("ORG_NOT_FOUND");
   const name = fields.name !== undefined ? fields.name : cur.name;
   const pu =

@@ -278,7 +278,7 @@ export async function PATCH(req: Request) {
   const next: OrgUiPolicy = parseOrgUiPolicy(body.uiPolicy);
 
   try {
-    await updateOrganizationProfile(orgId, { uiPolicy: next });
+    await updateOrganizationProfile(orgId, { uiPolicy: next, actorUserId: userId });
     const org = await getOrganizationProfile(orgId);
     return NextResponse.json({ ok: true, uiPolicy: org.uiPolicy });
   } catch (error) {

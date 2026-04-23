@@ -55,10 +55,12 @@ function ownerLabel(ownerId: string): string {
 }
 
 function OverviewHeroCTAs() {
+  const { user } = useUser();
   const { t } = useI18n();
   const { orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
   const showAddCompany = !loadingOrganization && canCreateCompany(orgRole);
-  const showTaskTracker = loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole);
+  const showTaskTracker =
+    loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole, user?.id ?? null);
   const isMember = !loadingOrganization && orgRole === "member";
   const primaryCtaClass =
     "inline-flex h-10 items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 text-[12px] font-semibold text-white shadow-[0_8px_20px_-14px_rgba(15,23,42,0.75)] transition hover:-translate-y-0.5 hover:bg-white/20";

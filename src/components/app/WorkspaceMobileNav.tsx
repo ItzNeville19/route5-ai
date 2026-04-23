@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { BarChart3, Keyboard, ListChecks, ListTodo, Settings } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
@@ -53,10 +54,11 @@ function ShortcutsTab({ label }: { label: string }) {
 }
 
 export default function WorkspaceMobileNav() {
+  const { user } = useUser();
   const pathname = usePathname() ?? "";
   const path = pathname.split("?")[0] ?? pathname;
   const { orgUiPolicy, orgRole } = useWorkspaceData();
-  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
+  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole, user?.id ?? null);
   const { t } = useI18n();
 
   return (

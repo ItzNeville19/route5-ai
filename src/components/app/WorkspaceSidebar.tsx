@@ -97,7 +97,7 @@ export default function WorkspaceSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
   const { entitlements, orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
-  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
+  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole, user?.id ?? null);
   const { t } = useI18n();
   const path = pathname ?? "";
   const displayName =

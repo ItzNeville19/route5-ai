@@ -21,6 +21,8 @@ export type OrgNavKey = (typeof ORG_NAV_KEYS)[number];
 export type OrgUiPolicy = {
   /** Full map: false hides a screen for non-admins. Home is always true. */
   nav: Record<OrgNavKey, boolean>;
+  /** Optional per-user overrides for non-admins. */
+  userNav: Record<string, Partial<Record<OrgNavKey, boolean>>>;
 };
 
 const DEFAULT_TRUE: Record<OrgNavKey, true> = ORG_NAV_KEYS.reduce(
@@ -32,12 +34,16 @@ const DEFAULT_TRUE: Record<OrgNavKey, true> = ORG_NAV_KEYS.reduce(
 );
 
 export function defaultOrgUiPolicy(): OrgUiPolicy {
-  return { nav: { ...DEFAULT_TRUE, home: true } as Record<OrgNavKey, boolean> };
+  return {
+    nav: { ...DEFAULT_TRUE, home: true } as Record<OrgNavKey, boolean>,
+    userNav: {},
+  };
 }
 
 export function parseOrgUiPolicy(raw: unknown): OrgUiPolicy {
   if (!raw || typeof raw !== "object") return defaultOrgUiPolicy();
   const nav = (raw as { nav?: unknown }).nav;
+  const userNavRaw = (raw as { userNav?: unknown }).userNav;
   if (!nav || typeof nav !== "object") return defaultOrgUiPolicy();
   const out: Record<OrgNavKey, boolean> = { ...DEFAULT_TRUE };
   for (const k of ORG_NAV_KEYS) {
@@ -49,7 +55,20 @@ export function parseOrgUiPolicy(raw: unknown): OrgUiPolicy {
     if (v === false) out[k] = false;
     else if (v === true) out[k] = true;
   }
-  return { nav: out };
+  const userNav: Record<string, Partial<Record<OrgNavKey, boolean>>> = {};
+  if (userNavRaw && typeof userNavRaw === "object") {
+    for (const [userId, value] of Object.entries(userNavRaw as Record<string, unknown>)) {
+      if (!userId || !value || typeof value !== "object") continue;
+      const overrides: Partial<Record<OrgNavKey, boolean>> = {};
+      for (const k of ORG_NAV_KEYS) {
+        if (k === "home") continue;
+        const v = (value as Record<string, unknown>)[k];
+        if (v === true || v === false) overrides[k] = v;
+      }
+      if (Object.keys(overrides).length > 0) userNav[userId] = overrides;
+    }
+  }
+  return { nav: out, userNav };
 }
 
 function normalizePolicyForStorage(policy: OrgUiPolicy): OrgUiPolicy {
@@ -57,6 +76,15 @@ function normalizePolicyForStorage(policy: OrgUiPolicy): OrgUiPolicy {
   for (const k of ORG_NAV_KEYS) {
     if (k === "home") continue;
     if (policy.nav[k] === false) base.nav[k] = false;
+  }
+  for (const [userId, overrides] of Object.entries(policy.userNav ?? {})) {
+    const next: Partial<Record<OrgNavKey, boolean>> = {};
+    for (const k of ORG_NAV_KEYS) {
+      if (k === "home") continue;
+      const v = overrides[k];
+      if (v === true || v === false) next[k] = v;
+    }
+    if (Object.keys(next).length > 0) base.userNav[userId] = next;
   }
   base.nav.home = true;
   return base;
@@ -66,17 +94,24 @@ function normalizePolicyForStorage(policy: OrgUiPolicy): OrgUiPolicy {
 export function orgUiPolicyToStorageJson(policy: OrgUiPolicy): string | null {
   const n = normalizePolicyForStorage(policy);
   const anyOff = ORG_NAV_KEYS.some((k) => n.nav[k] === false);
-  if (!anyOff) return null;
-  return JSON.stringify({ nav: n.nav });
+  const hasUserOverrides = Object.keys(n.userNav).length > 0;
+  if (!anyOff && !hasUserOverrides) return null;
+  return JSON.stringify({ nav: n.nav, userNav: n.userNav });
 }
 
 export function isNavKeyVisible(
   key: OrgNavKey,
   policy: OrgUiPolicy,
-  orgRole: "admin" | "manager" | "member" | null
+  orgRole: "admin" | "manager" | "member" | null,
+  userId?: string | null
 ): boolean {
   if (key === "home") return true;
   if (orgRole === "admin") return true;
+  if (userId) {
+    const userOverride = policy.userNav?.[userId]?.[key];
+    if (userOverride === false) return false;
+    if (userOverride === true) return true;
+  }
   const v = policy.nav[key];
   if (v === false) return false;
   return true;
@@ -108,9 +143,10 @@ export function pathToOrgNavKey(pathname: string): OrgNavKey | null {
 export function isPathAllowedByOrgPolicy(
   pathname: string,
   policy: OrgUiPolicy,
-  orgRole: "admin" | "manager" | "member" | null
+  orgRole: "admin" | "manager" | "member" | null,
+  userId?: string | null
 ): boolean {
   const key = pathToOrgNavKey(pathname);
   if (key == null) return true;
-  return isNavKeyVisible(key, policy, orgRole);
+  return isNavKeyVisible(key, policy, orgRole, userId);
 }

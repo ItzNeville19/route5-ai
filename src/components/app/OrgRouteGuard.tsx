@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isPathAllowedByOrgPolicy } from "@/lib/org-ui-policy";
 
@@ -9,6 +10,7 @@ import { isPathAllowedByOrgPolicy } from "@/lib/org-ui-policy";
  * Redirects non-admins off routes hidden by the org's UI policy (set by admins in Organization).
  */
 export default function OrgRouteGuard() {
+  const { user } = useUser();
   const { orgRole, orgUiPolicy, loadingOrganization } = useWorkspaceData();
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
@@ -38,9 +40,9 @@ export default function OrgRouteGuard() {
       }
     }
     const p = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
-    if (isPathAllowedByOrgPolicy(p, orgUiPolicy, orgRole)) return;
+    if (isPathAllowedByOrgPolicy(p, orgUiPolicy, orgRole, user?.id ?? null)) return;
     router.replace(memberHome);
-  }, [loadingOrganization, orgRole, orgUiPolicy, pathname, router, searchParams]);
+  }, [loadingOrganization, orgRole, orgUiPolicy, pathname, router, searchParams, user?.id]);
 
   return null;
 }

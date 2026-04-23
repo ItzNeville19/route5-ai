@@ -83,6 +83,8 @@ export default function WorkspaceOrganizationClient() {
   const [uiPolicy, setUiPolicy] = useState<OrgUiPolicy>(() => defaultOrgUiPolicy());
   const [busyPolicy, setBusyPolicy] = useState(false);
   const [fromCache, setFromCache] = useState(false);
+  const [visibilityScope, setVisibilityScope] = useState<"everyone" | "member">("everyone");
+  const [selectedMemberId, setSelectedMemberId] = useState<string>("");
 
   const isAdmin = state?.me.role === "admin";
 
@@ -170,6 +172,16 @@ export default function WorkspaceOrganizationClient() {
     [state?.members]
   );
   const pendingInvites = state?.invitations ?? [];
+  const configurableMembers = useMemo(
+    () => sortedMembers.filter((m) => m.role !== "admin"),
+    [sortedMembers]
+  );
+
+  useEffect(() => {
+    if (visibilityScope !== "member") return;
+    if (selectedMemberId && configurableMembers.some((m) => m.userId === selectedMemberId)) return;
+    setSelectedMemberId(configurableMembers[0]?.userId ?? "");
+  }, [visibilityScope, configurableMembers, selectedMemberId]);
 
   async function inviteMember() {
     if (!inviteEmail.trim()) return;
@@ -217,8 +229,8 @@ export default function WorkspaceOrganizationClient() {
     }
   }
 
-  async function saveNavPolicy(next: OrgUiPolicy) {
-    if (!isAdmin) return;
+  async function saveNavPolicy(next: OrgUiPolicy): Promise<boolean> {
+    if (!isAdmin) return false;
     setBusyPolicy(true);
     setNotice(null);
     try {
@@ -231,23 +243,41 @@ export default function WorkspaceOrganizationClient() {
       const data = (await res.json().catch(() => ({}))) as { error?: string; uiPolicy?: unknown };
       if (!res.ok) {
         setNotice(data.error ?? "Could not update visibility.");
-        return;
+        return false;
       }
       if (data.uiPolicy) setUiPolicy(parseOrgUiPolicy(data.uiPolicy));
       await refreshOrganization();
       setNotice("Workspace visibility updated.");
+      return true;
     } finally {
       setBusyPolicy(false);
     }
   }
 
-  function toggleNavKey(key: OrgNavKey, on: boolean) {
+  function navValueForScope(policy: OrgUiPolicy, key: OrgNavKey): boolean {
+    if (key === "home") return true;
+    if (visibilityScope !== "member" || !selectedMemberId) return Boolean(policy.nav[key]);
+    const override = policy.userNav[selectedMemberId]?.[key];
+    if (override === true || override === false) return override;
+    return Boolean(policy.nav[key]);
+  }
+
+  async function toggleNavKey(key: OrgNavKey, on: boolean) {
     if (key === "home") return;
+    const prev = uiPolicy;
     const next: OrgUiPolicy = {
       nav: { ...uiPolicy.nav, [key]: on },
+      userNav: { ...uiPolicy.userNav },
     };
+    if (visibilityScope === "member" && selectedMemberId) {
+      const currentOverride = next.userNav[selectedMemberId] ?? {};
+      next.userNav[selectedMemberId] = { ...currentOverride, [key]: on };
+    } else {
+      next.nav[key] = on;
+    }
     setUiPolicy(next);
-    void saveNavPolicy(next);
+    const ok = await saveNavPolicy(next);
+    if (!ok) setUiPolicy(prev);
   }
 
   async function resendInvite(invitationId: string) {
@@ -293,19 +323,19 @@ export default function WorkspaceOrganizationClient() {
   return (
     <div className="mx-auto w-full max-w-[980px] space-y-5">
       <div>
-        <Link href="/desk" className="text-[13px] text-r5-text-secondary hover:text-r5-text-primary">
+        <Link href="/desk" className="text-[13px] text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100">
           ← Desk
         </Link>
-        <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-r5-text-tertiary">
+        <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
           Workspace
         </p>
-        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-r5-text-primary">
+        <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-slate-900 dark:text-slate-100">
           Organization Control
         </h1>
-        <p className="mt-2 text-[14px] text-r5-text-secondary">
+        <p className="mt-2 text-[14px] text-slate-600 dark:text-slate-300">
           Admin surface for team members, access roles, and workspace visibility.
         </p>
-        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-r5-text-tertiary">
+        <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-slate-500 dark:text-slate-400">
           Invite people by email—they sign in with their own account and join this organization.
           They inherit this org&apos;s plan and limits (what you see under Billing); admins assign which
           projects each person can access.
@@ -315,21 +345,21 @@ export default function WorkspaceOrganizationClient() {
       <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.4)] dark:border-slate-700 dark:bg-slate-950/55">
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-0 flex-1">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-tertiary">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
               Invite by email
             </label>
             <input
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="teammate@company.com"
-              className="mt-1.5 min-h-11 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-primary/70 px-3 text-[14px] text-r5-text-primary placeholder:text-r5-text-tertiary"
+              className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100 dark:placeholder:text-slate-500"
               disabled={!isAdmin}
             />
           </div>
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value as OrgRole)}
-            className="min-h-11 rounded-xl border border-r5-border-subtle bg-r5-surface-primary/70 px-3 text-[14px] text-r5-text-primary"
+            className="min-h-11 rounded-xl border border-slate-300 bg-white px-3 text-[14px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
             disabled={!isAdmin}
           >
             <option value="admin">Admin</option>
@@ -340,14 +370,14 @@ export default function WorkspaceOrganizationClient() {
             type="button"
             disabled={!isAdmin || busyInvite || !inviteEmail.trim()}
             onClick={() => void inviteMember()}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-r5-text-primary px-4 text-[14px] font-semibold text-r5-surface-primary disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-[14px] font-semibold text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
           >
             <MailPlus className="h-4 w-4" />
             {busyInvite ? "Sending…" : "Invite"}
           </button>
         </div>
         {!isAdmin ? (
-          <p className="mt-2 text-[12px] text-r5-text-tertiary">
+          <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
             Only admins can invite members.
           </p>
         ) : null}
@@ -355,27 +385,60 @@ export default function WorkspaceOrganizationClient() {
 
       {isAdmin ? (
         <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.4)] dark:border-slate-700 dark:bg-slate-950/55">
-          <h2 className="text-[15px] font-semibold text-r5-text-primary">Who can see what</h2>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-r5-text-tertiary">
+          <h2 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">Who can see what</h2>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-slate-500 dark:text-slate-400">
             Admins always have full access. For members and managers, turn off areas they should not see in
             the sidebar, mobile bar, and quick links.
           </p>
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <div>
+              <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                Apply to
+              </label>
+              <select
+                value={visibilityScope}
+                onChange={(e) => setVisibilityScope(e.target.value as "everyone" | "member")}
+                className="mt-1.5 min-h-10 rounded-lg border border-slate-300 bg-white px-3 text-[13px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
+              >
+                <option value="everyone">Everyone (all non-admins)</option>
+                <option value="member">Specific member</option>
+              </select>
+            </div>
+            {visibilityScope === "member" ? (
+              <div className="min-w-[220px] flex-1">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                  Member
+                </label>
+                <select
+                  value={selectedMemberId}
+                  onChange={(e) => setSelectedMemberId(e.target.value)}
+                  className="mt-1.5 min-h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-[13px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
+                >
+                  {configurableMembers.map((member) => (
+                    <option key={member.userId} value={member.userId}>
+                      {memberName(member)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+          </div>
           <ul className="mt-4 space-y-2.5">
             {ORG_NAV_KEYS.map((key) => {
-              const on = key === "home" ? true : Boolean(uiPolicy.nav[key]);
+              const on = navValueForScope(uiPolicy, key);
               return (
                 <li
                   key={key}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2.5"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/40"
                 >
-                  <span className="text-[13px] font-medium text-r5-text-primary">{NAV_LABEL[key]}</span>
-                  <label className="inline-flex items-center gap-2 text-[12px] text-r5-text-secondary">
+                  <span className="text-[13px] font-medium text-slate-900 dark:text-slate-100">{NAV_LABEL[key]}</span>
+                  <label className="inline-flex items-center gap-2 text-[12px] text-slate-600 dark:text-slate-300">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-r5-border-subtle"
+                      className="h-4 w-4 rounded border-slate-300 dark:border-slate-700"
                       checked={on}
-                      disabled={key === "home" || busyPolicy}
-                      onChange={(e) => toggleNavKey(key, e.target.checked)}
+                      disabled={key === "home" || busyPolicy || (visibilityScope === "member" && !selectedMemberId)}
+                      onChange={(e) => void toggleNavKey(key, e.target.checked)}
                     />
                     {on ? "Visible" : "Hidden"}
                   </label>
@@ -423,12 +486,12 @@ export default function WorkspaceOrganizationClient() {
                 </button>
               </div>
             ) : null}
-            <p className="text-[12px] text-r5-text-secondary">
+            <p className="text-[12px] text-slate-600 dark:text-slate-300">
               {state?.orgName ?? "Organization"} · {sortedMembers.length} active · {pendingInvites.length} pending
             </p>
             {pendingInvites.length > 0 ? (
               <div className="space-y-2 rounded-xl border border-r5-border-subtle/70 bg-r5-surface-primary/50 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300">
                   Pending invitations
                 </p>
                 {pendingInvites.map((invite) => {
@@ -436,18 +499,18 @@ export default function WorkspaceOrganizationClient() {
                   return (
                     <div
                       key={invite.id}
-                      className="flex flex-wrap items-center gap-2 rounded-lg border border-r5-border-subtle/60 bg-r5-surface-secondary/35 px-3 py-2"
+                      className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/40"
                     >
-                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-r5-text-primary">
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-slate-900 dark:text-slate-100">
                         {invite.email}
                       </p>
                       <span className="rounded-full border border-amber-300/35 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
                         Pending
                       </span>
-                      <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-semibold text-r5-text-primary">
+                      <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-800 dark:border-slate-700 dark:text-slate-200">
                         {invite.role}
                       </span>
-                      <p className="w-full text-[11px] text-r5-text-secondary sm:w-auto sm:flex-1">
+                      <p className="w-full text-[11px] text-slate-600 dark:text-slate-300 sm:w-auto sm:flex-1">
                         Invited by {invite.invitedByName}
                       </p>
                       {isAdmin ? (
@@ -455,7 +518,7 @@ export default function WorkspaceOrganizationClient() {
                           type="button"
                           onClick={() => void resendInvite(invite.id)}
                           disabled={resendBusy}
-                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-r5-border-subtle bg-r5-surface-primary/50 px-2.5 text-[12px] font-medium text-r5-text-secondary hover:text-r5-text-primary disabled:opacity-50"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 text-[12px] font-medium text-slate-700 hover:text-slate-900 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-300 dark:hover:text-slate-100"
                         >
                           <RotateCcw className={`h-3.5 w-3.5 ${resendBusy ? "animate-spin" : ""}`} aria-hidden />
                           {resendBusy ? "Sending…" : "Resend email"}
@@ -473,41 +536,41 @@ export default function WorkspaceOrganizationClient() {
               return (
                 <div
                   key={member.userId}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-r5-border-subtle/70 bg-r5-surface-primary/50 px-3 py-2.5"
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-900/40"
                 >
                   {member.profile.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={member.profile.imageUrl}
                       alt=""
-                      className="h-10 w-10 rounded-full object-cover ring-1 ring-r5-border-subtle"
+                      className="h-10 w-10 rounded-full object-cover ring-1 ring-slate-300 dark:ring-slate-700"
                     />
                   ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-r5-accent/15 text-[13px] font-semibold text-r5-accent">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-[13px] font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300">
                       {name.slice(0, 2).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-semibold text-r5-text-primary">
+                    <p className="truncate text-[14px] font-semibold text-slate-900 dark:text-slate-100">
                       {name}
-                      {me ? <span className="ml-1 text-[12px] font-normal text-r5-text-tertiary">(you)</span> : null}
+                      {me ? <span className="ml-1 text-[12px] font-normal text-slate-500 dark:text-slate-400">(you)</span> : null}
                     </p>
-                    <p className="truncate text-[12px] text-r5-text-secondary">
+                    <p className="truncate text-[12px] text-slate-600 dark:text-slate-300">
                       {member.profile.primaryEmail ?? member.userId}
                     </p>
                   </div>
-                  <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-medium text-r5-text-secondary">
+                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:text-slate-300">
                     {member.activeCommitmentsCount} active
                   </span>
-                  <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-semibold text-r5-text-primary">
+                  <span className="rounded-full border border-slate-300 px-2 py-0.5 text-[11px] font-semibold text-slate-800 dark:border-slate-700 dark:text-slate-200">
                     {member.role}
                   </span>
                   {isAdmin ? (
                     <select
                       value={member.role}
                       onChange={(e) => void changeRole(member.userId, e.target.value as OrgRole)}
-                      disabled={busy}
-                      className="min-h-10 rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] text-r5-text-primary"
+                      disabled={busy || me}
+                      className="min-h-10 rounded-lg border border-slate-300 bg-white px-2.5 text-[12px] text-slate-900 dark:border-slate-700 dark:bg-slate-950/70 dark:text-slate-100"
                     >
                       <option value="admin">Admin</option>
                       <option value="manager">Manager</option>
@@ -529,7 +592,7 @@ export default function WorkspaceOrganizationClient() {
             })}
           </div>
         )}
-        {notice ? <p className="mt-3 text-[12px] text-r5-text-secondary">{notice}</p> : null}
+        {notice ? <p className="mt-3 text-[12px] text-slate-600 dark:text-slate-300">{notice}</p> : null}
       </section>
     </div>
   );
