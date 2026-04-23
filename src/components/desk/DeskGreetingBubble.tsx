@@ -12,6 +12,10 @@ import {
   resolveWorkspaceTheme,
   type WorkspaceThemeId,
 } from "@/lib/workspace-themes";
+import {
+  WORKSPACE_THEME_PHOTO,
+  workspacePhotoUrl,
+} from "@/lib/workspace-theme-photos";
 import { celestialsForCard, type DeskSkyPhase } from "@/lib/desk-greeting-solar";
 
 const deskScript = Caveat({
@@ -283,33 +287,55 @@ export default function DeskGreetingBubble() {
 
   const oceanClass = oceanPalette(solar.phase, liveTheme.resolvedId);
 
+  const placePhoto = WORKSPACE_THEME_PHOTO[liveTheme.resolvedId];
+  const placePhotoUrl = workspacePhotoUrl(placePhoto.path, 960);
+
   return (
     <div className="flex w-full justify-center px-1 sm:px-2">
       <div
         className="relative w-full max-w-[min(100%,26rem)] overflow-hidden rounded-[28px] border border-white/[0.14] shadow-[0_0_0_1px_rgba(56,189,248,0.06),0_28px_56px_-20px_rgba(0,0,0,0.55),0_12px_40px_-12px_rgba(14,165,233,0.18)] sm:max-w-lg"
         aria-label={`${headline} ${contextLine}`}
       >
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={placePhotoUrl}
+            alt=""
+            className="h-full w-full object-cover"
+            decoding="async"
+          />
+          <div
+            className="absolute inset-0"
+            aria-hidden
+            style={{
+              backgroundImage: placePhoto.scrim,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        </div>
         <div
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 z-[1]"
           aria-hidden
           style={{
             background: sky.base,
+            opacity: 0.22,
           }}
         />
         <div
-          className="pointer-events-none absolute inset-0 opacity-95"
+          className="pointer-events-none absolute inset-0 z-[1] opacity-95"
           aria-hidden
-          style={{ background: sky.wash }}
+          style={{ background: sky.wash, opacity: 0.35 }}
         />
         <div
-          className="pointer-events-none absolute inset-0 opacity-40 mix-blend-soft-light"
+          className="pointer-events-none absolute inset-0 z-[1] opacity-40 mix-blend-soft-light"
           aria-hidden
-          style={{ background: sky.haze }}
+          style={{ background: sky.haze, opacity: 0.35 }}
         />
 
         {sky.highClouds ? (
           <div
-            className="pointer-events-none absolute inset-0 z-[1] opacity-75"
+            className="pointer-events-none absolute inset-0 z-[1] opacity-[0.42]"
             aria-hidden
             style={{ background: sky.highClouds }}
           />
@@ -318,7 +344,7 @@ export default function DeskGreetingBubble() {
         <div
           className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(52%,13rem)]"
           aria-hidden
-          style={{ background: sky.oceanBand }}
+          style={{ background: sky.oceanBand, opacity: 0.45 }}
         />
 
         {sky.showStars ? (
@@ -402,21 +428,21 @@ export default function DeskGreetingBubble() {
 
         <div
           className="pointer-events-none absolute bottom-0 left-[-2%] z-[2] w-[min(32%,5.5rem)] max-w-[5.5rem] sm:left-0"
-          style={{ opacity: sky.palmOpacity }}
+          style={{ opacity: sky.palmOpacity * 0.18 }}
           aria-hidden
         >
           <PalmSilhouette className="h-auto w-full" />
         </div>
         <div
           className="pointer-events-none absolute bottom-0 right-[-2%] z-[2] w-[min(32%,5.5rem)] max-w-[5.5rem] sm:right-0"
-          style={{ opacity: sky.palmOpacity }}
+          style={{ opacity: sky.palmOpacity * 0.18 }}
           aria-hidden
         >
           <PalmSilhouette className="h-auto w-full" mirrored />
         </div>
 
         <div
-          className={`desk-greeting-wave-drift pointer-events-none absolute -bottom-px left-[-14%] right-[-14%] z-[3] h-[6rem] ${oceanClass} sm:h-[7rem]`}
+          className={`desk-greeting-wave-drift pointer-events-none absolute -bottom-px left-[-14%] right-[-14%] z-[3] h-[6rem] opacity-35 ${oceanClass} sm:h-[7rem]`}
           aria-hidden
         >
           <svg className="h-full w-[128%] max-w-none" viewBox="0 0 1200 140" preserveAspectRatio="none">
@@ -443,7 +469,7 @@ export default function DeskGreetingBubble() {
           </svg>
         </div>
         <div
-          className={`desk-greeting-wave-drift-2 pointer-events-none absolute -bottom-px left-[-18%] right-[-18%] z-[3] h-[5rem] ${oceanClass} opacity-75 sm:h-[6rem]`}
+          className={`desk-greeting-wave-drift-2 pointer-events-none absolute -bottom-px left-[-18%] right-[-18%] z-[3] h-[5rem] ${oceanClass} opacity-25 sm:h-[6rem]`}
           aria-hidden
         >
           <svg className="h-full w-[136%] max-w-none" viewBox="0 0 1200 120" preserveAspectRatio="none">

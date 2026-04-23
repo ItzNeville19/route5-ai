@@ -125,7 +125,7 @@ export default function OverviewHomeHero({
     >
       <OverviewTimeOfDayArt period={period} />
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/90 via-white/50 to-white/20 dark:from-slate-950/85 dark:via-slate-950/45 dark:to-slate-950/20"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/60 to-white/15 dark:from-slate-950/92 dark:via-slate-950/55 dark:to-slate-950/18"
         aria-hidden
       />
 

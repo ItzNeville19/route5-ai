@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import WorkspaceHeader from "@/components/WorkspaceHeader";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
@@ -14,6 +14,9 @@ import {
   WorkspaceExperienceProvider,
   useWorkspaceExperience,
 } from "@/components/workspace/WorkspaceExperience";
+import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
+import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
+import { workspaceThemePhotoStyle } from "@/lib/workspace-theme-photos";
 import { WorkspaceDataProvider } from "@/components/workspace/WorkspaceData";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import {
@@ -28,6 +31,15 @@ import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesPro
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
   const { shellModifierClass, prefs } = exp;
+  const appearanceTick = useAlignedMinuteTick();
+  const resolvedTheme = useMemo(
+    () => resolveWorkspaceTheme(prefs, appearanceTick),
+    [prefs, appearanceTick]
+  );
+  const agentCanvasPhotoStyle = useMemo(
+    () => workspaceThemePhotoStyle(resolvedTheme.resolvedId),
+    [resolvedTheme.resolvedId]
+  );
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -108,7 +120,10 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <WorkspaceSidebar />
         </Suspense>
-        <div className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col">
+        <div
+          className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col"
+          style={agentCanvasPhotoStyle}
+        >
           <WorkspaceHeader
             onSidebarToggle={() => {
               if (typeof window === "undefined") return;
