@@ -150,7 +150,11 @@ export default function ProjectsHub() {
         </p>
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+            )
+          }
           className="mt-[var(--r5-space-6)] inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-5)] text-[length:var(--r5-font-subheading)] font-semibold text-r5-surface-primary transition hover:opacity-95"
         >
           <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
@@ -171,7 +175,11 @@ export default function ProjectsHub() {
         </div>
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+            )
+          }
           className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/80 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
         >
           <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />

@@ -105,7 +105,9 @@ export default function WorkspaceProjectSwitcher() {
 
   const openNew = useCallback(() => {
     setOpen(false);
-    window.dispatchEvent(new Event("route5:new-project-open"));
+    window.dispatchEvent(
+      new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+    );
   }, []);
 
   if (loadingProjects && projects.length === 0 && !stableCurrent && showColdSkeleton) {

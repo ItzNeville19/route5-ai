@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
+import { getProjectDetailForUser } from "@/lib/workspace/store";
 import {
   createOrgCommitment,
   listOrgCommitments,
@@ -27,8 +28,10 @@ const postSchema = z
     title: z.string().min(1).max(2000),
     description: z.string().max(20_000).optional().nullable(),
     ownerId: z.string().min(1).max(128),
-    deadline: z.string().min(1).max(48),
+    deadline: z.string().min(1).max(64),
     priority: prioritySchema,
+    /** Optional link to a workspace company (project) the user can access. */
+    projectId: z.string().uuid().optional(),
   })
   .strict();
 
@@ -116,11 +119,20 @@ export async function POST(req: Request) {
     if (!gate.allowed && gate.upgrade) {
       return planLimitResponse(gate.upgrade);
     }
+    let scopedProjectId: string | null = null;
+    if (body.projectId) {
+      const project = await getProjectDetailForUser(userId, body.projectId);
+      if (!project) {
+        return NextResponse.json({ error: "Company not found" }, { status: 400 });
+      }
+      scopedProjectId = body.projectId;
+    }
     const ownerId = roleAccess.role === "admin" ? body.ownerId : userId;
     const row = await createOrgCommitment(userId, {
       title: body.title,
       description: body.description ?? null,
       ownerId,
+      projectId: scopedProjectId,
       deadline: new Date(body.deadline).toISOString(),
       priority: body.priority,
     });

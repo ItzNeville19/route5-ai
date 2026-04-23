@@ -20,6 +20,7 @@ import {
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
 import { ROUTE5_SIGNATURE } from "@/lib/brand-signature";
 
 const tierLabel =
@@ -92,7 +93,8 @@ function NavRow({
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
   const { user } = useUser();
-  const { entitlements } = useWorkspaceData();
+  const { entitlements, orgUiPolicy, orgRole } = useWorkspaceData();
+  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
   const { t } = useI18n();
   const path = pathname ?? "";
   const displayName =
@@ -160,30 +162,38 @@ export default function WorkspaceSidebar() {
 
           <div className="space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionAccount")}</NavSectionTitle>
-            <NavRow
-              href="/workspace/customize"
-              active={path === "/workspace/customize"}
-              icon={Palette}
-              label={t("sidebar.customize")}
-            />
-            <NavRow
-              href="/workspace/help"
-              active={path === "/workspace/help"}
-              icon={LifeBuoy}
-              label="Help"
-            />
-            <NavRow
-              href="/settings"
-              active={path === "/settings"}
-              icon={Settings}
-              label={t("sidebar.settings")}
-            />
-            <NavRow
-              href="/workspace/billing"
-              active={path.startsWith("/workspace/billing")}
-              icon={CreditCard}
-              label="Billing"
-            />
+            {show("customize") ? (
+              <NavRow
+                href="/workspace/customize"
+                active={path === "/workspace/customize"}
+                icon={Palette}
+                label={t("sidebar.customize")}
+              />
+            ) : null}
+            {show("help") ? (
+              <NavRow
+                href="/workspace/help"
+                active={path === "/workspace/help"}
+                icon={LifeBuoy}
+                label="Help"
+              />
+            ) : null}
+            {show("settings") ? (
+              <NavRow
+                href="/settings"
+                active={path === "/settings"}
+                icon={Settings}
+                label={t("sidebar.settings")}
+              />
+            ) : null}
+            {show("billing") ? (
+              <NavRow
+                href="/workspace/billing"
+                active={path.startsWith("/workspace/billing")}
+                icon={CreditCard}
+                label="Billing"
+              />
+            ) : null}
             <NavRow
               active={false}
               icon={Keyboard}

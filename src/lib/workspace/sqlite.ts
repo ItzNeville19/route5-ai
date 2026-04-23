@@ -625,6 +625,9 @@ function getDb(): Database.Database {
   if (!orgCols.some((c) => c.name === "primary_use_case")) {
     database.exec(`ALTER TABLE organizations ADD COLUMN primary_use_case TEXT`);
   }
+  if (!orgCols.some((c) => c.name === "ui_policy")) {
+    database.exec(`ALTER TABLE organizations ADD COLUMN ui_policy TEXT`);
+  }
   const oaCols = (
     database.prepare(`PRAGMA table_info(org_commitment_attachments)`).all() as { name: string }[]
   ).map((c) => c.name);

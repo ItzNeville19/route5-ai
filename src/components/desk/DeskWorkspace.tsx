@@ -54,7 +54,7 @@ function buildDeskPath(opts: { projectId?: string | null; preset?: string | null
 }
 
 function openNewProjectModal() {
-  window.dispatchEvent(new Event("route5:new-project-open"));
+  window.dispatchEvent(new CustomEvent("route5:new-project-open", { detail: { mode: "task" } }));
 }
 
 function DeskStatusTile({

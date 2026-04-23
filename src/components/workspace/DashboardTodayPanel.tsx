@@ -20,7 +20,7 @@ function storageKey(userId: string): string {
 }
 
 function openNewProjectModal() {
-  window.dispatchEvent(new Event("route5:new-project-open"));
+  window.dispatchEvent(new CustomEvent("route5:new-project-open", { detail: { mode: "task" } }));
 }
 
 function openAssistant() {

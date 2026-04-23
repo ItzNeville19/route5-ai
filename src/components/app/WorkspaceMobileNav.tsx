@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, ListChecks, ListTodo, Settings } from "lucide-react";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
 
 function LinkTab({
   href,
@@ -31,21 +33,31 @@ function LinkTab({
 export default function WorkspaceMobileNav() {
   const pathname = usePathname() ?? "";
   const path = pathname.split("?")[0] ?? pathname;
+  const { orgUiPolicy, orgRole } = useWorkspaceData();
+  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
 
   return (
     <nav
       className="route5-brand-mobile-nav-edge fixed inset-x-0 bottom-0 z-40 flex h-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] items-stretch border-t border-r5-border-subtle bg-r5-surface-primary/95 pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
       aria-label="Primary"
     >
-      <LinkTab href="/overview" label="Home" icon={BarChart3} active={path === "/overview" || path === "/leadership"} />
-      <LinkTab href="/desk" label="Desk" icon={ListChecks} active={path === "/desk" || path === "/feed"} />
-      <LinkTab
-        href="/workspace/commitments"
-        label="Tasks"
-        icon={ListTodo}
-        active={path.startsWith("/workspace/commitments")}
-      />
-      <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
+      {show("home") ? (
+        <LinkTab href="/overview" label="Home" icon={BarChart3} active={path === "/overview" || path === "/leadership"} />
+      ) : null}
+      {show("desk") ? (
+        <LinkTab href="/desk" label="Desk" icon={ListChecks} active={path === "/desk" || path === "/feed"} />
+      ) : null}
+      {show("tasks") ? (
+        <LinkTab
+          href="/workspace/commitments"
+          label="Tasks"
+          icon={ListTodo}
+          active={path.startsWith("/workspace/commitments")}
+        />
+      ) : null}
+      {show("settings") ? (
+        <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
+      ) : null}
     </nav>
   );
 }

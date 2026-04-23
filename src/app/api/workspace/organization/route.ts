@@ -10,7 +10,11 @@ import {
   type OrgRole,
 } from "@/lib/workspace/org-members";
 import { listOrgCommitmentsForOrgId } from "@/lib/org-commitments/repository";
-import { getOrganizationProfile } from "@/lib/workspace/organizations-update";
+import {
+  getOrganizationProfile,
+  updateOrganizationProfile,
+} from "@/lib/workspace/organizations-update";
+import { parseOrgUiPolicy, type OrgUiPolicy } from "@/lib/org-ui-policy";
 import { notifyTeamInvited } from "@/lib/notifications/team-invite";
 import { appBaseUrl } from "@/lib/integrations/app-url";
 import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
@@ -165,6 +169,7 @@ export async function GET() {
     return NextResponse.json({
       orgId,
       orgName: org.name,
+      uiPolicy: org.uiPolicy,
       me: { userId, role: access.role },
       members: dto,
       invitations,
@@ -234,6 +239,41 @@ export async function POST(req: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not send invitation" },
+      { status: 503 }
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  const authz = await requireUserId();
+  if (!authz.ok) return authz.response;
+  const { userId } = authz;
+  const orgId = await ensureOrganizationForClerkUser(userId);
+  const access = await requireOrgRole(userId, ["admin"]);
+  if (!access.ok || access.orgId !== orgId) {
+    return NextResponse.json({ error: "Only admins can update organization settings" }, { status: 403 });
+  }
+
+  let body: { uiPolicy?: unknown };
+  try {
+    body = (await req.json()) as { uiPolicy?: unknown };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  if (body.uiPolicy === undefined) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
+
+  const next: OrgUiPolicy = parseOrgUiPolicy(body.uiPolicy);
+
+  try {
+    await updateOrganizationProfile(orgId, { uiPolicy: next });
+    const org = await getOrganizationProfile(orgId);
+    return NextResponse.json({ ok: true, uiPolicy: org.uiPolicy });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not update organization" },
       { status: 503 }
     );
   }

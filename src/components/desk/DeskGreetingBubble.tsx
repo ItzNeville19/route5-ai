@@ -7,7 +7,7 @@ import { getDeskContextLine, getDeskHeadline } from "@/lib/workspace-welcome";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
-import { getBrowserIanaTimezone } from "@/lib/workspace-location";
+import { getWorkspaceIanaTimeZone } from "@/lib/workspace-regions";
 import {
   resolveWorkspaceTheme,
   type WorkspaceThemeId,
@@ -20,18 +20,36 @@ const deskScript = Caveat({
   display: "swap",
 });
 
-function skyCanvasFor(
-  phase: DeskSkyPhase,
-  themeId: WorkspaceThemeId,
-  dayProgress: number
-): {
+/** Star positions: deterministic, SSR/hydration-safe. */
+const STAR_DOTS = Array.from({ length: 42 }, (_, i) => ({
+  left: 4 + (i * 19 + (i % 7) * 11) % 90,
+  top: 2 + (i * 7 + (i % 5) * 5) % 32,
+  r: 0.5 + (i % 3) * 0.35,
+  o: 0.18 + (i % 6) * 0.1,
+}));
+
+type SkyCanvas = {
   base: string;
   wash: string;
   haze: string;
   sunCore: string;
   sunHalo: string;
   sunOpacity: number;
-} {
+  /** Bottom 35–50%: Pacific / Laguna water band (varies with phase). */
+  oceanBand: string;
+  /** Shore foam & depth at the very bottom. */
+  beachFoam: string;
+  palmOpacity: number;
+  showStars: boolean;
+  /** Slight high-altitude clouds for midday. */
+  highClouds?: string;
+};
+
+function skyCanvasFor(
+  phase: DeskSkyPhase,
+  themeId: WorkspaceThemeId,
+  dayProgress: number
+): SkyCanvas {
   const t = themeId === "auto" ? "daytime" : themeId;
   const push =
     t === "ember" || t === "sunset" || t === "sunrise" || t === "vegas"
@@ -39,25 +57,70 @@ function skyCanvasFor(
       : t === "ocean" || t === "daytime" || t === "lagunabeach"
         ? 0.5
         : 0;
+  const dp = 0.25 + dayProgress * 0.5;
 
   if (phase === "deep_night" || phase === "night") {
     return {
-      base: "radial-gradient(120% 100% at 50% 0%, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 0.98) 45%, #020617 100%)",
-      wash: "radial-gradient(80% 60% at 20% 15%, rgba(99, 102, 241, 0.12), transparent 50%)",
-      haze: "linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(2, 6, 23, 0.5) 100%)",
+      base: "radial-gradient(120% 100% at 50% 0%, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.98) 50%, #020617 100%)",
+      wash: "radial-gradient(80% 60% at 20% 15%, rgba(99, 102, 241, 0.11), transparent 50%)",
+      haze: "linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(2, 6, 23, 0.5) 100%)",
       sunCore: "rgba(250, 250, 250, 0.9)",
       sunHalo: "rgba(56, 189, 248, 0.2)",
-      sunOpacity: 0.12,
+      sunOpacity: 0.1,
+      oceanBand:
+        "linear-gradient(180deg, transparent 0%, transparent 40%, rgba(8, 47, 73, 0.55) 55%, rgba(2, 12, 27, 0.88) 78%, rgba(2, 6, 23, 0.95) 100%)",
+      beachFoam:
+        "linear-gradient(180deg, rgba(2,6,23,0.1) 0%, rgba(15,23,42,0.65) 55%, rgba(2,6,23,0.92) 100%)",
+      palmOpacity: 0.32 + push * 0.08,
+      showStars: true,
     };
   }
   if (phase === "dawn") {
     return {
-      base: "radial-gradient(95% 80% at 15% 0%, rgba(254, 205, 211, 0.55) 0%, rgba(253, 230, 138, 0.25) 40%, rgba(12, 74, 110, 0.5) 100%)",
-      wash: "radial-gradient(90% 70% at 100% 0%, rgba(125, 211, 252, 0.3), transparent 50%)",
-      haze: "linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(15, 23, 42, 0.25) 100%)",
-      sunCore: "rgba(255, 251, 235, 0.98)",
-      sunHalo: "rgba(251, 191, 36, 0.45)",
-      sunOpacity: 0.92,
+      base: `
+        radial-gradient(100% 85% at 18% -2%, rgba(255, 183, 197, 0.65) 0%, rgba(255, 237, 213, 0.45) 32%, transparent 58%),
+        radial-gradient(80% 70% at 92% 0%, rgba(56, 189, 248, 0.28) 0%, transparent 50%),
+        linear-gradient(178deg, #fff1f2 0%, #bae6fd 45%, #0c4a6e 100%)
+      `,
+      wash: "radial-gradient(95% 55% at 50% 8%, rgba(255, 251, 235, 0.2), transparent 50%)",
+      haze: "linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(8, 51, 68, 0.2) 100%)",
+      sunCore: "rgba(255, 250, 240, 0.99)",
+      sunHalo: "rgba(253, 186, 116, 0.55)",
+      sunOpacity: 0.95,
+      oceanBand:
+        "linear-gradient(180deg, transparent 0%, transparent 42%, rgba(14, 165, 233, 0.4) 52%, rgba(8, 89, 133, 0.8) 72%, rgba(12, 74, 110, 0.92) 100%)",
+      beachFoam:
+        "linear-gradient(180deg, transparent 0%, rgba(254, 215, 170, 0.12) 50%, rgba(2, 12, 27, 0.4) 100%)",
+      palmOpacity: 0.48 + push * 0.1,
+      showStars: false,
+    };
+  }
+  if (phase === "day") {
+    return {
+      base: `
+        radial-gradient(100% 75% at 50% -2%, rgba(56, 189, 248, 0.55) 0%, rgba(125, 211, 252, 0.28) 38%, rgba(8, 145, 178, 0) 60%),
+        radial-gradient(90% 50% at 5% 15%, rgba(165, 243, 252, 0.35) 0%, transparent 50%),
+        linear-gradient(182deg, #7dd3fc 0%, #38bdf8 32%, #bae6fd 58%, #0c4a6e 100%)
+      `,
+      wash: "linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 35%, rgba(14, 116, 144, 0.2) 100%)",
+      haze: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(3, 105, 161, 0.15) 100%)",
+      sunCore: "rgba(255, 253, 230, 0.99)",
+      sunHalo: "rgba(125, 211, 252, 0.5)",
+      sunOpacity: 1,
+      highClouds:
+        "radial-gradient(60% 25% at 70% 8%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%)",
+      oceanBand: `
+        linear-gradient(180deg, transparent 0%, transparent 38%,
+        rgba(14, 165, 233, 0.35) 46%,
+        rgba(6, 182, 212, ${0.5 + push * 0.08}) 60%,
+        rgba(2, 132, 199, 0.88) 80%,
+        rgba(4, 47, 80, 0.96) 100%)
+      `
+        .replace(/\s+/g, " ")
+        .trim(),
+      beachFoam: `linear-gradient(180deg, transparent 0%, rgba(224, 242, 254, 0.15) 55%, rgba(2, 12, 27, ${0.5 + push * 0.05}) 100%)`,
+      palmOpacity: 0.52 + push * 0.12,
+      showStars: false,
     };
   }
   if (phase === "golden" || phase === "sunset") {
@@ -66,52 +129,110 @@ function skyCanvasFor(
     const b = Math.round(Math.max(140, Math.min(255, 200 - redBoost * 80)));
     return {
       base: `
-        radial-gradient(110% 90% at ${48 + dayProgress * 8}% -8%, rgba(251, 191, 36, ${0.42 + redBoost}), transparent 54%),
-        radial-gradient(85% 65% at 95% 12%, rgba(249, 115, 22, ${0.28 + redBoost}), transparent 52%),
-        radial-gradient(90% 75% at 8% 25%, rgba(244, 114, 182, 0.18), transparent 55%),
-        linear-gradient(172deg, rgba(255, 247, 237, 0.92) 0%, rgba(254, 215, 170, 0.85) 42%, rgba(30, 58, 138, 0.55) 100%)
+        radial-gradient(110% 90% at ${48 + dayProgress * 8}% -8%, rgba(251, 191, 36, ${0.45 + redBoost}), transparent 54%),
+        radial-gradient(85% 65% at 95% 8%, rgba(249, 115, 22, ${0.32 + redBoost}), transparent 52%),
+        radial-gradient(90% 70% at 5% 22%, rgba(52, 211, 153, 0.12) 0%, transparent 50%),
+        linear-gradient(172deg, #fff7ed 0%, #fb923c 30%, #f97316 50%, #1d4ed8 100%)
       `,
-      wash: "linear-gradient(180deg, rgba(253, 186, 116, 0.15) 0%, transparent 42%, rgba(59, 130, 246, 0.18) 100%)",
-      haze: "linear-gradient(175deg, rgba(255, 255, 255, 0.06) 0%, rgba(15, 23, 42, 0.35) 100%)",
-      sunCore: `rgba(255, ${g}, ${b}, 0.98)`,
-      sunHalo: `rgba(251, 113, 133, ${0.45 + redBoost})`,
+      wash: "linear-gradient(180deg, rgba(253, 186, 116, 0.2) 0%, transparent 40%, rgba(30, 64, 175, 0.22) 100%)",
+      haze: "linear-gradient(175deg, rgba(255, 255, 255, 0.07) 0%, rgba(15, 23, 42, 0.4) 100%)",
+      sunCore: `rgba(255, ${g}, ${b}, 0.99)`,
+      sunHalo: `rgba(251, 113, 133, ${0.5 + redBoost})`,
       sunOpacity: 1,
+      oceanBand: `
+        linear-gradient(180deg, transparent 0%, transparent 36%,
+        rgba(251, 191, 36, ${0.2 + redBoost * 0.2}) 48%,
+        rgba(234, 88, 12, ${0.45 + dp * 0.1}) 68%,
+        rgba(30, 64, 175, ${0.55 + redBoost * 0.1}) 100%)
+      `
+        .replace(/\s+/g, " ")
+        .trim(),
+      beachFoam:
+        "linear-gradient(180deg, transparent 0%, rgba(254, 159, 125, 0.12) 55%, rgba(15, 23, 42, 0.5) 100%)",
+      palmOpacity: 0.58 + push * 0.1,
+      showStars: false,
     };
   }
   if (phase === "dusk") {
     return {
       base: `
-        radial-gradient(100% 95% at 52% -6%, rgba(239, 68, 68, 0.28), transparent 54%),
-        radial-gradient(80% 60% at 0% 70%, rgba(76, 29, 149, 0.22), transparent 55%),
-        linear-gradient(178deg, #fdf2f8 0%, #fecdd3 38%, #1e1b4b 92%)
+        radial-gradient(100% 90% at 50% -4%, rgba(190, 24, 93, 0.2), transparent 52%),
+        radial-gradient(80% 55% at 0% 30%, rgba(99, 102, 241, 0.18) 0%, transparent 50%),
+        linear-gradient(178deg, #fce7f3 0%, #f9a8d4 32%, #312e81 92%)
       `,
-      wash: "radial-gradient(ellipse 70% 50% at 50% 100%, rgba(14, 165, 233, 0.14), transparent 58%)",
-      haze: "linear-gradient(180deg, transparent 30%, rgba(15, 23, 42, 0.55) 100%)",
-      sunCore: "rgba(253, 186, 116, 0.85)",
-      sunHalo: "rgba(244, 63, 94, 0.5)",
-      sunOpacity: 0.85,
+      wash: "radial-gradient(ellipse 80% 45% at 50% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 50%)",
+      haze: "linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(2, 6, 23, 0.55) 100%)",
+      sunCore: "rgba(254, 215, 170, 0.88)",
+      sunHalo: "rgba(192, 38, 211, 0.45)",
+      sunOpacity: 0.8,
+      oceanBand:
+        "linear-gradient(180deg, transparent 0%, rgba(6, 78, 115, 0.35) 50%, rgba(2, 12, 27, 0.9) 100%)",
+      beachFoam:
+        "linear-gradient(180deg, transparent 0%, rgba(76, 29, 149, 0.15) 50%, rgba(2, 6, 23, 0.75) 100%)",
+      palmOpacity: 0.4 + push * 0.08,
+      showStars: false,
     };
   }
 
+  // Fallback: treat as clear coastal daytime.
   return {
     base: `
-      radial-gradient(115% 85% at 48% -12%, rgba(186, 230, 253, ${0.38 + push * 0.06}), transparent 53%),
-      radial-gradient(90% 65% at 95% 8%, rgba(125, 211, 252, 0.22), transparent 52%),
-      linear-gradient(178deg, #ecfeff 0%, rgba(56, 189, 248, 0.22) 45%, rgba(15, 23, 42, 0.82) 100%)
+      radial-gradient(115% 85% at 48% -10%, rgba(56, 189, 248, 0.45) 0%, rgba(8, 145, 178, 0) 50%),
+      linear-gradient(178deg, #e0f2fe 0%, #38bdf8 38%, #0e7490 100%)
     `,
-    wash: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(14, 116, 144, 0.25) 100%)",
-    haze: "linear-gradient(165deg, rgba(255,255,255,0.05) 0%, rgba(15, 23, 42, 0.28) 100%)",
-    sunCore: "rgba(254, 249, 195, 0.98)",
-    sunHalo: "rgba(56, 189, 248, 0.35)",
+    wash: "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(14, 116, 144, 0.2) 100%)",
+    haze: "linear-gradient(160deg, rgba(255,255,255,0.05) 0%, rgba(3, 105, 161, 0.12) 100%)",
+    sunCore: "rgba(254, 252, 232, 0.99)",
+    sunHalo: "rgba(14, 165, 233, 0.38)",
     sunOpacity: 1,
+    highClouds:
+      "radial-gradient(50% 18% at 32% 6%, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%)",
+    oceanBand:
+      "linear-gradient(180deg, transparent 0%, rgba(6, 182, 212, 0.45) 52%, rgba(4, 47, 80, 0.92) 100%)",
+    beachFoam: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(12, 74, 110, 0.35) 100%)",
+    palmOpacity: 0.5 + push * 0.1,
+    showStars: false,
   };
 }
 
 function oceanPalette(phase: DeskSkyPhase, themeId: Exclude<WorkspaceThemeId, "auto">): string {
-  if (phase === "deep_night" || phase === "night") return "text-indigo-300/50";
-  if (phase === "dusk" || themeId === "ember" || themeId === "vegas") return "text-rose-400/55";
-  if (phase === "golden" || phase === "sunset") return "text-orange-300/50";
-  return "text-cyan-300/55";
+  if (phase === "deep_night" || phase === "night") return "text-indigo-200/50";
+  if (phase === "dusk" || themeId === "ember" || themeId === "vegas") return "text-fuchsia-300/50";
+  if (phase === "golden" || phase === "sunset") return "text-amber-200/55";
+  if (phase === "dawn") return "text-sky-200/55";
+  return "text-cyan-200/60";
+}
+
+/** Stylized coastal palm (stroke-only silhouette). */
+function PalmSilhouette({ className, mirrored }: { className?: string; mirrored?: boolean }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 64 100"
+      fill="none"
+      style={mirrored ? { transform: "scaleX(-1)" } : undefined}
+      aria-hidden
+    >
+      <g
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-slate-950/80"
+        strokeWidth="2.4"
+        opacity="0.88"
+      >
+        <path d="M32 95V52" />
+        <path d="M32 54C18 40 2 4 0 0" />
+        <path d="M32 50C26 20 20 2 20 0" />
+        <path d="M32 50C38 20 44 2 44 0" />
+        <path d="M32 54C44 40 64 4 64 0" />
+        <path d="M32 58C18 64 4 80 0 100" />
+        <path d="M32 58C46 64 60 80 64 100" />
+        <path d="M20 100c2-4 8-6 12-2" />
+        <path d="M44 100c-2-4-8-6-12-2" />
+      </g>
+    </svg>
+  );
 }
 
 export default function DeskGreetingBubble() {
@@ -129,8 +250,8 @@ export default function DeskGreetingBubble() {
   const first = displayName.trim().split(/\s+/)[0] || "there";
 
   const effectiveIana = useMemo(
-    () => exp.prefs.workspaceTimezone?.trim() || getBrowserIanaTimezone(),
-    [exp.prefs.workspaceTimezone]
+    () => getWorkspaceIanaTimeZone(exp.prefs.workspaceTimezone, exp.prefs.workspaceRegionKey),
+    [exp.prefs.workspaceRegionKey, exp.prefs.workspaceTimezone]
   );
 
   const liveTheme = useMemo(
@@ -186,10 +307,42 @@ export default function DeskGreetingBubble() {
           style={{ background: sky.haze }}
         />
 
+        {sky.highClouds ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-[1] opacity-75"
+            aria-hidden
+            style={{ background: sky.highClouds }}
+          />
+        ) : null}
+
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-[min(52%,13rem)]"
+          aria-hidden
+          style={{ background: sky.oceanBand }}
+        />
+
+        {sky.showStars ? (
+          <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+            {STAR_DOTS.map((s, i) => (
+              <div
+                key={i}
+                className="absolute rounded-full bg-white"
+                style={{
+                  left: `${s.left}%`,
+                  top: `${s.top}%`,
+                  width: s.r,
+                  height: s.r,
+                  opacity: s.o,
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
+
         {celestials.showSun ? (
           <>
             <div
-              className="pointer-events-none absolute rounded-full blur-[2px]"
+              className="pointer-events-none absolute z-[2] rounded-full blur-[2px]"
               aria-hidden
               style={{
                 width: "min(22vw, 5.25rem)",
@@ -203,7 +356,7 @@ export default function DeskGreetingBubble() {
               }}
             />
             <div
-              className="pointer-events-none absolute h-[min(14vw,3rem)] w-[min(140%,40rem)] max-w-none rounded-[100%] opacity-[0.22]"
+              className="pointer-events-none absolute z-[2] h-[min(14vw,3rem)] w-[min(140%,40rem)] max-w-none rounded-[100%] opacity-[0.22]"
               aria-hidden
               style={{
                 left: `${solar.sunLeftPct}%`,
@@ -246,6 +399,21 @@ export default function DeskGreetingBubble() {
             </div>
           </div>
         ) : null}
+
+        <div
+          className="pointer-events-none absolute bottom-0 left-[-2%] z-[2] w-[min(32%,5.5rem)] max-w-[5.5rem] sm:left-0"
+          style={{ opacity: sky.palmOpacity }}
+          aria-hidden
+        >
+          <PalmSilhouette className="h-auto w-full" />
+        </div>
+        <div
+          className="pointer-events-none absolute bottom-0 right-[-2%] z-[2] w-[min(32%,5.5rem)] max-w-[5.5rem] sm:right-0"
+          style={{ opacity: sky.palmOpacity }}
+          aria-hidden
+        >
+          <PalmSilhouette className="h-auto w-full" mirrored />
+        </div>
 
         <div
           className={`desk-greeting-wave-drift pointer-events-none absolute -bottom-px left-[-14%] right-[-14%] z-[3] h-[6rem] ${oceanClass} sm:h-[7rem]`}
@@ -292,8 +460,9 @@ export default function DeskGreetingBubble() {
           </svg>
         </div>
         <div
-          className="desk-greeting-foam pointer-events-none absolute bottom-0 left-0 right-0 z-[4] h-12 bg-gradient-to-t from-[rgba(15,23,42,0.48)] via-[rgba(15,23,42,0.12)] to-transparent sm:h-14"
+          className="desk-greeting-foam pointer-events-none absolute bottom-0 left-0 right-0 z-[4] h-12 sm:h-14"
           aria-hidden
+          style={{ background: sky.beachFoam }}
         />
 
         <div className="relative z-[6] px-7 pb-11 pt-9 text-center sm:px-9 sm:pb-12 sm:pt-10">

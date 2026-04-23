@@ -4,6 +4,7 @@
  * “Columbia” (US cities) vs “Colombia” (country) are both listed where relevant.
  */
 import { shortTimezoneLabel } from "@/lib/timezone-date";
+import { getBrowserIanaTimezone } from "@/lib/workspace-location";
 
 export type WorkspaceRegionKey = string;
 
@@ -222,4 +223,28 @@ export function normalizeRegionKeyForTimezone(
   const regions = REGIONS_BY_IANA[tz];
   if (!regions?.some((r) => r.key === regionKey)) return undefined;
   return regionKey;
+}
+
+/** Map a saved region key (e.g. `las_vegas_nv`) to its IANA zone (e.g. `America/Los_Angeles`). */
+export function ianaTimezoneForRegionKey(regionKey: string | undefined): string | undefined {
+  const k = regionKey?.trim();
+  if (!k) return undefined;
+  for (const [iana, regions] of Object.entries(REGIONS_BY_IANA)) {
+    if (regions.some((r) => r.key === k)) return iana;
+  }
+  return undefined;
+}
+
+/**
+ * Workspace clock + hero copy: prefer explicit IANA; else infer from region; else browser.
+ */
+export function getWorkspaceIanaTimeZone(
+  workspaceTimezone: string | undefined,
+  workspaceRegionKey: string | undefined
+): string {
+  const tz = workspaceTimezone?.trim();
+  if (tz) return tz;
+  const fromRegion = ianaTimezoneForRegionKey(workspaceRegionKey);
+  if (fromRegion) return fromRegion;
+  return getBrowserIanaTimezone();
 }

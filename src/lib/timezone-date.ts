@@ -95,7 +95,7 @@ export function shortTimezoneLabel(timezone: string | undefined): string {
 }
 
 /** Local hour (0–23) in the given IANA timezone — for greetings and time-aware copy. */
-export function hourInTimezone(timezone: string | undefined): number {
+export function hourInTimezone(timezone: string | undefined, at: Date = new Date()): number {
   const tz = timezone?.trim() || "UTC";
   try {
     const fmt = new Intl.DateTimeFormat("en-US", {
@@ -103,13 +103,13 @@ export function hourInTimezone(timezone: string | undefined): number {
       hour: "numeric",
       hour12: false,
     });
-    const parts = fmt.formatToParts(new Date());
+    const parts = fmt.formatToParts(at);
     const h = parts.find((p) => p.type === "hour")?.value;
     if (h !== undefined) return Number.parseInt(h, 10);
   } catch {
     /* fall through */
   }
-  return new Date().getHours();
+  return at.getHours();
 }
 
 /** Common IANA zones for settings — international coverage; order is UX grouping. */

@@ -480,10 +480,21 @@ export function CommandPaletteProvider({
         }, 0);
         return;
       }
+      if (item.action === "open-new-task") {
+        close();
+        window.setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
+          );
+        }, 0);
+        return;
+      }
       if (item.action === "open-new-project") {
         close();
         window.setTimeout(() => {
-          window.dispatchEvent(new Event("route5:new-project-open"));
+          window.dispatchEvent(
+            new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+          );
         }, 0);
         return;
       }

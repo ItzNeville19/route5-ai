@@ -299,7 +299,11 @@ export default function DashboardWorkspaceHero({
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+              onClick={() =>
+                window.dispatchEvent(
+                  new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+                )
+              }
               className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[13px] font-semibold text-zinc-950 shadow-lg shadow-black/25 transition hover:bg-zinc-100"
             >
               New project

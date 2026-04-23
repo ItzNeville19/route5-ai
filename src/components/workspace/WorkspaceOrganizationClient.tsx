@@ -4,6 +4,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { MailPlus } from "lucide-react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import {
+  ORG_NAV_KEYS,
+  defaultOrgUiPolicy,
+  parseOrgUiPolicy,
+  type OrgNavKey,
+  type OrgUiPolicy,
+} from "@/lib/org-ui-policy";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -26,6 +34,7 @@ type OrganizationMember = {
 type OrganizationPayload = {
   orgId: string;
   orgName: string;
+  uiPolicy?: unknown;
   me: { userId: string; role: OrgRole };
   members: OrganizationMember[];
   invitations?: Array<{
@@ -44,7 +53,20 @@ function memberName(member: OrganizationMember): string {
   return full || member.profile.username || member.profile.primaryEmail || member.userId;
 }
 
+const NAV_LABEL: Record<OrgNavKey, string> = {
+  home: "Home (always on)",
+  desk: "Desk",
+  tasks: "Task tracker",
+  organization: "Organization",
+  companies: "Companies",
+  customize: "Customize",
+  help: "Help",
+  settings: "Settings",
+  billing: "Billing",
+};
+
 export default function WorkspaceOrganizationClient() {
+  const { refreshOrganization } = useWorkspaceData();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [state, setState] = useState<OrganizationPayload | null>(null);
@@ -53,6 +75,8 @@ export default function WorkspaceOrganizationClient() {
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [busyInvite, setBusyInvite] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [uiPolicy, setUiPolicy] = useState<OrgUiPolicy>(() => defaultOrgUiPolicy());
+  const [busyPolicy, setBusyPolicy] = useState(false);
 
   const isAdmin = state?.me.role === "admin";
 
@@ -68,6 +92,7 @@ export default function WorkspaceOrganizationClient() {
         return;
       }
       setState(data);
+      setUiPolicy(parseOrgUiPolicy(data.uiPolicy));
     } catch {
       setError("Could not load organization.");
       setState(null);
@@ -149,6 +174,39 @@ export default function WorkspaceOrganizationClient() {
     } finally {
       setBusyMemberId(null);
     }
+  }
+
+  async function saveNavPolicy(next: OrgUiPolicy) {
+    if (!isAdmin) return;
+    setBusyPolicy(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/workspace/organization", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uiPolicy: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; uiPolicy?: unknown };
+      if (!res.ok) {
+        setNotice(data.error ?? "Could not update visibility.");
+        return;
+      }
+      if (data.uiPolicy) setUiPolicy(parseOrgUiPolicy(data.uiPolicy));
+      await refreshOrganization();
+      setNotice("Workspace visibility updated.");
+    } finally {
+      setBusyPolicy(false);
+    }
+  }
+
+  function toggleNavKey(key: OrgNavKey, on: boolean) {
+    if (key === "home") return;
+    const next: OrgUiPolicy = {
+      nav: { ...uiPolicy.nav, [key]: on },
+    };
+    setUiPolicy(next);
+    void saveNavPolicy(next);
   }
 
   async function removeMember(memberUserId: string, name: string) {
@@ -234,6 +292,39 @@ export default function WorkspaceOrganizationClient() {
           </p>
         ) : null}
       </section>
+
+      {isAdmin ? (
+        <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/40 p-4">
+          <h2 className="text-[15px] font-semibold text-r5-text-primary">Who can see what</h2>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-r5-text-tertiary">
+            Admins always have full access. For members and managers, turn off areas they should not see in
+            the sidebar, mobile bar, and quick links.
+          </p>
+          <ul className="mt-4 space-y-2.5">
+            {ORG_NAV_KEYS.map((key) => {
+              const on = key === "home" ? true : Boolean(uiPolicy.nav[key]);
+              return (
+                <li
+                  key={key}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2.5"
+                >
+                  <span className="text-[13px] font-medium text-r5-text-primary">{NAV_LABEL[key]}</span>
+                  <label className="inline-flex items-center gap-2 text-[12px] text-r5-text-secondary">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-r5-border-subtle"
+                      checked={on}
+                      disabled={key === "home" || busyPolicy}
+                      onChange={(e) => toggleNavKey(key, e.target.checked)}
+                    />
+                    {on ? "Visible" : "Hidden"}
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/35 p-4">
         {loading ? (

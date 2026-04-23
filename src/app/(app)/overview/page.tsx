@@ -3,11 +3,33 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Plus, ArrowUpRight, Clock3, AlertTriangle, CalendarDays, Building2, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Plus,
+  ArrowUpRight,
+  Clock3,
+  AlertTriangle,
+  CalendarDays,
+  Building2,
+  Users,
+  LayoutGrid,
+  ListTodo,
+  MessageSquare,
+  Sparkles,
+  ScrollText,
+  Settings2,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import OverviewHomeHero, { dayPeriodForHour } from "@/components/overview/OverviewHomeHero";
 import { formatRelativeLong } from "@/lib/relative-time";
+import { getWorkspaceIanaTimeZone, getDisplayLocationLabel } from "@/lib/workspace-regions";
+import { hourInTimezone } from "@/lib/timezone-date";
+import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
+import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -36,9 +58,72 @@ function ownerLabel(ownerId: string): string {
   return ownerId.length > 16 ? `${ownerId.slice(0, 14)}…` : ownerId;
 }
 
+function OverviewHeroCTAs() {
+  const { orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
+  const showTaskTracker = loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() =>
+          window.dispatchEvent(
+            new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+          )
+        }
+        className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover"
+      >
+        <Plus className="h-4 w-4" aria-hidden />
+        Add company
+      </button>
+      {showTaskTracker ? (
+        <Link
+          href="/workspace/commitments"
+          className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover"
+        >
+          Task tracker
+        </Link>
+      ) : null}
+    </>
+  );
+}
+
+function QuickAction({
+  href,
+  icon: Icon,
+  label,
+  hint,
+  orgNavKey,
+}: {
+  href: string;
+  icon: LucideIcon;
+  label: string;
+  hint: string;
+  orgNavKey?: OrgNavKey | null;
+}) {
+  const { orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
+  if (!loadingOrganization && orgNavKey && !isNavKeyVisible(orgNavKey, orgUiPolicy, orgRole)) {
+    return null;
+  }
+  return (
+    <Link
+      href={href}
+      className="group flex min-h-[6.5rem] flex-col gap-1.5 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-[#6264A7]/35 hover:shadow-md"
+    >
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6264A7]/10 text-[#5059c9] dark:bg-[#6264A7]/20 dark:text-[#a6a7dc]">
+        <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
+      </span>
+      <span className="text-[14px] font-semibold leading-tight text-r5-text-primary">{label}</span>
+      <span className="line-clamp-2 text-[11px] leading-snug text-r5-text-secondary">{hint}</span>
+    </Link>
+  );
+}
+
 export default function OverviewPage() {
   const { user } = useUser();
+  const { intlLocale } = useI18n();
+  const exp = useWorkspaceExperience();
   const { projects, orgRole, loadingOrganization } = useWorkspaceData();
+  const mod = primaryModLabelFromNavigator();
   const [now, setNow] = useState(() => new Date());
   const [loadingOwnTasks, setLoadingOwnTasks] = useState(true);
   const [loadingAdminTasks, setLoadingAdminTasks] = useState(false);
@@ -46,6 +131,16 @@ export default function OverviewPage() {
   const [ownTasks, setOwnTasks] = useState<OrgCommitmentRow[]>([]);
   const [adminOrgTasks, setAdminOrgTasks] = useState<OrgCommitmentRow[]>([]);
   const [managerMembers, setManagerMembers] = useState<OrgPayload["members"]>([]);
+
+  const homeIana = useMemo(
+    () => getWorkspaceIanaTimeZone(exp.prefs.workspaceTimezone, exp.prefs.workspaceRegionKey),
+    [exp.prefs.workspaceRegionKey, exp.prefs.workspaceTimezone]
+  );
+  const placeLabel = useMemo(
+    () => getDisplayLocationLabel(homeIana, exp.prefs.workspaceRegionKey),
+    [homeIana, exp.prefs.workspaceRegionKey]
+  );
+  const period = useMemo(() => dayPeriodForHour(hourInTimezone(homeIana, now)), [homeIana, now]);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
@@ -57,7 +152,9 @@ export default function OverviewPage() {
     (async () => {
       setLoadingOwnTasks(true);
       try {
-        const owner = user?.id ? `?owner=${encodeURIComponent(user.id)}&sort=deadline&order=asc` : "?sort=deadline&order=asc";
+        const owner = user?.id
+          ? `?owner=${encodeURIComponent(user.id)}&sort=deadline&order=asc`
+          : "?sort=deadline&order=asc";
         const res = await fetch(`/api/commitments${owner}`, { credentials: "same-origin" });
         const data = (await res.json().catch(() => ({}))) as { commitments?: OrgCommitmentRow[] };
         if (!cancelled && res.ok) setOwnTasks(data.commitments ?? []);
@@ -114,8 +211,6 @@ export default function OverviewPage() {
     };
   }, [orgRole]);
 
-  const period = dayPeriodForHour(now.getHours());
-
   const firstName = useMemo(() => {
     const fn = user?.firstName?.trim();
     if (fn) return fn;
@@ -148,131 +243,272 @@ export default function OverviewPage() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] space-y-[var(--r5-space-5)]">
-      <OverviewHomeHero period={period} now={now} firstName={firstName}>
-        <button
-          type="button"
-          onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-          className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/80 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm backdrop-blur-sm transition hover:bg-r5-surface-hover"
+    <motion.div
+      className="mx-auto w-full max-w-[min(100%,1200px)] space-y-6 pb-12"
+      initial="hidden"
+      animate="show"
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.05 } } }}
+    >
+      <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { duration: 0.35 } } }}>
+        <OverviewHomeHero
+          period={period}
+          now={now}
+          firstName={firstName}
+          timeZone={homeIana}
+          placeLabel={placeLabel}
+          locale={intlLocale}
         >
-          <Plus className="h-4 w-4" aria-hidden />
-          Add company
-        </button>
-        <Link
-          href="/workspace/commitments"
-          className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/80 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm backdrop-blur-sm transition hover:bg-r5-surface-hover"
-        >
-          Task tracker
-        </Link>
-      </OverviewHomeHero>
+          <OverviewHeroCTAs />
+        </OverviewHomeHero>
+      </motion.div>
 
-      <section className="grid gap-[var(--r5-space-3)] sm:grid-cols-3">
-        <MetricCard icon={AlertTriangle} label="Overdue tasks" value={overdueCount} tone="text-r5-status-overdue" />
-        <MetricCard icon={Clock3} label="Due soon" value={dueSoonCount} tone="text-r5-status-at-risk" />
-        <MetricCard icon={CalendarDays} label="Open tasks" value={ownOpenTasks.length} tone="text-r5-status-completed" />
-      </section>
+      <motion.p
+        className="px-0.5 text-[12px] text-r5-text-secondary sm:text-[13px]"
+        variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+      >
+        <span className="font-medium text-r5-text-primary/90">Tip</span> — Press{" "}
+        <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary px-1.5 py-0.5 font-mono text-[11px]">
+          {mod}K
+        </kbd>{" "}
+        to search routes, companies, and actions.
+      </motion.p>
 
-      <section className="grid gap-[var(--r5-space-4)] lg:grid-cols-2">
-        <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-          <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">My tasks</h2>
-          {loadingOwnTasks ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">Loading tasks…</p>
-          ) : ownOpenTasks.length === 0 ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">You are clear. No open tasks.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {ownOpenTasks.slice(0, 8).map((task) => (
-                <li key={task.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[13px] text-r5-text-primary">{task.title}</p>
-                    <span className="text-[11px] text-r5-text-secondary">{new Date(task.deadline).toLocaleDateString()}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+      <motion.section variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+        <div className="mb-3 flex items-baseline justify-between gap-2 px-0.5">
+          <h2 className="text-[15px] font-semibold text-r5-text-primary">Jump back in</h2>
+          <span className="text-[12px] text-r5-text-secondary">Same rail as Teams: one tap to the work you do every day.</span>
         </div>
-
-        <div className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-          <h2 className="flex items-center gap-2 text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">
-            <Building2 className="h-4 w-4" aria-hidden />
-            My companies
-          </h2>
-          {myCompanies.length === 0 ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">No companies yet. Use “Add company” to start.</p>
-          ) : (
-            <ul className="mt-3 space-y-2">
-              {myCompanies.map((company) => (
-                <li key={company.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2">
-                  <Link href={`/companies/${company.id}`} className="flex items-start justify-between gap-2 text-[13px] text-r5-text-primary">
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">{company.name}</span>
-                      <span className="mt-0.5 block text-[11px] text-r5-text-secondary">
-                        Updated {formatRelativeLong(company.updatedAt)}
-                      </span>
-                    </span>
-                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-r5-text-secondary" aria-hidden />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+          <QuickAction
+            href="/desk"
+            icon={LayoutGrid}
+            label="Desk"
+            hint="Execution board & capture"
+            orgNavKey="desk"
+          />
+          <QuickAction
+            href="/workspace/commitments"
+            icon={ListTodo}
+            label="Tasks"
+            hint="Org task tracker & filters"
+            orgNavKey="tasks"
+          />
+          <QuickAction
+            href="/workspace/chat"
+            icon={MessageSquare}
+            label="Chat"
+            hint="Workspace channels"
+            orgNavKey={null}
+          />
+          <QuickAction
+            href="/capture"
+            icon={Sparkles}
+            label="Capture"
+            hint="Paste notes & extract"
+            orgNavKey={null}
+          />
+          <QuickAction
+            href="/companies"
+            icon={Building2}
+            label="Companies"
+            hint="Programs & accounts"
+            orgNavKey="companies"
+          />
+          <QuickAction
+            href="/workspace/digest"
+            icon={ScrollText}
+            label="Digest"
+            hint="Rollups & summaries"
+            orgNavKey={null}
+          />
         </div>
-      </section>
+        <div className="mt-2.5 flex flex-wrap gap-2.5">
+          <Link
+            href="/settings"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-r5-border-subtle px-3 py-2 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-text-tertiary hover:text-r5-text-primary"
+          >
+            <Settings2 className="h-3.5 w-3.5" aria-hidden />
+            Time zone &amp; location
+          </Link>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+        variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+      >
+        <div className="border-b border-r5-border-subtle/80 bg-r5-surface-secondary/40 px-4 py-2.5">
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">This week on your plate</h2>
+          <p className="mt-0.5 text-[12px] text-r5-text-secondary">Prioritize what is overdue, due soon, and still open.</p>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-3">
+          <MetricCard
+            icon={AlertTriangle}
+            label="Overdue"
+            value={overdueCount}
+            tone="text-r5-status-overdue"
+            hint="Needs a date or owner"
+          />
+          <MetricCard
+            icon={Clock3}
+            label="Due soon"
+            value={dueSoonCount}
+            tone="text-r5-status-at-risk"
+            hint="Next 3 days"
+          />
+          <MetricCard
+            icon={CalendarDays}
+            label="Open"
+            value={ownOpenTasks.length}
+            tone="text-r5-status-completed"
+            hint="Assigned to you"
+          />
+        </div>
+      </motion.section>
+
+      <motion.div
+        className="grid gap-5 lg:grid-cols-2"
+        variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+      >
+        <section className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm">
+          <div className="flex items-center justify-between border-b border-r5-border-subtle/80 px-4 py-3">
+            <h2 className="text-[15px] font-semibold text-r5-text-primary">My tasks</h2>
+            <Link href="/workspace/commitments" className="text-[12px] font-medium text-[#5059c9] hover:underline">
+              Open tracker
+            </Link>
+          </div>
+          <div className="p-0">
+            {loadingOwnTasks ? (
+              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading tasks…</p>
+            ) : ownOpenTasks.length === 0 ? (
+              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">You are clear — nothing open. Nice.</p>
+            ) : (
+              <ul>
+                {ownOpenTasks.slice(0, 8).map((task) => (
+                  <li
+                    key={task.id}
+                    className="border-b border-r5-border-subtle/60 last:border-0"
+                  >
+                    <Link
+                      href={`/workspace/commitments?id=${encodeURIComponent(task.id)}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-r5-surface-secondary/50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-r5-text-primary">{task.title}</p>
+                        <p className="mt-0.5 text-[11px] text-r5-text-secondary">Due {new Date(task.deadline).toLocaleString(intlLocale, { dateStyle: "medium" })}</p>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-r5-text-tertiary" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm">
+          <div className="flex items-center justify-between border-b border-r5-border-subtle/80 px-4 py-3">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
+              <Building2 className="h-4 w-4 text-r5-text-secondary" aria-hidden />
+              My companies
+            </h2>
+            <Link href="/companies" className="text-[12px] font-medium text-[#5059c9] hover:underline">
+              See all
+            </Link>
+          </div>
+          <div className="p-0">
+            {myCompanies.length === 0 ? (
+              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">
+                No companies yet. Use Add company in the header or the button in the hero.
+              </p>
+            ) : (
+              <ul>
+                {myCompanies.map((company) => (
+                  <li key={company.id} className="border-b border-r5-border-subtle/60 last:border-0">
+                    <Link
+                      href={`/companies/${company.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-r5-surface-secondary/50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-medium text-r5-text-primary">{company.name}</p>
+                        <p className="mt-0.5 text-[11px] text-r5-text-secondary">Updated {formatRelativeLong(company.updatedAt)}</p>
+                      </div>
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-r5-text-tertiary" aria-hidden />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </motion.div>
 
       {loadingOrganization ? null : orgRole === "admin" ? (
-        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-          <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">All team tasks</h2>
+        <motion.section
+          className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+          variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+        >
+          <div className="border-b border-r5-border-subtle/80 px-4 py-3">
+            <h2 className="text-[15px] font-semibold text-r5-text-primary">All team tasks</h2>
+            <p className="mt-0.5 text-[12px] text-r5-text-secondary">Org-wide open work — for routing and follow-up.</p>
+          </div>
           {loadingAdminTasks ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">Loading team tasks…</p>
+            <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading team tasks…</p>
           ) : adminBottomRows.length === 0 ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">No open team tasks.</p>
+            <p className="px-4 py-6 text-[13px] text-r5-text-secondary">No open team tasks.</p>
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul>
               {adminBottomRows.map((task) => (
-                <li key={task.id} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2">
-                  <div className="flex items-start justify-between gap-2">
+                <li key={task.id} className="border-b border-r5-border-subtle/60 last:border-0">
+                  <div className="flex items-center justify-between gap-3 px-4 py-3.5">
                     <div className="min-w-0">
-                      <p className="truncate text-[13px] text-r5-text-primary">{task.title}</p>
+                      <p className="truncate text-[14px] text-r5-text-primary">{task.title}</p>
                       <p className="text-[11px] text-r5-text-secondary">{ownerLabel(task.ownerId)}</p>
                     </div>
-                    <span className="text-[11px] text-r5-text-secondary">{new Date(task.deadline).toLocaleDateString()}</span>
+                    <span className="text-[12px] text-r5-text-secondary">
+                      {new Date(task.deadline).toLocaleString(intlLocale, { month: "short", day: "numeric" })}
+                    </span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </motion.section>
       ) : orgRole === "manager" ? (
-        <section className="rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/30 p-[var(--r5-space-4)]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">
-              <Users className="h-4 w-4" aria-hidden />
-              Team with upcoming work
+        <motion.section
+          className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+          variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-r5-border-subtle/80 px-4 py-3">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
+              <Users className="h-4 w-4 text-r5-text-secondary" aria-hidden />
+              Team load
             </h2>
-            <Link href="/workspace/team-work" className="text-[12px] font-medium text-r5-accent hover:underline">
-              Open full screen
+            <Link href="/workspace/team-work" className="text-[12px] font-medium text-[#5059c9] hover:underline">
+              Open full view
             </Link>
           </div>
           {loadingManagerMembers ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">Loading team list…</p>
+            <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading team list…</p>
           ) : managerBottomRows.length === 0 ? (
-            <p className="mt-3 text-[13px] text-r5-text-secondary">No upcoming team work right now.</p>
+            <p className="px-4 py-6 text-[13px] text-r5-text-secondary">No upcoming team work right now.</p>
           ) : (
-            <ul className="mt-3 space-y-2">
+            <ul>
               {managerBottomRows.map((member) => (
-                <li key={member.userId} className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/60 bg-r5-surface-primary/50 px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-[13px] text-r5-text-primary">{member.displayName}</p>
-                    <span className="text-[11px] text-r5-text-secondary">{member.activeCommitmentsCount} upcoming</span>
+                <li key={member.userId} className="border-b border-r5-border-subtle/60 last:border-0">
+                  <div className="flex items-center justify-between gap-2 px-4 py-3.5">
+                    <p className="truncate text-[14px] text-r5-text-primary">{member.displayName}</p>
+                    <span className="shrink-0 text-[12px] font-medium text-r5-text-secondary">
+                      {member.activeCommitmentsCount} open
+                    </span>
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </motion.section>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 
@@ -281,19 +517,24 @@ function MetricCard({
   label,
   value,
   tone,
+  hint,
 }: {
   icon: typeof AlertTriangle;
   label: string;
   value: number;
   tone: string;
+  hint: string;
 }) {
   return (
-    <div className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-secondary/40 p-[var(--r5-space-4)]">
-      <p className="flex items-center gap-1.5 text-[length:var(--r5-font-caption)] uppercase tracking-[0.12em] text-r5-text-secondary">
-        <Icon className="h-3.5 w-3.5" aria-hidden />
-        {label}
-      </p>
-      <p className={`mt-2 text-[length:var(--r5-font-stat)] font-semibold ${tone}`}>{value}</p>
+    <div className="flex gap-3 rounded-xl border border-r5-border-subtle/80 bg-r5-surface-primary p-3 sm:flex-col sm:gap-1">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#6264A7]/10 text-[#5059c9] sm:mb-1">
+        <Icon className="h-4 w-4" strokeWidth={2} aria-hidden />
+      </span>
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-r5-text-secondary">{label}</p>
+        <p className={`text-[28px] font-bold leading-tight tabular-nums sm:text-[32px] ${tone}`}>{value}</p>
+        <p className="text-[11px] text-r5-text-tertiary">{hint}</p>
+      </div>
     </div>
   );
 }

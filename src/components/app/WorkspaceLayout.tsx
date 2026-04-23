@@ -9,6 +9,7 @@ import NewProjectModal from "@/components/workspace/NewProjectModal";
 import WorkspaceSidebar from "@/components/app/WorkspaceSidebar";
 import WorkspaceMobileNav from "@/components/app/WorkspaceMobileNav";
 import WorkspaceMobileSidebar from "@/components/app/WorkspaceMobileSidebar";
+import OrgRouteGuard from "@/components/app/OrgRouteGuard";
 import {
   WorkspaceExperienceProvider,
   useWorkspaceExperience,
@@ -96,6 +97,9 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       className={`theme-agent-shell theme-route5-command relative flex min-h-dvh w-full text-[var(--workspace-fg)] ${shellModifierClass}`.trim()}
     >
       <WorkspaceShortcuts />
+      <Suspense fallback={null}>
+        <OrgRouteGuard />
+      </Suspense>
       <Suspense fallback={null}>
         <WorkspaceQueryHandler />
       </Suspense>

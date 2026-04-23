@@ -42,7 +42,7 @@ export type PaletteItem = {
   /** Navigation target; omit when `action` is set. */
   href?: string;
   /** Non-navigation palette actions. */
-  action?: "open-capture" | "open-new-project";
+  action?: "open-capture" | "open-new-project" | "open-new-task";
   description?: string;
   keywords?: string[];
   section: PaletteSection;
@@ -347,11 +347,19 @@ export function buildPaletteItems(params: {
       section: "workspace",
     },
     {
+      id: "new-task",
+      label: "Add task",
+      action: "open-new-task",
+      description: "Create a task in the org tracker (due date, company, owner)",
+      keywords: ["create", "add", "task", "commitment", "todo", "new"],
+      section: "workspace",
+    },
+    {
       id: "new-project",
       label: "Add company",
       action: "open-new-project",
-      description: "Launch company builder",
-      keywords: ["create", "add", "company", "project", "new"],
+      description: "Create a new workspace company",
+      keywords: ["create", "add", "company", "project", "workstream", "new"],
       section: "workspace",
     },
     {

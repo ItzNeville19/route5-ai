@@ -88,7 +88,9 @@ export default function WorkspaceShortcuts() {
           return;
         }
       }
-      window.dispatchEvent(new Event("route5:new-project-open"));
+      window.dispatchEvent(
+        new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
+      );
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);

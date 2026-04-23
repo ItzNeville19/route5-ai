@@ -15,8 +15,10 @@ import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?: () => void }) {
+  const { t } = useI18n();
   const pathname = usePathname() ?? "";
   const { open: openPalette } = useCommandPalette();
   const exp = useWorkspaceExperience();
@@ -28,8 +30,8 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
 
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
-      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] flex-wrap items-center justify-between gap-[var(--r5-space-2)] px-[var(--r5-content-padding-x-mobile)] py-1.5 sm:flex-nowrap sm:px-[var(--r5-content-padding-x)]">
-        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)] max-sm:w-full">
+      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-2 px-[var(--r5-content-padding-x-mobile)] sm:gap-[var(--r5-space-2)] sm:px-[var(--r5-content-padding-x)]">
+        <div className="flex min-h-0 min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => {
@@ -39,7 +41,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               }
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -52,7 +54,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </button>
           <Link
             href="/desk"
-            className="mr-1 inline-flex shrink-0"
+            className="mr-0.5 inline-flex shrink-0 self-center"
             title="Route5 — Desk"
             aria-label="Route5 home"
           >
@@ -61,21 +63,21 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           <Suspense
             fallback={
               <div
-                className="hidden h-8 w-[min(100%,140px)] animate-pulse rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/60 md:block"
+                className="h-8 w-[min(32vw,120px)] shrink-0 animate-pulse self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/60 sm:w-[min(200px,28vw)]"
                 aria-hidden
               />
             }
           >
-            <div className="hidden sm:block">
+            <div className="min-w-0 max-w-[min(46vw,13rem)] shrink-0 self-center sm:max-w-[min(44vw,17rem)] md:max-w-[22rem]">
               <WorkspaceProjectSwitcher />
             </div>
           </Suspense>
-          <h1 className="min-w-0 flex-1 max-sm:max-w-[min(100%,min(70vw,220px))] max-sm:line-clamp-1 break-words text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary sm:max-w-[min(100%,320px)]">
+          <h1 className="min-w-0 flex-1 truncate self-center text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
             {pageTitle}
           </h1>
         </div>
 
-        <div className="flex w-full shrink-0 items-center justify-end gap-[var(--r5-space-2)] max-sm:pl-10 sm:w-auto sm:pl-0">
+        <div className="flex min-h-8 shrink-0 items-center justify-end gap-2 self-center sm:gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => openPalette()}
@@ -98,16 +100,20 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
 
           <button
             type="button"
-            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
+              )
+            }
             className="group inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
-            aria-label="Add company"
+            aria-label={t("header.create.openTask")}
           >
             <Plus
               className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)]"
               strokeWidth={2}
               aria-hidden
             />
-            <span className="hidden sm:inline">Add company</span>
+            <span className="hidden sm:inline">{t("header.create.addTask")}</span>
             <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-tertiary group-hover:inline sm:group-hover:inline">
               {modLabel}N
             </kbd>

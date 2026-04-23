@@ -1,10 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowUpRight, Calendar, CheckCircle2, Circle, ListTodo, Loader2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CalendarClock,
+  CheckCircle2,
+  ChevronRight,
+  Circle,
+  ListTodo,
+  Loader2,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
@@ -14,12 +25,34 @@ function taskDetailHref(id: string): string {
   return `/workspace/commitments?id=${encodeURIComponent(id)}`;
 }
 
+const META_LINE =
+  /^\*?\*?(last\s*updated|updated|risk|notes)\b/i;
+
+/** Prefer a real title line; strip common markdown and metadata that leaked into `title`. */
+function cleanTaskTitle(raw: string | undefined | null): string {
+  if (!raw?.trim()) return "Untitled";
+  const lines = raw
+    .split(/\n/)
+    .map((l) => l.replace(/\*+/g, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const usable = lines.filter((l) => !META_LINE.test(l) && l.length > 0);
+  const t = (usable[0] ?? lines[0] ?? raw).replace(/\*+/g, " ").replace(/\s+/g, " ").trim();
+  if (t.length < 2) return "Untitled";
+  return t.length > 200 ? `${t.slice(0, 197)}…` : t;
+}
+
+function isGenericProjectLabel(name: string | undefined) {
+  const n = (name ?? "").trim().toLowerCase();
+  return n === "company" || n === "project" || n === "no company";
+}
+
 /** iOS Reminders–inspired panel: neutral grays, rounded groups, checklist rows, no “notification” badge. */
 export default function WorkspaceCommitmentsHeaderPanel() {
   const { t, intlLocale } = useI18n();
   const pathname = usePathname();
   const onDesk = pathname === "/desk" || pathname?.startsWith("/desk/");
   const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [overview, setOverview] = useState<ExecutionOverview | null>(null);
@@ -85,11 +118,19 @@ export default function WorkspaceCommitmentsHeaderPanel() {
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      const el = rootRef.current;
-      if (!el?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t) || panelRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   const summary = overview?.summary;
@@ -118,7 +159,8 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                 onClick={() => setOpen(false)}
               />
               <aside
-                className="fixed left-3 right-3 top-16 z-[200] flex max-h-[min(88dvh,720px)] w-auto flex-col overflow-hidden rounded-[14px] border border-r5-border-subtle bg-r5-surface-primary shadow-[0_20px_60px_-15px_rgba(0,0,0,0.45)] sm:left-auto sm:right-4 sm:top-[calc(var(--r5-header-height)+8px)] sm:w-[min(100vw-2rem,380px)] sm:max-h-[min(88dvh,740px)]"
+                ref={panelRef}
+                className="fixed left-3 right-3 top-16 z-[200] flex max-h-[min(88dvh,720px)] w-auto flex-col overflow-hidden rounded-[20px] border border-r5-border-subtle bg-r5-surface-primary shadow-[0_20px_60px_-15px_rgba(0,0,0,0.45)] sm:left-auto sm:right-4 sm:top-[calc(var(--r5-header-height)+8px)] sm:w-[min(100vw-2rem,400px)] sm:max-h-[min(88dvh,760px)]"
                 role="dialog"
                 aria-label={t("header.commitments.dialogTitle")}
                 aria-modal="true"
@@ -154,46 +196,50 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                     </div>
                   ) : (
                     <>
-                      {/* Smart counts — neutral rings (not red notification bubbles) */}
-                      <section className="mx-1 mb-2 rounded-[12px] bg-r5-surface-secondary px-3 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
-                        <p className="mb-2.5 px-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-r5-text-secondary">
+                      {/* Apple Reminders–style smart lists (2×2), not notification rings */}
+                      <section className="mx-1 mb-2 rounded-[12px] bg-r5-surface-secondary/80 px-2 py-2.5 ring-1 ring-r5-border-subtle">
+                        <p className="mb-1.5 px-1.5 text-[12px] font-semibold text-r5-text-primary">
                           {t("header.commitments.countsSection")}
                         </p>
-                        <div className="flex flex-wrap justify-center gap-3 px-1">
-                          <RemindersCountRing
+                        <div className="grid grid-cols-2 gap-2">
+                          <RemindersSmartTile
                             value={summary.activeTotal}
-                            label={t("commitment.metrics.active")}
-                            ring="border-zinc-300/90 text-[#1c1c1e]"
+                            label={t("header.commitments.tileAll")}
                             href={orgCommitmentsHref()}
                             onNavigate={() => setOpen(false)}
+                            tone="blue"
+                            icon={ListTodo}
                           />
-                          <RemindersCountRing
+                          <RemindersSmartTile
                             value={summary.overdueCount}
-                            label={t("commitment.metrics.overdue")}
-                            ring="border-orange-300/90 text-[#c2410c]"
+                            label={t("header.commitments.tileOverdue")}
                             href={orgCommitmentsHref("overdue")}
                             onNavigate={() => setOpen(false)}
+                            tone="coral"
+                            icon={CalendarClock}
                           />
-                          <RemindersCountRing
+                          <RemindersSmartTile
                             value={summary.atRiskCount}
-                            label={t("commitment.metrics.atRisk")}
-                            ring="border-amber-300/90 text-[#a16207]"
+                            label={t("header.commitments.tileAtRisk")}
                             href={orgCommitmentsHref("at_risk")}
                             onNavigate={() => setOpen(false)}
+                            tone="amber"
+                            icon={AlertTriangle}
                           />
-                          <RemindersCountRing
+                          <RemindersSmartTile
                             value={summary.unassignedCount}
-                            label={t("commitment.metrics.unassigned")}
-                            ring="border-violet-300/90 text-[#5b21b6]"
+                            label={t("header.commitments.tileUnassigned")}
                             href={orgCommitmentsHref()}
                             onNavigate={() => setOpen(false)}
+                            tone="violet"
+                            icon={UserRound}
                           />
                         </div>
-                        <div className="mt-3 flex gap-2 border-t border-r5-border-subtle pt-3">
+                        <div className="mt-2 flex flex-col gap-1.5 border-t border-r5-border-subtle pt-2.5">
                           <Link
                             href="/workspace/commitments"
                             onClick={() => setOpen(false)}
-                            className={`flex min-h-[44px] items-center justify-center rounded-[10px] bg-r5-accent px-3 text-[15px] font-medium text-white transition active:opacity-90 ${onDesk ? "w-full flex-1" : "flex-1"}`}
+                            className={`flex min-h-[40px] items-center justify-center rounded-xl border border-r5-border-subtle bg-r5-surface-primary text-[16px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover active:opacity-90 ${onDesk ? "w-full" : "w-full"}`}
                           >
                             {t("header.commitments.openFullTracker")}
                           </Link>
@@ -201,7 +247,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             <Link
                               href="/desk"
                               onClick={() => setOpen(false)}
-                              className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-r5-surface-hover px-3 text-[15px] font-semibold text-r5-text-primary transition hover:opacity-90"
+                              className="flex min-h-[40px] w-full items-center justify-center rounded-xl text-[16px] font-medium text-r5-accent transition active:opacity-80"
                             >
                               {t("header.commitments.openDesk")}
                             </Link>
@@ -211,11 +257,11 @@ export default function WorkspaceCommitmentsHeaderPanel() {
 
                       {/* Checklist-style attention list */}
                       <section className="mx-1 mb-2">
-                        <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-r5-text-secondary">
+                        <p className="mb-1.5 px-2 text-[12px] font-semibold text-r5-text-primary">
                           {t("header.commitments.attentionSection")}
                         </p>
                         {riskPreview.length === 0 ? (
-                          <div className="overflow-hidden rounded-[12px] bg-r5-surface-secondary shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
+                          <div className="overflow-hidden rounded-[12px] bg-r5-surface-secondary/80 ring-1 ring-r5-border-subtle">
                             <div className="flex flex-col items-center px-4 py-10 text-center">
                               <CheckCircle2 className="h-9 w-9 text-r5-status-completed" strokeWidth={1.5} />
                               <p className="mt-2 text-[15px] font-semibold text-r5-text-primary">
@@ -227,46 +273,66 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             </div>
                           </div>
                         ) : (
-                          <ul className="overflow-hidden rounded-[12px] bg-r5-surface-secondary shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
+                          <ul
+                            className="overflow-hidden rounded-[12px] bg-r5-surface-secondary/80 ring-1 ring-r5-border-subtle"
+                            role="list"
+                          >
                             {riskPreview.map((r, i) => {
                               const href = taskDetailHref(r.id);
-                              const reason =
+                              const reasonKey =
                                 r.riskReason === "overdue"
-                                  ? t("commitment.metrics.overdue")
+                                  ? t("header.commitments.reasonOverdue")
                                   : r.riskReason === "unassigned"
-                                    ? t("commitment.metrics.unassigned")
-                                    : t("commitment.metrics.atRisk");
+                                    ? t("header.commitments.reasonUnassigned")
+                                    : t("header.commitments.reasonAtRisk");
                               const showDivider = i < riskPreview.length - 1;
+                              const title = cleanTaskTitle(r.title);
+                              const subParts: string[] = [];
+                              if (r.dueDate) {
+                                subParts.push(
+                                  new Date(r.dueDate).toLocaleDateString(intlLocale, {
+                                    month: "short",
+                                    day: "numeric",
+                                  })
+                                );
+                              }
+                              if (r.projectName && !isGenericProjectLabel(r.projectName)) {
+                                subParts.push(r.projectName);
+                              }
+                              if (r.riskReason) subParts.push(reasonKey);
+                              const subline = subParts.join(" · ");
                               return (
                                 <li key={r.id} className={showDivider ? "border-b border-r5-border-subtle" : ""}>
                                   <Link
                                     href={href}
                                     onClick={() => setOpen(false)}
-                                    className="flex min-h-[52px] items-start gap-3 px-3 py-2.5 transition hover:bg-r5-surface-hover active:opacity-90"
+                                    className="flex min-h-[48px] items-center gap-2.5 px-2.5 py-2 transition hover:bg-r5-surface-hover active:opacity-90"
                                   >
-                                    <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-r5-border-subtle bg-r5-surface-primary">
-                                      <Circle className="h-[14px] w-[14px] text-r5-text-secondary" strokeWidth={2} aria-hidden />
+                                    <span
+                                      className="flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full border border-[#c6c6c8] bg-r5-surface-primary"
+                                      aria-hidden
+                                    >
+                                      <Circle
+                                        className="h-[14px] w-[14px] text-[#8e8e93]"
+                                        strokeWidth={1.75}
+                                        aria-hidden
+                                      />
                                     </span>
-                                    <span className="min-w-0 flex-1">
-                                      <span className="line-clamp-2 text-[15px] font-normal leading-snug text-r5-text-primary">
-                                        {r.title}
+                                    <span className="min-w-0 flex-1 pr-0.5">
+                                      <span className="line-clamp-2 text-left text-[16px] font-normal leading-tight text-r5-text-primary">
+                                        {title}
                                       </span>
-                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-r5-text-secondary">
-                                        <span>{r.projectName}</span>
-                                        <span className="font-medium text-r5-accent">{reason}</span>
-                                        {r.dueDate ? (
-                                          <span className="inline-flex items-center gap-1 tabular-nums">
-                                            <Calendar className="h-3 w-3 opacity-70" aria-hidden />
-                                            {new Date(r.dueDate).toLocaleDateString(intlLocale, {
-                                              weekday: "short",
-                                              month: "short",
-                                              day: "numeric",
-                                            })}
-                                          </span>
-                                        ) : null}
-                                      </span>
+                                      {subline ? (
+                                        <span className="mt-0.5 line-clamp-1 text-left text-[12px] leading-tight text-r5-text-secondary">
+                                          {subline}
+                                        </span>
+                                      ) : null}
                                     </span>
-                                    <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-r5-text-secondary" aria-hidden />
+                                    <ChevronRight
+                                      className="h-[18px] w-[18px] shrink-0 text-[#c6c6c8]"
+                                      strokeWidth={2}
+                                      aria-hidden
+                                    />
                                   </Link>
                                 </li>
                               );
@@ -309,39 +375,59 @@ export default function WorkspaceCommitmentsHeaderPanel() {
   );
 }
 
-function RemindersCountRing({
+const SMART_TILE: Record<
+  "blue" | "coral" | "amber" | "violet",
+  { well: string; icon: string }
+> = {
+  blue: { well: "bg-[#007aff]/12 text-[#007aff]", icon: "text-[#007aff]" },
+  coral: { well: "bg-[#ff3b30]/10 text-[#ff3b30]", icon: "text-[#ff3b30]" },
+  amber: { well: "bg-[#ffcc00]/18 text-[#a05a00]", icon: "text-[#b45309]" },
+  violet: { well: "bg-violet-500/12 text-violet-600 dark:text-violet-300", icon: "text-violet-600 dark:text-violet-300" },
+};
+
+function RemindersSmartTile({
   value,
   label,
-  ring,
   href,
   onNavigate,
+  tone,
+  icon: Icon,
 }: {
   value: number;
   label: string;
-  ring: string;
   href: string;
   onNavigate: () => void;
+  tone: keyof typeof SMART_TILE;
+  icon: ComponentType<{ className?: string; strokeWidth?: number; "aria-hidden"?: boolean }>;
 }) {
-  const inner = (
-    <>
-      <div
-        className={`flex h-[52px] w-[52px] items-center justify-center rounded-full border-[2.5px] bg-r5-surface-primary text-[20px] font-semibold tabular-nums transition hover:bg-r5-surface-hover active:scale-[0.98] ${ring}`}
-      >
-        {value > 99 ? "99+" : value}
-      </div>
-      <span className="max-w-[72px] text-center text-[10px] font-medium leading-tight text-r5-text-secondary">{label}</span>
-    </>
-  );
+  const c = SMART_TILE[tone];
   return (
-    <div className="flex flex-col items-center gap-1">
-      <Link
-        href={href}
-        onClick={onNavigate}
-        className="flex flex-col items-center gap-1 rounded-[14px] outline-none ring-r5-accent/40 transition hover:opacity-95 focus-visible:ring-2"
-      >
-        {inner}
-      </Link>
-    </div>
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className="group flex min-h-[72px] min-w-0 items-stretch overflow-hidden rounded-2xl border border-r5-border-subtle/80 bg-r5-surface-primary shadow-[0_1px_2px_rgba(0,0,0,0.04)] outline-none transition hover:bg-r5-surface-hover focus-visible:ring-2 focus-visible:ring-r5-accent/40"
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] ${c.well}`}
+        >
+          <Icon className={`h-5 w-5 ${c.icon}`} strokeWidth={2} aria-hidden />
+        </div>
+        <div className="min-w-0 flex-1 text-left">
+          <p className="text-[22px] font-semibold leading-none tabular-nums text-r5-text-primary">
+            {value > 999 ? "999+" : value}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-[12px] font-medium leading-tight text-r5-text-secondary">
+            {label}
+          </p>
+        </div>
+        <ChevronRight
+          className="h-4 w-4 shrink-0 self-center text-[#c6c6c8] opacity-0 transition group-hover:opacity-100"
+          strokeWidth={2.5}
+          aria-hidden
+        />
+      </div>
+    </Link>
   );
 }
 

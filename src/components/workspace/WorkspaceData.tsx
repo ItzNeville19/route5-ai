@@ -31,6 +31,7 @@ import {
 } from "@/lib/entitlements";
 import type { ExecutionOverview } from "@/lib/commitment-types";
 import { emptyExecutionOverview } from "@/lib/execution-overview";
+import { defaultOrgUiPolicy, parseOrgUiPolicy, type OrgUiPolicy } from "@/lib/org-ui-policy";
 
 type WorkspaceSummaryState = {
   projectCount: number;
@@ -49,6 +50,7 @@ type WorkspaceDataValue = {
   /** Commitment engine aggregates — same payload as GET /api/workspace/execution. */
   executionOverview: ExecutionOverview | null;
   orgRole: "admin" | "manager" | "member" | null;
+  orgUiPolicy: OrgUiPolicy;
   entitlements: EntitlementsPayload | null;
   loadingProjects: boolean;
   loadingSummary: boolean;
@@ -113,6 +115,7 @@ export function WorkspaceDataProvider({
   const [summary, setSummary] = useState<WorkspaceSummaryState>(EMPTY_SUMMARY);
   const [executionOverview, setExecutionOverview] = useState<ExecutionOverview | null>(null);
   const [orgRole, setOrgRole] = useState<"admin" | "manager" | "member" | null>(null);
+  const [orgUiPolicy, setOrgUiPolicy] = useState<OrgUiPolicy>(() => defaultOrgUiPolicy());
   const [entitlements, setEntitlements] = useState<EntitlementsPayload | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
@@ -185,11 +188,14 @@ export function WorkspaceDataProvider({
       });
       const data = (await res.json().catch(() => ({}))) as {
         me?: { role?: string | null };
+        uiPolicy?: unknown;
       };
       if (!res.ok) {
         setOrgRole(null);
+        setOrgUiPolicy(defaultOrgUiPolicy());
         return;
       }
+      setOrgUiPolicy(parseOrgUiPolicy(data.uiPolicy));
       const role = data.me?.role;
       if (role === "admin" || role === "manager" || role === "member") {
         setOrgRole(role);
@@ -198,6 +204,7 @@ export function WorkspaceDataProvider({
       }
     } catch {
       setOrgRole(null);
+      setOrgUiPolicy(defaultOrgUiPolicy());
     } finally {
       setLoadingOrganization(false);
     }
@@ -303,6 +310,7 @@ export function WorkspaceDataProvider({
       summary,
       executionOverview,
       orgRole,
+      orgUiPolicy,
       entitlements,
       loadingProjects,
       loadingSummary,
@@ -320,6 +328,7 @@ export function WorkspaceDataProvider({
       summary,
       executionOverview,
       orgRole,
+      orgUiPolicy,
       entitlements,
       loadingProjects,
       loadingSummary,

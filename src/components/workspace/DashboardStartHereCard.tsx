@@ -135,7 +135,11 @@ export default function DashboardStartHereCard({
             {!hasProject ? (
               <button
                 type="button"
-                onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+                onClick={() =>
+                  window.dispatchEvent(
+                    new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+                  )
+                }
                 className="mt-3 text-[12px] font-semibold text-[var(--workspace-accent-hover)] underline-offset-2 hover:underline"
               >
                 + New project
