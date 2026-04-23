@@ -16,9 +16,31 @@ export default function OrgRouteGuard() {
 
   useEffect(() => {
     if (loadingOrganization) return;
+    const memberHome = "/workspace/my-inbox";
+    const isMember = orgRole === "member";
+    const currentPath = pathname.split("?")[0];
+    if (isMember) {
+      if (currentPath === "/overview" || currentPath === "/leadership") {
+        router.replace(memberHome);
+        return;
+      }
+      const blockedForMembers = [
+        "/workspace/org-feed",
+        "/workspace/dashboard",
+        "/capture",
+        "/workspace/assign-task",
+        "/workspace/organization",
+        "/workspace/team",
+        "/workspace/billing",
+      ];
+      if (blockedForMembers.some((pfx) => currentPath === pfx || currentPath.startsWith(`${pfx}/`))) {
+        router.replace(memberHome);
+        return;
+      }
+    }
     const p = `${pathname}${searchParams?.toString() ? `?${searchParams.toString()}` : ""}`;
     if (isPathAllowedByOrgPolicy(p, orgUiPolicy, orgRole)) return;
-    router.replace("/overview");
+    router.replace(memberHome);
   }, [loadingOrganization, orgRole, orgUiPolicy, pathname, router, searchParams]);
 
   return null;

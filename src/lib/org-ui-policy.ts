@@ -88,9 +88,14 @@ export function isNavKeyVisible(
  */
 export function pathToOrgNavKey(pathname: string): OrgNavKey | null {
   const p = pathname.split("?")[0] ?? "";
-  if (p === "/overview" || p === "/leadership") return "home";
+  if (p === "/overview" || p === "/leadership" || p === "/workspace/my-inbox") return "home";
   if (p === "/desk" || p === "/feed") return "desk";
-  if (p.startsWith("/workspace/commitments") || p.startsWith("/workspace/team-work")) return "tasks";
+  if (
+    p.startsWith("/workspace/commitments") ||
+    p.startsWith("/workspace/team-work") ||
+    p.startsWith("/workspace/org-feed") ||
+    p.startsWith("/workspace/assign-task")
+  ) return "tasks";
   if (p.startsWith("/workspace/organization") || p === "/workspace/team") return "organization";
   if (p.startsWith("/companies")) return "companies";
   if (p.startsWith("/workspace/customize")) return "customize";

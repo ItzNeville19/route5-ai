@@ -688,6 +688,7 @@ export async function updateOrgCommitment(
     projectId: string | null;
     deadline: string;
     priority: OrgCommitmentPriority;
+    status: OrgCommitmentStatus;
     completed: boolean;
   }>
 ): Promise<{ row: OrgCommitmentRow; previousOwnerId: string | null }> {
@@ -712,7 +713,14 @@ export async function updateOrgCommitment(
   const lastActivityAt = now;
 
   let status: OrgCommitmentStatus;
-  if (completedAt) {
+  if (patch.status !== undefined) {
+    status = patch.status;
+    if (patch.status === "completed") {
+      completedAt = now;
+    } else if (patch.completed !== true) {
+      completedAt = null;
+    }
+  } else if (completedAt) {
     status = "completed";
   } else {
     status = computeAutomaticOrgCommitmentStatus({
@@ -789,6 +797,15 @@ export async function updateOrgCommitment(
         fieldChanged: "priority",
         oldValue: existing.priority,
         newValue: patch.priority,
+      });
+    }
+    if (patch.status !== undefined && patch.status !== existing.status) {
+      await appendHistory(supabase, null, {
+        commitmentId,
+        changedBy: userId,
+        fieldChanged: "status",
+        oldValue: existing.status,
+        newValue: patch.status,
       });
     }
     if (patch.projectId !== undefined && patch.projectId !== (existing.projectId ?? null)) {

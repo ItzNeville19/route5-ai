@@ -13,11 +13,8 @@ import {
   Building2,
   Users,
   ListTodo,
-  BriefcaseBusiness,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -27,7 +24,7 @@ import { formatRelativeLong } from "@/lib/relative-time";
 import { getWorkspaceIanaTimeZone, getDisplayLocationLabel } from "@/lib/workspace-regions";
 import { hourInTimezone } from "@/lib/timezone-date";
 import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
-import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
+import { isNavKeyVisible } from "@/lib/org-ui-policy";
 import { canCreateCompany } from "@/lib/workspace-role";
 
 type OrgRole = "admin" | "manager" | "member";
@@ -64,9 +61,9 @@ function OverviewHeroCTAs() {
   const showTaskTracker = loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole);
   const isMember = !loadingOrganization && orgRole === "member";
   const primaryCtaClass =
-    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/25 bg-white/10 px-3 text-[12px] font-medium text-white shadow-sm transition hover:bg-white/20";
+    "inline-flex h-10 items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 text-[12px] font-semibold text-white shadow-[0_8px_20px_-14px_rgba(15,23,42,0.75)] transition hover:-translate-y-0.5 hover:bg-white/20";
   const memberAccentClass =
-    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] bg-indigo-500 px-3.5 text-[12px] font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:bg-indigo-400";
+    "inline-flex h-10 items-center gap-2 rounded-full bg-indigo-500 px-4 text-[12px] font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:-translate-y-0.5 hover:bg-indigo-400";
   if (isMember) {
     return (
       <>
@@ -122,40 +119,6 @@ function roleLeadForHome(role: OrgRole | null, loading: boolean): string {
     return "Manager view: team load, routing, and follow-through.";
   }
   return "Admin view: full organization control, policy, and visibility.";
-}
-
-function QuickAction({
-  href,
-  icon: Icon,
-  label,
-  hint,
-  orgNavKey,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  hint: string;
-  orgNavKey?: OrgNavKey | null;
-}) {
-  const { orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
-  if (!loadingOrganization && orgNavKey && !isNavKeyVisible(orgNavKey, orgUiPolicy, orgRole)) {
-    return null;
-  }
-  return (
-    <Link
-      href={href}
-      className="group flex min-h-[7.25rem] flex-col gap-2 rounded-2xl border border-slate-200/95 bg-white p-3.5 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:border-[#6264A7]/45 hover:shadow-[0_16px_30px_-18px_rgba(79,70,229,0.38)] dark:border-slate-700 dark:bg-slate-950/50 dark:hover:border-[#818cf8]/35"
-    >
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6264A7]/12 text-[#5059c9] dark:bg-[#6264A7]/22 dark:text-[#a6a7dc]">
-        <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
-      </span>
-      <span className="text-[14px] font-semibold leading-tight text-r5-text-primary">{label}</span>
-      <span className="line-clamp-2 text-[11px] leading-snug text-r5-text-secondary">{hint}</span>
-      <span className="mt-auto inline-flex items-center text-[11px] font-semibold text-[#5059c9] group-hover:text-[#3f47aa]">
-        Open <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden />
-      </span>
-    </Link>
-  );
 }
 
 export default function OverviewPage() {
@@ -367,36 +330,6 @@ export default function OverviewPage() {
               to jump anywhere
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <QuickAction
-              href="/workspace/commitments"
-              icon={ListTodo}
-              label="My open tasks"
-              hint="Overdue, due soon, and owned work"
-              orgNavKey="tasks"
-            />
-            <QuickAction
-              href="/desk"
-              icon={BriefcaseBusiness}
-              label="Desk workspace"
-              hint="Capture notes and drive execution"
-              orgNavKey="desk"
-            />
-            <QuickAction
-              href="/companies"
-              icon={Building2}
-              label="Companies"
-              hint="Program threads and context"
-              orgNavKey="companies"
-            />
-            <QuickAction
-              href="/workspace/organization"
-              icon={ShieldCheck}
-              label="Organization control"
-              hint="Members, roles, and visibility policy"
-              orgNavKey="organization"
-            />
-          </div>
           <div className="border-t border-slate-200/90 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
               Audience map
@@ -430,6 +363,9 @@ export default function OverviewPage() {
                 Admin: full org control and policy
               </span>
             </div>
+            <p className="mt-2 text-[12px] text-r5-text-secondary">
+              Navigation stays in the sidebar. Home is now a role status page, not a second menu.
+            </p>
           </div>
         </div>
       </motion.section>

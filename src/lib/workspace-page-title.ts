@@ -15,6 +15,9 @@ export function getWorkspacePageTitle(pathname: string): string {
   if (p === "/integrations" || p.startsWith("/integrations/")) return "Integrations";
   if (p === "/workspace/help") return "Help";
   if (p === "/workspace/digest") return "Daily digest";
+  if (p === "/workspace/my-inbox" || p.startsWith("/workspace/my-inbox/")) return "My Inbox";
+  if (p === "/workspace/assign-task" || p.startsWith("/workspace/assign-task/")) return "Assign Task";
+  if (p === "/workspace/org-feed" || p.startsWith("/workspace/org-feed/")) return "Org Feed";
   if (p === "/workspace/commitments" || p.startsWith("/workspace/commitments/")) return "Commitments";
   if (p === "/workspace/chat") return "Chat";
   if (p === "/workspace/team" || p === "/workspace/organization") return "Organization";

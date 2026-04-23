@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { X } from "lucide-react";
+import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
 
 type Props = {
   open: boolean;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function DeskShortcutsModal({ open, onClose, t }: Props) {
+  const mod = primaryModLabelFromNavigator();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -53,13 +55,13 @@ export default function DeskShortcutsModal({ open, onClose, t }: Props) {
           <li className="flex justify-between gap-4">
             <span>{t("desk.shortcuts.run")}</span>
             <kbd className="shrink-0 rounded border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-2 py-0.5 font-mono text-[11px] text-[var(--workspace-fg)]">
-              ⌘ Enter
+              {mod} Enter
             </kbd>
           </li>
           <li className="flex justify-between gap-4">
             <span>{t("desk.shortcuts.palette")}</span>
             <kbd className="shrink-0 rounded border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-2 py-0.5 font-mono text-[11px] text-[var(--workspace-fg)]">
-              ⌘ K
+              {mod} K
             </kbd>
           </li>
           <li className="flex justify-between gap-4">

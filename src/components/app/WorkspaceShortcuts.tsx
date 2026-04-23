@@ -19,6 +19,12 @@ export default function WorkspaceShortcuts() {
   const modLabel = primaryModLabelFromNavigator();
   const platformNotes = shortcutsSheetPlatformNotes();
 
+  const isEditingTarget = (t: HTMLElement | null) =>
+    t?.tagName === "INPUT" ||
+    t?.tagName === "TEXTAREA" ||
+    t?.tagName === "SELECT" ||
+    t?.isContentEditable;
+
   useEffect(() => {
     const open = () => setHelpOpen(true);
     const close = () => setHelpOpen(false);
@@ -43,57 +49,48 @@ export default function WorkspaceShortcuts() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "u") {
-        const t = e.target as HTMLElement | null;
-        if (
-          t?.tagName === "INPUT" ||
-          t?.tagName === "TEXTAREA" ||
-          t?.tagName === "SELECT" ||
-          t?.isContentEditable
-        ) {
-          return;
-        }
+        if (isEditingTarget(t)) return;
         e.preventDefault();
         window.dispatchEvent(new Event("route5:notifications-open"));
         return;
       }
 
       if (e.key === "?" && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        const t = e.target as HTMLElement | null;
-        if (
-          t?.tagName === "INPUT" ||
-          t?.tagName === "TEXTAREA" ||
-          t?.tagName === "SELECT" ||
-          t?.isContentEditable
-        ) {
-          return;
-        }
+        if (isEditingTarget(t)) return;
+        e.preventDefault();
+        setHelpOpen((o) => !o);
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        if (isEditingTarget(t)) return;
         e.preventDefault();
         setHelpOpen((o) => !o);
         return;
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
-        const t = e.target as HTMLElement | null;
-        if (
-          t?.tagName === "INPUT" ||
-          t?.tagName === "TEXTAREA" ||
-          t?.tagName === "SELECT" ||
-          t?.isContentEditable
-        ) {
-          return;
-        }
+        if (isEditingTarget(t)) return;
         e.preventDefault();
         window.dispatchEvent(new Event("route5:capture-open"));
         return;
       }
 
+      // Alternate opener for command palette on external keyboards.
+      if ((e.metaKey || e.ctrlKey) && e.code === "Space") {
+        if (isEditingTarget(t)) return;
+        e.preventDefault();
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: e.metaKey, ctrlKey: e.ctrlKey }));
+        return;
+      }
+
       if (!(e.metaKey || e.ctrlKey)) return;
       if (e.key.toLowerCase() !== "n") return;
-      const t = e.target as HTMLElement | null;
       if (t?.closest?.('[contenteditable="true"]')) return;
-      const tag = t?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (isEditingTarget(t)) return;
 
       e.preventDefault();
       if (pathname === "/overview") {
@@ -182,70 +179,6 @@ export default function WorkspaceShortcuts() {
               </div>
 
               <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-                On Desk
-              </p>
-              <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Focus search</span>
-                  <kbd className="shrink-0 rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    /
-                  </kbd>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Cycle filters</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    F
-                  </kbd>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Move active row</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      J
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      K
-                    </kbd>
-                  </span>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Expand active row</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    Enter
-                  </kbd>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Complete active row</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    X
-                  </kbd>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Reassign / due date</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      R
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      D
-                    </kbd>
-                  </span>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Collapse/expand feed groups</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    T
-                  </kbd>
-                </li>
-                <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Select all visible</span>
-                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    {modLabel}A
-                  </kbd>
-                </li>
-              </ul>
-
-              <p className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
                 Everywhere
               </p>
               <ul className="mt-2 divide-y divide-white/[0.06] rounded-xl border border-white/[0.08] bg-white/[0.03]">
@@ -292,9 +225,9 @@ export default function WorkspaceShortcuts() {
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">Save popover edits</span>
+                  <span className="text-[13px] font-medium text-zinc-200">Shortcuts sheet (alternate)</span>
                   <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    {modLabel}Enter
+                    {modLabel}/
                   </kbd>
                 </li>
               </ul>

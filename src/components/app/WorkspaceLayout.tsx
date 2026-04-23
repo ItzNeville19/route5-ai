@@ -77,7 +77,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-      if (e.key !== "\\") return;
+      if (e.key !== "\\" && e.code !== "Backslash") return;
       const t = e.target as HTMLElement | null;
       if (
         t?.tagName === "INPUT" ||

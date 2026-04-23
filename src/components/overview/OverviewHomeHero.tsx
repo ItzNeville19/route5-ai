@@ -3,11 +3,18 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { Caveat } from "next/font/google";
 import OverviewTimeOfDayArt from "@/components/overview/OverviewTimeOfDayArt";
 
 export type OverviewDayPeriod = "morning" | "afternoon" | "evening" | "night";
 
 type CanvasMode = "gradient" | "photo";
+
+const heroScript = Caveat({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
 
 type Props = {
   period: OverviewDayPeriod;
@@ -121,7 +128,7 @@ export default function OverviewHomeHero({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-slate-200/85 bg-slate-950 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.65)] ring-1 ring-black/20 dark:border-slate-700"
+      className="dashboard-home-card relative min-h-[12rem] overflow-hidden rounded-[24px] border border-slate-200/85 bg-slate-950 shadow-[0_18px_44px_-24px_rgba(15,23,42,0.65)] ring-1 ring-black/20 dark:border-slate-700"
     >
       <OverviewTimeOfDayArt
         period={period}
@@ -130,9 +137,9 @@ export default function OverviewHomeHero({
         regionKey={workspaceRegionKey}
       />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/65 to-slate-900/80" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/82 via-indigo-950/45 to-slate-900/82" />
       <div className="relative z-[1] flex flex-col gap-4 p-[var(--r5-space-5)] sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 max-w-[46rem] flex-1 rounded-xl border border-white/20 bg-slate-950/55 px-5 py-4 shadow-[0_12px_28px_-18px_rgba(2,6,23,0.9)] backdrop-blur-md ring-1 ring-white/20">
+        <div className="min-w-0 max-w-[46rem] flex-1 rounded-2xl border border-white/18 bg-slate-950/52 px-5 py-4 shadow-[0_12px_28px_-18px_rgba(2,6,23,0.9)] backdrop-blur-md ring-1 ring-white/20">
           <p className="text-[length:var(--r5-font-caption)] tracking-[0.04em] text-slate-200">
             <span className="font-semibold text-white">{dateLine}</span>
             <span className="mx-1.5 text-slate-400">·</span>
@@ -158,7 +165,7 @@ export default function OverviewHomeHero({
               </>
             ) : null}
           </p>
-          <h1 className="mt-[var(--r5-space-3)] text-[clamp(1.35rem,4vw,1.75rem)] font-semibold tracking-[-0.02em] text-white">
+          <h1 className={`${heroScript.className} mt-[var(--r5-space-3)] text-[clamp(2rem,5.2vw,3rem)] font-semibold leading-[1.08] tracking-[0.01em] text-white`}>
             {greeting}
             {firstName ? (
               <>
@@ -175,7 +182,7 @@ export default function OverviewHomeHero({
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-white/20 bg-slate-950/60 px-3 py-3 shadow-[0_12px_28px_-18px_rgba(2,6,23,0.9)] backdrop-blur-md ring-1 ring-white/20 sm:justify-end">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/60 px-3 py-3 shadow-[0_12px_28px_-18px_rgba(2,6,23,0.9)] backdrop-blur-md ring-1 ring-white/20 sm:justify-end">
           {children}
         </div>
       </div>

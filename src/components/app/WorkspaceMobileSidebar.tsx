@@ -7,8 +7,10 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
 import {
   X,
-  ListChecks,
   BarChart3,
+  ClipboardList,
+  Layers3,
+  PenSquare,
   Users,
   Palette,
   LifeBuoy,
@@ -19,7 +21,6 @@ import {
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isNavKeyVisible } from "@/lib/org-ui-policy";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 const tierLabel =
@@ -37,50 +38,60 @@ type NavItem =
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements, orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
+  const { entitlements, orgRole, loadingOrganization } = useWorkspaceData();
   const { t } = useI18n();
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+  const adminView = !loadingOrganization && orgRole !== "member";
 
   const navSections = useMemo(() => {
-    const showOrg =
-      loadingOrganization || isNavKeyVisible("organization", orgUiPolicy, orgRole);
     const sections: Array<{
       title: string;
       items: NavItem[];
     }> = [
-      {
-        title: "Work",
-        items: [
-          { href: "/overview", label: "Home (role-aware)", icon: BarChart3 },
-          { href: "/desk", label: "Desk", icon: ListChecks },
-          { href: "/workspace/commitments", label: "Task tracker", icon: ListTodo },
-        ],
-      },
+      ...(adminView
+        ? [
+            {
+              title: "ORG OVERVIEW",
+              items: [
+                { href: "/workspace/org-feed", label: "Org Feed", icon: Layers3 },
+                { href: "/workspace/dashboard", label: "Org Dashboard", icon: BarChart3 },
+              ],
+            },
+            {
+              title: "ACTIONS",
+              items: [
+                { href: "/capture", label: "Capture", icon: PenSquare },
+                { href: "/workspace/assign-task", label: "Assign Task", icon: ClipboardList },
+              ],
+            },
+            {
+              title: "PEOPLE",
+              items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
+            },
+          ]
+        : [
+            {
+              title: "MY WORK",
+              items: [
+                { href: "/workspace/my-inbox", label: "My Inbox", icon: Layers3 },
+                { href: "/workspace/commitments", label: "My Tasks", icon: ListTodo },
+              ],
+            },
+          ]),
     ];
-    if (showOrg) {
-      sections.push({
-        title: "People",
-        items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
-      });
-    }
-    sections.push(
-      {
-        title: t("sidebar.sectionShortcuts"),
-        items: [{ href: "__shortcuts__" as const, label: t("sidebar.shortcuts"), icon: Keyboard }],
-      },
-      {
-        title: "Account",
-        items: [
-          { href: "/workspace/customize", label: "Customize", icon: Palette },
-          { href: "/workspace/help", label: "Help", icon: LifeBuoy },
-          { href: "/settings", label: "Settings", icon: Settings },
-          { href: "/workspace/billing", label: "Billing", icon: CreditCard },
-        ],
-      }
-    );
+    sections.push({
+      title: "ACCOUNT",
+      items: [
+        { href: "__shortcuts__" as const, label: t("sidebar.shortcuts"), icon: Keyboard },
+        { href: "/workspace/customize", label: "Customize", icon: Palette },
+        { href: "/workspace/help", label: "Help", icon: LifeBuoy },
+        { href: "/settings", label: adminView ? "Settings (org-wide)" : "Settings (personal)", icon: Settings },
+        ...(adminView ? [{ href: "/workspace/billing", label: "Billing", icon: CreditCard }] : []),
+      ],
+    });
     return sections;
-  }, [t, loadingOrganization, orgUiPolicy, orgRole]);
+  }, [t, adminView]);
 
   const openShortcuts = () => {
     window.dispatchEvent(new Event("route5:shortcuts-open"));
@@ -102,7 +113,12 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
         }`}
       >
         <div className="flex items-center justify-between border-b border-r5-border-subtle px-4 py-3">
-          <p className="text-sm font-semibold text-r5-text-primary">Route5</p>
+          <div>
+            <p className="text-sm font-semibold text-r5-text-primary">Route5</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
+              {adminView ? "ADMIN WORKSPACE" : "MY WORKSPACE"}
+            </p>
+          </div>
           <button
             type="button"
             onClick={onClose}
@@ -135,10 +151,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                       </button>
                     );
                   }
-                  const active =
-                    pathname === item.href ||
-                    (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||
-                    (item.href === "/workspace/commitments" && pathname.startsWith("/workspace/commitments"));
+                  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   return (
                     <Link
                       key={`${section.title}-${item.label}`}

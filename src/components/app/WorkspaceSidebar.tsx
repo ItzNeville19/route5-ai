@@ -8,12 +8,14 @@ import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
   Bell,
+  ClipboardList,
   CreditCard,
   Keyboard,
   LifeBuoy,
-  ListChecks,
+  Layers3,
   ListTodo,
   Palette,
+  PenSquare,
   Settings,
   Users,
 } from "lucide-react";
@@ -99,6 +101,7 @@ export default function WorkspaceSidebar() {
   const path = pathname ?? "";
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+  const adminView = !loadingOrganization && orgRole !== "member";
 
   return (
     <aside
@@ -122,64 +125,77 @@ export default function WorkspaceSidebar() {
           className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
           aria-label={t("sidebar.navAria")}
         >
+          <p className="px-[var(--r5-space-3)] pb-1 pt-1 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-text-tertiary">
+            {adminView ? "ADMIN WORKSPACE" : "MY WORKSPACE"}
+          </p>
           <div className="space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>{t("sidebar.sectionWork")}</NavSectionTitle>
-            <NavRow
-              href="/overview"
-              active={path === "/overview" || path === "/leadership"}
-              icon={BarChart3}
-              label="Home (role-aware)"
-            />
-            <NavRow
-              href="/desk"
-              active={path === "/desk" || path === "/feed"}
-              icon={ListChecks}
-              label={t("sidebar.desk")}
-            />
-            <NavRow
-              href="/workspace/commitments"
-              active={path.startsWith("/workspace/commitments")}
-              icon={ListTodo}
-              label="Task tracker"
-            />
+            {adminView ? (
+              <>
+                <NavSectionTitle>ORG OVERVIEW</NavSectionTitle>
+                <NavRow
+                  href="/workspace/org-feed"
+                  active={path.startsWith("/workspace/org-feed")}
+                  icon={Layers3}
+                  label="Org Feed"
+                />
+                <NavRow
+                  href="/workspace/dashboard"
+                  active={path.startsWith("/workspace/dashboard")}
+                  icon={BarChart3}
+                  label="Org Dashboard"
+                />
+
+                <NavSectionTitle>ACTIONS</NavSectionTitle>
+                <NavRow
+                  href="/capture"
+                  active={path === "/capture"}
+                  icon={PenSquare}
+                  label="Capture"
+                />
+                <NavRow
+                  href="/workspace/assign-task"
+                  active={path.startsWith("/workspace/assign-task")}
+                  icon={ClipboardList}
+                  label="Assign Task"
+                />
+
+                <NavSectionTitle>PEOPLE</NavSectionTitle>
+                <NavRow
+                  href="/workspace/organization"
+                  active={path === "/workspace/team" || path === "/workspace/organization"}
+                  icon={Users}
+                  label="Organization"
+                />
+              </>
+            ) : (
+              <>
+                <NavSectionTitle>MY WORK</NavSectionTitle>
+                <NavRow
+                  href="/workspace/my-inbox"
+                  active={path.startsWith("/workspace/my-inbox")}
+                  icon={Layers3}
+                  label="My Inbox"
+                />
+                <NavRow
+                  href="/workspace/commitments"
+                  active={path.startsWith("/workspace/commitments")}
+                  icon={ListTodo}
+                  label="My Tasks"
+                />
+              </>
+            )}
           </div>
 
-          {loadingOrganization || show("organization") ? (
-            <div className="mt-1 space-y-[var(--r5-space-1)]">
-              <NavSectionTitle>{t("sidebar.sectionPeople")}</NavSectionTitle>
-              <NavRow
-                href="/workspace/organization"
-                active={path === "/workspace/team" || path === "/workspace/organization"}
-                icon={Users}
-                label="Organization"
-              />
-            </div>
-          ) : null}
-
-          <div
-            className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"
-            role="separator"
-            aria-hidden
-          />
+          <div className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle" role="separator" aria-hidden />
 
           <div className="space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>{t("sidebar.sectionShortcuts")}</NavSectionTitle>
+            <NavSectionTitle>ACCOUNT</NavSectionTitle>
             <NavRow
               active={false}
               icon={Keyboard}
               label={t("sidebar.shortcuts")}
               onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
             />
-          </div>
-
-          <div
-            className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"
-            role="separator"
-            aria-hidden
-          />
-
-          <div className="space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>{t("sidebar.sectionAccount")}</NavSectionTitle>
             {show("customize") ? (
               <NavRow
                 href="/workspace/customize"
@@ -201,10 +217,10 @@ export default function WorkspaceSidebar() {
                 href="/settings"
                 active={path === "/settings"}
                 icon={Settings}
-                label={t("sidebar.settings")}
+                label={adminView ? "Settings (org-wide)" : "Settings (personal)"}
               />
             ) : null}
-            {show("billing") ? (
+            {adminView && show("billing") ? (
               <NavRow
                 href="/workspace/billing"
                 active={path.startsWith("/workspace/billing")}

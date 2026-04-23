@@ -28,6 +28,7 @@ const patchSchema = z
     projectId: z.string().uuid().nullable().optional(),
     deadline: z.string().min(1).max(48).optional(),
     priority: z.enum(["critical", "high", "medium", "low"]).optional(),
+    status: z.enum(["not_started", "in_progress", "on_track", "at_risk", "overdue", "completed"]).optional(),
     completed: z.boolean().optional(),
   })
   .strict();
@@ -95,6 +96,7 @@ export async function PATCH(
       projectId: patch.projectId,
       deadline: patch.deadline ? new Date(patch.deadline).toISOString() : undefined,
       priority: patch.priority,
+      status: patch.status,
       completed: patch.completed,
     });
     broadcastOrgCommitmentEvent(orgId, { kind: "commitment_updated", id });
