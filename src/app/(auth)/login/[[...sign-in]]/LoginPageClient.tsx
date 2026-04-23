@@ -44,7 +44,7 @@ function LoginClerkMissing() {
             ← Website
           </Link>
           <Link href="/product" className="font-medium text-[#0071e3] hover:underline">
-            What we ship
+            Product
           </Link>
           <Link href="/contact" className="font-medium text-[#0071e3] hover:underline">
             Contact
@@ -151,9 +151,9 @@ function LoginWithClerk() {
             className="font-medium text-white/90 hover:underline"
             onClick={closeMobileNavFromLogin}
           >
-            Read what we ship
-          </Link>{" "}
-          before you paste production text.
+            Product overview
+          </Link>
+          .
         </p>
       </div>
     </div>

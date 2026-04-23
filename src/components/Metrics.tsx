@@ -5,9 +5,9 @@ import { useRef } from "react";
 import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
 const metrics = [
-  { value: "3", label: "Structured fields", sub: "Summary, decisions, and actions every commitment" },
-  { value: "100k", label: "Characters per request", sub: "Enough for long threads in one paste" },
-  { value: "0", label: "Production touchpoints", sub: "This baseline is text-in, structured data out" },
+  { value: "3", label: "Structured fields", sub: "Summary, decisions, and actions on each commitment" },
+  { value: "100k", label: "Characters per request", sub: "Long threads and notes in a single capture" },
+  { value: "1", label: "Workspace record", sub: "Text in, structured commitments in your data store" },
 ];
 
 const comparison = [
@@ -44,7 +44,7 @@ export default function Metrics() {
             What the product does.
           </h2>
           <p className="mt-4 max-w-[480px] text-[16px] text-white/55">
-            No fake ROI. These are mechanics.
+            Concrete limits and behavior you can validate in the product.
           </p>
         </motion.div>
 

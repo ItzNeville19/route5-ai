@@ -51,7 +51,7 @@ export const CEO_BRIEF = {
       heading: "What we do not promise (roadmap talk only)",
       body: `These are **directions**, not closing scope until they appear in the app: ${PRODUCT_ROADMAP.join(
         "; "
-      )}. Compare with **What we ship** (Guides or /product) for live product.`,
+      )}. Compare with the **Product** guide (Guides or /product) for current capabilities.`,
     },
   ] as const,
 } as const;

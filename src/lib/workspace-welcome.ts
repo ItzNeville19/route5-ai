@@ -567,7 +567,7 @@ export function getTodayCardsForWorkspace(
     {
       id: "today-tip-docs",
       title: "Guides",
-      body: "What we ship, roadmap, and privacy — all under Guides.",
+      body: "Product scope, roadmap, and privacy — all under Guides.",
       ctaLabel: "Guides",
       ctaHref: "/docs",
       learnMoreHref: "/docs/product",

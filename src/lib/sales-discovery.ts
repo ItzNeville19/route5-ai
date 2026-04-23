@@ -22,7 +22,7 @@ export const EXECUTION_PLAN_30_DAY: { week: string; body: string }[] = [
   {
     week: "Week 3–4",
     body:
-      "Iterate one Desk preset or export format based on repeated buyer asks — stay scoped and honest to what ships (Guides → What we ship).",
+      "Iterate one Desk preset or export format based on repeated buyer asks—stay aligned with the current product (Guides → Product).",
   },
 ];
 
@@ -104,6 +104,6 @@ export const DISCOVERY_QUESTIONS: { id: string; prompt: string; followUp?: strin
   {
     id: "objections",
     prompt: "What would make you say ‘this is just another AI wrapper’ — and what would prove it isn’t?",
-    followUp: "Point to saved runs, checklists, and completion on Overview — same as in Guides → What we ship.",
+    followUp: "Point to saved runs, checklists, and completion on Overview—same as in Guides → Product.",
   },
 ];

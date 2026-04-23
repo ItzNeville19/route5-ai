@@ -6,16 +6,16 @@ import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
 const principles = [
   {
-    title: "Truth in packaging",
-    body: "Every page lists what runs in production versus what is roadmap. No borrowed logos, no fake compliance badges.",
+    title: "Scope you can verify",
+    body: "Product and documentation stay aligned: you can see what is available in the app today and what is planned for later releases.",
   },
   {
     title: "Operators first",
-    body: "We optimize for people who carry pager risk — clear states, honest errors, and flows that still work when the model is down.",
+    body: "Clear states, recoverable errors, and workflows that stay usable when optional AI services are unavailable.",
   },
   {
-    title: "Stepwise delivery",
-    body: "Ship a narrow workflow, earn trust, then expand into connectors and generated code. Big bang launches are where enterprise projects go to die.",
+    title: "Phased delivery",
+    body: "We ship focused workflows first, then expand connectors and automation as teams adopt the core record.",
   },
 ];
 
@@ -38,10 +38,10 @@ export default function Credibility() {
         >
           <p className="label-text text-[#a1a1a6] mb-5">Principles</p>
           <h2 className="text-[clamp(36px,6vw,56px)] font-bold tracking-[-0.04em] leading-[1.02] text-white">
-            Proof over posture.
+            How we build
           </h2>
           <p className="mt-4 text-[15px] text-[#86868b] max-w-[420px]">
-            Verify in the app.
+            Principles that shape the product and how we work with customers.
           </p>
         </motion.div>
 

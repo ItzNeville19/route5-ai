@@ -7,4 +7,4 @@ export const TRIAL_BODY =
   "Every workspace includes a 14-day free trial—no credit card required. After that, contact us to align on scope, security review, and the plan that fits your rollout.";
 
 export const PRICING_INTRO =
-  "Commercial plans are scoped to your organization (seats, integrations, security review). Start with a workspace trial—no card—then we align rollout, limits, and contracting together. There is no silent self-serve production checkout.";
+  "Plans are tailored to your organization: seats, integrations, and security review. Start with a 14-day trial, then we align rollout, limits, and contracting with your team.";

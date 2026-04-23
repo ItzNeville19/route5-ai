@@ -213,9 +213,9 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   },
   {
     label: "Roadmap vs shipped",
-    prompt: "What is explicitly roadmap versus live in this product?",
+    prompt: "What is on the roadmap versus available in the product today?",
     learnMoreHref: "/docs/roadmap",
-    keywords: ["roadmap", "shipped", "planned", "future", "vapor", "honest"],
+    keywords: ["roadmap", "shipped", "planned", "future", "release"],
   },
 ];
 
@@ -313,7 +313,7 @@ function greetingPhrase(hour: number): string {
 
 function welcomeLine(opts: {
   hour: number;
-  /** Clerk given name only — we don’t fake “Hi emailprefix” as a real name. */
+  /** Prefer Clerk given name when present; otherwise generic greeting. */
   knowsYou: boolean;
   givenName: string;
   memoryTrim: string;

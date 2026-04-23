@@ -16,9 +16,9 @@ export default function IntegrationStatusStrip() {
   if (!r) {
     return (
       <p className="mt-4 text-[13px] text-[var(--workspace-muted-fg)]">
-        Connector readiness will show here once your workspace summary loads. Product scope:{" "}
+        Connector readiness will show here once your workspace summary loads.         Product scope:{" "}
         <a href="/docs/product" className="font-medium text-[var(--workspace-accent)] hover:underline">
-          Guides — what we ship
+          Guides — Product
         </a>
         .
       </p>

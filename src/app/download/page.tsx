@@ -24,8 +24,8 @@ export default function DownloadPage() {
           Download & install
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-          Use Route5 in the browser, install to mobile home screen, or run the desktop shell.
-          Signing out always returns you to the secure sign-in flow — not a random marketing page.
+          Use Route5 in the browser, add it to your home screen, or use the desktop app where available. After you
+          sign out, you return to the secure sign-in experience.
         </p>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">

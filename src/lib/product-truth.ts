@@ -13,8 +13,8 @@ export const PRODUCT_VISION = {
     "Decisions happen in meetings, Slack, and documents, but they are rarely owned, tracked, or executed. Work gets summarized; accountability does not.",
   outcome:
     "Persistent accountability state: what was decided, who owns it, deadlines, and whether it happened—with risk surfaced before failure.",
-  not:
-    "Not a task manager, not a generic AI summarizer, not another PM suite—it closes the loop from decision to done.",
+  focus:
+    "Built to close the loop from decision to done: a dedicated execution workspace alongside chat, email, and your existing project tools.",
   icp:
     "B2B SaaS for C-suite and COOs at mid-market companies (often 50–500 employees) in finance, law, consulting, and operations-heavy businesses.",
   wedge:
@@ -25,7 +25,7 @@ export const PRODUCT_VISION = {
 
 /**
  * Honest scope — what Route5 does in this app (plain language, no buzzwords).
- * UI must match: no fake agents, sync, or connectors that are not shipped.
+ * UI must match shipped behavior: do not show agents, sync, or connectors that are not available in production.
  */
 export const PRODUCT_HONEST = {
   oneLine: POSITIONING_WEDGE.productOneLine,
@@ -37,9 +37,9 @@ export const PRODUCT_HONEST = {
     "Use Desk as the primary execution surface (Feed remains for org-wide commitment views); Capture to process raw text; Overview shows execution health, stale work, and load from saved data. Optional Linear/GitHub when you configure them.",
   ] as const,
   notThis:
-    "There is no autonomous email sync. Slack: paste-to-capture paths work as documented; the Slack integration page and API are Pro+ (optional SLACK_BOT_TOKEN / SLACK_WEBHOOK_URL for deployment). Linear/GitHub paste-and-import flows are as documented on each screen.",
+    "Email is not auto-synced into Route5. Slack, Linear, and GitHub follow the setup described on each integration page (including optional tokens for your deployment).",
   why:
-    "Decisions and actions stay tied to projects; metrics reflect your database, not demos.",
+    "Decisions and actions stay tied to projects; metrics are computed from your workspace data.",
 } as const;
 
 /**
@@ -111,7 +111,7 @@ export const PRODUCT_LIVE = {
   ingest:
     "Optional POST /api/ingest/webhook with ROUTE5_INGEST_SECRET — push text into a project as commitments (Zapier, scripts, Slack outgoing).",
   extract:
-    "Paste raw text. With OPENAI_API_KEY: structured decision capture (problem, path forward, open questions, snapshot summary, decisions, actions). Without: heuristic process with the same fields, labeled on the capture — not GPT-grade analysis.",
+    "Paste raw text. With AI enabled: structured fields (problem, path forward, open questions, summary, decisions, actions). Without AI: a fast pattern-based process with the same fields, clearly labeled on each capture.",
   linear: "Settings → Connections → Linear: browse, import by link when API access is configured.",
   github: "Settings → Connections → GitHub: samples and import by URL when a token is configured.",
   actions: "Check off action items; saved per capture; completion rolls into workspace metrics.",
@@ -142,14 +142,14 @@ export const PRODUCT_ROADMAP = [
  * Buyer clarity — Route5 is not “AI that does your job.”
  */
 export const PRODUCT_VALUE_REALITY = {
-  headline: "What you actually get",
+  headline: "What you get",
   summary:
-    "The core is next steps you can execute: what is wrong, what to do, open questions, decisions, and checkboxes — saved per project, with charts from what people finish. Route5 does not operate autonomous bots inside Jira or Slack.",
+    "Executable next steps: what is wrong, what to do, open questions, decisions, and checkboxes—saved per project, with health views from what your team finishes. Route5 is not an autonomous agent inside Jira or Slack.",
   withoutAi:
-    "Without an OpenAI API key (or equivalent), captures use a fast pattern-based process and say so on each capture. That is not the same as full AI understanding — be honest when you demo.",
+    "Without an OpenAI key, captures use a fast pattern-based process, labeled on each run. Add AI when you want model-generated structure on the same fields.",
   withAi:
-    "With AI enabled, the service returns structured fields (problem, path, questions, snapshot, decisions, actions). It still does not execute work in other tools by itself.",
+    "With AI enabled, captures return structured fields. Owners still review and accept work before it drives execution elsewhere.",
   integrationsHonesty:
-    "Linear, GitHub, and similar: live lists need the right setup on your deployment. Screens without credentials may show samples — that is not full company sync.",
+    "For Linear, GitHub, and similar: live data requires the credentials and setup described on each connection screen. Preview and sample states are shown where a full live sync is not configured.",
   linkDocs: "/docs/product",
 } as const;

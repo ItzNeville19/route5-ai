@@ -35,7 +35,7 @@ function AppShellClerkMissing() {
           Website
         </Link>
         <Link href="/product" className="text-[#0071e3] hover:underline">
-          What we ship
+          Product
         </Link>
         <Link href="/contact" className="text-[#0071e3] hover:underline">
           Contact

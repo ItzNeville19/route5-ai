@@ -13,9 +13,9 @@ import {
 } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
-  title: "What we ship — Route5.ai",
+  title: "Product — Route5",
   description:
-    "Enterprise execution layer: owned commitments and accountability state—live MVP scope, roadmap, and how we compare to chat.",
+    "Route5 product overview: current capabilities, roadmap themes, and how to engage our team for rollout and security review.",
 };
 
 export default function ProductPage() {
@@ -27,11 +27,10 @@ export default function ProductPage() {
           Route5 · product
         </p>
         <h1 className="mt-4 text-[clamp(1.75rem,4.5vw,2.5rem)] font-semibold tracking-[-0.04em] text-[#1d1d1f]">
-          The short version we&apos;d give in the room
+          Product overview
         </h1>
         <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-          What we ship today, what&apos;s on the roadmap, and how we engage — no borrowed
-          traction metrics, no fake logos.
+          What is in production, what is on the roadmap, and how to work with us for pilots, security review, and rollout.
         </p>
 
         <section className="mt-10 rounded-2xl border border-black/[0.08] bg-black/[0.02] px-5 py-6 md:px-6">
@@ -41,7 +40,7 @@ export default function ProductPage() {
           <p className="mt-3 text-[17px] leading-relaxed text-[#1d1d1f]">{PRODUCT_VISION.category}</p>
           <p className="mt-3 text-[17px] leading-relaxed text-[#6e6e73]">{PRODUCT_VISION.problem}</p>
           <p className="mt-3 text-[16px] leading-relaxed text-[#1d1d1f]">{PRODUCT_VISION.outcome}</p>
-          <p className="mt-3 text-[15px] leading-relaxed text-[#6e6e73]">{PRODUCT_VISION.not}</p>
+          <p className="mt-3 text-[15px] leading-relaxed text-[#6e6e73]">{PRODUCT_VISION.focus}</p>
           <p className="mt-4 text-[14px] leading-relaxed text-[#86868b]">{PRODUCT_VISION.icp}</p>
         </section>
 
@@ -105,7 +104,7 @@ export default function ProductPage() {
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            04 — What we built (live)
+            04 — In production
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
             Route5 is a signed-in workspace: projects, Desk processes, structured fields, and
@@ -142,12 +141,10 @@ export default function ProductPage() {
 
         <section id="roadmap" className="mt-12 scroll-mt-28 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            05 — Roadmap (explicitly not “vapor”)
+            05 — Roadmap
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-            These are directions we may pursue — they are{" "}
-            <strong className="font-medium text-[#1d1d1f]">not</strong> sold as
-            shipped product until they appear in the app and in our docs.
+            These themes describe where we are investing. Capabilities are committed when they are available in the product and documented here—not before.
           </p>
           <ul className="mt-6 space-y-3 text-[15px] leading-relaxed text-[#1d1d1f]">
             {PRODUCT_ROADMAP.map((line) => (
@@ -163,20 +160,20 @@ export default function ProductPage() {
             06 — Why teams talk to us
           </h2>
           <ul className="mt-6 space-y-3 text-[15px] leading-relaxed text-[#1d1d1f]">
-            <li>· Clarity: one workspace, one decision-capture flow, traceable history.</li>
-            <li>· Honesty: we label roadmap vs live — no ambiguity in diligence.</li>
-            <li>· Governance-friendly posture: human review before operational reliance on AI outputs.</li>
+            <li>· Clarity: one workspace, one capture flow, traceable history.</li>
+            <li>· Clear scope: in-product and documentation stay aligned on what is available today.</li>
+            <li>· Governance: human review of outputs before they drive operational decisions.</li>
           </ul>
         </section>
 
         <section className="mt-12 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            07 — Risks (we say them out loud)
+            07 — Using model-assisted capture responsibly
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-            Language models can hallucinate or miss context. Route5 outputs are
-            starting points — your SMEs and owners remain accountable for decisions.
-            We encode that in product copy and in our terms.
+            Language models can miss context. Route5 surfaces structured drafts; your
+            subject-matter experts and owners remain accountable for what ships. That
+            expectation is reflected in product copy and in our terms.
           </p>
         </section>
 

@@ -4,19 +4,19 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { defaultTransition, easeApple, inViewOpts } from "@/lib/motion";
 
-/** Themes from real enterprise conversations — not attributed testimonials. */
+/** Customer themes we hear in discovery — composite, not individual quotes. */
 const themes = [
   {
     title: "Alignment under pressure",
-    body: "Leaders want one narrative before they fund the next phase. They are tired of reconciling five versions of what we decided.",
+    body: "Leaders need a single view of what was decided and who owns the next step before the next budget or board cycle.",
   },
   {
-    title: "Audit without theater",
-    body: "Risk and ops teams ask for evidence that humans reviewed AI output. A durable project record answers that without extra tooling.",
+    title: "Review-ready records",
+    body: "Risk and operations teams need a durable project log that shows what was captured, when, and by whom—without standing up another system.",
   },
   {
-    title: "A path to automation",
-    body: "Engineering wants structured inputs before they commit to APIs or agents. Text-in / structured-out is the smallest honest first step.",
+    title: "Automation-ready inputs",
+    body: "Engineering teams want consistent structured fields before they invest in deeper integrations and agents.",
   },
 ];
 

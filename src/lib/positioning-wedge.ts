@@ -29,7 +29,7 @@ export const POSITIONING_WEDGE = {
     "Route5.ai is an enterprise execution layer: it turns decisions from meetings, threads, and documents into owned, tracked commitments—so nothing falls through the cracks between tools.",
   /** Subtle — discipline of execution */
   qualityBar:
-    "Not a task manager or summarizer—a system of record for who owes what, with health you can read from real state.",
+    "A system of record for ownership and deadlines: who owes what, when it is due, and how load and risk read from the same data your team updates.",
   /** Shark-style closer — qualify “real time” as in-app execution state, not omnichannel firehose */
   sharkOneLine:
     "Route5 sits above Slack, Notion, and email as the layer that enforces execution—persistent accountability from decision to done.",

@@ -5,7 +5,7 @@ import { PRODUCT_ROADMAP } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
   title: "Roadmap — Route5",
-  description: "Planned directions for Route5 — explicitly not the live product.",
+  description: "Planned directions for Route5. Roadmap items are not the live product until shipped.",
 };
 
 export default function DocsRoadmapPage() {
@@ -15,7 +15,7 @@ export default function DocsRoadmapPage() {
       backLabel="Guides"
       kicker="Guides"
       title="Roadmap"
-      intro="This page exists so “roadmap” is never a mystery link. Nothing below is guaranteed or sold as shipped product."
+      intro="Planned work and research themes. Items ship when they are available in the product and documented here."
     >
       <p>
         For vendor-specific requests (Slack, Jira, etc.), use{" "}
@@ -39,7 +39,7 @@ export default function DocsRoadmapPage() {
           href="/docs/product"
           className="font-medium text-[var(--workspace-accent)] underline-offset-4 hover:underline"
         >
-          ← What we ship (live)
+          ← Product (live)
         </Link>
       </p>
     </WorkspaceArticle>

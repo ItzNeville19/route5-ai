@@ -33,7 +33,7 @@ function OnboardingShellHeader() {
             href="/docs/product"
             className="font-medium text-[var(--workspace-accent)] underline-offset-2 hover:underline"
           >
-            What we ship
+            Product
           </Link>
         </p>
       </div>

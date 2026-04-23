@@ -19,7 +19,7 @@ Stack: Next.js (App Router), Clerk, Supabase, Stripe, optional OpenAI for struct
 3. In Clerk, allow your production URL (and `http://localhost:3000` for dev) under **Domains**.
 4. Run `npm run launch-check` locally before shipping (lint, theme audit, production build).
 5. Deploy to Vercel (or your host) and add the same env vars in project settings (never commit secrets).
-6. Signed-in workspace docs live under `/docs` (e.g. **Executive brief**, **Sales playbook**, **What we ship**).
+6. Signed-in workspace docs live under `/docs` (e.g. **Executive brief**, **Sales playbook**, **Product**).
 
 ### Local development
 

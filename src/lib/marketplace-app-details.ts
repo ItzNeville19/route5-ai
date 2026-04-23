@@ -106,13 +106,13 @@ const DETAILS: Record<string, { about: string; highlights: string[] }> = {
   },
   contact: {
     about:
-      "Support hub inside the workspace: opens the same contact flow as the public site so nothing is a fake button.",
+      "Support hub inside the workspace: opens the same contact flow as the public site for consistent handoff.",
     highlights: ["Sales, integrations, and onboarding", "Public form for deliverability"],
   },
   pitch: {
     about:
-      "The detailed “what we ship” briefing, now hosted under /docs/product so it always opens inside the workspace shell.",
-    highlights: ["Honest live vs roadmap", "Cross-links to boundaries and roadmap pages"],
+      "The full product guide, hosted under /docs/product so it opens in the workspace shell for signed-in users.",
+    highlights: ["Current capabilities vs roadmap", "Links to boundaries and roadmap pages"],
   },
   privacy: {
     about:

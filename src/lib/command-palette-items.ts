@@ -145,7 +145,7 @@ export function buildPaletteItems(params: {
       },
       {
         id: "product",
-        label: "What we ship",
+        label: "Product",
         href: "/product",
         description: "Product overview",
         keywords: ["product", "features", "pitch"],
@@ -503,7 +503,7 @@ export function buildPaletteItems(params: {
     },
     {
       id: "product-scope",
-      label: "What we ship (public)",
+      label: "Product (public site)",
       href: "/product",
       description: "Product scope — live vs roadmap",
       section: "site",

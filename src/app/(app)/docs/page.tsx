@@ -10,15 +10,15 @@ export const metadata: Metadata = {
 
 const featured = {
   href: "/docs/product",
-  title: "What we ship",
-  desc: "Read this first — what works in the app today versus ideas on the roadmap.",
+  title: "Product",
+  desc: "Start here—what is in the app today and what is still on the roadmap.",
 };
 
 const guides: { href: string; title: string; desc: string }[] = [
   {
     href: "/docs/boundaries",
-    title: "What we do not do (yet)",
-    desc: "So expectations stay realistic — no surprise promises.",
+    title: "Boundaries",
+    desc: "What is out of scope today and how we set expectations with customers.",
   },
   {
     href: "/docs/roadmap",

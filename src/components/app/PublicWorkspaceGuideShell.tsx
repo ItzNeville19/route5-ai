@@ -20,7 +20,7 @@ export default function PublicWorkspaceGuideShell({ children }: Props) {
         <div className="mx-auto flex max-w-[1280px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
             Signed-in users get Capture, Desk, projects, and integrations. You can explore scope and
-            limits in <Link href="/product" className="font-medium text-[var(--workspace-accent)] hover:underline">What we ship</Link>{" "}
+            limits in <Link href="/product" className="font-medium text-[var(--workspace-accent)] hover:underline">the product page</Link>{" "}
             and <Link href="/trust" className="font-medium text-[var(--workspace-accent)] hover:underline">Trust</Link>.
           </p>
           <div className="flex flex-wrap gap-3">

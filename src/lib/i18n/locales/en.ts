@@ -97,7 +97,7 @@ export const en: Record<string, string> = {
   "desk.llmOffLead":
     "Captures use a fast, clearly labeled heuristic — not full model understanding. Add",
   "desk.llmOffTail": "when you want AI-structured fields.",
-  "desk.llmOffRead": "What we ship →",
+  "desk.llmOffRead": "Product →",
 
   "desk.badge": "Task workspace",
   "desk.heroTitle": "Where follow-through becomes visible",
@@ -245,7 +245,7 @@ export const en: Record<string, string> = {
   "desk.resourcesLead": "What we promise, how to pilot, and example success metrics — no jargon tours.",
   "desk.linkCeoBrief": "Executive brief",
   "desk.linkPilot": "Pilot & discovery",
-  "desk.linkProduct": "What we ship",
+  "desk.linkProduct": "Product",
   "desk.resourcePlans": "Plans & limits",
 
   "desk.toastCopied": "Copied to clipboard.",
@@ -328,16 +328,17 @@ export const en: Record<string, string> = {
   "marketing.hero.openFeed": "Open Desk",
   "marketing.hero.marketplace": "Connections",
   "marketing.hero.signedOutTitle": "One flow: sign in → project → capture → process → prove completion.",
-  "marketing.hero.signedOutBody": "Structured commitments, owned actions, and metrics from data you saved — not vibes.",
+  "marketing.hero.signedOutBody":
+    "Structured commitments, clear owners, and metrics from the work your team saves in Route5.",
   "marketing.hero.createAccount": "Create account",
   "marketing.hero.logIn": "Log in",
   "marketing.hero.dashboard": "Dashboard",
   "marketing.hero.noClerkTitle": "One flow: sign in → project → capture → process → prove completion.",
-  "marketing.hero.noClerkBody": "Clear ownership and metrics from what you save — not a disposable chat.",
+  "marketing.hero.noClerkBody": "Clear ownership and metrics from the work you capture in your workspace.",
   "marketing.hero.contact": "Contact",
   "marketing.hero.getInTouch": "Get in touch",
   "marketing.hero.plans": "Plans",
-  "marketing.hero.whatWeShip": "What we ship",
+  "marketing.hero.whatWeShip": "Product",
 
   "marketing.hero.previewKicker": "Communication in · execution out",
   "marketing.hero.previewAria":
@@ -368,7 +369,7 @@ export const en: Record<string, string> = {
     "Paste into Capture or a project—meeting notes, threads, exports. Roadmap: Slack, email, Notion, and transcript ingestion so capture is not manual forever.",
   "marketing.simple.step2Title": "Owned commitments, not summaries",
   "marketing.simple.step2Body":
-    "Structured decision capture turns text into commitments and action—with owners and status. AI when configured; a clear offline process when not—never pretend a summary is execution.",
+    "Structured decision capture turns text into commitments and actions with owners and status. With AI enabled you get full structured fields; without it, a fast labeled process still produces the same record shape.",
   "marketing.simple.step3Title": "Execution health you can trust",
   "marketing.simple.step3Body":
     "Overview shows organizational execution health from saved state: overdue, at risk, unowned, and trends—same data your team actually updates.",
@@ -376,10 +377,10 @@ export const en: Record<string, string> = {
   "marketing.simple.vsChat.colArea": "Area",
   "marketing.simple.vsChat.colChat": "General chat",
   "marketing.simple.vsChat.colRoute5": "Route5",
-  "marketing.simple.vsChat.linkProduct": "Full comparison on What we ship →",
+  "marketing.simple.vsChat.linkProduct": "Full comparison on the product page →",
 
   "marketing.simple.trustNote":
-    "This is not a fake dashboard: charts and counts come from your workspace database. Connectors behave exactly as each integration page explains — tokens optional, samples labeled where we preview without a live API.",
+    "Charts and counts reflect data in your workspace. Each integration page describes how that connector works, including when API credentials are required.",
   "marketing.simple.linkProduct": "Full product scope",
   "marketing.simple.linkBoundaries": "Live vs roadmap (honest list)",
   "marketing.simple.anchor": "Plain-English story",
@@ -421,7 +422,7 @@ export const en: Record<string, string> = {
     "Tune hero copy, shortcuts, and how your workspace greets you — plus locale and timezone prefs.",
   "marketing.showcase.storyTitle": "Why Route5 exists",
   "marketing.showcase.storyBody":
-    "The problem, the missing layer between communication and execution, and what we ship today — plain language, no noise.",
+    "The gap between communication and execution, and how Route5 addresses it in plain language.",
 
   "marketing.showcase.relayTitle": "Relay assistant & command palette",
   "marketing.showcase.relayBody":
@@ -529,8 +530,8 @@ export const en: Record<string, string> = {
   "marketing.home.hero.ctaProduct": "How it works",
   "marketing.home.marquee.m1": "Plain-language home for every role",
   "marketing.home.marquee.m2": "Windows & Mac—shortcuts that match the OS",
-  "marketing.home.marquee.m3": "Companies, not project theater",
-  "marketing.home.marquee.m4": "Task tracker with real filters",
+  "marketing.home.marquee.m3": "Companies as the organizing unit",
+  "marketing.home.marquee.m4": "Task tracker with live filters",
   "marketing.home.marquee.m5": "Desk for notes → owned tasks",
   "marketing.home.marquee.m6": "Built for small teams with big expectations",
   "marketing.home.flow.s1": "Pull work in from real threads",
@@ -538,7 +539,7 @@ export const en: Record<string, string> = {
   "marketing.home.flow.s3": "Home & tracker stay in sync",
   "marketing.home.socialProof.badge": "Trusted structure",
   "marketing.home.socialProof.line":
-    "A calm home page, a real task tracker, and a Desk that turns notes into owners and dates—without pretending to be your whole stack.",
+    "A clear home, a full task tracker, and a Desk that turns notes into owners and dates—connected to the tools you already use.",
   "marketing.home.why.kicker": "Why?",
   "marketing.home.why.title": "Do you know who owns the next step tomorrow?",
   "marketing.home.why.lead": "If the answer lives in last week’s thread, you don’t have a system—you have a scavenger hunt.",
@@ -550,7 +551,7 @@ export const en: Record<string, string> = {
     "They are flexible—and fragile. The moment someone duplicates a tab, your single source of truth is gone.",
   "marketing.home.why.p3.title": "Status meetings recycle the same story",
   "marketing.home.why.p3.body":
-    "Route5 is the thin layer that keeps the work tied to people and companies so the narrative and the log match.",
+    "Route5 keeps work tied to people and companies so decisions, tasks, and history stay aligned in one place.",
   "marketing.home.solution.kicker": "Solution",
   "marketing.home.solution.title": "Start each day with tasks, owners, and companies in one place",
   "marketing.home.solution.body":
@@ -562,11 +563,11 @@ export const en: Record<string, string> = {
   "marketing.home.stage.row1": "Owners & due dates",
   "marketing.home.stage.row2": "History you can point to",
   "marketing.home.stage.disclaimer":
-    "After sign-in, numbers come from your workspace—no mock charts on the marketing page.",
+    "After sign-in, metrics and lists reflect your workspace data.",
   "marketing.home.platform.kicker": "The workspace",
   "marketing.home.platform.title": "From scattered updates to a record people trust",
   "marketing.home.platform.subtitle":
-    "We are not trying to replace your chat tool. We give you a thin layer for accountability—who, what, when—across companies and tasks.",
+    "Use Route5 alongside chat and email: a dedicated place for ownership—who, what, when—across companies and tasks.",
   "marketing.home.tile.capture.title": "Inbox to tasks",
   "marketing.home.tile.capture.body":
     "Paste real text from email or meetings. Route5 helps turn it into tasks with owners and deadlines you can review before they land.",
@@ -582,13 +583,13 @@ export const en: Record<string, string> = {
   "marketing.home.tile.identity.title": "Sign-in & rollout",
   "marketing.home.tile.identity.body":
     "Clerk-backed auth. When you are ready, we can talk SSO and a rollout that legal and IT are comfortable with.",
-  "marketing.home.tile.evidence.title": "Proof, not vibes",
+  "marketing.home.tile.evidence.title": "Exports & audit trail",
   "marketing.home.tile.evidence.body":
     "Exports and trails that line up with reviews and handoffs—because the story should match the log.",
   "marketing.home.story.kicker": "Why teams pick Route5",
   "marketing.home.story.title": "Accountability without another noisy feed",
   "marketing.home.story.lead":
-    "If your week is a mix of chat, docs, and heroic memory, Route5 is the small layer that makes ownership legible—without turning into a second Microsoft Teams.",
+    "When your week spans chat, docs, and inboxes, Route5 gives ownership and due dates a single home—complementing the tools your team already relies on.",
   "marketing.home.pillar.p1.title": "Names on the work",
   "marketing.home.pillar.p1.body": "Tasks have owners and dates. If it matters, it is written down where everyone can see it.",
   "marketing.home.pillar.p2.title": "Right level of signal",
@@ -598,10 +599,10 @@ export const en: Record<string, string> = {
   "marketing.home.audience.kicker": "Who it fits",
   "marketing.home.audience.title": "From operators to the people they report to",
   "marketing.home.audience.lead":
-    "Same product, three useful views—without three spreadsheets pretending to be the same plan.",
+    "The same data, shaped for how each role works: individual focus, team load, and org-wide visibility when you need it.",
   "marketing.home.audience.leadership.title": "Leaders",
   "marketing.home.audience.leadership.body":
-    "See risk and load from the same record your teams update—not a deck rebuilt Friday night.",
+    "See risk and load from the same task record your teams update every day.",
   "marketing.home.audience.operators.title": "Operators",
   "marketing.home.audience.operators.body":
     "Run a desk you can trust: overdue, due soon, and the next handoff—without living in a chat scroll.",
@@ -650,7 +651,7 @@ export const en: Record<string, string> = {
     "The second you copy a sheet for “just this week,” you have forked your plan. Route5 keeps one queue with real history.",
   "landing.why.p3.title": "Another inbox is not the answer",
   "landing.why.p3.body":
-    "We are not here to replace Slack or Teams. We sit above them so follow-through has a home that is not a meeting invite.",
+    "Route5 works alongside Slack and Microsoft Teams: a dedicated place for follow-through so commitments are not only visible inside a thread or meeting invite.",
 
   "landing.solution.kicker": "Solution",
   "landing.solution.title": "One workspace: companies, tasks, people.",
@@ -661,7 +662,7 @@ export const en: Record<string, string> = {
   "landing.solution.b3": "Desk turns messy notes into reviewable work before it hits the tracker.",
 
   "landing.how.kicker": "How it works",
-  "landing.how.title": "Three moves. No theater.",
+  "landing.how.title": "Three steps to running the week",
   "landing.how.s1.title": "Add the company",
   "landing.how.s1.body": "Create the line of business you are executing against so work is never ownerless context.",
   "landing.how.s2.title": "Drop reality on the Desk",
@@ -671,10 +672,11 @@ export const en: Record<string, string> = {
 
   "landing.bento.kicker": "Inside the workspace",
   "landing.bento.title": "Everything you need to run the week",
-  "landing.bento.subtitle": "Built for clarity on a white-and-sky canvas—fast to read, hard to fake.",
+  "landing.bento.subtitle":
+    "A calm, high-contrast workspace: fast to scan, easy to use every day on Mac and Windows.",
   "landing.bento.1.title": "Home that respects the role",
   "landing.bento.1.body": "Employees see their tasks. Managers see the team. Admins see the org when the job requires it.",
-  "landing.bento.2.title": "Companies, not costume projects",
+  "landing.bento.2.title": "Companies that match how you sell and deliver",
   "landing.bento.2.body": "Route5 uses “companies” as the durable container so your language matches how you sell and deliver.",
   "landing.bento.3.title": "Task tracker that is actually a tracker",
   "landing.bento.3.body": "Filters, search, and live data—so you are not maintaining a parallel spreadsheet for the truth.",
@@ -688,13 +690,15 @@ export const en: Record<string, string> = {
   "landing.integrations.kicker": "Connectors",
   "landing.integrations.title": "Bring the tools you already pay for",
   "landing.integrations.line":
-    "Integrations keep context flowing so your people are not retyping the same story in three places.",
+    "Connect the tools you already use so context flows into the same task and company record.",
 
   "landing.teams.kicker": "Who it is for",
   "landing.teams.title": "Operators, managers, and the folks who sign the checks",
-  "landing.teams.lead": "Same product—three honest views. No duplicate spreadsheets pretending to be alignment.",
+  "landing.teams.lead":
+    "Individual contributors, people leaders, and buyers each get a view that fits their job—grounded in the same task and company data.",
   "landing.teams.c1.title": "People doing the work",
-  "landing.teams.c1.body": "A home page with your overdue, your upcoming, and your companies—no junk, no vague “insights.”",
+  "landing.teams.c1.body":
+    "A home view with your overdue and upcoming work, organized by company and priority.",
   "landing.teams.c2.title": "People leading the work",
   "landing.teams.c2.body": "See who is underwater, what is due soon, and open the full team view when you need the whole picture.",
   "landing.teams.c3.title": "People buying the work",

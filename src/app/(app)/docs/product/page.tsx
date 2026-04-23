@@ -4,8 +4,8 @@ import { WorkspaceArticle } from "@/components/workspace/WorkspaceArticle";
 import { PRODUCT_LIVE, PRODUCT_ROADMAP, PRODUCT_VALUE_REALITY } from "@/lib/product-truth";
 
 export const metadata: Metadata = {
-  title: "What we ship — Route5",
-  description: "Live workspace capabilities and honest roadmap labeling.",
+  title: "Product — Route5",
+  description: "Live workspace capabilities and roadmap labeling.",
 };
 
 export default function DocsProductPage() {
@@ -14,8 +14,8 @@ export default function DocsProductPage() {
       backHref="/docs"
       backLabel="Guides"
       kicker="Guides"
-      title="What we ship"
-      intro="Simple version: projects hold your work, Desk turns pasted notes into clear next steps and checklists, and the overview shows real progress. Details and honest limits are below."
+      title="Product"
+      intro="Projects hold your work, Desk turns pasted notes into clear next steps and checklists, and Overview shows progress from the same data. Scope and limits are summarized below."
     >
       <section className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-5 sm:p-6">
         <h2 className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-fg)]">

@@ -7,16 +7,16 @@ const TRACKS = [
   {
     id: "leadership",
     label: "Leadership",
-    headline: "See drift before it becomes someone else’s quarterly narrative.",
-    sub: "One place for overdue load, owner pressure, and escalation posture—without another status circus.",
+    headline: "See load and risk while work is still in flight.",
+    sub: "One place for overdue work, owner load, and escalation when commitments slip.",
     bullets: [
       "Ownership and deadlines stay visible across teams.",
       "Threshold-based escalations when commitments slip.",
-      "Digest-ready signals for exec reviews—not vanity charts.",
+      "Digest-ready signals for leadership reviews.",
     ],
     emphasis: {
-      line: "Executive altitude",
-      sub: "Governance without babysitting spreadsheets.",
+      line: "Executive view",
+      sub: "Governance from the same data your teams update.",
       tone: "emerald" as const,
     },
   },
@@ -39,7 +39,7 @@ const TRACKS = [
   {
     id: "teams",
     label: "Teams",
-    headline: "Accountability as how you run the week—not a poster.",
+    headline: "Run the week from clear ownership and shared context.",
     sub: "Roles, invites, and membership mirror how large programs actually coordinate across sites.",
     bullets: [
       "Organization roles with explicit permissions.",
@@ -57,7 +57,7 @@ const TRACKS = [
 const FAQ = [
   {
     q: "How is this different from a task tracker?",
-    a: "Task tools reward typing tasks. Route5 is built for decisions: who owns it, when it’s due, and what changed when reality hits—so execution stays honest.",
+    a: "Task lists capture items. Route5 is built for commitments tied to owners and dates—so you can see what still needs a decision, what moved, and what is overdue.",
   },
   {
     q: "We already record meetings.",

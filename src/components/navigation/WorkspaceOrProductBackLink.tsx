@@ -40,7 +40,7 @@ export default function WorkspaceOrProductBackLink({
 
   return (
     <Link href="/product" className={className}>
-      ← What we ship
+      ← Product
     </Link>
   );
 }

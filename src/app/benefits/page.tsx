@@ -15,7 +15,7 @@ const BENEFITS = [
   },
   {
     title: "Employee-first accountability",
-    body: "Work stays grouped by owner and visible by assignee, which makes follow-through clear without noisy status theater.",
+    body: "Work stays grouped by owner and assignee, so follow-through is visible without extra status meetings.",
   },
   {
     title: "Signals your team can trust",
