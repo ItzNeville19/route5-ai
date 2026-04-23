@@ -145,6 +145,7 @@ export async function POST(req: Request) {
         deadline: row.deadline,
         priority: body.priority,
         commitmentId: row.id,
+        description: body.description ?? null,
       });
     }
     return NextResponse.json({ commitment: row });
