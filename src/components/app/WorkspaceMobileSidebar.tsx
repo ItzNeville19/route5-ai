@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
+import type { LucideIcon } from "lucide-react";
 import {
   X,
   ListChecks,
@@ -14,9 +15,11 @@ import {
   Settings,
   CreditCard,
   ListTodo,
+  Keyboard,
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 const tierLabel =
   process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
@@ -26,29 +29,15 @@ type WorkspaceMobileSidebarProps = {
   onClose: () => void;
 };
 
-const ACCOUNT: {
-  title: string;
-  items: { href: string; label: string; icon: (typeof ListChecks) }[];
-}[] = [
-  {
-    title: "People",
-    items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
-  },
-  {
-    title: "Account",
-    items: [
-      { href: "/workspace/customize", label: "Customize", icon: Palette },
-      { href: "/workspace/help", label: "Help", icon: LifeBuoy },
-      { href: "/settings", label: "Settings", icon: Settings },
-      { href: "/workspace/billing", label: "Billing", icon: CreditCard },
-    ],
-  },
-];
+type NavItem =
+  | { href: string; label: string; icon: LucideIcon }
+  | { href: "__shortcuts__"; label: string; icon: LucideIcon };
 
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
   const { entitlements } = useWorkspaceData();
+  const { t } = useI18n();
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
@@ -62,10 +51,31 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           { href: "/workspace/commitments", label: "Task tracker", icon: ListTodo },
         ],
       },
-      ...ACCOUNT,
+      {
+        title: "People",
+        items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
+      },
+      {
+        title: t("sidebar.sectionShortcuts"),
+        items: [{ href: "__shortcuts__" as const, label: t("sidebar.shortcuts"), icon: Keyboard }],
+      },
+      {
+        title: "Account",
+        items: [
+          { href: "/workspace/customize", label: "Customize", icon: Palette },
+          { href: "/workspace/help", label: "Help", icon: LifeBuoy },
+          { href: "/settings", label: "Settings", icon: Settings },
+          { href: "/workspace/billing", label: "Billing", icon: CreditCard },
+        ],
+      },
     ],
-    []
+    [t]
   );
+
+  const openShortcuts = () => {
+    window.dispatchEvent(new Event("route5:shortcuts-open"));
+    onClose();
+  };
 
   return (
     <div
@@ -102,6 +112,19 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
               <div className="space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
+                  if (item.href === "__shortcuts__") {
+                    return (
+                      <button
+                        key={`${section.title}-${item.label}`}
+                        type="button"
+                        onClick={openShortcuts}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  }
                   const active =
                     pathname === item.href ||
                     (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||

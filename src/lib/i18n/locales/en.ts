@@ -13,6 +13,8 @@ export const en: Record<string, string> = {
   "sidebar.sectionOps": "Operations",
   "sidebar.sectionConnect": "Connect",
   "sidebar.sectionAccount": "Account",
+  "sidebar.sectionShortcuts": "Shortcuts",
+  "sidebar.shortcuts": "Shortcuts",
   "sidebar.sectionPeople": "People",
   "sidebar.notifications": "Notifications",
   "sidebar.overview": "Overview",

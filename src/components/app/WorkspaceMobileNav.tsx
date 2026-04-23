@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, ListChecks, ListTodo, Settings } from "lucide-react";
+import { BarChart3, Keyboard, ListChecks, ListTodo, Settings } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 function LinkTab({
   href,
@@ -20,7 +21,7 @@ function LinkTab({
   return (
     <Link
       href={href}
-      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] ${
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] ${
         active ? "bg-r5-surface-secondary text-r5-text-primary" : "text-r5-text-tertiary hover:bg-r5-surface-hover hover:text-r5-text-primary"
       }`}
     >
@@ -30,11 +31,26 @@ function LinkTab({
   );
 }
 
+function ShortcutsTab({ label }: { label: string }) {
+  return (
+    <button
+      type="button"
+      className="flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none text-r5-text-tertiary transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+      aria-label={`${label} — open keyboard shortcuts`}
+      onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
+    >
+      <Keyboard style={{ width: "var(--r5-icon-nav)", height: "var(--r5-icon-nav)" }} strokeWidth={1.75} aria-hidden />
+      <span className="max-w-full truncate">{label}</span>
+    </button>
+  );
+}
+
 export default function WorkspaceMobileNav() {
   const pathname = usePathname() ?? "";
   const path = pathname.split("?")[0] ?? pathname;
   const { orgUiPolicy, orgRole } = useWorkspaceData();
   const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole);
+  const { t } = useI18n();
 
   return (
     <nav
@@ -55,6 +71,7 @@ export default function WorkspaceMobileNav() {
           active={path.startsWith("/workspace/commitments")}
         />
       ) : null}
+      <ShortcutsTab label={t("sidebar.shortcuts")} />
       {show("settings") ? (
         <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
       ) : null}

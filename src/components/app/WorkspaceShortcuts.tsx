@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
-import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
+import {
+  primaryModLabelFromNavigator,
+  shortcutsSheetPlatformNotes,
+} from "@/lib/platform-shortcuts";
 
 /**
  * Workspace keyboard shortcuts — toggle with ? outside inputs, or open via
@@ -14,6 +17,7 @@ export default function WorkspaceShortcuts() {
   const pathname = usePathname();
   const [helpOpen, setHelpOpen] = useState(false);
   const modLabel = primaryModLabelFromNavigator();
+  const platformNotes = shortcutsSheetPlatformNotes();
 
   useEffect(() => {
     const open = () => setHelpOpen(true);
@@ -25,6 +29,17 @@ export default function WorkspaceShortcuts() {
       window.removeEventListener("route5:shortcuts-close", close);
     };
   }, []);
+
+  useEffect(() => {
+    if (!helpOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.preventDefault();
+      setHelpOpen(false);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [helpOpen]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -133,6 +148,16 @@ export default function WorkspaceShortcuts() {
                   </kbd>{" "}
                   anytime (outside a text field) to open or close this sheet.
                 </p>
+                {platformNotes.length > 0 ? (
+                  <ul className="mt-3 space-y-1.5 border-t border-white/[0.08] pt-3 text-[12px] leading-snug text-zinc-400">
+                    {platformNotes.map((line) => (
+                      <li key={line} className="flex gap-2">
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-violet-400/80" aria-hidden />
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </div>
 
               <div className="mt-5 rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.14] to-transparent px-4 py-3.5">

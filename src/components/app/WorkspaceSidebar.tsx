@@ -161,6 +161,22 @@ export default function WorkspaceSidebar() {
           />
 
           <div className="space-y-[var(--r5-space-1)]">
+            <NavSectionTitle>{t("sidebar.sectionShortcuts")}</NavSectionTitle>
+            <NavRow
+              active={false}
+              icon={Keyboard}
+              label={t("sidebar.shortcuts")}
+              onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
+            />
+          </div>
+
+          <div
+            className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle"
+            role="separator"
+            aria-hidden
+          />
+
+          <div className="space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionAccount")}</NavSectionTitle>
             {show("customize") ? (
               <NavRow
@@ -194,12 +210,6 @@ export default function WorkspaceSidebar() {
                 label="Billing"
               />
             ) : null}
-            <NavRow
-              active={false}
-              icon={Keyboard}
-              label="Shortcuts"
-              onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
-            />
             <NavRow
               active={false}
               icon={Bell}
