@@ -1,274 +1,140 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, Box, Layers3, LayoutGrid, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { useMemo } from "react";
+import { motion } from "framer-motion";
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Keyboard,
+  LayoutGrid,
+  Link2,
+  ListTodo,
+  MessageSquare,
+  Shield,
+  Sparkles,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { TRIAL_BODY, TRIAL_SUBLINE } from "@/lib/marketing-copy";
+import { TRIAL_BODY } from "@/lib/marketing-copy";
 
-const TILE_IDS = ["capture", "desk", "signal", "integrations", "identity", "evidence"] as const;
-
-function TiltPanel({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const springX = useSpring(mx, { stiffness: 280, damping: 28 });
-  const springY = useSpring(my, { stiffness: 280, damping: 28 });
-  const rx = useTransform(springY, [-0.5, 0.5], [7, -7]);
-  const ry = useTransform(springX, [-0.5, 0.5], [-7, 7]);
-
-  function onMove(e: React.MouseEvent) {
-    const el = ref.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
-  }
-  function onLeave() {
-    mx.set(0);
-    my.set(0);
-  }
-
-  return (
-    <motion.div
-      ref={ref}
-      style={{ rotateX: rx, rotateY: ry, transformStyle: "preserve-3d" }}
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
-}
+const fadeUp = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, amount: 0.2 },
+  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+};
 
 export default function MarketingHomeClient() {
   const { t } = useI18n();
 
-  const marqueeItems = useMemo(
-    () =>
-      ["m1", "m2", "m3", "m4", "m5", "m6"].map((k) => t(`marketing.home.marquee.${k}`)),
+  const ticker = useMemo(
+    () => ["1", "2", "3", "4", "5", "6"].map((k) => t(`landing.ticker.${k}`)),
     [t]
   );
 
-  const steps = useMemo(
-    () =>
-      [
-        { key: "s1", icon: Zap },
-        { key: "s2", icon: Layers3 },
-        { key: "s3", icon: Sparkles },
-      ] as const,
-    []
-  );
-
   return (
-    <>
-      {/* Hero */}
+    <div className="bg-white text-slate-900">
+      {/* Hero — white / sky / blue wash (Godmode-adjacent clarity, Route5 product) */}
       <section
         id="hero"
-        className="relative overflow-hidden border-b border-white/[0.06] pb-20 pt-[calc(5rem+env(safe-area-inset-top,0px))] sm:pb-28 sm:pt-[5.75rem]"
+        className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-br from-white via-sky-50/90 to-blue-50/70 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pb-24"
       >
-        <motion.div
-          className="pointer-events-none absolute -left-[20%] top-[-30%] h-[min(90vh,720px)] w-[min(100vw,900px)] rounded-[50%] blur-[100px]"
-          style={{
-            background:
-              "radial-gradient(circle at 40% 40%, rgba(56,189,248,0.22), transparent 55%), radial-gradient(circle at 70% 60%, rgba(251,191,36,0.07), transparent 50%)",
-          }}
-          animate={{ opacity: [0.55, 0.85, 0.55] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_70%_-10%,rgba(59,130,246,0.12),transparent_55%)]"
           aria-hidden
         />
-
-        <div className="relative mx-auto grid max-w-[1280px] gap-16 px-5 sm:px-8 lg:grid-cols-12 lg:gap-14 lg:px-10">
-          <motion.div
-            className="lg:col-span-7"
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-200/95">
-                {t("marketing.home.hero.kicker")}
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                {t("marketing.home.hero.subkicker")}
-              </span>
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-10">
+          <motion.div className="lg:col-span-7" {...fadeUp}>
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 shadow-sm backdrop-blur-sm">
+              {t("landing.hero.badge")}
             </div>
-            <h1 className="font-landing-display mt-7 max-w-[20ch] text-balance text-[clamp(2.5rem,6.8vw,4.25rem)] font-semibold leading-[1.02] tracking-[-0.038em] text-white lg:max-w-none">
-              {t("marketing.home.hero.titleTop")}
-              <span className="mt-[0.06em] block bg-gradient-to-r from-cyan-200 via-white to-amber-100 bg-clip-text text-transparent">
-                {t("marketing.home.hero.titleAccent")}
+            <h1 className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-slate-900">
+              {t("landing.hero.title1")}{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
+                {t("landing.hero.title2")}
               </span>
             </h1>
-            <p className="mt-8 max-w-[40rem] text-pretty text-[clamp(1.06rem,1.9vw,1.22rem)] leading-[1.65] text-slate-400">
-              {t("marketing.home.hero.lead")}
+            <p className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-600">
+              {t("landing.hero.lead")}
             </p>
-            <p className="mt-5 max-w-[40rem] text-[14px] leading-relaxed text-slate-500">{TRIAL_BODY}</p>
-            <div className="mt-10 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-500">{TRIAL_BODY}</p>
+            <div className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/sign-up"
-                className="inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-9 text-[15px] font-semibold text-slate-950 shadow-[0_24px_60px_-28px_rgba(34,211,238,0.55)] ring-1 ring-white/15 transition hover:brightness-110 active:scale-[0.99] sm:w-auto"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700"
               >
-                {t("marketing.home.hero.ctaPrimary")}
-              </Link>
-              <a
-                href="mailto:neville@rayze.xyz?subject=Route5%20—%20Enterprise%20briefing"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-white/14 bg-white/[0.04] px-9 text-[15px] font-semibold text-zinc-100 backdrop-blur-md transition hover:border-amber-400/35 hover:bg-white/[0.07] active:scale-[0.99] sm:w-auto"
-              >
-                {t("marketing.home.hero.ctaSales")}
-              </a>
-              <Link
-                href="/product"
-                className="inline-flex min-h-12 w-full items-center justify-center gap-1 text-[14px] font-medium text-slate-500 underline-offset-4 transition hover:text-slate-300 hover:underline sm:w-auto sm:px-2"
-              >
-                {t("marketing.home.hero.ctaProduct")}
-                <ArrowRight className="h-4 w-4 opacity-70" aria-hidden />
-              </Link>
-            </div>
-            <p className="mt-6 text-[12px] tracking-wide text-slate-600">{TRIAL_SUBLINE}</p>
-
-            <motion.ul
-              className="mt-12 flex flex-wrap gap-3"
-              initial="hidden"
-              animate="show"
-              variants={{
-                hidden: {},
-                show: { transition: { staggerChildren: 0.08 } },
-              }}
-            >
-              {steps.map(({ key, icon: Icon }) => (
-                <motion.li
-                  key={key}
-                  variants={{
-                    hidden: { opacity: 0, y: 12 },
-                    show: { opacity: 1, y: 0 },
-                  }}
-                  className="flex items-center gap-2 rounded-2xl border border-white/[0.08] bg-[#070b14]/75 px-4 py-3 text-[13px] text-slate-400 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-md"
-                >
-                  <Icon className="h-4 w-4 shrink-0 text-cyan-300/90" aria-hidden />
-                  <span className="font-medium text-slate-200">{t(`marketing.home.flow.${key}`)}</span>
-                </motion.li>
-              ))}
-            </motion.ul>
-          </motion.div>
-
-          <motion.div
-            className="relative flex flex-col justify-center lg:col-span-5"
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.85, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="relative [perspective:1400px]">
-              <TiltPanel className="relative rounded-[28px] border border-white/10 bg-gradient-to-br from-[#050c18]/95 via-[#061525]/90 to-[#020617] p-[1px] shadow-[0_40px_120px_-48px_rgba(34,211,238,0.35)]">
-                <div className="rounded-[27px] bg-[#050b14]/95 p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                  <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-400/90">
-                    <Box className="h-4 w-4" aria-hidden />
-                    {t("marketing.home.stage.label")}
-                  </div>
-                  <p className="font-landing-display mt-6 text-[clamp(1.6rem,3.4vw,2.1rem)] font-semibold tracking-[-0.03em] text-white">
-                    {t("marketing.home.stage.title")}
-                  </p>
-                  <p className="mt-4 text-[14px] leading-relaxed text-slate-400">{t("marketing.home.stage.body")}</p>
-                  <div className="mt-8 grid gap-3 text-[12px] text-slate-500">
-                    <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                      <span>{t("marketing.home.stage.row1")}</span>
-                      <span className="font-mono text-cyan-300/90">●</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                      <span>{t("marketing.home.stage.row2")}</span>
-                      <span className="font-mono text-amber-200/90">●</span>
-                    </div>
-                  </div>
-                  <p className="mt-6 text-[11px] leading-relaxed text-slate-600">{t("marketing.home.stage.disclaimer")}</p>
-                </div>
-              </TiltPanel>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Social + Why + Solution (structure inspired by classic PLG / agent landing pages — copy is original to Route5) */}
-      <section
-        className="border-b border-white/[0.06] bg-[#010409] py-16 sm:py-20"
-        aria-labelledby="marketing-why-heading"
-      >
-        <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-10">
-          <div className="flex flex-col items-center text-center">
-            <span className="inline-flex items-center rounded-full border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/90">
-              {t("marketing.home.socialProof.badge")}
-            </span>
-            <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-slate-500">{t("marketing.home.socialProof.line")}</p>
-          </div>
-
-          <div className="mt-16 border-t border-white/[0.06] pt-16">
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300/85">
-              {t("marketing.home.why.kicker")}
-            </p>
-            <h2
-              id="marketing-why-heading"
-              className="font-landing-display mx-auto mt-4 max-w-[40rem] text-center text-[clamp(1.5rem,3.2vw,2.1rem)] font-semibold leading-tight tracking-[-0.02em] text-white"
-            >
-              {t("marketing.home.why.title")}
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-center text-[15px] leading-relaxed text-slate-500">
-              {t("marketing.home.why.lead")}
-            </p>
-            <ul className="mt-12 grid gap-5 md:grid-cols-3">
-              {(["p1", "p2", "p3"] as const).map((pid) => (
-                <li
-                  key={pid}
-                  className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0a1420]/95 to-[#040b14] p-7 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
-                >
-                  <p className="font-landing-display text-[15px] font-semibold text-white">
-                    {t(`marketing.home.why.${pid}.title`)}
-                  </p>
-                  <p className="mt-3 text-[14px] leading-relaxed text-slate-500">{t(`marketing.home.why.${pid}.body`)}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-16 rounded-[24px] border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.07] via-transparent to-amber-500/[0.06] p-8 sm:p-10">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/90">{t("marketing.home.solution.kicker")}</p>
-            <h3 className="font-landing-display mt-4 text-[clamp(1.35rem,2.8vw,1.9rem)] font-semibold leading-snug tracking-[-0.02em] text-white">
-              {t("marketing.home.solution.title")}
-            </h3>
-            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-slate-400">{t("marketing.home.solution.body")}</p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3 sm:justify-start">
-              <Link
-                href="/sign-up"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-8 text-[14px] font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
-              >
-                {t("marketing.home.hero.ctaPrimary")}
+                {t("landing.hero.ctaPrimary")}
               </Link>
               <a
                 href="mailto:neville@rayze.xyz?subject=Route5%20—%20walkthrough"
-                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-8 text-[14px] font-semibold text-zinc-100 transition hover:border-amber-400/35"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-[15px] font-semibold text-slate-800 shadow-sm transition hover:border-blue-300 hover:bg-slate-50"
               >
-                {t("marketing.home.hero.ctaSales")}
+                {t("landing.hero.ctaSecondary")}
               </a>
+              <Link
+                href="/product"
+                className="inline-flex min-h-12 items-center justify-center gap-1 text-[15px] font-medium text-slate-500 underline-offset-4 transition hover:text-blue-700 hover:underline sm:px-2"
+              >
+                {t("landing.hero.ctaProduct")}
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Link>
             </div>
-          </div>
+            <p className="mt-5 text-[12px] font-medium tracking-wide text-slate-500">{t("landing.trial")}</p>
+          </motion.div>
+
+          <motion.div
+            className="relative lg:col-span-5"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_24px_80px_-32px_rgba(37,99,235,0.35)]">
+              <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <p className="text-[13px] font-semibold text-slate-800">{t("landing.hero.mockTitle")}</p>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                  Live
+                </span>
+              </div>
+              <ul className="mt-4 space-y-3 text-[13px] text-slate-700">
+                <li className="flex gap-3 rounded-xl bg-slate-50/90 px-3 py-2.5">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" aria-hidden />
+                  <span>{t("landing.hero.mock1")}</span>
+                </li>
+                <li className="flex gap-3 rounded-xl bg-white px-3 py-2.5 ring-1 ring-blue-100">
+                  <ListTodo className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" aria-hidden />
+                  <span className="font-medium">{t("landing.hero.mock2")}</span>
+                </li>
+                <li className="flex gap-3 rounded-xl bg-slate-50/90 px-3 py-2.5">
+                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" aria-hidden />
+                  <span>{t("landing.hero.mock3")}</span>
+                </li>
+              </ul>
+              <div className="mt-5 flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-[11px] text-slate-500">
+                <Sparkles className="h-3.5 w-3.5 text-blue-500" aria-hidden />
+                Desk → tasks with owners & dates
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Marquee */}
-      <div className="border-y border-white/[0.06] bg-black/40">
-        <div className="relative overflow-hidden py-4">
+      {/* Ticker */}
+      <div className="border-b border-slate-200 bg-slate-50/90">
+        <div className="relative overflow-hidden py-3.5">
           <div className="landing-fortune-marquee-track flex w-max gap-16 px-6">
             {[0, 1].map((dup) => (
-              <div key={dup} className="flex shrink-0 items-center gap-16" aria-hidden={dup === 1}>
-                {marqueeItems.map((item) => (
+              <div
+                key={dup}
+                className="flex shrink-0 items-center gap-16"
+                aria-hidden={dup === 1}
+              >
+                {ticker.map((item) => (
                   <span
                     key={`${dup}-${item}`}
-                    className="route5-landing-section-label whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
+                    className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
                   >
                     {item}
                   </span>
@@ -279,157 +145,270 @@ export default function MarketingHomeClient() {
         </div>
       </div>
 
-      {/* Platform bento */}
-      <section id="platform" className="relative border-b border-white/[0.06] bg-[#020617] py-20 sm:py-28">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(56,189,248,0.08),transparent)]" aria-hidden />
-        <div className="relative mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-10">
-          <motion.div
-            className="max-w-2xl"
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.55 }}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/85">{t("marketing.home.platform.kicker")}</p>
-            <h2 className="font-landing-display mt-4 text-[clamp(1.65rem,3.4vw,2.45rem)] font-semibold tracking-[-0.028em] text-white">
-              {t("marketing.home.platform.title")}
+      {/* Trust + Why */}
+      <section
+        id="why-route5"
+        className="border-b border-slate-200 bg-white py-20 sm:py-28"
+      >
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <p className="text-center text-[15px] font-medium text-slate-500">{t("landing.trust.line")}</p>
+
+          <motion.div className="mt-20 text-center" {...fadeUp}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-600">
+              {t("landing.why.kicker")}
+            </p>
+            <h2 className="mt-4 font-landing-display text-[clamp(1.65rem,3.2vw,2.35rem)] font-semibold tracking-[-0.02em] text-slate-900">
+              {t("landing.why.title")}
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-slate-500">{t("marketing.home.platform.subtitle")}</p>
+            <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-slate-600">
+              {t("landing.why.lead")}
+            </p>
           </motion.div>
 
-          <ul className="mt-14 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {TILE_IDS.map((id, i) => (
-              <motion.li
-                key={id}
-                initial={{ opacity: 0, y: 22 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.45, delay: i * 0.05 }}
-              >
-                <div className="group relative h-full overflow-hidden rounded-2xl border border-white/[0.07] bg-gradient-to-br from-[#0a1428]/95 to-[#030712] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition duration-300 hover:border-cyan-400/25 hover:shadow-[0_28px_80px_-48px_rgba(34,211,238,0.18)]">
-                  <div
-                    className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-gradient-to-br from-cyan-400/18 to-amber-400/10 opacity-90 blur-3xl transition duration-500 group-hover:opacity-100"
-                    aria-hidden
-                  />
-                  <LayoutGrid className="relative h-5 w-5 text-cyan-300/80" aria-hidden />
-                  <p className="font-landing-display relative mt-5 text-[15px] font-semibold tracking-wide text-white">
-                    {t(`marketing.home.tile.${id}.title`)}
-                  </p>
-                  <p className="relative mt-3 text-[13px] leading-relaxed text-slate-500">
-                    {t(`marketing.home.tile.${id}.body`)}
-                  </p>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* Differentiation */}
-      <section id="story" className="mx-auto max-w-[1280px] px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
-        <div className="flex flex-col gap-14 lg:flex-row lg:items-end lg:justify-between">
-          <motion.div
-            className="max-w-xl"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-300/80">{t("marketing.home.story.kicker")}</p>
-            <h2 className="font-landing-display mt-4 text-[clamp(1.5rem,3vw,2.15rem)] font-semibold tracking-[-0.02em] text-white">
-              {t("marketing.home.story.title")}
-            </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-slate-500">{t("marketing.home.story.lead")}</p>
-          </motion.div>
-          <ul className="grid flex-1 gap-4 sm:grid-cols-3 lg:max-w-[820px] lg:gap-5">
-            {["p1", "p2", "p3"].map((pid, idx) => (
+          <ul className="mt-14 grid gap-6 md:grid-cols-3">
+            {(["p1", "p2", "p3"] as const).map((pid, i) => (
               <motion.li
                 key={pid}
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.45, delay: idx * 0.08 }}
-                className="rounded-xl border border-white/[0.08] bg-[#070b14]/90 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm"
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.45, delay: i * 0.06 }}
+                className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-7 shadow-sm"
               >
-                <p className="font-landing-display text-[13px] font-semibold uppercase tracking-wide text-white">
-                  {t(`marketing.home.pillar.${pid}.title`)}
+                <p className="font-landing-display text-[16px] font-semibold text-slate-900">
+                  {t(`landing.why.${pid}.title`)}
                 </p>
-                <p className="mt-3 text-[13px] leading-relaxed text-slate-500">{t(`marketing.home.pillar.${pid}.body`)}</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                  {t(`landing.why.${pid}.body`)}
+                </p>
               </motion.li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* Audiences */}
-      <section id="audiences" className="border-t border-white/[0.06] bg-[#020617] px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
-        <div className="mx-auto max-w-[1280px]">
-          <motion.div
-            className="mb-14 max-w-xl"
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/85">{t("marketing.home.audience.kicker")}</p>
-            <h2 className="font-landing-display mt-4 text-[clamp(1.5rem,3vw,2.1rem)] font-semibold tracking-[-0.02em] text-white">
-              {t("marketing.home.audience.title")}
+      {/* Solution band */}
+      <section className="border-b border-blue-700/20 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 py-16 sm:py-20">
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-3xl text-center text-white">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100/90">
+              {t("landing.solution.kicker")}
+            </p>
+            <h2 className="mt-4 font-landing-display text-[clamp(1.6rem,3vw,2.1rem)] font-semibold leading-tight tracking-[-0.02em]">
+              {t("landing.solution.title")}
             </h2>
-            <p className="mt-3 text-[15px] leading-relaxed text-slate-500">{t("marketing.home.audience.lead")}</p>
-          </motion.div>
-          <ul className="grid gap-6 md:grid-cols-3">
-            {["leadership", "operators", "procurement"].map((aud, idx) => (
-              <motion.li
-                key={aud}
-                initial={{ opacity: 0, y: 22 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{ duration: 0.5, delay: idx * 0.07 }}
-                className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0a1422] to-[#050916] p-8 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+            <p className="mt-4 text-[16px] leading-relaxed text-blue-50/95">{t("landing.solution.body")}</p>
+          </div>
+          <ul className="mt-12 grid gap-4 md:grid-cols-3">
+            {[
+              { icon: Building2, key: "b1" as const },
+              { icon: ListTodo, key: "b2" as const },
+              { icon: Zap, key: "b3" as const },
+            ].map(({ icon: Icon, key }) => (
+              <li
+                key={key}
+                className="flex gap-4 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm"
               >
-                <ShieldCheck className="h-5 w-5 text-cyan-300/75" aria-hidden />
-                <p className="font-landing-display mt-5 text-[15px] font-semibold text-white">{t(`marketing.home.audience.${aud}.title`)}</p>
-                <p className="mt-4 text-[14px] leading-relaxed text-slate-500">{t(`marketing.home.audience.${aud}.body`)}</p>
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-white" strokeWidth={2} aria-hidden />
+                <p className="text-[14px] leading-relaxed text-white/95">{t(`landing.solution.${key}`)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section
+        id="how-it-works"
+        className="border-b border-slate-200 bg-slate-50/50 py-20 sm:py-28"
+      >
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <motion.div className="text-center" {...fadeUp}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+              {t("landing.how.kicker")}
+            </p>
+            <h2 className="mt-3 font-landing-display text-[clamp(1.6rem,3vw,2.1rem)] font-semibold text-slate-900">
+              {t("landing.how.title")}
+            </h2>
+          </motion.div>
+          <ol className="mt-14 grid gap-8 md:grid-cols-3">
+            {(
+              [
+                { n: "1", k: "s1" as const, icon: Building2 },
+                { n: "2", k: "s2" as const, icon: MessageSquare },
+                { n: "3", k: "s3" as const, icon: Keyboard },
+              ] as const
+            ).map(({ n, k, icon: Icon }) => (
+              <li
+                key={k}
+                className="relative rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
+              >
+                <span className="font-landing-display text-3xl font-bold text-blue-100">{n}</span>
+                <Icon className="mt-4 h-6 w-6 text-blue-600" aria-hidden />
+                <p className="mt-3 font-landing-display text-[17px] font-semibold text-slate-900">
+                  {t(`landing.how.${k}.title`)}
+                </p>
+                <p className="mt-2 text-[14px] leading-relaxed text-slate-600">
+                  {t(`landing.how.${k}.body`)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Bento / workspace */}
+      <section
+        id="workspace"
+        className="border-b border-slate-200 bg-white py-20 sm:py-28"
+      >
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <motion.div className="max-w-2xl" {...fadeUp}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+              {t("landing.bento.kicker")}
+            </p>
+            <h2 className="mt-3 font-landing-display text-[clamp(1.65rem,3.2vw,2.3rem)] font-semibold text-slate-900">
+              {t("landing.bento.title")}
+            </h2>
+            <p className="mt-3 text-[16px] leading-relaxed text-slate-600">{t("landing.bento.subtitle")}</p>
+          </motion.div>
+          <ul className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {(["1", "2", "3", "4", "5", "6"] as const).map((id, i) => (
+              <motion.li
+                key={id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.4, delay: i * 0.04 }}
+                className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/80 p-6 transition hover:border-blue-200 hover:shadow-md"
+              >
+                <LayoutGrid className="h-5 w-5 text-blue-600" aria-hidden />
+                <p className="mt-4 font-landing-display text-[15px] font-semibold text-slate-900">
+                  {t(`landing.bento.${id}.title`)}
+                </p>
+                <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
+                  {t(`landing.bento.${id}.body`)}
+                </p>
               </motion.li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-t border-white/[0.06] bg-gradient-to-b from-[#020617] via-[#030a14] to-black">
-        <div className="mx-auto max-w-[1280px] px-5 py-20 sm:px-8 sm:py-24 lg:px-12">
+      {/* Integrations */}
+      <section
+        id="integrations"
+        className="border-b border-slate-200 bg-slate-50/80 py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-6xl px-5 text-center sm:px-8 lg:px-10">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+            {t("landing.integrations.kicker")}
+          </p>
+          <h2 className="mt-3 font-landing-display text-[clamp(1.4rem,2.6vw,1.85rem)] font-semibold text-slate-900">
+            {t("landing.integrations.title")}
+          </h2>
+          <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600">
+            {t("landing.integrations.line")}
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-[12px] font-semibold text-slate-500">
+            {["Slack", "Google", "Linear", "GitHub", "Notion", "Figma", "OpenAI"].map((name) => (
+              <span
+                key={name}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm"
+              >
+                {name}
+              </span>
+            ))}
+            <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-slate-500">
+              <Link2 className="h-3.5 w-3.5" aria-hidden />
+              more
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Who */}
+      <section
+        id="who-its-for"
+        className="border-b border-slate-200 bg-white py-20 sm:py-28"
+      >
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <motion.div className="max-w-2xl" {...fadeUp}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+              {t("landing.teams.kicker")}
+            </p>
+            <h2 className="mt-3 font-landing-display text-[clamp(1.6rem,3vw,2.05rem)] font-semibold text-slate-900">
+              {t("landing.teams.title")}
+            </h2>
+            <p className="mt-3 text-[16px] leading-relaxed text-slate-600">{t("landing.teams.lead")}</p>
+          </motion.div>
+          <ul className="mt-12 grid gap-6 md:grid-cols-3">
+            {(
+              [
+                { k: "c1" as const, icon: Users },
+                { k: "c2" as const, icon: Shield },
+                { k: "c3" as const, icon: Building2 },
+              ] as const
+            ).map(({ k, icon: Icon }, idx) => (
+              <motion.li
+                key={k}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.45, delay: idx * 0.07 }}
+                className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/90 to-white p-8 shadow-sm"
+              >
+                <Icon className="h-6 w-6 text-blue-600" strokeWidth={1.75} aria-hidden />
+                <p className="mt-5 font-landing-display text-[16px] font-semibold text-slate-900">
+                  {t(`landing.teams.${k}.title`)}
+                </p>
+                <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                  {t(`landing.teams.${k}.body`)}
+                </p>
+              </motion.li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* CTA — id=contact for nav / footer */}
+      <section
+        id="contact"
+        className="bg-gradient-to-b from-slate-50 to-white py-20 sm:py-24"
+      >
+        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
           <motion.div
-            className="flex flex-col gap-12 rounded-[28px] border border-cyan-500/15 bg-[#071021]/92 p-10 shadow-[0_36px_100px_-52px_rgba(34,211,238,0.25)] sm:flex-row sm:items-center sm:justify-between sm:p-12"
-            initial={{ opacity: 0, scale: 0.98 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.55 }}
+            className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-white to-sky-50/60 p-10 shadow-[0_32px_100px_-48px_rgba(37,99,235,0.25)] sm:p-12"
+            {...fadeUp}
           >
-            <div className="max-w-xl">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/85">{t("marketing.home.cta.kicker")}</p>
-              <h2 className="font-landing-display mt-4 text-[clamp(1.35rem,2.6vw,1.95rem)] font-semibold tracking-[-0.02em] text-white">
-                {t("marketing.home.cta.title")}
-              </h2>
-              <p className="mt-3 text-[15px] leading-relaxed text-slate-500">{t("marketing.home.cta.body")}</p>
-            </div>
-            <div className="flex w-full max-w-md flex-col gap-3 sm:w-auto sm:max-w-none sm:flex-row sm:shrink-0">
-              <a
-                href="mailto:neville@rayze.xyz?subject=Route5%20—%20Enterprise"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-9 text-[14px] font-semibold text-slate-950 shadow-lg shadow-cyan-500/15 transition hover:brightness-110 sm:w-auto"
-              >
-                {t("marketing.home.cta.primary")}
-              </a>
-              <Link
-                href="/sign-up"
-                className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-white/18 px-9 text-[14px] font-semibold text-zinc-100 transition hover:border-amber-400/40 sm:w-auto"
-              >
-                {t("marketing.home.cta.secondary")}
-              </Link>
+            <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+                  {t("landing.cta.kicker")}
+                </p>
+                <h2 className="mt-3 font-landing-display text-[clamp(1.35rem,2.5vw,1.9rem)] font-semibold text-slate-900">
+                  {t("landing.cta.title")}
+                </h2>
+                <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{t("landing.cta.body")}</p>
+              </div>
+              <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-end">
+                <a
+                  href="mailto:neville@rayze.xyz?subject=Route5"
+                  className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+                >
+                  {t("landing.cta.email")}
+                </a>
+                <Link
+                  href="/sign-up"
+                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-[15px] font-semibold text-slate-800 transition hover:border-blue-300"
+                >
+                  {t("landing.cta.signup")}
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -61,7 +61,7 @@ export default function Navbar() {
     if (pathname !== "/") return;
 
     const observers = new Map<string, IntersectionObserver>();
-    const ids = ["platform", "story", "audiences", "contact"];
+    const ids = ["why-route5", "how-it-works", "workspace", "integrations", "who-its-for", "contact"];
 
     ids.forEach((id) => {
       const element = document.getElementById(id);
@@ -84,8 +84,6 @@ export default function Navbar() {
   }, [pathname]);
 
   const clerkConfigured = useClerkRuntimeEnabled();
-  /** Marketing home uses the same dark command shell as the workspace. */
-  const isCommandHome = pathname === "/";
   /** Login / sign-up use dark chrome so nav + Clerk stay readable on black. */
   const isAuthPage =
     pathname === "/login" ||
@@ -95,7 +93,7 @@ export default function Navbar() {
   /** Signed-out guides (/docs, /support) use the workspace theme — keep nav text light on dark. */
   const isPublicGuideChrome =
     pathname === "/support" || pathname === "/docs" || pathname?.startsWith("/docs/");
-  const navUsesDarkChrome = isCommandHome || isAuthPage || isPublicGuideChrome;
+  const navUsesDarkChrome = isAuthPage || isPublicGuideChrome;
 
   const navLinkClass = navUsesDarkChrome
     ? "text-[13px] font-medium text-zinc-300 transition-colors duration-200 hover:text-white"
@@ -113,7 +111,10 @@ export default function Navbar() {
   function linkIsHighlighted(link: (typeof navLinks)[0]) {
     if (linkIsActive(link.href)) return true;
     if (pathname !== "/") return false;
-    if (link.href === "/product" && ["platform", "story"].includes(activeHomeSection ?? ""))
+    if (
+      link.href === "/product" &&
+      ["workspace", "how-it-works", "why-route5", "integrations"].includes(activeHomeSection ?? "")
+    )
       return true;
     if (link.href === "/contact" && activeHomeSection === "contact")
       return true;
@@ -176,7 +177,7 @@ export default function Navbar() {
             {clerkConfigured ? (
               <NavbarClerkExtrasLazy
                 variant="mobile"
-                isCommandHome={navUsesDarkChrome}
+                isCommandHome={!!navUsesDarkChrome}
                 mobileLink={mobileLink}
                 onMobileNavigate={() => setMobileOpen(false)}
               />
@@ -276,7 +277,7 @@ export default function Navbar() {
               <Search className="h-[20px] w-[20px]" strokeWidth={2} aria-hidden />
             </button>
             {clerkConfigured ? (
-              <NavbarClerkExtrasLazy variant="desktop" isCommandHome={navUsesDarkChrome} mobileLink="" />
+              <NavbarClerkExtrasLazy variant="desktop" isCommandHome={!!navUsesDarkChrome} mobileLink="" />
             ) : (
               <Link
                 href="/login"
@@ -356,11 +357,9 @@ export default function Navbar() {
       </motion.nav>
       <div
         className={`route5-brand-nav-accent-bar absolute bottom-0 left-0 right-0 ${
-          pathname === "/"
-            ? "route5-brand-nav-accent-bar--athletic"
-            : navUsesDarkChrome
-              ? "route5-brand-nav-accent-bar--dark"
-              : "route5-brand-nav-accent-bar--light"
+          navUsesDarkChrome
+            ? "route5-brand-nav-accent-bar--dark"
+            : "route5-brand-nav-accent-bar--light"
         }`}
         aria-hidden
       />

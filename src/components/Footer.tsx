@@ -8,7 +8,7 @@ const platform: { href: string; label: string; title: string }[] = [
   { href: "/docs", label: "Guides", title: "Executive brief, roadmap, boundaries — no sign-in required" },
   { href: "/benefits", label: "Benefits", title: "Why teams stay with Route5" },
   { href: "/pricing", label: "Pricing", title: "Plans and packaging" },
-  { href: "/#showcase", label: "Home — workspace preview", title: "Jump to the workspace preview on the home page" },
+  { href: "/#workspace", label: "Home — workspace", title: "Jump to the workspace section on the home page" },
   { href: "/overview", label: "Overview", title: "Signed-in app — leadership health and load" },
   { href: "/login", label: "Log in", title: "Sign in with Clerk" },
 ];
@@ -84,8 +84,9 @@ export default function Footer({ tone = "light" }: FooterProps) {
               </span>
             </div>
             <p className={`mt-3 text-[14px] leading-relaxed ${muted}`}>
-              Enterprise execution layer — decisions become owned commitments with persistent
-              accountability. Sits above Slack, Notion, and email; does not replace them.
+              {command
+                ? "Tasks, companies, and owners in one layer—above chat and docs, not a replacement for them."
+                : "Route5 keeps tasks, companies, and owners in one place so follow-through is visible—without becoming another team chat app."}
             </p>
             <PublicEmailSubscribe tone={command ? "command" : "light"} source="footer" />
           </div>

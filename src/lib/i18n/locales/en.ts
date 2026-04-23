@@ -575,4 +575,96 @@ export const en: Record<string, string> = {
     "Start a workspace on your own, or email us for security packets, reference calls, and a schedule that matches how you buy software.",
   "marketing.home.cta.primary": "Email us",
   "marketing.home.cta.secondary": "Create an account",
+
+  "landing.hero.badge": "Execution workspace",
+  "landing.hero.title1": "Turn scattered updates into",
+  "landing.hero.title2": "owned work.",
+  "landing.hero.lead":
+    "Route5 is where companies, tasks, and owners stay in one place. Paste notes on the Desk, track everything in one home, and give managers a real read on the team—without building another chat app.",
+  "landing.hero.ctaPrimary": "Start free",
+  "landing.hero.ctaSecondary": "Book a walkthrough",
+  "landing.hero.ctaProduct": "Product detail",
+  "landing.hero.mockTitle": "Open tasks · Acme Corp",
+  "landing.hero.mock1": "Send revised scope to legal",
+  "landing.hero.mock2": "Confirm Q2 launch date with PM",
+  "landing.hero.mock3": "Follow up on vendor security review",
+  "landing.trial": "14-day trial · No card · We help you roll out when you are ready",
+
+  "landing.ticker.1": "Companies as the spine",
+  "landing.ticker.2": "Task tracker with real filters",
+  "landing.ticker.3": "Desk: notes → tasks",
+  "landing.ticker.4": "Role-aware home for every person",
+  "landing.ticker.5": "Windows & Mac shortcuts",
+  "landing.ticker.6": "Clerk sign-in · enterprise path",
+
+  "landing.trust.line": "For teams where the work is too important to live only in threads.",
+
+  "landing.why.kicker": "Why?",
+  "landing.why.title": "If the next step is not written down, it is not real.",
+  "landing.why.lead":
+    "Chat is fast. It is also forgetful. Route5 does one job: keep who-owns-what-and-when next to the company it belongs to.",
+  "landing.why.p1.title": "Threads are not a system of record",
+  "landing.why.p1.body":
+    "Decisions evaporate the moment someone scrolls. You need a thin layer that holds names, dates, and status where your operators live.",
+  "landing.why.p2.title": "Spreadsheets only work until someone forks a tab",
+  "landing.why.p2.body":
+    "The second you copy a sheet for “just this week,” you have forked your plan. Route5 keeps one queue with real history.",
+  "landing.why.p3.title": "Another inbox is not the answer",
+  "landing.why.p3.body":
+    "We are not here to replace Slack or Teams. We sit above them so follow-through has a home that is not a meeting invite.",
+
+  "landing.solution.kicker": "Solution",
+  "landing.solution.title": "One workspace: companies, tasks, people.",
+  "landing.solution.body":
+    "Add a company when you start an initiative. Your people see a calm home with their own overdue and upcoming work. Managers see who is loaded. Admins can read the org when they need to. Everyone pulls from the same tasks—not the same slide deck.",
+  "landing.solution.b1": "Companies (clients, programs, whatever you call them) keep context from floating away.",
+  "landing.solution.b2": "Tasks carry owners, deadlines, and status your team can filter and trust.",
+  "landing.solution.b3": "Desk turns messy notes into reviewable work before it hits the tracker.",
+
+  "landing.how.kicker": "How it works",
+  "landing.how.title": "Three moves. No theater.",
+  "landing.how.s1.title": "Add the company",
+  "landing.how.s1.body": "Create the line of business you are executing against so work is never ownerless context.",
+  "landing.how.s2.title": "Drop reality on the Desk",
+  "landing.how.s2.body": "Paste email, notes, or threads. Route5 helps you land tasks with owners and dates you can accept or adjust.",
+  "landing.how.s3.title": "Run the home and tracker",
+  "landing.how.s3.body": "Everyone sees their own load; leaders get the right altitudes. Shortcuts match Mac and Windows.",
+
+  "landing.bento.kicker": "Inside the workspace",
+  "landing.bento.title": "Everything you need to run the week",
+  "landing.bento.subtitle": "Built for clarity on a white-and-sky canvas—fast to read, hard to fake.",
+  "landing.bento.1.title": "Home that respects the role",
+  "landing.bento.1.body": "Employees see their tasks. Managers see the team. Admins see the org when the job requires it.",
+  "landing.bento.2.title": "Companies, not costume projects",
+  "landing.bento.2.body": "Route5 uses “companies” as the durable container so your language matches how you sell and deliver.",
+  "landing.bento.3.title": "Task tracker that is actually a tracker",
+  "landing.bento.3.body": "Filters, search, and live data—so you are not maintaining a parallel spreadsheet for the truth.",
+  "landing.bento.4.title": "Desk for the messy middle",
+  "landing.bento.4.body": "Where raw notes become owned tasks instead of another doc nobody opens.",
+  "landing.bento.5.title": "Connectors",
+  "landing.bento.5.body": "Slack, Google, Linear, GitHub, Notion, and more feed the same record your team executes against.",
+  "landing.bento.6.title": "Security-minded rollout",
+  "landing.bento.6.body": "Clerk-backed auth today, enterprise conversations when your legal and IT teams are ready.",
+
+  "landing.integrations.kicker": "Connectors",
+  "landing.integrations.title": "Bring the tools you already pay for",
+  "landing.integrations.line":
+    "Integrations keep context flowing so your people are not retyping the same story in three places.",
+
+  "landing.teams.kicker": "Who it is for",
+  "landing.teams.title": "Operators, managers, and the folks who sign the checks",
+  "landing.teams.lead": "Same product—three honest views. No duplicate spreadsheets pretending to be alignment.",
+  "landing.teams.c1.title": "People doing the work",
+  "landing.teams.c1.body": "A home page with your overdue, your upcoming, and your companies—no junk, no vague “insights.”",
+  "landing.teams.c2.title": "People leading the work",
+  "landing.teams.c2.body": "See who is underwater, what is due soon, and open the full team view when you need the whole picture.",
+  "landing.teams.c3.title": "People buying the work",
+  "landing.teams.c3.body": "We have been through security packets, phased rollouts, and procurement cadence that do not fit a self-serve checkout.",
+
+  "landing.cta.kicker": "Next step",
+  "landing.cta.title": "Start in minutes. Plan enterprise when you are ready.",
+  "landing.cta.body":
+    "Create a workspace on your own, or email us for a walkthrough, security questions, and a rollout plan that matches how your company actually buys software.",
+  "landing.cta.email": "Email the team",
+  "landing.cta.signup": "Create your workspace",
 };
