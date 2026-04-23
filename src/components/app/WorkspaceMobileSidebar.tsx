@@ -10,6 +10,7 @@ import {
   BarChart3,
   ClipboardList,
   Layers3,
+  LayoutGrid,
   PenSquare,
   Users,
   Palette,
@@ -61,6 +62,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
             {
               title: "ACTIONS",
               items: [
+                { href: "/desk", label: "Desk", icon: LayoutGrid },
                 { href: "/capture", label: "Capture", icon: PenSquare },
                 { href: "/workspace/assign-task", label: "Assign Task", icon: ClipboardList },
               ],
@@ -75,6 +77,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
               title: "MY WORK",
               items: [
                 { href: "/workspace/my-inbox", label: "My Inbox", icon: Layers3 },
+                { href: "/capture", label: "Capture (AI)", icon: PenSquare },
                 { href: "/workspace/commitments", label: "My Tasks", icon: ListTodo },
               ],
             },

@@ -13,6 +13,7 @@ import {
   Keyboard,
   LifeBuoy,
   Layers3,
+  LayoutGrid,
   ListTodo,
   Palette,
   PenSquare,
@@ -147,6 +148,12 @@ export default function WorkspaceSidebar() {
 
                 <NavSectionTitle>ACTIONS</NavSectionTitle>
                 <NavRow
+                  href="/desk"
+                  active={path === "/desk" || path === "/feed"}
+                  icon={LayoutGrid}
+                  label="Desk"
+                />
+                <NavRow
                   href="/capture"
                   active={path === "/capture"}
                   icon={PenSquare}
@@ -175,6 +182,12 @@ export default function WorkspaceSidebar() {
                   active={path.startsWith("/workspace/my-inbox")}
                   icon={Layers3}
                   label="My Inbox"
+                />
+                <NavRow
+                  href="/capture"
+                  active={path === "/capture"}
+                  icon={PenSquare}
+                  label="Capture (AI)"
                 />
                 <NavRow
                   href="/workspace/commitments"

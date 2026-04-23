@@ -27,7 +27,6 @@ export default function OrgRouteGuard() {
       const blockedForMembers = [
         "/workspace/org-feed",
         "/workspace/dashboard",
-        "/capture",
         "/workspace/assign-task",
         "/workspace/organization",
         "/workspace/team",

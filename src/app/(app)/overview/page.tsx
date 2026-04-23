@@ -375,8 +375,8 @@ export default function OverviewPage() {
         variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
       >
         <div className="border-b border-slate-200/90 bg-slate-50/95 px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900/50">
-          <h2 className="text-[14px] font-semibold text-r5-text-primary">Execution pulse</h2>
-          <p className="mt-0.5 text-[12px] text-r5-text-secondary">Scan urgency first, then move into action.</p>
+          <h2 className="text-[14px] font-semibold text-slate-900 dark:text-slate-100">Execution pulse</h2>
+          <p className="mt-0.5 text-[12px] text-slate-600 dark:text-slate-300">Scan urgency first, then move into action.</p>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-3">
           <MetricCard
@@ -409,16 +409,16 @@ export default function OverviewPage() {
       >
         <section className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55">
           <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
-            <h2 className="text-[15px] font-semibold text-r5-text-primary">Task queue (employee view)</h2>
+            <h2 className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">Task queue (employee view)</h2>
             <Link href="/workspace/commitments" className="text-[12px] font-medium text-[#5059c9] hover:underline">
               Open tracker
             </Link>
           </div>
           <div className="p-0">
             {loadingOwnTasks ? (
-              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading tasks…</p>
+              <p className="px-4 py-6 text-[13px] text-slate-600 dark:text-slate-300">Loading tasks…</p>
             ) : ownOpenTasks.length === 0 ? (
-              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">No open work assigned to you.</p>
+              <p className="px-4 py-6 text-[13px] text-slate-600 dark:text-slate-300">No open work assigned to you.</p>
             ) : (
               <ul>
                 {ownOpenTasks.slice(0, 8).map((task) => (
@@ -431,10 +431,10 @@ export default function OverviewPage() {
                       className="flex items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-r5-surface-secondary/50"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[14px] font-medium text-r5-text-primary">{task.title}</p>
-                        <p className="mt-0.5 text-[11px] text-r5-text-secondary">Due {new Date(task.deadline).toLocaleString(intlLocale, { dateStyle: "medium" })}</p>
+                        <p className="truncate text-[14px] font-medium text-slate-900 dark:text-slate-100">{task.title}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300">Due {new Date(task.deadline).toLocaleString(intlLocale, { dateStyle: "medium" })}</p>
                       </div>
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-r5-text-tertiary" aria-hidden />
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden />
                     </Link>
                   </li>
                 ))}
@@ -445,8 +445,8 @@ export default function OverviewPage() {
 
         <section className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55">
           <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
-              <Building2 className="h-4 w-4 text-r5-text-secondary" aria-hidden />
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+              <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" aria-hidden />
               Companies in your scope
             </h2>
             <Link href="/companies" className="text-[12px] font-medium text-[#5059c9] hover:underline">
@@ -455,7 +455,7 @@ export default function OverviewPage() {
           </div>
           <div className="p-0">
             {myCompanies.length === 0 ? (
-              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">{companiesEmptyCopy}</p>
+              <p className="px-4 py-6 text-[13px] text-slate-600 dark:text-slate-300">{companiesEmptyCopy}</p>
             ) : (
               <ul>
                 {myCompanies.map((company) => (
@@ -465,10 +465,10 @@ export default function OverviewPage() {
                       className="flex items-center justify-between gap-3 px-4 py-3.5 transition hover:bg-r5-surface-secondary/50"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-[14px] font-medium text-r5-text-primary">{company.name}</p>
-                        <p className="mt-0.5 text-[11px] text-r5-text-secondary">Updated {formatRelativeLong(company.updatedAt)}</p>
+                        <p className="truncate text-[14px] font-medium text-slate-900 dark:text-slate-100">{company.name}</p>
+                        <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-300">Updated {formatRelativeLong(company.updatedAt)}</p>
                       </div>
-                      <ArrowUpRight className="h-4 w-4 shrink-0 text-r5-text-tertiary" aria-hidden />
+                      <ArrowUpRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" aria-hidden />
                     </Link>
                   </li>
                 ))}
