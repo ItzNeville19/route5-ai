@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, Search, X } from "lucide-react";
 import { useCommandPalette } from "@/components/CommandPalette";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -16,9 +16,22 @@ const NavbarClerkExtrasLazy = dynamic(
   { ssr: false, loading: () => null }
 );
 
+const NavbarHomeTryCtaLazy = dynamic(() => import("./NavbarHomeTryCta"), {
+  ssr: false,
+  loading: () => (
+    <Link
+      href="/sign-up"
+      className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
+    >
+      Try Route5
+    </Link>
+  ),
+});
+
 export default function Navbar() {
   const { t } = useI18n();
   const pathname = usePathname();
+  const reducedMotion = useReducedMotion();
   const { open: openCommandPalette } = useCommandPalette();
   const navLinks = useMemo(
     () => [
@@ -229,15 +242,21 @@ export default function Navbar() {
             title="Route5 home"
             className="relative z-[30] flex flex-shrink-0 items-center py-3 touch-manipulation lg:py-0"
           >
-            <span
+            <motion.span
               className={
                 navUsesDarkChrome
                   ? "site-brand-wordmark text-white"
                   : "site-brand-wordmark text-[#1d1d1f]"
               }
+              whileHover={
+                reducedMotion
+                  ? undefined
+                  : { scale: 1.03, transition: { type: "spring", stiffness: 460, damping: 26 } }
+              }
+              whileTap={reducedMotion ? undefined : { scale: 0.98 }}
             >
               Route5
-            </span>
+            </motion.span>
           </Link>
 
           <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex">
@@ -312,12 +331,16 @@ export default function Navbar() {
 
           <div className="flex items-center gap-1 lg:hidden">
             {pathname === "/" ? (
-              <Link
-                href="/sign-up"
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
-              >
-                Try Route5
-              </Link>
+              clerkConfigured ? (
+                <NavbarHomeTryCtaLazy />
+              ) : (
+                <Link
+                  href="/sign-up"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
+                >
+                  {t("marketing.nav.tryRoute5")}
+                </Link>
+              )
             ) : null}
             <button
               type="button"

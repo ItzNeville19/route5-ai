@@ -53,6 +53,11 @@ export type WorkspacePrefsV1 = {
   /** Mesh / gradient backgrounds on the command canvas (off = flat, easier on eyes). */
   appearanceGradients?: boolean;
   /**
+   * Command canvas behind the workspace: theme CSS gradients/mesh (`gradient`) vs photography overlay (`photo`).
+   * Default `gradient` preserves contrast and the Route5 violet/lime mesh; `photo` layers Unsplash art from the theme.
+   */
+  workspaceCanvasBackground?: "gradient" | "photo";
+  /**
    * Workspace look — see `/workspace/customize` for previews.
    * Legacy `appearanceSchedule` is migrated on read (day→daytime, night→classic).
    */
@@ -81,6 +86,7 @@ const defaultPrefs: WorkspacePrefsV1 = {
   extractionProviderId: "auto",
   llmProviderId: "auto",
   appearanceGradients: true,
+  workspaceCanvasBackground: "gradient",
   /** Default shell: violet & lime mesh (“classic” / labeled Default in theme picker). */
   appearanceTheme: "classic",
 };
@@ -133,6 +139,10 @@ export function loadWorkspacePrefs(): WorkspacePrefsV1 {
           : undefined,
       appearanceGradients:
         typeof o.appearanceGradients === "boolean" ? o.appearanceGradients : undefined,
+      workspaceCanvasBackground:
+        o.workspaceCanvasBackground === "gradient" || o.workspaceCanvasBackground === "photo"
+          ? o.workspaceCanvasBackground
+          : defaultPrefs.workspaceCanvasBackground,
       appearanceTheme: (() => {
         if (typeof o.appearanceTheme === "string" && isWorkspaceThemeId(o.appearanceTheme)) {
           return o.appearanceTheme;

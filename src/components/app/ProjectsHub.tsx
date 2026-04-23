@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { FolderOpen, Plus } from "lucide-react";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { canCreateCompany } from "@/lib/workspace-role";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
 import { isCompletedRow } from "@/lib/feed/group-commitments";
@@ -48,7 +50,9 @@ function healthToneClass(score: number): string {
 }
 
 export default function ProjectsHub() {
-  const { projects, loadingProjects } = useWorkspaceData();
+  const { t } = useI18n();
+  const { projects, loadingProjects, orgRole, loadingOrganization } = useWorkspaceData();
+  const canAddCompany = !loadingOrganization && canCreateCompany(orgRole);
   const { displayName, get } = useMemberDirectory();
   const [commitments, setCommitments] = useState<OrgCommitmentRow[]>([]);
 
@@ -146,20 +150,26 @@ export default function ProjectsHub() {
       <div className="mx-auto w-full max-w-[var(--r5-feed-max-width)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-7)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-6)]">
         <h1 className="text-[length:var(--r5-font-heading)] font-semibold tracking-tight text-r5-text-primary">Projects</h1>
         <p className="mt-[var(--r5-space-2)] max-w-md text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
-          No projects yet — create one to organize commitments.
+          {canAddCompany ? t("projects.hub.empty.leadership") : t("projects.hub.empty.member")}
         </p>
-        <button
-          type="button"
-          onClick={() =>
-            window.dispatchEvent(
-              new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
-            )
-          }
-          className="mt-[var(--r5-space-6)] inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-5)] text-[length:var(--r5-font-subheading)] font-semibold text-r5-surface-primary transition hover:opacity-95"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-          New project
-        </button>
+        {canAddCompany ? (
+          <button
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+              )
+            }
+            className="mt-[var(--r5-space-6)] inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] bg-r5-text-primary px-[var(--r5-space-5)] text-[length:var(--r5-font-subheading)] font-semibold text-r5-surface-primary transition hover:opacity-95"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {t("projects.hub.addCompany")}
+          </button>
+        ) : (
+          <p className="mt-[var(--r5-space-4)] max-w-md text-[length:var(--r5-font-body)] text-r5-text-tertiary">
+            {t("projects.hub.addDisabledHint")}
+          </p>
+        )}
       </div>
     );
   }
@@ -173,18 +183,20 @@ export default function ProjectsHub() {
             {projectCards.length} project{projectCards.length === 1 ? "" : "s"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            window.dispatchEvent(
-              new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
-            )
-          }
-          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/80 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
-          New project
-        </button>
+        {canAddCompany ? (
+          <button
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+              )
+            }
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-space-2)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/80 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
+          >
+            <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
+            {t("projects.hub.addCompany")}
+          </button>
+        ) : null}
       </div>
 
       {needsAttention.length > 0 ? (

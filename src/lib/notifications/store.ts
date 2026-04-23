@@ -158,6 +158,48 @@ export async function countUnreadNotifications(userId: string): Promise<number> 
   return row?.c ?? 0;
 }
 
+/**
+ * Prevents sending multiple morning digests when the cron runs often (e.g. every 10 minutes)
+ * but the user is still in their local 8:00–8:59 window.
+ */
+export async function hasMorningDigestForLocalDate(params: {
+  orgId: string;
+  userId: string;
+  localDateKey: string;
+}): Promise<boolean> {
+  const pattern = `%"morningDigestLocalDate":"${params.localDateKey.replace(/"/g, "")}"%`;
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .select("id,metadata")
+        .eq("org_id", params.orgId)
+        .eq("user_id", params.userId)
+        .eq("type", "daily_morning_digest")
+        .is("deleted_at", null)
+        .limit(50);
+      if (error) throw error;
+      const hit = (data ?? []).find((row) => {
+        const m = row.metadata as { morningDigestLocalDate?: string } | null;
+        return m?.morningDigestLocalDate === params.localDateKey;
+      });
+      return Boolean(hit);
+    } catch (e) {
+      console.error("[notifications] Supabase morning digest check failed, using SQLite", e);
+    }
+  }
+  const d = getSqliteHandle();
+  const row = d
+    .prepare(
+      `SELECT id FROM org_notifications
+       WHERE org_id = ? AND user_id = ? AND type = 'daily_morning_digest' AND deleted_at IS NULL
+         AND metadata LIKE ?`
+    )
+    .get(params.orgId, params.userId, pattern) as { id: string } | undefined;
+  return Boolean(row?.id);
+}
+
 export async function hasRecentNotificationByType(params: {
   userId: string;
   type: NotificationType;

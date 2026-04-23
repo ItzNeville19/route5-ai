@@ -36,10 +36,12 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
     () => resolveWorkspaceTheme(prefs, appearanceTick),
     [prefs, appearanceTick]
   );
-  const agentCanvasPhotoStyle = useMemo(
-    () => workspaceThemePhotoStyle(resolvedTheme.resolvedId),
-    [resolvedTheme.resolvedId]
-  );
+  const useCanvasPhotography =
+    (prefs.workspaceCanvasBackground ?? "gradient") === "photo";
+  const agentCanvasPhotoStyle = useMemo(() => {
+    if (!useCanvasPhotography) return undefined;
+    return workspaceThemePhotoStyle(resolvedTheme.resolvedId);
+  }, [useCanvasPhotography, resolvedTheme.resolvedId]);
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -122,7 +124,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
         </Suspense>
         <div
           className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col"
-          style={agentCanvasPhotoStyle}
+          style={agentCanvasPhotoStyle ?? undefined}
         >
           <WorkspaceHeader
             onSidebarToggle={() => {

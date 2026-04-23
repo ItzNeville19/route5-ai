@@ -306,6 +306,74 @@ export async function createOrganizationInvitation(params: {
   };
 }
 
+export type PendingInvitationWithToken = PendingOrgInvitationRow & { token: string };
+
+/**
+ * For resend: load a non-expired, pending invite in this org (includes secret token).
+ */
+export async function getPendingOrganizationInvitationById(
+  orgId: string,
+  invitationId: string
+): Promise<PendingInvitationWithToken | null> {
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    const { data, error } = await supabase
+      .from("org_invitations")
+      .select("id, org_id, email, role, invited_by, token, expires_at, created_at, accepted_at")
+      .eq("org_id", orgId)
+      .eq("id", invitationId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    if (data.accepted_at) return null;
+    if (new Date(String(data.expires_at)).getTime() < Date.now()) return null;
+    return {
+      id: String(data.id),
+      orgId: String(data.org_id),
+      email: String(data.email),
+      role: data.role as OrgRole,
+      invitedBy: String(data.invited_by),
+      token: String(data.token),
+      expiresAt: String(data.expires_at),
+      createdAt: String(data.created_at),
+    };
+  }
+
+  const d = getSqliteHandle();
+  const row = d
+    .prepare(
+      `SELECT id, org_id, email, role, invited_by, token, expires_at, created_at, accepted_at
+       FROM org_invitations
+       WHERE org_id = ? AND id = ?`
+    )
+    .get(orgId, invitationId) as
+    | {
+        id: string;
+        org_id: string;
+        email: string;
+        role: OrgRole;
+        invited_by: string;
+        token: string;
+        expires_at: string;
+        created_at: string;
+        accepted_at: string | null;
+      }
+    | undefined;
+  if (!row) return null;
+  if (row.accepted_at) return null;
+  if (new Date(row.expires_at).getTime() < Date.now()) return null;
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    email: row.email,
+    role: row.role,
+    invitedBy: row.invited_by,
+    token: row.token,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  };
+}
+
 export async function listPendingOrganizationInvitations(
   orgId: string
 ): Promise<PendingOrgInvitationRow[]> {

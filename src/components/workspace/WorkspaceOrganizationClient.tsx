@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MailPlus } from "lucide-react";
+import { MailPlus, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -12,6 +12,10 @@ import {
   type OrgNavKey,
   type OrgUiPolicy,
 } from "@/lib/org-ui-policy";
+import {
+  readCachedOrgPayload,
+  writeCachedOrgPayload,
+} from "@/lib/org-payload-cache";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -74,32 +78,69 @@ export default function WorkspaceOrganizationClient() {
   const [inviteRole, setInviteRole] = useState<OrgRole>("member");
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
   const [busyInvite, setBusyInvite] = useState(false);
+  const [busyResendId, setBusyResendId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [uiPolicy, setUiPolicy] = useState<OrgUiPolicy>(() => defaultOrgUiPolicy());
   const [busyPolicy, setBusyPolicy] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
 
   const isAdmin = state?.me.role === "admin";
+
+  const applyPayload = useCallback((data: OrganizationPayload) => {
+    setState(data);
+    setUiPolicy(parseOrgUiPolicy(data.uiPolicy));
+    writeCachedOrgPayload(data);
+    setError(null);
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    try {
-      const res = await fetch("/api/workspace/organization", { credentials: "same-origin" });
+    const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    const tryFetch = async () => {
+      const res = await fetch("/api/workspace/organization", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       const data = (await res.json().catch(() => ({}))) as OrganizationPayload & { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Could not load organization.");
-        setState(null);
+        return { ok: false as const, error: data.error ?? "Could not load organization." };
+      }
+      return { ok: true as const, data };
+    };
+
+    try {
+      let lastError = "Could not load organization.";
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const out = await tryFetch();
+          if (out.ok) {
+            setFromCache(false);
+            applyPayload(out.data);
+            return;
+          }
+          lastError = out.error;
+        } catch {
+          lastError = "Network error while loading organization.";
+        }
+        if (attempt < 2) await delay(400 * (attempt + 1));
+      }
+
+      const cached = readCachedOrgPayload() as OrganizationPayload | null;
+      if (cached?.orgId && Array.isArray(cached.members)) {
+        setFromCache(true);
+        applyPayload(cached);
+        setError(
+          "Could not reach the server after several tries — showing your last saved copy on this device. Use Retry to sync when you are back online."
+        );
         return;
       }
-      setState(data);
-      setUiPolicy(parseOrgUiPolicy(data.uiPolicy));
-    } catch {
-      setError("Could not load organization.");
       setState(null);
+      setError(lastError);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [applyPayload]);
 
   useEffect(() => {
     void load();
@@ -207,6 +248,25 @@ export default function WorkspaceOrganizationClient() {
     };
     setUiPolicy(next);
     void saveNavPolicy(next);
+  }
+
+  async function resendInvite(invitationId: string) {
+    setBusyResendId(invitationId);
+    setNotice(null);
+    try {
+      const res = await fetch(
+        `/api/workspace/organization/invitations/${encodeURIComponent(invitationId)}/resend`,
+        { method: "POST", credentials: "same-origin" }
+      );
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setNotice(data.error ?? "Could not resend the invitation email.");
+        return;
+      }
+      setNotice("Invitation email sent again.");
+    } finally {
+      setBusyResendId(null);
+    }
   }
 
   async function removeMember(memberUserId: string, name: string) {
@@ -333,10 +393,32 @@ export default function WorkspaceOrganizationClient() {
               <div key={i} className="h-14 animate-pulse rounded-xl bg-r5-border-subtle/35" />
             ))}
           </div>
-        ) : error ? (
-          <p className="text-[13px] text-red-300">{error}</p>
+        ) : !state && error ? (
+          <div className="space-y-3">
+            <p className="text-[13px] text-red-300">{error}</p>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex min-h-10 items-center rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-4 text-[13px] font-medium text-r5-text-primary"
+            >
+              Retry
+            </button>
+          </div>
         ) : (
           <div className="space-y-2">
+            {fromCache && error ? (
+              <div className="mb-3 flex flex-col gap-2 rounded-xl border border-amber-400/25 bg-amber-500/10 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[12px] leading-snug text-amber-100/95">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => void load()}
+                  disabled={loading}
+                  className="shrink-0 self-start rounded-lg border border-amber-300/40 bg-amber-500/15 px-3 py-1.5 text-[12px] font-semibold text-amber-50 transition hover:bg-amber-500/25 disabled:opacity-50"
+                >
+                  Retry sync
+                </button>
+              </div>
+            ) : null}
             <p className="text-[12px] text-r5-text-secondary">
               {state?.orgName ?? "Organization"} · {sortedMembers.length} active · {pendingInvites.length} pending
             </p>
@@ -345,25 +427,39 @@ export default function WorkspaceOrganizationClient() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
                   Pending invitations
                 </p>
-                {pendingInvites.map((invite) => (
-                  <div
-                    key={invite.id}
-                    className="flex flex-wrap items-center gap-2 rounded-lg border border-r5-border-subtle/60 bg-r5-surface-secondary/35 px-3 py-2"
-                  >
-                    <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-r5-text-primary">
-                      {invite.email}
-                    </p>
-                    <span className="rounded-full border border-amber-300/35 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
-                      Pending
-                    </span>
-                    <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-semibold text-r5-text-primary">
-                      {invite.role}
-                    </span>
-                    <p className="text-[11px] text-r5-text-secondary">
-                      Invited by {invite.invitedByName}
-                    </p>
-                  </div>
-                ))}
+                {pendingInvites.map((invite) => {
+                  const resendBusy = busyResendId === invite.id;
+                  return (
+                    <div
+                      key={invite.id}
+                      className="flex flex-wrap items-center gap-2 rounded-lg border border-r5-border-subtle/60 bg-r5-surface-secondary/35 px-3 py-2"
+                    >
+                      <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-r5-text-primary">
+                        {invite.email}
+                      </p>
+                      <span className="rounded-full border border-amber-300/35 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200">
+                        Pending
+                      </span>
+                      <span className="rounded-full border border-r5-border-subtle px-2 py-0.5 text-[11px] font-semibold text-r5-text-primary">
+                        {invite.role}
+                      </span>
+                      <p className="w-full text-[11px] text-r5-text-secondary sm:w-auto sm:flex-1">
+                        Invited by {invite.invitedByName}
+                      </p>
+                      {isAdmin ? (
+                        <button
+                          type="button"
+                          onClick={() => void resendInvite(invite.id)}
+                          disabled={resendBusy}
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-r5-border-subtle bg-r5-surface-primary/50 px-2.5 text-[12px] font-medium text-r5-text-secondary hover:text-r5-text-primary disabled:opacity-50"
+                        >
+                          <RotateCcw className={`h-3.5 w-3.5 ${resendBusy ? "animate-spin" : ""}`} aria-hidden />
+                          {resendBusy ? "Sending…" : "Resend email"}
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             ) : null}
             {sortedMembers.map((member) => {

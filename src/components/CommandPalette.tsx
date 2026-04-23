@@ -25,6 +25,8 @@ import {
   type PaletteSearchCommitment,
   type PaletteSection,
 } from "@/lib/command-palette-items";
+import { useWorkspaceDataOptional } from "@/components/workspace/WorkspaceData";
+import { canCreateCompany } from "@/lib/workspace-role";
 
 type PaletteContextValue = {
   open: () => void;
@@ -253,6 +255,9 @@ export function CommandPaletteProvider({
   const inFlightRef = useRef<AbortController | null>(null);
   const router = useRouter();
   const pathname = usePathname();
+  const ws = useWorkspaceDataOptional();
+  const canAddCompanyInWorkspace =
+    ws != null && !ws.loadingOrganization && canCreateCompany(ws.orgRole);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const deferredQuery = useDeferredValue(query);
@@ -355,6 +360,7 @@ export function CommandPaletteProvider({
         searchCommitments,
         people,
         openActionsCount,
+        canCreateCompany: canAddCompanyInWorkspace,
       }),
     [
       signedInEffective,
@@ -364,6 +370,7 @@ export function CommandPaletteProvider({
       searchCommitments,
       people,
       openActionsCount,
+      canAddCompanyInWorkspace,
     ]
   );
 

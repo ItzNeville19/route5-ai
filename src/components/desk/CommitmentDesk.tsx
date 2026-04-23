@@ -41,6 +41,7 @@ import type { ExtractedCommitmentDraft } from "@/lib/extract-commitments";
 import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { orgRoleLabel } from "@/lib/workspace-role";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -134,7 +135,7 @@ export default function CommitmentDesk() {
   const { t } = useI18n();
   const { map: memberMap, displayName: memberDisplayName, get: getMember } = useMemberDirectory();
   const { pushToast } = useWorkspaceExperience();
-  const { projects, loadingProjects, refreshAll } = useWorkspaceData();
+  const { projects, loadingProjects, refreshAll, orgRole, loadingOrganization } = useWorkspaceData();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -511,6 +512,13 @@ export default function CommitmentDesk() {
 
   const currentProject = projects.find((p) => p.id === projectId);
 
+  const deskSubtitleKey = useMemo(() => {
+    if (loadingOrganization || !orgRole) return "desk.strip.subtitle" as const;
+    if (orgRole === "member") return "desk.strip.subtitleMember" as const;
+    if (orgRole === "manager") return "desk.strip.subtitleManager" as const;
+    return "desk.strip.subtitleAdmin" as const;
+  }, [orgRole, loadingOrganization]);
+
   /** Metric tiles open the real org task tracker module with filters. */
   const statLinks = useMemo(() => {
     return executionMetricFallbackHrefs();
@@ -546,11 +554,18 @@ export default function CommitmentDesk() {
                   t("desk.strip.deskFallback")
                 )}
               </p>
-              <h2 className="mt-1 text-[18px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[20px]">
-                {t("desk.strip.title")}
-              </h2>
+              <div className="mt-1 flex flex-wrap items-center gap-2.5">
+                <h2 className="text-[18px] font-semibold tracking-[-0.03em] text-[var(--workspace-fg)] sm:text-[20px]">
+                  {t("desk.strip.title")}
+                </h2>
+                {!loadingOrganization && orgRole ? (
+                  <span className="inline-flex items-center rounded-full border border-[var(--workspace-accent)]/35 bg-[var(--workspace-surface)]/50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
+                    {orgRoleLabel(orgRole)} {t("desk.roleBadge")}
+                  </span>
+                ) : null}
+              </div>
               <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-[var(--workspace-muted-fg)] sm:text-[13px]">
-                {t("desk.strip.subtitle")}
+                {t(deskSubtitleKey)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">

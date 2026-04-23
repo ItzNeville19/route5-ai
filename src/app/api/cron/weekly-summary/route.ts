@@ -1,3 +1,7 @@
+/**
+ * Sends HTML weekly executive email per org (Resend). Schedule: Mondays 14:00 UTC by default in vercel.json.
+ * Requires RESEND_API_KEY, RESEND_FROM, CRON_SECRET (production).
+ */
 import { NextResponse } from "next/server";
 import { requireCronAuth } from "@/lib/cron-auth";
 import { listAllOrganizationIds, fetchOrganizationName } from "@/lib/dashboard/store";

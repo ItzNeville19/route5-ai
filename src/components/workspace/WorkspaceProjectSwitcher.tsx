@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, FolderKanban, Plus } from "lucide-react";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { canCreateCompany } from "@/lib/workspace-role";
 
 const STORAGE_KEY = "route5.headerProjectId";
 
@@ -31,7 +33,9 @@ export default function WorkspaceProjectSwitcher() {
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const searchParams = useSearchParams();
-  const { projects, loadingProjects, refreshProjects } = useWorkspaceData();
+  const { t } = useI18n();
+  const { projects, loadingProjects, refreshProjects, orgRole, loadingOrganization } = useWorkspaceData();
+  const canAddCompany = !loadingOrganization && canCreateCompany(orgRole);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showColdSkeleton, setShowColdSkeleton] = useState(false);
@@ -120,15 +124,26 @@ export default function WorkspaceProjectSwitcher() {
   }
 
   if (projects.length === 0) {
+    if (canAddCompany) {
+      return (
+        <button
+          type="button"
+          onClick={openNew}
+          className="inline-flex min-h-8 max-w-[min(52vw,220px)] shrink-0 items-center gap-1.5 rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle bg-r5-surface-secondary/80 px-2.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-text-tertiary hover:text-r5-text-primary sm:max-w-[240px]"
+        >
+          <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+          <span className="truncate">{t("header.companies.emptyAdd")}</span>
+        </button>
+      );
+    }
     return (
-      <button
-        type="button"
-        onClick={openNew}
-        className="inline-flex min-h-8 max-w-[min(52vw,220px)] shrink-0 items-center gap-1.5 rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle bg-r5-surface-secondary/80 px-2.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-text-tertiary hover:text-r5-text-primary sm:max-w-[240px]"
+      <div
+        className="inline-flex min-h-8 max-w-[min(60vw,280px)] shrink-0 flex-col justify-center gap-0.5 rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle/80 bg-r5-surface-secondary/50 px-2.5 py-1.5 text-left sm:max-w-[300px]"
+        title={t("header.companies.emptyMemberHint")}
       >
-        <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-        <span className="truncate">New company</span>
-      </button>
+        <span className="truncate text-[11px] font-semibold text-r5-text-primary">{t("header.companies.emptyMember")}</span>
+        <span className="line-clamp-2 text-[10px] leading-snug text-r5-text-tertiary">{t("header.companies.emptyMemberHint")}</span>
+      </div>
     );
   }
 
@@ -136,13 +151,16 @@ export default function WorkspaceProjectSwitcher() {
   const iconEmoji = stableCurrent?.iconEmoji?.trim();
 
   return (
-    <div ref={rootRef} className="relative min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]">
+    <div
+      ref={rootRef}
+      className="relative z-[200] min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]"
+    >
       <button
         type="button"
         onClick={() => {
           setOpen((v) => {
             const next = !v;
-            if (next) {
+            if (next && projects.length === 0) {
               void refreshProjects();
             }
             return next;
@@ -170,7 +188,7 @@ export default function WorkspaceProjectSwitcher() {
       {open ? (
         <div
           role="listbox"
-          className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[260px] max-w-[min(100vw-2rem,320px)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md"
+          className="absolute left-0 top-[calc(100%+6px)] z-[300] min-w-[260px] max-w-[min(100vw-2rem,320px)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md"
         >
           <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
             Companies
@@ -198,14 +216,16 @@ export default function WorkspaceProjectSwitcher() {
             })}
           </div>
           <div className="border-t border-r5-border-subtle p-1">
-            <button
-              type="button"
-              onClick={openNew}
-              className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-            >
-              <Plus className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden />
-              New company…
-            </button>
+            {canAddCompany ? (
+              <button
+                type="button"
+                onClick={openNew}
+                className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+              >
+                <Plus className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden />
+                {t("header.companies.addNew")}
+              </button>
+            ) : null}
             <Link
               href="/companies"
               onClick={() => setOpen(false)}

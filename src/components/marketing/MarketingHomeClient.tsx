@@ -2,8 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { useMemo, useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
+import {
+  MotionA,
+  MotionLink,
+  TiltSurface,
+  LiftCard,
+  InteractiveChip,
+  LANDING_EASE,
+  LANDING_SPRING,
+  staggerParent,
+  staggerChild,
+  fadeUpViewport,
+} from "@/components/marketing/LandingMotion";
 import {
   ArrowRight,
   Building2,
@@ -20,16 +37,25 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { TRIAL_BODY } from "@/lib/marketing-copy";
+import {
+  route5ContactFromWebsiteMailto,
+  route5WalkthroughMailto,
+} from "@/lib/marketing-mailto";
 
-const fadeUp = {
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, amount: 0.2 },
-  transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-};
-
-export default function MarketingHomeClient() {
+export default function MarketingHomeClient({
+  signedIn = false,
+}: {
+  signedIn?: boolean;
+}) {
   const { t } = useI18n();
+  const heroRef = useRef<HTMLElement>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  const heroBgY = useTransform(scrollYProgress, [0, 1], [0, 56]);
+  const heroBgScale = useTransform(scrollYProgress, [0, 1], [1, 1.06]);
 
   const ticker = useMemo(
     () => ["1", "2", "3", "4", "5", "6"].map((k) => t(`landing.ticker.${k}`)),
@@ -40,11 +66,22 @@ export default function MarketingHomeClient() {
     <div className="bg-white text-slate-900">
       {/* Hero — full-bleed city photo + scrim (entrepreneurial, high signal) */}
       <section
+        ref={heroRef}
         id="hero"
         aria-label="Product introduction"
         className="relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24"
       >
-        <div className="absolute inset-0 z-0 min-h-full">
+        <motion.div
+          className="absolute inset-0 z-0 min-h-full overflow-hidden"
+          style={
+            reduceMotion
+              ? undefined
+              : {
+                  y: heroBgY,
+                  scale: heroBgScale,
+                }
+          }
+        >
           <Image
             src="/images/marketing/hero-city.jpg"
             alt=""
@@ -54,7 +91,7 @@ export default function MarketingHomeClient() {
             className="object-cover object-[center_32%] sm:object-center"
             quality={88}
           />
-        </div>
+        </motion.div>
         {/* Readability: dark left for copy, lift right for product mock */}
         <div
           className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/94 via-slate-950/78 to-slate-950/40"
@@ -70,51 +107,92 @@ export default function MarketingHomeClient() {
         />
 
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
-          <motion.div className="lg:col-span-7" {...fadeUp}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md">
-              {t("landing.hero.badge")}
-            </div>
-            <h1 className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]">
+          <motion.div
+            className="lg:col-span-7"
+            variants={staggerParent}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.div variants={staggerChild}>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-white/35 hover:bg-white/[0.14]">
+                {t("landing.hero.badge")}
+              </span>
+            </motion.div>
+            <motion.h1
+              variants={staggerChild}
+              className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]"
+            >
               {t("landing.hero.title1")}{" "}
-              <span className="bg-gradient-to-r from-sky-200 to-cyan-200 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-sky-200 via-cyan-200 to-sky-100 bg-clip-text text-transparent">
                 {t("landing.hero.title2")}
               </span>
-            </h1>
-            <p className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-200">
+            </motion.h1>
+            <motion.p
+              variants={staggerChild}
+              className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-200"
+            >
               {t("landing.hero.lead")}
-            </p>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/90">{TRIAL_BODY}</p>
-            <div className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link
-                href="/sign-up"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-500 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-400"
+            </motion.p>
+            <motion.p
+              variants={staggerChild}
+              className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/90"
+            >
+              {TRIAL_BODY}
+            </motion.p>
+            <motion.div
+              variants={staggerChild}
+              className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
+            >
+              <MotionLink
+                href={signedIn ? "/desk" : "/sign-up"}
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-500 px-8 text-[15px] font-semibold text-white shadow-[0_18px_44px_-14px_rgba(37,99,235,0.65)] ring-1 ring-white/15 transition-colors hover:bg-blue-400"
+                whileHover={
+                  reduceMotion ? undefined : { scale: 1.03, y: -2, transition: LANDING_SPRING }
+                }
+                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
               >
-                {t("landing.hero.ctaPrimary")}
-              </Link>
-              <a
-                href="mailto:neville@rayze.xyz?subject=Route5%20—%20walkthrough"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-8 text-[15px] font-semibold text-white shadow-sm backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
+                {signedIn ? t("landing.hero.ctaOpenDesk") : t("landing.hero.ctaPrimary")}
+              </MotionLink>
+              <MotionA
+                href={route5WalkthroughMailto()}
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-white/30 bg-white/10 px-8 text-[15px] font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:border-white/50 hover:bg-white/15"
+                whileHover={
+                  reduceMotion ? undefined : { scale: 1.02, y: -1, transition: LANDING_SPRING }
+                }
+                whileTap={reduceMotion ? undefined : { scale: 0.99 }}
               >
                 {t("landing.hero.ctaSecondary")}
-              </a>
-              <Link
+              </MotionA>
+              <MotionLink
                 href="/product"
-                className="inline-flex min-h-12 items-center justify-center gap-1 text-[15px] font-medium text-slate-200 underline-offset-4 transition hover:text-white hover:underline sm:px-2"
+                className="inline-flex min-h-12 items-center justify-center gap-1.5 text-[15px] font-medium text-slate-200 underline-offset-4 transition-colors hover:text-white hover:underline sm:px-2"
+                whileHover={
+                  reduceMotion ? undefined : { x: 3, transition: LANDING_SPRING }
+                }
               >
                 {t("landing.hero.ctaProduct")}
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </div>
-            <p className="mt-5 text-[12px] font-medium tracking-wide text-slate-400">{t("landing.trial")}</p>
+                <motion.span aria-hidden className="inline-flex" whileHover={{ x: 4 }}>
+                  <ArrowRight className="h-4 w-4" aria-hidden />
+                </motion.span>
+              </MotionLink>
+            </motion.div>
+            <motion.p
+              variants={staggerChild}
+              className="mt-5 text-[12px] font-medium tracking-wide text-slate-400"
+            >
+              {t("landing.trial")}
+            </motion.p>
           </motion.div>
 
           <motion.div
             className="relative lg:col-span-5"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 28, rotateX: 6 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0 }}
+            transition={{ duration: 0.75, delay: 0.14, ease: LANDING_EASE }}
+            style={{ perspective: 1200 }}
           >
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_24px_80px_-32px_rgba(37,99,235,0.35)]">
+            <TiltSurface float className="w-full">
+              <div className="rounded-2xl border border-white/40 bg-white/98 p-6 shadow-[0_28px_90px_-36px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.65)_inset] backdrop-blur-md">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
                 <p className="text-[13px] font-semibold text-slate-800">{t("landing.hero.mockTitle")}</p>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
@@ -135,11 +213,24 @@ export default function MarketingHomeClient() {
                   <span>{t("landing.hero.mock3")}</span>
                 </li>
               </ul>
-              <div className="mt-5 flex items-center gap-2 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-3 py-2 text-[11px] text-slate-500">
-                <Sparkles className="h-3.5 w-3.5 text-blue-500" aria-hidden />
-                Desk → tasks with owners & dates
+              {reduceMotion ? (
+                <div className="mt-5 flex items-center gap-2 rounded-xl border border-dashed border-slate-200/90 bg-gradient-to-r from-slate-50/90 to-blue-50/40 px-3 py-2 text-[11px] text-slate-600">
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden />
+                  Desk → tasks with owners & dates
+                </div>
+              ) : (
+                <motion.div
+                  className="mt-5 flex items-center gap-2 rounded-xl border border-dashed border-slate-200/90 bg-gradient-to-r from-slate-50/90 to-blue-50/40 px-3 py-2 text-[11px] text-slate-600"
+                  initial={{ opacity: 0.9 }}
+                  animate={{ opacity: [0.9, 1, 0.9] }}
+                  transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden />
+                  Desk → tasks with owners & dates
+                </motion.div>
+              )}
               </div>
-            </div>
+            </TiltSurface>
           </motion.div>
         </div>
       </section>
@@ -174,9 +265,14 @@ export default function MarketingHomeClient() {
         className="border-b border-slate-200 bg-white py-20 sm:py-28"
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
-          <p className="text-center text-[15px] font-medium text-slate-500">{t("landing.trust.line")}</p>
+          <motion.p
+            className="text-center text-[15px] font-medium text-slate-500"
+            {...fadeUpViewport}
+          >
+            {t("landing.trust.line")}
+          </motion.p>
 
-          <motion.div className="mt-20 text-center" {...fadeUp}>
+          <motion.div className="mt-20 text-center" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-600">
               {t("landing.why.kicker")}
             </p>
@@ -190,51 +286,73 @@ export default function MarketingHomeClient() {
 
           <ul className="mt-14 grid gap-6 md:grid-cols-3">
             {(["p1", "p2", "p3"] as const).map((pid, i) => (
-              <motion.li
-                key={pid}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.45, delay: i * 0.06 }}
-                className="rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 p-7 shadow-sm"
-              >
-                <p className="font-landing-display text-[16px] font-semibold text-slate-900">
-                  {t(`landing.why.${pid}.title`)}
-                </p>
-                <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
-                  {t(`landing.why.${pid}.body`)}
-                </p>
-              </motion.li>
+              <li key={pid}>
+                <LiftCard
+                  className="h-full rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/85 p-7 shadow-[0_18px_48px_-28px_rgba(15,23,42,0.12)]"
+                  transition={{ duration: 0.5, ease: LANDING_EASE, delay: i * 0.07 }}
+                >
+                  <p className="font-landing-display text-[16px] font-semibold text-slate-900">
+                    {t(`landing.why.${pid}.title`)}
+                  </p>
+                  <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                    {t(`landing.why.${pid}.body`)}
+                  </p>
+                </LiftCard>
+              </li>
             ))}
           </ul>
         </div>
       </section>
 
       {/* Solution band */}
-      <section className="border-b border-blue-700/20 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
-          <div className="mx-auto max-w-3xl text-center text-white">
+      <section className="relative overflow-hidden border-b border-blue-700/20 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 py-16 sm:py-20">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.22]"
+          aria-hidden
+          style={{
+            background:
+              "radial-gradient(ellipse 90% 70% at 10% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(ellipse 70% 50% at 90% 80%, rgba(56,189,248,0.28), transparent 50%)",
+          }}
+        />
+        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+          <motion.div className="mx-auto max-w-3xl text-center text-white" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100/90">
               {t("landing.solution.kicker")}
             </p>
-            <h2 className="mt-4 font-landing-display text-[clamp(1.6rem,3vw,2.1rem)] font-semibold leading-tight tracking-[-0.02em]">
+            <h2 className="mt-4 font-landing-display text-[clamp(1.6rem,3vw,2.1rem)] font-semibold leading-tight tracking-[-0.02em] drop-shadow-[0_2px_24px_rgba(0,0,0,0.15)]">
               {t("landing.solution.title")}
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-blue-50/95">{t("landing.solution.body")}</p>
-          </div>
-          <ul className="mt-12 grid gap-4 md:grid-cols-3">
+          </motion.div>
+          <ul className="relative mt-12 grid gap-4 md:grid-cols-3">
             {[
               { icon: Building2, key: "b1" as const },
               { icon: ListTodo, key: "b2" as const },
               { icon: Zap, key: "b3" as const },
-            ].map(({ icon: Icon, key }) => (
-              <li
+            ].map(({ icon: Icon, key }, i) => (
+              <motion.li
                 key={key}
-                className="flex gap-4 rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm"
+                initial={{ opacity: 0, y: 18, rotateX: 6 }}
+                whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.5, delay: i * 0.08, ease: LANDING_EASE }}
+                whileHover={
+                  reduceMotion
+                    ? { y: -2 }
+                    : {
+                        y: -5,
+                        rotateX: 3,
+                        rotateY: -2,
+                        z: 10,
+                        transition: LANDING_SPRING,
+                      }
+                }
+                className="relative flex gap-4 rounded-2xl border border-white/20 bg-white/[0.14] p-5 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.35)] backdrop-blur-md [transform-style:preserve-3d]"
+                style={{ perspective: 900 }}
               >
-                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-white" strokeWidth={2} aria-hidden />
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-white drop-shadow-sm" strokeWidth={2} aria-hidden />
                 <p className="text-[14px] leading-relaxed text-white/95">{t(`landing.solution.${key}`)}</p>
-              </li>
+              </motion.li>
             ))}
           </ul>
         </div>
@@ -246,7 +364,7 @@ export default function MarketingHomeClient() {
         className="border-b border-slate-200 bg-slate-50/50 py-20 sm:py-28"
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
-          <motion.div className="text-center" {...fadeUp}>
+          <motion.div className="text-center" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
               {t("landing.how.kicker")}
             </p>
@@ -261,19 +379,29 @@ export default function MarketingHomeClient() {
                 { n: "2", k: "s2" as const, icon: MessageSquare },
                 { n: "3", k: "s3" as const, icon: Keyboard },
               ] as const
-            ).map(({ n, k, icon: Icon }) => (
-              <li
-                key={k}
-                className="relative rounded-2xl border border-slate-200 bg-white p-7 shadow-sm"
-              >
-                <span className="font-landing-display text-3xl font-bold text-blue-100">{n}</span>
-                <Icon className="mt-4 h-6 w-6 text-blue-600" aria-hidden />
-                <p className="mt-3 font-landing-display text-[17px] font-semibold text-slate-900">
-                  {t(`landing.how.${k}.title`)}
-                </p>
-                <p className="mt-2 text-[14px] leading-relaxed text-slate-600">
-                  {t(`landing.how.${k}.body`)}
-                </p>
+            ).map(({ n, k, icon: Icon }, i) => (
+              <li key={k}>
+                <LiftCard
+                  className="relative h-full overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-7 shadow-[0_16px_40px_-24px_rgba(30,64,175,0.18)] ring-1 ring-slate-100/80"
+                  transition={{ duration: 0.48, ease: LANDING_EASE, delay: i * 0.07 }}
+                >
+                  <motion.span
+                    className="font-landing-display text-3xl font-bold text-blue-100"
+                    initial={{ opacity: 0.6, scale: 0.92 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.05 + i * 0.05 }}
+                  >
+                    {n}
+                  </motion.span>
+                  <Icon className="mt-4 h-6 w-6 text-blue-600" aria-hidden />
+                  <p className="mt-3 font-landing-display text-[17px] font-semibold text-slate-900">
+                    {t(`landing.how.${k}.title`)}
+                  </p>
+                  <p className="mt-2 text-[14px] leading-relaxed text-slate-600">
+                    {t(`landing.how.${k}.body`)}
+                  </p>
+                </LiftCard>
               </li>
             ))}
           </ol>
@@ -286,7 +414,7 @@ export default function MarketingHomeClient() {
         className="border-b border-slate-200 bg-white py-20 sm:py-28"
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
-          <motion.div className="max-w-2xl" {...fadeUp}>
+          <motion.div className="max-w-2xl" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
               {t("landing.bento.kicker")}
             </p>
@@ -297,22 +425,20 @@ export default function MarketingHomeClient() {
           </motion.div>
           <ul className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {(["1", "2", "3", "4", "5", "6"] as const).map((id, i) => (
-              <motion.li
-                key={id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{ duration: 0.4, delay: i * 0.04 }}
-                className="group rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50/80 p-6 transition hover:border-blue-200 hover:shadow-md"
-              >
-                <LayoutGrid className="h-5 w-5 text-blue-600" aria-hidden />
-                <p className="mt-4 font-landing-display text-[15px] font-semibold text-slate-900">
-                  {t(`landing.bento.${id}.title`)}
-                </p>
-                <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
-                  {t(`landing.bento.${id}.body`)}
-                </p>
-              </motion.li>
+              <li key={id}>
+                <LiftCard
+                  className="h-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-white via-white to-slate-50/85 p-6 ring-1 ring-slate-100/90"
+                  transition={{ duration: 0.45, ease: LANDING_EASE, delay: i * 0.04 }}
+                >
+                  <LayoutGrid className="h-5 w-5 text-blue-600" aria-hidden />
+                  <p className="mt-4 font-landing-display text-[15px] font-semibold text-slate-900">
+                    {t(`landing.bento.${id}.title`)}
+                  </p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-slate-600">
+                    {t(`landing.bento.${id}.body`)}
+                  </p>
+                </LiftCard>
+              </li>
             ))}
           </ul>
         </div>
@@ -324,29 +450,54 @@ export default function MarketingHomeClient() {
         className="border-b border-slate-200 bg-slate-50/80 py-16 sm:py-20"
       >
         <div className="mx-auto max-w-6xl px-5 text-center sm:px-8 lg:px-10">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
-            {t("landing.integrations.kicker")}
-          </p>
-          <h2 className="mt-3 font-landing-display text-[clamp(1.4rem,2.6vw,1.85rem)] font-semibold text-slate-900">
-            {t("landing.integrations.title")}
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600">
-            {t("landing.integrations.line")}
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-[12px] font-semibold text-slate-500">
+          <motion.div {...fadeUpViewport}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
+              {t("landing.integrations.kicker")}
+            </p>
+            <h2 className="mt-3 font-landing-display text-[clamp(1.4rem,2.6vw,1.85rem)] font-semibold text-slate-900">
+              {t("landing.integrations.title")}
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-[15px] leading-relaxed text-slate-600">
+              {t("landing.integrations.line")}
+            </p>
+          </motion.div>
+          <motion.div
+            className="mt-8 flex flex-wrap items-center justify-center gap-3 text-[12px] font-semibold text-slate-600"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={{
+              hidden: {},
+              show: {
+                transition: { staggerChildren: 0.05, delayChildren: 0.08 },
+              },
+            }}
+          >
             {["Slack", "Google", "Linear", "GitHub", "Notion", "Figma", "OpenAI"].map((name) => (
-              <span
+              <motion.div
                 key={name}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 shadow-sm"
+                variants={{
+                  hidden: { opacity: 0, y: 10, rotateX: 8 },
+                  show: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.45, ease: LANDING_EASE } },
+                }}
+                className="[perspective:800px]"
               >
-                {name}
-              </span>
+                <InteractiveChip className="inline-block rounded-full border border-slate-200/90 bg-white px-3 py-1.5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.35)] ring-1 ring-white/80">
+                  {name}
+                </InteractiveChip>
+              </motion.div>
             ))}
-            <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-3 py-1.5 text-slate-500">
+            <motion.span
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                show: { opacity: 1, y: 0 },
+              }}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300/90 bg-white/60 px-3 py-1.5 text-slate-500 backdrop-blur-sm"
+            >
               <Link2 className="h-3.5 w-3.5" aria-hidden />
               more
-            </span>
-          </div>
+            </motion.span>
+          </motion.div>
         </div>
       </section>
 
@@ -356,7 +507,7 @@ export default function MarketingHomeClient() {
         className="border-b border-slate-200 bg-white py-20 sm:py-28"
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
-          <motion.div className="max-w-2xl" {...fadeUp}>
+          <motion.div className="max-w-2xl" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
               {t("landing.teams.kicker")}
             </p>
@@ -373,22 +524,20 @@ export default function MarketingHomeClient() {
                 { k: "c3" as const, icon: Building2 },
               ] as const
             ).map(({ k, icon: Icon }, idx) => (
-              <motion.li
-                key={k}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.45, delay: idx * 0.07 }}
-                className="rounded-2xl border border-slate-200 bg-gradient-to-b from-slate-50/90 to-white p-8 shadow-sm"
-              >
-                <Icon className="h-6 w-6 text-blue-600" strokeWidth={1.75} aria-hidden />
-                <p className="mt-5 font-landing-display text-[16px] font-semibold text-slate-900">
-                  {t(`landing.teams.${k}.title`)}
-                </p>
-                <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
-                  {t(`landing.teams.${k}.body`)}
-                </p>
-              </motion.li>
+              <li key={k}>
+                <LiftCard
+                  className="h-full rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50/95 to-white p-8 shadow-[0_18px_44px_-28px_rgba(15,23,42,0.12)]"
+                  transition={{ duration: 0.48, ease: LANDING_EASE, delay: idx * 0.07 }}
+                >
+                  <Icon className="h-6 w-6 text-blue-600" strokeWidth={1.75} aria-hidden />
+                  <p className="mt-5 font-landing-display text-[16px] font-semibold text-slate-900">
+                    {t(`landing.teams.${k}.title`)}
+                  </p>
+                  <p className="mt-3 text-[14px] leading-relaxed text-slate-600">
+                    {t(`landing.teams.${k}.body`)}
+                  </p>
+                </LiftCard>
+              </li>
             ))}
           </ul>
         </div>
@@ -401,10 +550,17 @@ export default function MarketingHomeClient() {
       >
         <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
           <motion.div
-            className="rounded-[28px] border border-slate-200 bg-gradient-to-br from-white to-sky-50/60 p-10 shadow-[0_32px_100px_-48px_rgba(37,99,235,0.25)] sm:p-12"
-            {...fadeUp}
+            className="relative overflow-hidden rounded-[28px] border border-slate-200/90 bg-gradient-to-br from-white via-white to-sky-50/55 p-10 shadow-[0_36px_110px_-52px_rgba(37,99,235,0.35)] ring-1 ring-sky-100/80 sm:p-12"
+            {...fadeUpViewport}
+            whileHover={
+              reduceMotion ? undefined : { y: -4, transition: LANDING_SPRING }
+            }
           >
-            <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+            <div
+              className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-gradient-to-br from-sky-200/40 to-blue-400/25 blur-3xl"
+              aria-hidden
+            />
+            <div className="relative flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-xl">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-600">
                   {t("landing.cta.kicker")}
@@ -415,18 +571,26 @@ export default function MarketingHomeClient() {
                 <p className="mt-3 text-[15px] leading-relaxed text-slate-600">{t("landing.cta.body")}</p>
               </div>
               <div className="flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-end">
-                <a
-                  href="mailto:neville@rayze.xyz?subject=Route5"
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+                <MotionA
+                  href={route5ContactFromWebsiteMailto()}
+                  className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl bg-blue-600 px-8 text-[15px] font-semibold text-white shadow-[0_16px_40px_-18px_rgba(37,99,235,0.55)] ring-1 ring-white/25 transition-colors hover:bg-blue-700"
+                  whileHover={
+                    reduceMotion ? undefined : { scale: 1.03, y: -2, transition: LANDING_SPRING }
+                  }
+                  whileTap={reduceMotion ? undefined : { scale: 0.98 }}
                 >
                   {t("landing.cta.email")}
-                </a>
-                <Link
-                  href="/sign-up"
-                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-[15px] font-semibold text-slate-800 transition hover:border-blue-300"
+                </MotionA>
+                <MotionLink
+                  href={signedIn ? "/desk" : "/sign-up"}
+                  className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200/90 bg-white/95 px-8 text-[15px] font-semibold text-slate-800 shadow-sm ring-1 ring-white/90 transition-colors hover:border-blue-200/90"
+                  whileHover={
+                    reduceMotion ? undefined : { scale: 1.02, y: -1, transition: LANDING_SPRING }
+                  }
+                  whileTap={reduceMotion ? undefined : { scale: 0.99 }}
                 >
-                  {t("landing.cta.signup")}
-                </Link>
+                  {signedIn ? t("landing.hero.ctaOpenDesk") : t("landing.cta.signup")}
+                </MotionLink>
               </div>
             </div>
           </motion.div>

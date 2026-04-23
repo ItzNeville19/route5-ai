@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import {
@@ -14,7 +14,6 @@ import {
   Users,
   LayoutGrid,
   ListTodo,
-  MessageSquare,
   Sparkles,
   ScrollText,
   Settings2,
@@ -30,6 +29,7 @@ import { getWorkspaceIanaTimeZone, getDisplayLocationLabel } from "@/lib/workspa
 import { hourInTimezone } from "@/lib/timezone-date";
 import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
 import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
+import { canCreateCompany, orgRoleLabel } from "@/lib/workspace-role";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -59,31 +59,75 @@ function ownerLabel(ownerId: string): string {
 }
 
 function OverviewHeroCTAs() {
+  const { t } = useI18n();
   const { orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
+  const showAddCompany = !loadingOrganization && canCreateCompany(orgRole);
   const showTaskTracker = loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole);
+  const isMember = !loadingOrganization && orgRole === "member";
+  const primaryCtaClass =
+    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover";
+  const memberAccentClass =
+    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] bg-[#5059c9] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#5059c9]/25 transition hover:opacity-[0.97] dark:bg-[#6264A7] dark:shadow-[#6264A7]/20";
+  if (isMember) {
+    return (
+      <>
+        <Link href="/workspace/commitments" className={memberAccentClass}>
+          <ListTodo className="h-4 w-4" aria-hidden />
+          {t("overview.home.myTasksCta")}
+        </Link>
+        <Link href="/desk" className={primaryCtaClass}>
+          {t("overview.home.openDesk")}
+          <ArrowUpRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+        </Link>
+      </>
+    );
+  }
   return (
     <>
-      <button
-        type="button"
-        onClick={() =>
-          window.dispatchEvent(
-            new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
-          )
-        }
-        className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover"
-      >
-        <Plus className="h-4 w-4" aria-hidden />
-        Add company
-      </button>
-      {showTaskTracker ? (
-        <Link
-          href="/workspace/commitments"
-          className="inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover"
+      {showAddCompany ? (
+        <button
+          type="button"
+          onClick={() =>
+            window.dispatchEvent(
+              new CustomEvent("route5:new-project-open", { detail: { mode: "company" } })
+            )
+          }
+          className={primaryCtaClass}
         >
-          Task tracker
+          <Plus className="h-4 w-4" aria-hidden />
+          {t("overview.home.addCompany")}
+        </button>
+      ) : null}
+      {showTaskTracker ? (
+        <Link href="/workspace/commitments" className={primaryCtaClass}>
+          {t("overview.home.taskTracker")}
         </Link>
       ) : null}
     </>
+  );
+}
+
+function OverviewRoleContextStrip() {
+  const { t } = useI18n();
+  const { orgRole, loadingOrganization } = useWorkspaceData();
+  if (loadingOrganization || !orgRole) return null;
+  const k =
+    orgRole === "member"
+      ? "overview.home.roleContext.member"
+      : orgRole === "manager"
+        ? "overview.home.roleContext.manager"
+        : "overview.home.roleContext.admin";
+  return (
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-950/65"
+    >
+      <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-300 sm:text-[13px]">
+        <span className="font-semibold text-slate-900 dark:text-white">{orgRoleLabel(orgRole)}</span>
+        <span className="text-slate-400 dark:text-slate-500"> — </span>
+        {t(k)}
+      </p>
+    </motion.div>
   );
 }
 
@@ -107,9 +151,9 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex min-h-[6.5rem] flex-col gap-1.5 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition hover:border-[#6264A7]/35 hover:shadow-md"
+      className="group flex min-h-[6.5rem] flex-col gap-1.5 rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_4px_14px_-6px_rgba(15,23,42,0.12)] transition hover:border-[#6264A7]/40 hover:shadow-[0_10px_28px_-12px_rgba(79,70,229,0.22)] dark:border-slate-700 dark:bg-slate-950/50 dark:hover:border-[#818cf8]/35"
     >
-      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6264A7]/10 text-[#5059c9] dark:bg-[#6264A7]/20 dark:text-[#a6a7dc]">
+      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6264A7]/12 text-[#5059c9] dark:bg-[#6264A7]/22 dark:text-[#a6a7dc]">
         <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
       </span>
       <span className="text-[14px] font-semibold leading-tight text-r5-text-primary">{label}</span>
@@ -120,7 +164,7 @@ function QuickAction({
 
 export default function OverviewPage() {
   const { user } = useUser();
-  const { intlLocale } = useI18n();
+  const { intlLocale, t } = useI18n();
   const exp = useWorkspaceExperience();
   const { projects, orgRole, loadingOrganization } = useWorkspaceData();
   const mod = primaryModLabelFromNavigator();
@@ -141,6 +185,31 @@ export default function OverviewPage() {
     [homeIana, exp.prefs.workspaceRegionKey]
   );
   const period = useMemo(() => dayPeriodForHour(hourInTimezone(homeIana, now)), [homeIana, now]);
+
+  const [heroWallIdx, setHeroWallIdx] = useState(0);
+  useEffect(() => {
+    try {
+      const s = sessionStorage.getItem("route5:overview-hero-wall");
+      if (s) setHeroWallIdx(parseInt(s, 10) || 0);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const cycleHeroWall = useCallback(() => {
+    setHeroWallIdx((n) => {
+      const next = n + 1;
+      try {
+        sessionStorage.setItem("route5:overview-hero-wall", String(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  }, []);
+
+  const overviewCanvasMode =
+    (exp.prefs.workspaceCanvasBackground ?? "gradient") === "photo" ? "photo" : "gradient";
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 60_000);
@@ -242,6 +311,23 @@ export default function OverviewPage() {
     [managerMembers]
   );
 
+  const jumpBackHintKey = useMemo(() => {
+    if (loadingOrganization) return "overview.home.jumpBack.hintDefault" as const;
+    if (orgRole === "member") return "overview.home.jumpBack.hintMember" as const;
+    if (orgRole === "manager") return "overview.home.jumpBack.hintManager" as const;
+    if (orgRole === "admin") return "overview.home.jumpBack.hintAdmin" as const;
+    return "overview.home.jumpBack.hintDefault" as const;
+  }, [orgRole, loadingOrganization]);
+
+  const companiesEmptyCopy = useMemo(() => {
+    if (loadingOrganization) {
+      return "…";
+    }
+    return canCreateCompany(orgRole)
+      ? t("overview.home.emptyCompanies.leadership")
+      : t("overview.home.emptyCompanies.member");
+  }, [orgRole, loadingOrganization, t]);
+
   return (
     <motion.div
       className="mx-auto w-full max-w-[min(100%,1200px)] space-y-6 pb-12"
@@ -257,6 +343,10 @@ export default function OverviewPage() {
           timeZone={homeIana}
           placeLabel={placeLabel}
           locale={intlLocale}
+          canvasMode={overviewCanvasMode}
+          heroWallIndex={heroWallIdx}
+          workspaceRegionKey={exp.prefs.workspaceRegionKey}
+          onCycleHeroWall={cycleHeroWall}
         >
           <OverviewHeroCTAs />
         </OverviewHomeHero>
@@ -274,44 +364,39 @@ export default function OverviewPage() {
       </motion.p>
 
       <motion.section variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <div className="mb-3 flex items-baseline justify-between gap-2 px-0.5">
+        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2 px-0.5">
           <h2 className="text-[15px] font-semibold text-r5-text-primary">Jump back in</h2>
-          <span className="text-[12px] text-r5-text-secondary">Same rail as Teams: one tap to the work you do every day.</span>
+          <span className="max-w-xl text-[12px] leading-snug text-r5-text-secondary sm:text-right">
+            {t(jumpBackHintKey)}
+          </span>
         </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
           <QuickAction
             href="/desk"
             icon={LayoutGrid}
             label="Desk"
-            hint="Execution board & capture"
+            hint="Execution & capture"
             orgNavKey="desk"
           />
           <QuickAction
             href="/workspace/commitments"
             icon={ListTodo}
             label="Tasks"
-            hint="Org task tracker & filters"
+            hint="Tracker & owners"
             orgNavKey="tasks"
-          />
-          <QuickAction
-            href="/workspace/chat"
-            icon={MessageSquare}
-            label="Chat"
-            hint="Workspace channels"
-            orgNavKey={null}
           />
           <QuickAction
             href="/capture"
             icon={Sparkles}
             label="Capture"
-            hint="Paste notes & extract"
+            hint="Notes to structured work"
             orgNavKey={null}
           />
           <QuickAction
             href="/companies"
             icon={Building2}
             label="Companies"
-            hint="Programs & accounts"
+            hint="Programs you follow"
             orgNavKey="companies"
           />
           <QuickAction
@@ -334,10 +419,10 @@ export default function OverviewPage() {
       </motion.section>
 
       <motion.section
-        className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+        className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.15)] dark:border-slate-700 dark:bg-slate-950/55"
         variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
       >
-        <div className="border-b border-r5-border-subtle/80 bg-r5-surface-secondary/40 px-4 py-2.5">
+        <div className="border-b border-slate-200/90 bg-slate-50/95 px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900/50">
           <h2 className="text-[14px] font-semibold text-r5-text-primary">This week on your plate</h2>
           <p className="mt-0.5 text-[12px] text-r5-text-secondary">Prioritize what is overdue, due soon, and still open.</p>
         </div>
@@ -370,8 +455,8 @@ export default function OverviewPage() {
         className="grid gap-5 lg:grid-cols-2"
         variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
       >
-        <section className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm">
-          <div className="flex items-center justify-between border-b border-r5-border-subtle/80 px-4 py-3">
+        <section className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55">
+          <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="text-[15px] font-semibold text-r5-text-primary">My tasks</h2>
             <Link href="/workspace/commitments" className="text-[12px] font-medium text-[#5059c9] hover:underline">
               Open tracker
@@ -406,8 +491,8 @@ export default function OverviewPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm">
-          <div className="flex items-center justify-between border-b border-r5-border-subtle/80 px-4 py-3">
+        <section className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55">
+          <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
               <Building2 className="h-4 w-4 text-r5-text-secondary" aria-hidden />
               My companies
@@ -418,9 +503,7 @@ export default function OverviewPage() {
           </div>
           <div className="p-0">
             {myCompanies.length === 0 ? (
-              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">
-                No companies yet. Use Add company in the header or the button in the hero.
-              </p>
+              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">{companiesEmptyCopy}</p>
             ) : (
               <ul>
                 {myCompanies.map((company) => (
@@ -445,10 +528,10 @@ export default function OverviewPage() {
 
       {loadingOrganization ? null : orgRole === "admin" ? (
         <motion.section
-          className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+          className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55"
           variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
         >
-          <div className="border-b border-r5-border-subtle/80 px-4 py-3">
+          <div className="border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="text-[15px] font-semibold text-r5-text-primary">All team tasks</h2>
             <p className="mt-0.5 text-[12px] text-r5-text-secondary">Org-wide open work — for routing and follow-up.</p>
           </div>
@@ -476,10 +559,10 @@ export default function OverviewPage() {
         </motion.section>
       ) : orgRole === "manager" ? (
         <motion.section
-          className="overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary/50 shadow-sm"
+          className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55"
           variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
         >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-r5-border-subtle/80 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
               <Users className="h-4 w-4 text-r5-text-secondary" aria-hidden />
               Team load

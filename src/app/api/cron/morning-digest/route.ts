@@ -3,6 +3,7 @@ import { requireCronAuth } from "@/lib/cron-auth";
 import { clerkClient } from "@clerk/nextjs/server";
 import { listAllOrganizationIds, fetchOrganizationName } from "@/lib/dashboard/store";
 import { getOrganizationClerkUserId } from "@/lib/escalations/store";
+import { hasMorningDigestForLocalDate } from "@/lib/notifications/store";
 import { sendNotification } from "@/lib/notifications/service";
 import { listOrgCommitmentsForOrgId } from "@/lib/org-commitments/repository";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
@@ -82,7 +83,9 @@ function readWorkspaceTimezoneFromUser(user: { privateMetadata?: unknown }): str
 
 /**
  * Daily morning digest cron.
- * Sends once in the 8:00-8:09 local-time window per org owner.
+ * Vercel schedule should run at least every 10 minutes (see vercel.json) so each workspace timezone
+ * hits the local 8:00 hour while deduping to one send per local calendar day (see metadata.morningDigestLocalDate).
+ * Requires RESEND_API_KEY, CRON_SECRET, and user email prefs (email on for "Morning digest").
  */
 export async function GET(req: Request) {
   const denied = requireCronAuth(req);
@@ -116,7 +119,8 @@ export async function GET(req: Request) {
 
       const workspaceTimezone = readWorkspaceTimezoneFromUser(user);
       const local = localTimeParts(now, workspaceTimezone);
-      if (!local || local.hour !== 8 || local.minute > 9) {
+      // Full 8:00–8:59 local hour; idempotency via hasMorningDigestForLocalDate (cron runs every ~10 min).
+      if (!local || local.hour !== 8) {
         outOfWindow++;
         continue;
       }
@@ -134,6 +138,10 @@ export async function GET(req: Request) {
       }
 
       const todayKey = dateKeyInTimezone(now, workspaceTimezone);
+      if (await hasMorningDigestForLocalDate({ orgId, userId: ownerUserId, localDateKey: todayKey })) {
+        skipped++;
+        continue;
+      }
       const dueToday = rows.filter((r) => isDueToday(r, todayKey));
       const overdue = rows.filter((r) => isOverdue(r, nowIso));
       const atRisk = rows.filter((r) => isAtRisk(r) && !isOverdue(r, nowIso));
@@ -177,6 +185,7 @@ export async function GET(req: Request) {
           title,
           body,
           metadata: {
+            morningDigestLocalDate: todayKey,
             orgName,
             dueTodayCount: dueToday.length,
             overdueCount: overdue.length,

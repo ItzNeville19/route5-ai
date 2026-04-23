@@ -7,6 +7,8 @@ import OverviewTimeOfDayArt from "@/components/overview/OverviewTimeOfDayArt";
 
 export type OverviewDayPeriod = "morning" | "afternoon" | "evening" | "night";
 
+type CanvasMode = "gradient" | "photo";
+
 type Props = {
   period: OverviewDayPeriod;
   now: Date;
@@ -17,20 +19,15 @@ type Props = {
   /** BCP-47, e.g. en-US */
   locale?: string;
   children?: ReactNode;
+  /** Matches workspace canvas: mesh vs photography. */
+  canvasMode: CanvasMode;
+  /** Rotates hero art (mesh variant or photo from pool). */
+  heroWallIndex: number;
+  /** Region key for curated photo pools (photo mode). */
+  workspaceRegionKey?: string;
+  /** Tap location line to cycle wall art. */
+  onCycleHeroWall?: () => void;
 };
-
-function borderForPeriod(period: OverviewDayPeriod): string {
-  switch (period) {
-    case "morning":
-      return "border-amber-200/50 dark:border-amber-800/30";
-    case "afternoon":
-      return "border-sky-200/50 dark:border-sky-800/30";
-    case "evening":
-      return "border-violet-200/45 dark:border-violet-800/30";
-    default:
-      return "border-slate-300/50 dark:border-slate-700/40";
-  }
-}
 
 function headlineForPeriod(period: OverviewDayPeriod): string {
   switch (period) {
@@ -48,13 +45,13 @@ function headlineForPeriod(period: OverviewDayPeriod): string {
 function leadForPeriod(period: OverviewDayPeriod): string {
   switch (period) {
     case "morning":
-      return "Overdue, due soon, and open work—plus your companies—in one calm screen.";
+      return "Overdue, due soon, and open work — plus your companies — in one calm screen.";
     case "afternoon":
-      return "Same snapshot through the day: tasks, dates, and companies without digging through chat.";
+      return "Tasks, dates, and programs stay visible here so nothing slips through the cracks.";
     case "evening":
       return "See what still needs attention before you sign off.";
     default:
-      return "Nothing urgent here—your list waits until you're back.";
+      return "Nothing urgent here — your list waits until you're back.";
   }
 }
 
@@ -86,8 +83,11 @@ export default function OverviewHomeHero({
   placeLabel,
   locale = "en-US",
   children,
+  canvasMode,
+  heroWallIndex,
+  workspaceRegionKey,
+  onCycleHeroWall,
 }: Props) {
-  const border = borderForPeriod(period);
   const { dateLine, timeLine, zoneAbbrev } = useMemo(() => {
     try {
       const dateLineInner = now.toLocaleDateString(locale, {
@@ -121,47 +121,60 @@ export default function OverviewHomeHero({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={`relative min-h-[11rem] overflow-hidden rounded-[var(--r5-radius-lg)] border bg-r5-surface-primary/20 ${border} p-[var(--r5-space-5)] shadow-sm`}
+      className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-50 shadow-[0_24px_64px_-28px_rgba(15,23,42,0.18)] dark:border-slate-700/90 dark:bg-slate-950/40 dark:shadow-[0_28px_70px_-24px_rgba(0,0,0,0.55)]"
     >
-      <OverviewTimeOfDayArt period={period} />
-      <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/95 via-white/60 to-white/15 dark:from-slate-950/92 dark:via-slate-950/55 dark:to-slate-950/18"
-        aria-hidden
+      <OverviewTimeOfDayArt
+        period={period}
+        mode={canvasMode}
+        rotationIndex={heroWallIndex}
+        regionKey={workspaceRegionKey}
       />
 
-      <div className="relative z-[1] flex flex-wrap items-start justify-between gap-[var(--r5-space-3)]">
-        <div className="max-w-[72ch] pr-4">
-          <p className="text-[length:var(--r5-font-caption)] tracking-[0.04em] text-r5-text-secondary [text-shadow:0_1px_12px_rgba(255,255,255,0.85)] dark:[text-shadow:0_1px_10px_rgba(0,0,0,0.45)]">
-            <span className="font-medium text-r5-text-primary/90">{dateLine}</span>
-            <span className="mx-1.5 text-r5-text-secondary/80">·</span>
-            <span>
+      <div className="relative z-[1] flex flex-col gap-4 p-[var(--r5-space-5)] sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="min-w-0 max-w-[46rem] flex-1 rounded-xl border border-white/70 bg-white/93 px-5 py-4 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.25)] backdrop-blur-md dark:border-white/10 dark:bg-slate-950/92 dark:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.65)]">
+          <p className="text-[length:var(--r5-font-caption)] tracking-[0.04em] text-slate-600 dark:text-slate-300">
+            <span className="font-semibold text-slate-900 dark:text-slate-50">{dateLine}</span>
+            <span className="mx-1.5 text-slate-400 dark:text-slate-500">·</span>
+            <span className="text-slate-700 dark:text-slate-200">
               {timeLine}
-              {zoneAbbrev ? <span className="text-r5-text-secondary/90"> {zoneAbbrev}</span> : null}
+              {zoneAbbrev ? <span className="text-slate-500 dark:text-slate-400"> {zoneAbbrev}</span> : null}
             </span>
             {placeLabel ? (
               <>
-                <span className="mx-1.5 text-r5-text-secondary/80">·</span>
-                <span className="text-r5-text-secondary">{placeLabel}</span>
+                <span className="mx-1.5 text-slate-400 dark:text-slate-500">·</span>
+                {onCycleHeroWall ? (
+                  <button
+                    type="button"
+                    onClick={onCycleHeroWall}
+                    title="Change background look"
+                    className="rounded-md font-medium text-[#5059c9] underline decoration-[#5059c9]/35 decoration-dotted underline-offset-2 transition hover:bg-[#5059c9]/10 hover:decoration-[#5059c9] dark:text-[#a5b4fc] dark:decoration-[#a5b4fc]/40 dark:hover:bg-indigo-500/15"
+                  >
+                    {placeLabel}
+                  </button>
+                ) : (
+                  <span className="text-slate-600 dark:text-slate-400">{placeLabel}</span>
+                )}
               </>
             ) : null}
           </p>
-          <h1 className="mt-[var(--r5-space-3)] text-[clamp(1.35rem,4vw,1.65rem)] font-semibold tracking-[-0.02em] text-r5-text-primary [text-shadow:0_1px_12px_rgba(255,255,255,0.9)] dark:[text-shadow:0_1px_12px_rgba(0,0,0,0.5)]">
+          <h1 className="mt-[var(--r5-space-3)] text-[clamp(1.35rem,4vw,1.75rem)] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
             {greeting}
             {firstName ? (
               <>
                 {", "}
-                <span className="text-r5-text-primary">{firstName}</span>
+                <span className="text-slate-950 dark:text-white">{firstName}</span>
               </>
             ) : null}
           </h1>
-          <p className="mt-1 text-[15px] font-medium text-r5-text-primary/90 [text-shadow:0_1px_8px_rgba(255,255,255,0.85)] dark:[text-shadow:0_1px_8px_rgba(0,0,0,0.4)]">
+          <p className="mt-1 text-[15px] font-semibold text-slate-800 dark:text-slate-100">
             {headlineForPeriod(period)}
           </p>
-          <p className="mt-[var(--r5-space-2)] max-w-[56ch] text-[13px] leading-relaxed text-r5-text-secondary [text-shadow:0_1px_6px_rgba(255,255,255,0.75)] dark:[text-shadow:0_1px_6px_rgba(0,0,0,0.35)]">
+          <p className="mt-[var(--r5-space-2)] max-w-[56ch] text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
             {leadForPeriod(period)}
           </p>
         </div>
-        <div className="relative z-[1] flex flex-shrink-0 flex-wrap items-center gap-[var(--r5-space-2)]">
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-white/65 bg-white/82 px-3 py-3 shadow-sm backdrop-blur-md dark:border-white/12 dark:bg-slate-950/78 sm:justify-end">
           {children}
         </div>
       </div>

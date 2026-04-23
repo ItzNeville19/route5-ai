@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { deskUrl } from "@/lib/desk-routes";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { canCreateCompany } from "@/lib/workspace-role";
 import { Check, X } from "lucide-react";
 
 function dismissedKey(userId: string | undefined) {
@@ -21,6 +23,8 @@ export default function DashboardStartHereCard({
   extractionCount: number;
   userId: string | undefined;
 }) {
+  const { orgRole, loadingOrganization } = useWorkspaceData();
+  const canAddCompany = !loadingOrganization && canCreateCompany(orgRole);
   const [hydrated, setHydrated] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [hide1, setHide1] = useState(false);
@@ -132,7 +136,7 @@ export default function DashboardStartHereCard({
             <p className="mt-1 text-[11px] leading-snug text-zinc-300">
               Scope an initiative — every commitment and checklist lives here.
             </p>
-            {!hasProject ? (
+            {!hasProject && canAddCompany ? (
               <button
                 type="button"
                 onClick={() =>
@@ -144,6 +148,10 @@ export default function DashboardStartHereCard({
               >
                 + New project
               </button>
+            ) : !hasProject ? (
+              <p className="mt-3 text-[11px] leading-snug text-zinc-400">
+                A manager or admin can add a company and put you on it — then this step checks off automatically.
+              </p>
             ) : (
               <p className="mt-3 text-[11px] font-medium text-[#d9f99d]">Done</p>
             )}

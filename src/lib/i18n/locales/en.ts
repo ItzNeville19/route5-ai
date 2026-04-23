@@ -95,6 +95,35 @@ export const en: Record<string, string> = {
   "overview.openActionsStrip.caughtUp":
     "No open actions in your queue — checklists are clear. Add the next client or program thread on Desk when you are ready.",
 
+  "overview.home.addCompany": "Add company",
+  "overview.home.taskTracker": "Task tracker",
+  "overview.home.myTasksCta": "My tasks",
+  "overview.home.openDesk": "Open desk",
+  "overview.home.roleContext.member":
+    "This home is for your assigned work. Managers and admins can assign items and use the org task tracker; you’ll see your queue here and on Desk.",
+  "overview.home.roleContext.manager":
+    "Manager view — you can add companies, assign work, and read team load. Teammates with a member role focus on completing what is assigned to them.",
+  "overview.home.roleContext.admin":
+    "Admin view — full org visibility, invitations, and org-wide follow-up. Use the task tracker to route work; members only see their own assignments where policy allows.",
+  "overview.home.jumpBack.hintDefault": "Shortcuts to the screens you use most in this workspace.",
+  "overview.home.jumpBack.hintMember": "Desk, tasks, capture, companies — everything you need to stay current.",
+  "overview.home.jumpBack.hintManager": "Ship work from one rail: desk execution, task routing, and company programs.",
+  "overview.home.jumpBack.hintAdmin": "Operational visibility: jump straight into trackers, programs, and rollups.",
+  "overview.home.emptyCompanies.leadership":
+    "No companies yet — use Add company in the home hero (or the header switcher) to create a program thread.",
+  "overview.home.emptyCompanies.member":
+    "No companies on your account yet. A manager or admin can add a company and grant you access — you’ll see it here when they do.",
+  "header.companies.addNew": "New company…",
+  "header.companies.emptyAdd": "Add company",
+  "header.companies.emptyMember": "No companies yet",
+  "header.companies.emptyMemberHint": "Your admin or manager can add a program. You’ll pick it from this menu when you’re on it.",
+  "projects.hub.addCompany": "Add company",
+  "projects.hub.empty.leadership":
+    "No companies yet — add one to organize programs, tasks, and meeting follow-through in one place.",
+  "projects.hub.empty.member":
+    "You don’t have any company workspaces yet. Ask a manager to add a program and invite you — then it will list here.",
+  "projects.hub.addDisabledHint": "Only managers and admins can add companies. Ask your org to grant access if you need to create one.",
+
   "desk.llmOffTitle": "Structured process without full AI",
   "desk.llmOffLead":
     "Captures use a fast, clearly labeled heuristic — not full model understanding. Add",
@@ -443,6 +472,7 @@ export const en: Record<string, string> = {
   "marketing.nav.openMenu": "Open menu",
   "marketing.nav.mobileNav": "Mobile",
   "marketing.nav.route5Home": "Route5 home",
+  "marketing.nav.tryRoute5": "Try Route5",
 
   "commitment.metrics.active": "Active",
   "commitment.metrics.onTrack": "On track",
@@ -457,6 +487,13 @@ export const en: Record<string, string> = {
   "desk.strip.deskFallback": "Desk",
   "desk.strip.title": "Tasks for this workspace",
   "desk.strip.subtitle": "Paste notes, assign owners, and track follow-through. Stats below are for the whole org.",
+  "desk.strip.subtitleMember":
+    "Your work queue for this company — complete what’s assigned to you. Managers use the org task tracker to assign and follow up.",
+  "desk.strip.subtitleManager":
+    "Run this company’s delivery: assign tasks, keep owners clear, and use the metrics below for team load.",
+  "desk.strip.subtitleAdmin":
+    "Full operational view for this company — assignments, load, and follow-through across the org.",
+  "desk.roleBadge": "View",
   "desk.strip.addDecision": "Add from notes",
   "desk.strip.overview": "Overview",
   "desk.stats.sub.open": "open",
@@ -558,7 +595,7 @@ export const en: Record<string, string> = {
   "marketing.home.solution.kicker": "Solution",
   "marketing.home.solution.title": "Start each day with tasks, owners, and companies in one place",
   "marketing.home.solution.body":
-    "Add a company when you start a new initiative. Your people get a tailored home, managers see upcoming work, and administrators can see the org when they need to—without turning the product into a second inbox.",
+    "Add a company when you start a new initiative. Teammates get a tailored home, managers see what is due, and org admins have full visibility when they need it—without turning the product into a second inbox.",
   "marketing.home.stage.label": "What you get",
   "marketing.home.stage.title": "One place for follow‑through",
   "marketing.home.stage.body":
@@ -625,6 +662,7 @@ export const en: Record<string, string> = {
   "landing.hero.lead":
     "Route5 is where companies, tasks, and owners stay in one place. Paste notes on the Desk, track everything in one home, and give managers a real read on the team—without building another chat app.",
   "landing.hero.ctaPrimary": "Start free",
+  "landing.hero.ctaOpenDesk": "Open Desk",
   "landing.hero.ctaSecondary": "Book a walkthrough",
   "landing.hero.ctaProduct": "Product detail",
   "landing.hero.mockTitle": "Open tasks · Acme Corp",

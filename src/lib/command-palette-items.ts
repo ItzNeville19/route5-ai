@@ -122,6 +122,8 @@ export function buildPaletteItems(params: {
   people?: PalettePerson[];
   /** Workspace-wide incomplete actions (Desk queue); sharpens Desk description. */
   openActionsCount?: number;
+  /** When false, omits the “Add company” palette action (e.g. member role). */
+  canCreateCompany?: boolean;
 }): PaletteItem[] {
   const {
     signedIn,
@@ -131,6 +133,7 @@ export function buildPaletteItems(params: {
     searchCommitments = [],
     people = [],
     openActionsCount = 0,
+    canCreateCompany = true,
   } = params;
 
   if (!signedIn) {
@@ -560,7 +563,7 @@ export function buildPaletteItems(params: {
     },
   ];
 
-  return filterLivePaletteItems([
+  const list = filterLivePaletteItems([
     ...activity,
     ...commitmentItems,
     ...agent,
@@ -570,4 +573,8 @@ export function buildPaletteItems(params: {
     ...site,
     ...legalSignedIn,
   ]);
+  if (!canCreateCompany) {
+    return list.filter((item) => item.id !== "new-project");
+  }
+  return list;
 }

@@ -106,6 +106,11 @@ export function useWorkspaceData(): WorkspaceDataValue {
   return value;
 }
 
+/** Root layout surfaces (e.g. command palette) render outside `WorkspaceDataProvider` on marketing routes. */
+export function useWorkspaceDataOptional(): WorkspaceDataValue | null {
+  return useContext(WorkspaceDataContext);
+}
+
 export function WorkspaceDataProvider({
   children,
 }: {

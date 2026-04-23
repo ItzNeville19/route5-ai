@@ -31,7 +31,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
       <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-2 px-[var(--r5-content-padding-x-mobile)] sm:gap-[var(--r5-space-2)] sm:px-[var(--r5-content-padding-x)]">
-        <div className="flex min-h-0 min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-[var(--r5-space-2)]">
+        <div className="flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-[var(--r5-space-2)]">
           <button
             type="button"
             onClick={() => {

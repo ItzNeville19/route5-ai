@@ -26,7 +26,7 @@ export default async function Home() {
         <Navbar />
         {userId ? <HomeSessionBar /> : null}
 
-        <MarketingHomeClient />
+        <MarketingHomeClient signedIn={!!userId} />
 
         <Footer tone="light" />
       </div>

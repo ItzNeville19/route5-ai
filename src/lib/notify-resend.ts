@@ -1,6 +1,13 @@
 /**
  * Operational email via Resend (https://resend.com). Server-only; never expose API key to the client.
- * Set RESEND_API_KEY and ESCALATION_NOTIFY_TO (recipient) for escalation emails.
+ *
+ * Required for product emails (digests, org invites, weekly summary, notifications):
+ * - `RESEND_API_KEY` — API key from the Resend dashboard.
+ * - `RESEND_FROM` — verified sender, e.g. `Route5 <digest@yourdomain.com>` (optional; defaults to onboarding@resend.dev for dev only).
+ *
+ * Related:
+ * - `CRON_SECRET` — required in production so `/api/cron/*` routes (morning digest, weekly summary) are not public.
+ * - Weekly summary also uses `ROUTE5_EXECUTIVE_EMAILS` (optional extra recipients) — see `collectWeeklySummaryRecipients`.
  */
 
 import { appBaseUrl } from "@/lib/app-base-url";
