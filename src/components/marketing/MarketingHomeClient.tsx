@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo } from "react";
 import { motion } from "framer-motion";
@@ -37,52 +38,74 @@ export default function MarketingHomeClient() {
 
   return (
     <div className="bg-white text-slate-900">
-      {/* Hero — white / sky / blue wash (Godmode-adjacent clarity, Route5 product) */}
+      {/* Hero — full-bleed city photo + scrim (entrepreneurial, high signal) */}
       <section
         id="hero"
-        className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-br from-white via-sky-50/90 to-blue-50/70 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-16 sm:pb-24"
+        aria-label="Product introduction"
+        className="relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24"
       >
+        <div className="absolute inset-0 z-0 min-h-full">
+          <Image
+            src="/images/marketing/hero-city.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[center_32%] sm:object-center"
+            quality={88}
+          />
+        </div>
+        {/* Readability: dark left for copy, lift right for product mock */}
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_70%_-10%,rgba(59,130,246,0.12),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/94 via-slate-950/78 to-slate-950/40"
           aria-hidden
         />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-12 lg:gap-16 lg:px-10">
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/25"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_100%_80%_at_100%_50%,rgba(59,130,246,0.12),transparent_50%)]"
+          aria-hidden
+        />
+
+        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
           <motion.div className="lg:col-span-7" {...fadeUp}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 shadow-sm backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md">
               {t("landing.hero.badge")}
             </div>
-            <h1 className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-slate-900">
+            <h1 className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]">
               {t("landing.hero.title1")}{" "}
-              <span className="bg-gradient-to-r from-blue-600 to-sky-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-sky-200 to-cyan-200 bg-clip-text text-transparent">
                 {t("landing.hero.title2")}
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-600">
+            <p className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-200">
               {t("landing.hero.lead")}
             </p>
-            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-500">{TRIAL_BODY}</p>
+            <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/90">{TRIAL_BODY}</p>
             <div className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               <Link
                 href="/sign-up"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-700"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-500 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:bg-blue-400"
               >
                 {t("landing.hero.ctaPrimary")}
               </Link>
               <a
                 href="mailto:neville@rayze.xyz?subject=Route5%20—%20walkthrough"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-8 text-[15px] font-semibold text-slate-800 shadow-sm transition hover:border-blue-300 hover:bg-slate-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/30 bg-white/10 px-8 text-[15px] font-semibold text-white shadow-sm backdrop-blur-sm transition hover:border-white/50 hover:bg-white/15"
               >
                 {t("landing.hero.ctaSecondary")}
               </a>
               <Link
                 href="/product"
-                className="inline-flex min-h-12 items-center justify-center gap-1 text-[15px] font-medium text-slate-500 underline-offset-4 transition hover:text-blue-700 hover:underline sm:px-2"
+                className="inline-flex min-h-12 items-center justify-center gap-1 text-[15px] font-medium text-slate-200 underline-offset-4 transition hover:text-white hover:underline sm:px-2"
               >
                 {t("landing.hero.ctaProduct")}
                 <ArrowRight className="h-4 w-4" aria-hidden />
               </Link>
             </div>
-            <p className="mt-5 text-[12px] font-medium tracking-wide text-slate-500">{t("landing.trial")}</p>
+            <p className="mt-5 text-[12px] font-medium tracking-wide text-slate-400">{t("landing.trial")}</p>
           </motion.div>
 
           <motion.div
