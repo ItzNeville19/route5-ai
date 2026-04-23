@@ -480,6 +480,7 @@ export const en: Record<string, string> = {
   "header.create.addTask": "Add task",
   "header.create.openTask": "Add new task",
   "header.commitments.open": "Open tasks snapshot",
+  "header.commitments.addTask": "New task",
   "header.commitments.dialogTitle": "Tasks",
   "header.commitments.remindersTitle": "Tasks",
   "header.commitments.remindersSubtitle": "Your workspace checklist — Desk execution + task tracker.",

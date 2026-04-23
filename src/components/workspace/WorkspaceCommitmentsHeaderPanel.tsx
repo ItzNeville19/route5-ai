@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +13,7 @@ import {
   Circle,
   ListTodo,
   Loader2,
+  Plus,
   UserRound,
   X,
 } from "lucide-react";
@@ -51,8 +52,6 @@ export default function WorkspaceCommitmentsHeaderPanel() {
   const { t, intlLocale } = useI18n();
   const pathname = usePathname();
   const onDesk = pathname === "/desk" || pathname?.startsWith("/desk/");
-  const rootRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [overview, setOverview] = useState<ExecutionOverview | null>(null);
@@ -117,27 +116,18 @@ export default function WorkspaceCommitmentsHeaderPanel() {
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (rootRef.current?.contains(t) || panelRef.current?.contains(t)) return;
-      setOpen(false);
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDoc);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   const summary = overview?.summary;
   const riskPreview = useMemo(() => overview?.riskFeed.slice(0, 12) ?? [], [overview]);
 
   return (
-    <div className="relative" ref={rootRef}>
+    <div className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -154,30 +144,47 @@ export default function WorkspaceCommitmentsHeaderPanel() {
             <>
               <button
                 type="button"
-                className="fixed inset-0 z-[199] bg-black/35"
+                className="fixed inset-0 z-[199] bg-black/40"
                 aria-label={t("modal.newProject.close")}
                 onClick={() => setOpen(false)}
               />
               <aside
-                ref={panelRef}
                 className="fixed left-3 right-3 top-16 z-[200] flex max-h-[min(88dvh,720px)] w-auto flex-col overflow-hidden rounded-[20px] border border-r5-border-subtle bg-r5-surface-primary shadow-[0_20px_60px_-15px_rgba(0,0,0,0.45)] sm:left-auto sm:right-4 sm:top-[calc(var(--r5-header-height)+8px)] sm:w-[min(100vw-2rem,400px)] sm:max-h-[min(88dvh,760px)]"
+                data-tasks-panel=""
                 role="dialog"
                 aria-label={t("header.commitments.dialogTitle")}
                 aria-modal="true"
+                onMouseDown={(event) => {
+                  /* Same as notifications popover: do not let document-level handlers see panel interactions. */
+                  event.stopPropagation();
+                }}
               >
-                <header className="flex shrink-0 items-center justify-between gap-2 border-b border-r5-border-subtle bg-r5-surface-primary/95 px-3 py-2.5 backdrop-blur-md">
-                  <div className="min-w-0 flex-1 text-center">
+                <header className="relative flex shrink-0 items-center justify-between gap-1 border-b border-r5-border-subtle bg-r5-surface-primary/95 px-2 py-2 pl-2 pr-1 backdrop-blur-md sm:pl-2">
+                  <button
+                    type="button"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-r5-accent transition hover:bg-r5-surface-hover"
+                    aria-label={t("header.commitments.addTask")}
+                    onClick={() => {
+                      setOpen(false);
+                      window.dispatchEvent(
+                        new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
+                      );
+                    }}
+                  >
+                    <Plus className="h-5 w-5" strokeWidth={2.25} aria-hidden />
+                  </button>
+                  <div className="min-w-0 flex-1 px-1 text-center">
                     <p className="text-[17px] font-semibold leading-snug tracking-[-0.02em] text-r5-text-primary">
                       {t("header.commitments.remindersTitle")}
                     </p>
-                    <p className="mt-0.5 px-2 text-[11px] leading-snug text-r5-text-secondary">
+                    <p className="mt-0.5 line-clamp-2 px-1 text-[11px] leading-snug text-r5-text-secondary">
                       {t("header.commitments.remindersSubtitle")}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="absolute right-2 top-2 rounded-full p-2 text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
                     aria-label={t("modal.newProject.close")}
                   >
                     <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
