@@ -287,6 +287,15 @@ export function WorkspaceDataProvider({
   }, [refreshAll]);
 
   useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      void refreshOrganization();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [refreshOrganization]);
+
+  useEffect(() => {
     const onRefresh = () => void refreshAll();
     window.addEventListener("route5:project-updated", onRefresh);
     return () => window.removeEventListener("route5:project-updated", onRefresh);

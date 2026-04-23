@@ -21,11 +21,18 @@ function LinkTab({
   return (
     <Link
       href={href}
-      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] ${
-        active ? "bg-r5-surface-secondary text-r5-text-primary" : "text-r5-text-tertiary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] ${
+        active
+          ? "bg-r5-accent/20 text-r5-text-primary ring-1 ring-inset ring-r5-accent/40"
+          : "text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
       }`}
     >
-      <Icon style={{ width: "var(--r5-icon-nav)", height: "var(--r5-icon-nav)" }} strokeWidth={1.75} aria-hidden />
+      <Icon
+        className={active ? "text-r5-accent" : "text-r5-text-secondary"}
+        style={{ width: "var(--r5-icon-nav)", height: "var(--r5-icon-nav)" }}
+        strokeWidth={1.75}
+        aria-hidden
+      />
       <span className="max-w-full truncate">{label}</span>
     </Link>
   );
@@ -35,7 +42,7 @@ function ShortcutsTab({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none text-r5-text-tertiary transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+      className="flex min-w-0 flex-1 flex-col items-center justify-center gap-[var(--r5-space-1)] rounded-[var(--r5-radius-card)] px-0.5 py-[var(--r5-space-2)] text-[length:var(--r5-font-kbd)] font-[var(--r5-font-weight-regular)] leading-none text-r5-text-secondary transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
       aria-label={`${label} — open keyboard shortcuts`}
       onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
     >
@@ -54,7 +61,7 @@ export default function WorkspaceMobileNav() {
 
   return (
     <nav
-      className="route5-brand-mobile-nav-edge fixed inset-x-0 bottom-0 z-40 flex h-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] items-stretch border-t border-r5-border-subtle bg-r5-surface-primary/95 pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
+      className="route5-brand-mobile-nav-edge fixed inset-x-0 bottom-0 z-40 flex h-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] items-stretch border-t border-r5-border-subtle pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
       aria-label="Primary"
     >
       {show("home") ? (

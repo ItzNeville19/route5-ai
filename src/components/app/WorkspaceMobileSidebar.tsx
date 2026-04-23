@@ -144,13 +144,13 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                       key={`${section.title}-${item.label}`}
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] ${
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium ${
                         active
-                          ? "bg-r5-surface-secondary text-r5-text-primary"
+                          ? "bg-r5-accent/15 text-r5-text-primary ring-1 ring-inset ring-r5-accent/35"
                           : "text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-r5-accent" : ""}`} />
                       <span>{item.label}</span>
                     </Link>
                   );

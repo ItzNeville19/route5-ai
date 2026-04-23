@@ -3209,11 +3209,17 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-/** Mobile tab bar: brand top glow. */
+/** Mobile tab bar: brand top glow + elevated surface (avoids “white on white” on light meshes). */
 .route5-brand-mobile-nav-edge {
+  /* Slightly more “card” than the canvas so tabs separate from page content. */
+  background: color-mix(in srgb, var(--r5-surface-secondary) 92%, var(--r5-surface-primary) 8%);
   box-shadow:
     inset 0 1px 0 rgba(56, 189, 248, 0.14),
     0 -12px 40px -20px rgba(14, 165, 233, 0.12);
+}
+
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) .route5-brand-mobile-nav-edge {
+  background: color-mix(in srgb, var(--r5-surface-secondary) 88%, #000 12%);
 }
 
 /** Onboarding full-viewport wash. */
