@@ -768,6 +768,25 @@ export function ensureOrganizationForClerkUser(userId: string): string {
   return id;
 }
 
+/**
+ * Ensures SQLite has an `organizations` row with the same id as Postgres so `org_members`
+ * inserts can succeed locally when Supabase writes fail (hybrid / degraded connectivity).
+ */
+export function ensureSqliteOrganizationMirror(
+  orgId: string,
+  ownerClerkUserId: string,
+  name = "Workspace"
+): void {
+  const d = getDb();
+  const existing = d.prepare(`SELECT id FROM organizations WHERE id = ?`).get(orgId) as { id: string } | undefined;
+  if (existing) return;
+  const now = new Date().toISOString();
+  d.prepare(
+    `INSERT INTO organizations (id, clerk_user_id, name, plan, created_at, updated_at)
+     VALUES (?, ?, ?, 'free', ?, ?)`
+  ).run(orgId, ownerClerkUserId, name, now, now);
+}
+
 export function listProjects(userId: string): SqliteProjectRow[] {
   const d = getDb();
   return d

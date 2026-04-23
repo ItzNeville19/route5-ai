@@ -59,23 +59,27 @@ export async function getOrganizationProfile(orgId: string): Promise<{
   uiPolicy: OrgUiPolicy;
 }> {
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("organizations")
-      .select("name, primary_use_case, ui_policy")
-      .eq("id", orgId)
-      .single();
-    if (error) throw error;
-    const r = data as {
-      name: string;
-      primary_use_case: string | null;
-      ui_policy: unknown;
-    };
-    return {
-      name: r.name,
-      primaryUseCase: r.primary_use_case,
-      uiPolicy: parseOrgUiPolicy(r.ui_policy),
-    };
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("name, primary_use_case, ui_policy")
+        .eq("id", orgId)
+        .single();
+      if (error) throw error;
+      const r = data as {
+        name: string;
+        primary_use_case: string | null;
+        ui_policy: unknown;
+      };
+      return {
+        name: r.name,
+        primaryUseCase: r.primary_use_case,
+        uiPolicy: parseOrgUiPolicy(r.ui_policy),
+      };
+    } catch (e) {
+      console.warn("[organizations-update] getOrganizationProfile Supabase failed; using SQLite", e);
+    }
   }
   const d = getSqliteHandle();
   const row = d

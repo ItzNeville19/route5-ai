@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
-import { getSqliteHandle } from "@/lib/workspace/sqlite";
+import { ensureSqliteOrganizationMirror, getSqliteHandle } from "@/lib/workspace/sqlite";
 
 export type OrgRole = "admin" | "manager" | "member";
 export type OrgMemberStatus = "active" | "invited" | "removed";
@@ -72,51 +72,7 @@ function pickPrimaryMembershipRow(
   )[0] ?? null;
 }
 
-export async function getActiveMembershipForUser(userId: string): Promise<OrgMembership | null> {
-  if (isSupabaseConfigured()) {
-    try {
-      const supabase = getServiceClient();
-      const { data: memberRows, error: mErr } = await supabase
-        .from("org_members")
-        .select("org_id, user_id, role, status, joined_at")
-        .eq("user_id", userId)
-        .eq("status", "active");
-      if (mErr) throw mErr;
-      const members = memberRows ?? [];
-      if (members.length === 0) return null;
-
-      const orgIds = [...new Set(members.map((m) => String(m.org_id)))];
-      const { data: orgRows, error: oErr } = await supabase
-        .from("organizations")
-        .select("id, clerk_user_id")
-        .in("id", orgIds);
-      if (oErr) throw oErr;
-      const ownerByOrgId = new Map(
-        (orgRows ?? []).map((o) => [String(o.id), String(o.clerk_user_id)])
-      );
-
-      const normalized = members.map((row) => ({
-        org_id: String(row.org_id),
-        user_id: String(row.user_id),
-        role: row.role as OrgRole,
-        status: row.status as OrgMemberStatus,
-        joined_at: String(row.joined_at),
-        org_owner_clerk_id: ownerByOrgId.get(String(row.org_id)) ?? userId,
-      }));
-      const picked = pickPrimaryMembershipRow(normalized, userId);
-      if (!picked) return null;
-      return {
-        orgId: picked.org_id,
-        userId: picked.user_id,
-        role: picked.role,
-        status: picked.status,
-        joinedAt: picked.joined_at,
-      };
-    } catch {
-      return null;
-    }
-  }
-
+function readActiveMembershipFromSqlite(userId: string): OrgMembership | null {
   const d = getSqliteHandle();
   const rows = d
     .prepare(
@@ -145,6 +101,60 @@ export async function getActiveMembershipForUser(userId: string): Promise<OrgMem
   };
 }
 
+/**
+ * Resolves the user's active org membership. When Supabase is configured, reads Postgres first;
+ * if that fails or returns no rows, falls back to embedded SQLite so org bootstrap stays consistent
+ * with `ensureOrganizationForClerkUser` (which may write only to SQLite when Postgres errors).
+ */
+export async function getActiveMembershipForUser(userId: string): Promise<OrgMembership | null> {
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { data: memberRows, error: mErr } = await supabase
+        .from("org_members")
+        .select("org_id, user_id, role, status, joined_at")
+        .eq("user_id", userId)
+        .eq("status", "active");
+      if (mErr) throw mErr;
+      const members = memberRows ?? [];
+      if (members.length > 0) {
+        const orgIds = [...new Set(members.map((m) => String(m.org_id)))];
+        const { data: orgRows, error: oErr } = await supabase
+          .from("organizations")
+          .select("id, clerk_user_id")
+          .in("id", orgIds);
+        if (oErr) throw oErr;
+        const ownerByOrgId = new Map(
+          (orgRows ?? []).map((o) => [String(o.id), String(o.clerk_user_id)])
+        );
+
+        const normalized = members.map((row) => ({
+          org_id: String(row.org_id),
+          user_id: String(row.user_id),
+          role: row.role as OrgRole,
+          status: row.status as OrgMemberStatus,
+          joined_at: String(row.joined_at),
+          org_owner_clerk_id: ownerByOrgId.get(String(row.org_id)) ?? userId,
+        }));
+        const picked = pickPrimaryMembershipRow(normalized, userId);
+        if (picked) {
+          return {
+            orgId: picked.org_id,
+            userId: picked.user_id,
+            role: picked.role,
+            status: picked.status,
+            joinedAt: picked.joined_at,
+          };
+        }
+      }
+    } catch (e) {
+      console.warn("[org-members] Supabase membership read failed; falling back to SQLite", e);
+    }
+  }
+
+  return readActiveMembershipFromSqlite(userId);
+}
+
 export async function ensureOrgMember(params: {
   orgId: string;
   userId: string;
@@ -171,12 +181,28 @@ export async function ensureOrgMember(params: {
       );
       if (error) throw error;
       return;
-    } catch {
-      return;
+    } catch (e) {
+      console.warn(
+        "[org-members] ensureOrgMember Supabase upsert failed; will mirror to SQLite if org exists locally",
+        e
+      );
     }
   }
 
   const d = getSqliteHandle();
+  try {
+    ensureSqliteOrganizationMirror(params.orgId, params.invitedBy ?? params.userId);
+  } catch (e) {
+    console.warn("[org-members] ensureSqliteOrganizationMirror failed", e);
+  }
+  const orgRow = d.prepare(`SELECT id FROM organizations WHERE id = ?`).get(params.orgId) as
+    | { id: string }
+    | undefined;
+  if (!orgRow) {
+    console.warn("[org-members] ensureOrgMember: skip SQLite — no organizations row for", params.orgId);
+    return;
+  }
+
   const existing = d
     .prepare(`SELECT id FROM org_members WHERE org_id = ? AND user_id = ?`)
     .get(params.orgId, params.userId) as { id: string } | undefined;
@@ -206,21 +232,26 @@ export async function ensureOrgMember(params: {
 
 export async function listOrganizationMembers(orgId: string): Promise<OrganizationMemberRow[]> {
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_members")
-      .select("user_id, role, status, joined_at, invited_by")
-      .eq("org_id", orgId)
-      .neq("status", "removed")
-      .order("joined_at", { ascending: true });
-    if (error) throw error;
-    return (data ?? []).map((row) => ({
-      userId: String(row.user_id),
-      role: row.role as OrgRole,
-      status: row.status as OrgMemberStatus,
-      joinedAt: String(row.joined_at),
-      invitedBy: row.invited_by ? String(row.invited_by) : null,
-    }));
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_members")
+        .select("user_id, role, status, joined_at, invited_by")
+        .eq("org_id", orgId)
+        .neq("status", "removed")
+        .order("joined_at", { ascending: true });
+      if (error) throw error;
+      const mapped = (data ?? []).map((row) => ({
+        userId: String(row.user_id),
+        role: row.role as OrgRole,
+        status: row.status as OrgMemberStatus,
+        joinedAt: String(row.joined_at),
+        invitedBy: row.invited_by ? String(row.invited_by) : null,
+      }));
+      if (mapped.length > 0) return mapped;
+    } catch (e) {
+      console.warn("[org-members] listOrganizationMembers Supabase failed; using SQLite", e);
+    }
   }
 
   const d = getSqliteHandle();
@@ -378,24 +409,29 @@ export async function listPendingOrganizationInvitations(
   orgId: string
 ): Promise<PendingOrgInvitationRow[]> {
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    const { data, error } = await supabase
-      .from("org_invitations")
-      .select("id, org_id, email, role, invited_by, expires_at, created_at")
-      .eq("org_id", orgId)
-      .is("accepted_at", null)
-      .gte("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    return (data ?? []).map((row) => ({
-      id: String(row.id),
-      orgId: String(row.org_id),
-      email: String(row.email),
-      role: row.role as OrgRole,
-      invitedBy: String(row.invited_by),
-      expiresAt: String(row.expires_at),
-      createdAt: String(row.created_at),
-    }));
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_invitations")
+        .select("id, org_id, email, role, invited_by, expires_at, created_at")
+        .eq("org_id", orgId)
+        .is("accepted_at", null)
+        .gte("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      const mapped = (data ?? []).map((row) => ({
+        id: String(row.id),
+        orgId: String(row.org_id),
+        email: String(row.email),
+        role: row.role as OrgRole,
+        invitedBy: String(row.invited_by),
+        expiresAt: String(row.expires_at),
+        createdAt: String(row.created_at),
+      }));
+      if (mapped.length > 0) return mapped;
+    } catch (e) {
+      console.warn("[org-members] listPendingOrganizationInvitations Supabase failed; using SQLite", e);
+    }
   }
 
   const d = getSqliteHandle();

@@ -10,30 +10,38 @@ export async function countActiveCommitmentsByOwnerForOrg(orgId: string): Promis
   const map = new Map<string, number>();
 
   if (isSupabaseConfigured()) {
-    const supabase = getServiceClient();
-    let start = 0;
-    const batch = 3000;
-    for (;;) {
-      const end = start + batch - 1;
-      const { data, error } = await supabase
-        .from("org_commitments")
-        .select("owner_id")
-        .eq("org_id", orgId)
-        .is("deleted_at", null)
-        .neq("status", "completed")
-        .range(start, end);
-      if (error) throw error;
-      const rows = data ?? [];
-      if (rows.length === 0) break;
-      for (const row of rows as { owner_id: string }[]) {
-        const oid = String(row.owner_id ?? "").trim();
-        if (!oid) continue;
-        map.set(oid, (map.get(oid) ?? 0) + 1);
+    try {
+      const supabase = getServiceClient();
+      let start = 0;
+      const batch = 3000;
+      for (;;) {
+        const end = start + batch - 1;
+        const { data, error } = await supabase
+          .from("org_commitments")
+          .select("owner_id")
+          .eq("org_id", orgId)
+          .is("deleted_at", null)
+          .neq("status", "completed")
+          .range(start, end);
+        if (error) throw error;
+        const rows = data ?? [];
+        if (rows.length === 0) break;
+        for (const row of rows as { owner_id: string }[]) {
+          const oid = String(row.owner_id ?? "").trim();
+          if (!oid) continue;
+          map.set(oid, (map.get(oid) ?? 0) + 1);
+        }
+        if (rows.length < batch) break;
+        start += batch;
       }
-      if (rows.length < batch) break;
-      start += batch;
+      if (map.size > 0) return map;
+    } catch (e) {
+      console.warn(
+        "[active-counts-by-owner] countActiveCommitmentsByOwnerForOrg Supabase failed; using SQLite",
+        e
+      );
+      map.clear();
     }
-    return map;
   }
 
   const d = getSqliteHandle();

@@ -54,6 +54,7 @@ export async function ensureOrganizationForClerkUser(userId: string): Promise<st
         .single();
       if (error) throw error;
       const orgId = (data as { id: string }).id;
+      sqlite.ensureSqliteOrganizationMirror(orgId, userId);
       const { error: patchErr } = await supabase
         .from("projects")
         .update({ org_id: orgId })
