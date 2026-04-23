@@ -154,10 +154,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                 role="dialog"
                 aria-label={t("header.commitments.dialogTitle")}
                 aria-modal="true"
-                onMouseDown={(event) => {
-                  /* Same as notifications popover: do not let document-level handlers see panel interactions. */
-                  event.stopPropagation();
-                }}
+                onMouseDown={(event) => event.stopPropagation()}
               >
                 <header className="relative flex shrink-0 items-center justify-between gap-1 border-b border-r5-border-subtle bg-r5-surface-primary/95 px-2 py-2 pl-2 pr-1 backdrop-blur-md sm:pl-2">
                   <button
