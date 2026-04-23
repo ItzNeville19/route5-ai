@@ -128,7 +128,7 @@ export default function WorkspaceSidebar() {
               href="/overview"
               active={path === "/overview" || path === "/leadership"}
               icon={BarChart3}
-              label="Home"
+              label="Home (role-aware)"
             />
             <NavRow
               href="/desk"

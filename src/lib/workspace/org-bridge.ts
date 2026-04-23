@@ -38,6 +38,12 @@ async function sendWelcomeOnce(userId: string, orgId: string): Promise<void> {
 export async function ensureOrganizationForClerkUser(userId: string): Promise<string> {
   const activeMembership = await getActiveMembershipForUser(userId);
   if (activeMembership?.orgId) {
+    // Heal missing local org rows so profile reads do not fail on mixed Supabase/SQLite states.
+    try {
+      sqlite.ensureSqliteOrganizationMirror(activeMembership.orgId, userId);
+    } catch {
+      /* best effort */
+    }
     return activeMembership.orgId;
   }
   if (isSupabaseConfigured()) {

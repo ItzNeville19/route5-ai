@@ -300,10 +300,10 @@ export default function WorkspaceOrganizationClient() {
           Workspace
         </p>
         <h1 className="mt-2 text-[28px] font-semibold tracking-[-0.03em] text-r5-text-primary">
-          Organization
+          Organization Control
         </h1>
         <p className="mt-2 text-[14px] text-r5-text-secondary">
-          Manage team members, access roles, and shared ownership.
+          Admin surface for team members, access roles, and workspace visibility.
         </p>
         <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-r5-text-tertiary">
           Invite people by email—they sign in with their own account and join this organization.
@@ -312,7 +312,7 @@ export default function WorkspaceOrganizationClient() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/40 p-4">
+      <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.4)] dark:border-slate-700 dark:bg-slate-950/55">
         <div className="flex flex-wrap items-end gap-2">
           <div className="min-w-0 flex-1">
             <label className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-tertiary">
@@ -354,7 +354,7 @@ export default function WorkspaceOrganizationClient() {
       </section>
 
       {isAdmin ? (
-        <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/40 p-4">
+        <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.4)] dark:border-slate-700 dark:bg-slate-950/55">
           <h2 className="text-[15px] font-semibold text-r5-text-primary">Who can see what</h2>
           <p className="mt-1.5 text-[12px] leading-relaxed text-r5-text-tertiary">
             Admins always have full access. For members and managers, turn off areas they should not see in
@@ -386,7 +386,7 @@ export default function WorkspaceOrganizationClient() {
         </section>
       ) : null}
 
-      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/35 p-4">
+      <section className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.4)] dark:border-slate-700 dark:bg-slate-950/55">
         {loading ? (
           <div className="space-y-2" aria-busy>
             {[1, 2, 3].map((i) => (
@@ -396,6 +396,10 @@ export default function WorkspaceOrganizationClient() {
         ) : !state && error ? (
           <div className="space-y-3">
             <p className="text-[13px] text-red-300">{error}</p>
+            <p className="text-[12px] text-r5-text-tertiary">
+              If this page looks corrupted, retry to resync membership and organization policy from the
+              server.
+            </p>
             <button
               type="button"
               onClick={() => void load()}

@@ -14,7 +14,7 @@ import {
   getOrganizationProfile,
   updateOrganizationProfile,
 } from "@/lib/workspace/organizations-update";
-import { parseOrgUiPolicy, type OrgUiPolicy } from "@/lib/org-ui-policy";
+import { defaultOrgUiPolicy, parseOrgUiPolicy, type OrgUiPolicy } from "@/lib/org-ui-policy";
 import { notifyTeamInvited } from "@/lib/notifications/team-invite";
 import { appBaseUrl } from "@/lib/integrations/app-url";
 import { broadcastOrgMembersChanged } from "@/lib/workspace/org-members-broadcast";
@@ -84,12 +84,21 @@ export async function GET() {
   }
 
   try {
-    const [members, pendingInvitations, org, activeCountByUser] = await Promise.all([
+    const [members, pendingInvitations, activeCountByUser] = await Promise.all([
       listOrganizationMembers(orgId),
       listPendingOrganizationInvitations(orgId),
-      getOrganizationProfile(orgId),
       countActiveCommitmentsByOwnerForOrg(orgId),
     ]);
+    let org: { name: string; uiPolicy: OrgUiPolicy } = {
+      name: "Workspace",
+      uiPolicy: defaultOrgUiPolicy(),
+    };
+    try {
+      const orgProfile = await getOrganizationProfile(orgId);
+      org = { name: orgProfile.name, uiPolicy: orgProfile.uiPolicy };
+    } catch (profileErr) {
+      console.warn("[workspace/organization] org profile missing; serving safe defaults", profileErr);
+    }
     const clerk = await clerkClient();
     const dto: MemberDto[] = await Promise.all(
       members.map(async (member) => {
@@ -206,7 +215,13 @@ export async function POST(req: Request) {
       role,
       invitedBy: userId,
     });
-    const org = await getOrganizationProfile(orgId);
+    let orgName = "Workspace";
+    try {
+      const org = await getOrganizationProfile(orgId);
+      orgName = org.name;
+    } catch (profileErr) {
+      console.warn("[workspace/organization] invite created with fallback org name", profileErr);
+    }
     let inviterName = "Route5 admin";
     try {
       const c = await clerkClient();
@@ -225,7 +240,7 @@ export async function POST(req: Request) {
       orgId,
       inviteeEmail: email,
       inviterName,
-      orgName: org.name,
+      orgName,
       inviteUrl,
       invitationToken: invite.token,
     });

@@ -196,8 +196,11 @@ export function WorkspaceDataProvider({
         uiPolicy?: unknown;
       };
       if (!res.ok) {
-        setOrgRole(null);
-        setOrgUiPolicy(defaultOrgUiPolicy());
+        // Keep the last known org state on transient backend failures.
+        if (res.status < 500) {
+          setOrgRole(null);
+          setOrgUiPolicy(defaultOrgUiPolicy());
+        }
         return;
       }
       setOrgUiPolicy(parseOrgUiPolicy(data.uiPolicy));
@@ -208,8 +211,7 @@ export function WorkspaceDataProvider({
         setOrgRole(null);
       }
     } catch {
-      setOrgRole(null);
-      setOrgUiPolicy(defaultOrgUiPolicy());
+      /* preserve prior org state on network blips */
     } finally {
       setLoadingOrganization(false);
     }

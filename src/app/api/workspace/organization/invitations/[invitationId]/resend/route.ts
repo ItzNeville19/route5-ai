@@ -38,7 +38,13 @@ export async function POST(
         { status: 404 }
       );
     }
-    const org = await getOrganizationProfile(orgId);
+    let orgName = "Workspace";
+    try {
+      const org = await getOrganizationProfile(orgId);
+      orgName = org.name;
+    } catch (profileErr) {
+      console.warn("[workspace/organization/resend] fallback org name", profileErr);
+    }
     let inviterName = "Route5 admin";
     try {
       const c = await clerkClient();
@@ -57,7 +63,7 @@ export async function POST(
       orgId,
       inviteeEmail: inv.email,
       inviterName,
-      orgName: org.name,
+      orgName,
       inviteUrl,
       invitationToken: inv.token,
     });

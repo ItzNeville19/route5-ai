@@ -52,7 +52,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
       {
         title: "Work",
         items: [
-          { href: "/overview", label: "Home", icon: BarChart3 },
+          { href: "/overview", label: "Home (role-aware)", icon: BarChart3 },
           { href: "/desk", label: "Desk", icon: ListChecks },
           { href: "/workspace/commitments", label: "Task tracker", icon: ListTodo },
         ],

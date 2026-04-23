@@ -12,11 +12,10 @@ import {
   CalendarDays,
   Building2,
   Users,
-  LayoutGrid,
   ListTodo,
-  Sparkles,
-  ScrollText,
-  Settings2,
+  BriefcaseBusiness,
+  ShieldCheck,
+  UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
@@ -29,7 +28,7 @@ import { getWorkspaceIanaTimeZone, getDisplayLocationLabel } from "@/lib/workspa
 import { hourInTimezone } from "@/lib/timezone-date";
 import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
 import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
-import { canCreateCompany, orgRoleLabel } from "@/lib/workspace-role";
+import { canCreateCompany } from "@/lib/workspace-role";
 
 type OrgRole = "admin" | "manager" | "member";
 
@@ -65,9 +64,9 @@ function OverviewHeroCTAs() {
   const showTaskTracker = loadingOrganization || isNavKeyVisible("tasks", orgUiPolicy, orgRole);
   const isMember = !loadingOrganization && orgRole === "member";
   const primaryCtaClass =
-    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-3 text-[12px] font-medium text-r5-text-primary shadow-sm transition hover:bg-r5-surface-hover";
+    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/25 bg-white/10 px-3 text-[12px] font-medium text-white shadow-sm transition hover:bg-white/20";
   const memberAccentClass =
-    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] bg-[#5059c9] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#5059c9]/25 transition hover:opacity-[0.97] dark:bg-[#6264A7] dark:shadow-[#6264A7]/20";
+    "inline-flex h-9 items-center gap-2 rounded-[var(--r5-radius-pill)] bg-indigo-500 px-3.5 text-[12px] font-semibold text-white shadow-md shadow-indigo-500/25 transition hover:bg-indigo-400";
   if (isMember) {
     return (
       <>
@@ -107,28 +106,22 @@ function OverviewHeroCTAs() {
   );
 }
 
-function OverviewRoleContextStrip() {
-  const { t } = useI18n();
-  const { orgRole, loadingOrganization } = useWorkspaceData();
-  if (loadingOrganization || !orgRole) return null;
-  const k =
-    orgRole === "member"
-      ? "overview.home.roleContext.member"
-      : orgRole === "manager"
-        ? "overview.home.roleContext.manager"
-        : "overview.home.roleContext.admin";
-  return (
-    <motion.div
-      variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
-      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 px-4 py-3.5 shadow-sm dark:border-slate-700 dark:bg-slate-950/65"
-    >
-      <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-300 sm:text-[13px]">
-        <span className="font-semibold text-slate-900 dark:text-white">{orgRoleLabel(orgRole)}</span>
-        <span className="text-slate-400 dark:text-slate-500"> — </span>
-        {t(k)}
-      </p>
-    </motion.div>
-  );
+function roleLabelForHome(role: OrgRole | null, loading: boolean): string {
+  if (loading || !role) return "Workspace Home";
+  if (role === "member") return "Employee Home";
+  if (role === "manager") return "Manager Home";
+  return "Admin Home";
+}
+
+function roleLeadForHome(role: OrgRole | null, loading: boolean): string {
+  if (loading || !role) return "Your role-aware command center.";
+  if (role === "member") {
+    return "Employee view: your own queue, due work, and company context.";
+  }
+  if (role === "manager") {
+    return "Manager view: team load, routing, and follow-through.";
+  }
+  return "Admin view: full organization control, policy, and visibility.";
 }
 
 function QuickAction({
@@ -151,13 +144,16 @@ function QuickAction({
   return (
     <Link
       href={href}
-      className="group flex min-h-[6.5rem] flex-col gap-1.5 rounded-2xl border border-slate-200/95 bg-white p-3 shadow-[0_4px_14px_-6px_rgba(15,23,42,0.12)] transition hover:border-[#6264A7]/40 hover:shadow-[0_10px_28px_-12px_rgba(79,70,229,0.22)] dark:border-slate-700 dark:bg-slate-950/50 dark:hover:border-[#818cf8]/35"
+      className="group flex min-h-[7.25rem] flex-col gap-2 rounded-2xl border border-slate-200/95 bg-white p-3.5 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:border-[#6264A7]/45 hover:shadow-[0_16px_30px_-18px_rgba(79,70,229,0.38)] dark:border-slate-700 dark:bg-slate-950/50 dark:hover:border-[#818cf8]/35"
     >
       <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#6264A7]/12 text-[#5059c9] dark:bg-[#6264A7]/22 dark:text-[#a6a7dc]">
         <Icon className="h-5 w-5" strokeWidth={2} aria-hidden />
       </span>
       <span className="text-[14px] font-semibold leading-tight text-r5-text-primary">{label}</span>
       <span className="line-clamp-2 text-[11px] leading-snug text-r5-text-secondary">{hint}</span>
+      <span className="mt-auto inline-flex items-center text-[11px] font-semibold text-[#5059c9] group-hover:text-[#3f47aa]">
+        Open <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden />
+      </span>
     </Link>
   );
 }
@@ -311,14 +307,6 @@ export default function OverviewPage() {
     [managerMembers]
   );
 
-  const jumpBackHintKey = useMemo(() => {
-    if (loadingOrganization) return "overview.home.jumpBack.hintDefault" as const;
-    if (orgRole === "member") return "overview.home.jumpBack.hintMember" as const;
-    if (orgRole === "manager") return "overview.home.jumpBack.hintManager" as const;
-    if (orgRole === "admin") return "overview.home.jumpBack.hintAdmin" as const;
-    return "overview.home.jumpBack.hintDefault" as const;
-  }, [orgRole, loadingOrganization]);
-
   const companiesEmptyCopy = useMemo(() => {
     if (loadingOrganization) {
       return "…";
@@ -327,6 +315,15 @@ export default function OverviewPage() {
       ? t("overview.home.emptyCompanies.leadership")
       : t("overview.home.emptyCompanies.member");
   }, [orgRole, loadingOrganization, t]);
+
+  const roleHomeLabel = useMemo(
+    () => roleLabelForHome(orgRole, loadingOrganization),
+    [orgRole, loadingOrganization]
+  );
+  const roleHomeLead = useMemo(
+    () => roleLeadForHome(orgRole, loadingOrganization),
+    [orgRole, loadingOrganization]
+  );
 
   return (
     <motion.div
@@ -352,69 +349,88 @@ export default function OverviewPage() {
         </OverviewHomeHero>
       </motion.div>
 
-      <motion.p
-        className="px-0.5 text-[12px] text-r5-text-secondary sm:text-[13px]"
-        variants={{ hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
-      >
-        <span className="font-medium text-r5-text-primary/90">Tip</span> — Press{" "}
-        <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary px-1.5 py-0.5 font-mono text-[11px]">
-          {mod}K
-        </kbd>{" "}
-        to search routes, companies, and actions.
-      </motion.p>
-
       <motion.section variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
-        <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-2 px-0.5">
-          <h2 className="text-[15px] font-semibold text-r5-text-primary">Jump back in</h2>
-          <span className="max-w-xl text-[12px] leading-snug text-r5-text-secondary sm:text-right">
-            {t(jumpBackHintKey)}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-          <QuickAction
-            href="/desk"
-            icon={LayoutGrid}
-            label="Desk"
-            hint="Execution & capture"
-            orgNavKey="desk"
-          />
-          <QuickAction
-            href="/workspace/commitments"
-            icon={ListTodo}
-            label="Tasks"
-            hint="Tracker & owners"
-            orgNavKey="tasks"
-          />
-          <QuickAction
-            href="/capture"
-            icon={Sparkles}
-            label="Capture"
-            hint="Notes to structured work"
-            orgNavKey={null}
-          />
-          <QuickAction
-            href="/companies"
-            icon={Building2}
-            label="Companies"
-            hint="Programs you follow"
-            orgNavKey="companies"
-          />
-          <QuickAction
-            href="/workspace/digest"
-            icon={ScrollText}
-            label="Digest"
-            hint="Rollups & summaries"
-            orgNavKey={null}
-          />
-        </div>
-        <div className="mt-2.5 flex flex-wrap gap-2.5">
-          <Link
-            href="/settings"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-r5-border-subtle px-3 py-2 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-text-tertiary hover:text-r5-text-primary"
-          >
-            <Settings2 className="h-3.5 w-3.5" aria-hidden />
-            Time zone &amp; location
-          </Link>
+        <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_10px_28px_-18px_rgba(15,23,42,0.2)] dark:border-slate-700 dark:bg-slate-950/60">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/90 bg-slate-50/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/55">
+            <div className="space-y-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
+                {roleHomeLabel}
+              </p>
+              <h2 className="text-[16px] font-semibold text-r5-text-primary">Action center</h2>
+              <p className="max-w-2xl text-[12px] text-r5-text-secondary">{roleHomeLead}</p>
+            </div>
+            <p className="text-[12px] text-r5-text-secondary">
+              Press{" "}
+              <kbd className="rounded border border-r5-border-subtle bg-r5-surface-secondary px-1.5 py-0.5 font-mono text-[11px]">
+                {mod}K
+              </kbd>{" "}
+              to jump anywhere
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
+            <QuickAction
+              href="/workspace/commitments"
+              icon={ListTodo}
+              label="My open tasks"
+              hint="Overdue, due soon, and owned work"
+              orgNavKey="tasks"
+            />
+            <QuickAction
+              href="/desk"
+              icon={BriefcaseBusiness}
+              label="Desk workspace"
+              hint="Capture notes and drive execution"
+              orgNavKey="desk"
+            />
+            <QuickAction
+              href="/companies"
+              icon={Building2}
+              label="Companies"
+              hint="Program threads and context"
+              orgNavKey="companies"
+            />
+            <QuickAction
+              href="/workspace/organization"
+              icon={ShieldCheck}
+              label="Organization control"
+              hint="Members, roles, and visibility policy"
+              orgNavKey="organization"
+            />
+          </div>
+          <div className="border-t border-slate-200/90 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
+              Audience map
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  orgRole === "member"
+                    ? "border-indigo-300 bg-indigo-500/15 text-indigo-700 dark:text-indigo-200"
+                    : "border-slate-300 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                }`}
+              >
+                Employee: execute assigned work
+              </span>
+              <span
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  orgRole === "manager"
+                    ? "border-indigo-300 bg-indigo-500/15 text-indigo-700 dark:text-indigo-200"
+                    : "border-slate-300 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                }`}
+              >
+                Manager: route and balance team load
+              </span>
+              <span
+                className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                  orgRole === "admin"
+                    ? "border-indigo-300 bg-indigo-500/15 text-indigo-700 dark:text-indigo-200"
+                    : "border-slate-300 bg-white text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+                }`}
+              >
+                Admin: full org control and policy
+              </span>
+            </div>
+          </div>
         </div>
       </motion.section>
 
@@ -423,8 +439,8 @@ export default function OverviewPage() {
         variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
       >
         <div className="border-b border-slate-200/90 bg-slate-50/95 px-4 py-2.5 dark:border-slate-700 dark:bg-slate-900/50">
-          <h2 className="text-[14px] font-semibold text-r5-text-primary">This week on your plate</h2>
-          <p className="mt-0.5 text-[12px] text-r5-text-secondary">Prioritize what is overdue, due soon, and still open.</p>
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">Execution pulse</h2>
+          <p className="mt-0.5 text-[12px] text-r5-text-secondary">Scan urgency first, then move into action.</p>
         </div>
         <div className="grid gap-3 p-4 sm:grid-cols-3">
           <MetricCard
@@ -432,7 +448,7 @@ export default function OverviewPage() {
             label="Overdue"
             value={overdueCount}
             tone="text-r5-status-overdue"
-            hint="Needs a date or owner"
+            hint="Needs attention now"
           />
           <MetricCard
             icon={Clock3}
@@ -446,7 +462,7 @@ export default function OverviewPage() {
             label="Open"
             value={ownOpenTasks.length}
             tone="text-r5-status-completed"
-            hint="Assigned to you"
+            hint="Still in your queue"
           />
         </div>
       </motion.section>
@@ -457,7 +473,7 @@ export default function OverviewPage() {
       >
         <section className="overflow-hidden rounded-2xl border border-slate-200/95 bg-white shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] dark:border-slate-700 dark:bg-slate-950/55">
           <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
-            <h2 className="text-[15px] font-semibold text-r5-text-primary">My tasks</h2>
+            <h2 className="text-[15px] font-semibold text-r5-text-primary">Task queue (employee view)</h2>
             <Link href="/workspace/commitments" className="text-[12px] font-medium text-[#5059c9] hover:underline">
               Open tracker
             </Link>
@@ -466,7 +482,7 @@ export default function OverviewPage() {
             {loadingOwnTasks ? (
               <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading tasks…</p>
             ) : ownOpenTasks.length === 0 ? (
-              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">You are clear — nothing open. Nice.</p>
+              <p className="px-4 py-6 text-[13px] text-r5-text-secondary">No open work assigned to you.</p>
             ) : (
               <ul>
                 {ownOpenTasks.slice(0, 8).map((task) => (
@@ -495,7 +511,7 @@ export default function OverviewPage() {
           <div className="flex items-center justify-between border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
               <Building2 className="h-4 w-4 text-r5-text-secondary" aria-hidden />
-              My companies
+              Companies in your scope
             </h2>
             <Link href="/companies" className="text-[12px] font-medium text-[#5059c9] hover:underline">
               See all
@@ -532,8 +548,8 @@ export default function OverviewPage() {
           variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
         >
           <div className="border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
-            <h2 className="text-[15px] font-semibold text-r5-text-primary">All team tasks</h2>
-            <p className="mt-0.5 text-[12px] text-r5-text-secondary">Org-wide open work — for routing and follow-up.</p>
+            <h2 className="text-[15px] font-semibold text-r5-text-primary">Admin control queue</h2>
+            <p className="mt-0.5 text-[12px] text-r5-text-secondary">Organization-wide open work for assignment and escalation.</p>
           </div>
           {loadingAdminTasks ? (
             <p className="px-4 py-6 text-[13px] text-r5-text-secondary">Loading team tasks…</p>
@@ -565,7 +581,7 @@ export default function OverviewPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/90 px-4 py-3 dark:border-slate-700">
             <h2 className="flex items-center gap-2 text-[15px] font-semibold text-r5-text-primary">
               <Users className="h-4 w-4 text-r5-text-secondary" aria-hidden />
-              Team load
+              Manager team load
             </h2>
             <Link href="/workspace/team-work" className="text-[12px] font-medium text-[#5059c9] hover:underline">
               Open full view
@@ -591,6 +607,21 @@ export default function OverviewPage() {
           )}
         </motion.section>
       ) : null}
+
+      <motion.section
+        className="rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-sm dark:border-slate-700 dark:bg-slate-950/60"
+        variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}
+      >
+        <div className="flex items-center gap-2">
+          <UserRound className="h-4 w-4 text-r5-text-secondary" aria-hidden />
+          <h2 className="text-[14px] font-semibold text-r5-text-primary">Role clarity</h2>
+        </div>
+        <p className="mt-1 text-[12px] text-r5-text-secondary">
+          Employees work from <span className="font-medium text-r5-text-primary">Task queue + Desk</span>. Managers run{" "}
+          <span className="font-medium text-r5-text-primary">team load + routing</span>. Admins own{" "}
+          <span className="font-medium text-r5-text-primary">organization policy + full visibility</span>.
+        </p>
+      </motion.section>
     </motion.div>
   );
 }
