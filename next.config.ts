@@ -50,6 +50,14 @@ const nextConfig: NextConfig = {
       { source: "/pitch", destination: "/product", permanent: true },
       { source: "/docs/ceo-brief", destination: "/docs", permanent: false },
       { source: "/docs/sales-playbook", destination: "/docs", permanent: false },
+      { source: "/projects", destination: "/companies", permanent: false },
+      { source: "/projects/:projectId", destination: "/companies/:projectId", permanent: false },
+      { source: "/api/companies", destination: "/api/projects", permanent: false },
+      { source: "/api/companies/:companyId", destination: "/api/projects/:companyId", permanent: false },
+      { source: "/api/companies/:companyId/commitments", destination: "/api/projects/:companyId/commitments", permanent: false },
+      { source: "/api/companies/:companyId/commitments/:commitmentId", destination: "/api/projects/:companyId/commitments/:commitmentId", permanent: false },
+      { source: "/api/companies/:companyId/extractions/:extractionId", destination: "/api/projects/:companyId/extractions/:extractionId", permanent: false },
+      { source: "/api/companies/:companyId/extractions/:extractionId/duplicate", destination: "/api/projects/:companyId/extractions/:extractionId/duplicate", permanent: false },
     ];
   },
   /** Dev: allow 127.0.0.1 so HMR / error overlay work when not using localhost hostname */

@@ -1,28 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle,
   BarChart3,
   Bell,
   CreditCard,
-  FileBarChart,
-  FolderOpen,
-  Gauge,
   Keyboard,
   LifeBuoy,
   ListChecks,
   ListTodo,
-  LineChart,
   Palette,
-  Plus,
-  CheckCircle2,
   Settings,
-  Target,
   Users,
 } from "lucide-react";
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
@@ -99,8 +91,6 @@ function NavRow({
 
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const deskFilter = searchParams.get("filter");
   const { user } = useUser();
   const { entitlements } = useWorkspaceData();
   const { t } = useI18n();
@@ -133,83 +123,22 @@ export default function WorkspaceSidebar() {
           <div className="space-y-[var(--r5-space-1)]">
             <NavSectionTitle>{t("sidebar.sectionWork")}</NavSectionTitle>
             <NavRow
+              href="/overview"
+              active={path === "/overview" || path === "/leadership"}
+              icon={BarChart3}
+              label="Home"
+            />
+            <NavRow
               href="/desk"
-              active={
-                (path === "/desk" || path === "/feed") && deskFilter !== "history"
-              }
+              active={path === "/desk" || path === "/feed"}
               icon={ListChecks}
               label={t("sidebar.desk")}
             />
             <NavRow
-              href="/desk?filter=history"
-              active={path === "/desk" && deskFilter === "history"}
-              icon={CheckCircle2}
-              label="Completed"
-            />
-            <NavRow
-              href="/projects"
-              active={path === "/projects" || path.startsWith("/projects/")}
-              icon={FolderOpen}
-              label={t("sidebar.projects")}
-            />
-            <NavRow
-              href="/workspace/commitments"
-              active={path === "/workspace/commitments"}
-              icon={ListTodo}
-              label={t("sidebar.commitmentTracker")}
-            />
-            <button
-              type="button"
-              title="Create a new project"
-              onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
-              className="flex w-full min-h-[var(--r5-nav-item-height)] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] border border-dashed border-r5-border-subtle bg-transparent px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] text-r5-text-primary transition-[background-color,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:border-r5-text-tertiary hover:bg-r5-surface-hover"
-            >
-              <Plus
-                className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)] shrink-0 opacity-90"
-                strokeWidth={2}
-                aria-hidden
-              />
-              <span>{t("sidebar.newProject")}</span>
-            </button>
-          </div>
-
-          <div className="mt-1 space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>{t("sidebar.sectionOps")}</NavSectionTitle>
-            <NavRow
-              href="/leadership"
-              active={path === "/overview" || path === "/leadership"}
-              icon={BarChart3}
-              label={t("sidebar.leadership")}
-            />
-            <NavRow
-              href="/workspace/dashboard"
-              active={path === "/workspace/dashboard"}
-              icon={Gauge}
-              label={t("sidebar.execution")}
-            />
-            <NavRow
               href="/workspace/commitments"
               active={path.startsWith("/workspace/commitments")}
-              icon={Target}
-              label="Commitments tracker"
-            />
-            <NavRow
-              href="/team-insights"
-              active={path === "/team-insights"}
-              icon={LineChart}
-              label={t("sidebar.teamInsights")}
-            />
-            <NavRow
-              href="/reports"
-              active={path === "/reports"}
-              icon={FileBarChart}
-              label={t("sidebar.reports")}
-            />
-            <NavRow
-              href="/workspace/escalations"
-              active={path.startsWith("/workspace/escalations")}
-              icon={AlertTriangle}
-              label={t("sidebar.escalations")}
+              icon={ListTodo}
+              label="Task tracker"
             />
           </div>
 

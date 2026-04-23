@@ -64,11 +64,11 @@ const LIVE_ROUTE_PREFIXES = [
   "/pricing",
   "/privacy",
   "/product",
+  "/companies",
   "/projects",
   "/settings",
   "/sign-up",
   "/support",
-  "/team-insights",
   "/terms",
   "/workspace",
 ] as const;
@@ -191,7 +191,7 @@ export function buildPaletteItems(params: {
   const activity: PaletteItem[] = recentRuns.map((r) => ({
     id: `recent-ex-${r.id}`,
     label: `${r.projectName} · recent update`,
-    href: `/projects/${r.projectId}#ex-${r.id}`,
+    href: `/companies/${r.projectId}#ex-${r.id}`,
     description: r.snippet,
     keywords: [
       "recent",
@@ -244,27 +244,11 @@ export function buildPaletteItems(params: {
       section: "agent",
     },
     {
-      id: "capture",
-      label: "Capture",
-      href: "/capture",
-      description: "Full-page capture — ⌘J opens the floating panel",
-      keywords: ["capture", "screen", "paste", "import", "meeting", "slack", "email", "note"],
-      section: "agent",
-    },
-    {
-      id: "capture-quick",
-      label: "Quick capture panel",
-      action: "open-capture",
-      description: "Floating paste — same as ⌘J",
-      keywords: ["quick", "floating", "panel", "paste"],
-      section: "agent",
-    },
-    {
       id: "projects-index",
-      label: "Projects",
-      href: "/projects",
-      description: "All projects in your workspace",
-      keywords: ["projects", "list", "hub", "programs"],
+      label: "Companies",
+      href: "/companies",
+      description: "All companies in your workspace",
+      keywords: ["companies", "projects", "list", "hub", "accounts"],
       section: "agent",
     },
     {
@@ -364,10 +348,10 @@ export function buildPaletteItems(params: {
     },
     {
       id: "new-project",
-      label: "New project",
+      label: "Add company",
       action: "open-new-project",
-      description: "Launch project builder · ⌘N",
-      keywords: ["create", "add", "project", "new"],
+      description: "Launch company builder",
+      keywords: ["create", "add", "company", "project", "new"],
       section: "workspace",
     },
     {
@@ -406,22 +390,6 @@ export function buildPaletteItems(params: {
       href: "/marketplace",
       description: "Extensions, connectors, and catalog",
       keywords: ["marketplace", "apps", "plugins", "catalog", "store", "library", "browse"],
-      section: "workspace",
-    },
-    {
-      id: "workspace-dashboard",
-      label: "Analytics dashboard",
-      href: "/workspace/dashboard",
-      description: "Charts and workspace analytics",
-      keywords: ["analytics", "dashboard", "charts", "reports"],
-      section: "workspace",
-    },
-    {
-      id: "escalations",
-      label: "Escalations",
-      href: "/workspace/escalations",
-      description: "Escalation queue",
-      keywords: ["escalations", "urgent", "queue"],
       section: "workspace",
     },
     {
@@ -497,9 +465,9 @@ export function buildPaletteItems(params: {
   const projectItems: PaletteItem[] = projects.map((p) => ({
     id: `project-${p.id}`,
     label: p.name,
-    href: `/projects/${p.id}`,
-    description: "Decisions, actions, and history",
-    keywords: ["project", p.name.toLowerCase()],
+    href: `/companies/${p.id}`,
+    description: "Tasks, updates, and history",
+    keywords: ["company", "project", p.name.toLowerCase()],
     section: "projects",
   }));
 

@@ -194,6 +194,71 @@ export default function MarketingHomeClient() {
         </div>
       </section>
 
+      {/* Social + Why + Solution (structure inspired by classic PLG / agent landing pages — copy is original to Route5) */}
+      <section
+        className="border-b border-white/[0.06] bg-[#010409] py-16 sm:py-20"
+        aria-labelledby="marketing-why-heading"
+      >
+        <div className="mx-auto max-w-[1280px] px-5 sm:px-8 lg:px-10">
+          <div className="flex flex-col items-center text-center">
+            <span className="inline-flex items-center rounded-full border border-cyan-500/25 bg-cyan-500/[0.07] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/90">
+              {t("marketing.home.socialProof.badge")}
+            </span>
+            <p className="mt-5 max-w-3xl text-[15px] leading-relaxed text-slate-500">{t("marketing.home.socialProof.line")}</p>
+          </div>
+
+          <div className="mt-16 border-t border-white/[0.06] pt-16">
+            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300/85">
+              {t("marketing.home.why.kicker")}
+            </p>
+            <h2
+              id="marketing-why-heading"
+              className="font-landing-display mx-auto mt-4 max-w-[40rem] text-center text-[clamp(1.5rem,3.2vw,2.1rem)] font-semibold leading-tight tracking-[-0.02em] text-white"
+            >
+              {t("marketing.home.why.title")}
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-center text-[15px] leading-relaxed text-slate-500">
+              {t("marketing.home.why.lead")}
+            </p>
+            <ul className="mt-12 grid gap-5 md:grid-cols-3">
+              {(["p1", "p2", "p3"] as const).map((pid) => (
+                <li
+                  key={pid}
+                  className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-[#0a1420]/95 to-[#040b14] p-7 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                >
+                  <p className="font-landing-display text-[15px] font-semibold text-white">
+                    {t(`marketing.home.why.${pid}.title`)}
+                  </p>
+                  <p className="mt-3 text-[14px] leading-relaxed text-slate-500">{t(`marketing.home.why.${pid}.body`)}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-16 rounded-[24px] border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.07] via-transparent to-amber-500/[0.06] p-8 sm:p-10">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/90">{t("marketing.home.solution.kicker")}</p>
+            <h3 className="font-landing-display mt-4 text-[clamp(1.35rem,2.8vw,1.9rem)] font-semibold leading-snug tracking-[-0.02em] text-white">
+              {t("marketing.home.solution.title")}
+            </h3>
+            <p className="mt-4 max-w-3xl text-[15px] leading-relaxed text-slate-400">{t("marketing.home.solution.body")}</p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3 sm:justify-start">
+              <Link
+                href="/sign-up"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-cyan-400 to-sky-500 px-8 text-[14px] font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
+              >
+                {t("marketing.home.hero.ctaPrimary")}
+              </Link>
+              <a
+                href="mailto:neville@rayze.xyz?subject=Route5%20—%20walkthrough"
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] px-8 text-[14px] font-semibold text-zinc-100 transition hover:border-amber-400/35"
+              >
+                {t("marketing.home.hero.ctaSales")}
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Marquee */}
       <div className="border-y border-white/[0.06] bg-black/40">
         <div className="relative overflow-hidden py-4">

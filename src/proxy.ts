@@ -33,6 +33,7 @@ function resolveClerkProxy(): NextMiddleware {
       "/support(.*)",
       /** Workspace UI gates with embedded Clerk client-side; APIs still require auth in handlers. */
       "/projects(.*)",
+      "/companies(.*)",
       "/overview(.*)",
       "/feed(.*)",
       "/desk(.*)",

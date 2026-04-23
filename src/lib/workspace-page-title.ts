@@ -7,7 +7,8 @@ export function getWorkspacePageTitle(pathname: string): string {
   if (p === "/capture") return "Capture";
   if (p === "/overview") return "Leadership";
   if (p === "/desk" || p.startsWith("/desk")) return "Desk";
-  if (p === "/projects" || p.startsWith("/projects/")) return "Projects";
+  if (p === "/companies" || p.startsWith("/companies/")) return "Companies";
+  if (p === "/projects" || p.startsWith("/projects/")) return "Companies";
   if (p === "/settings" || p.startsWith("/settings/")) return "Settings";
   if (p === "/workspace/customize" || p.startsWith("/workspace/customize/")) return "Customize";
   if (p === "/marketplace" || p.startsWith("/marketplace/")) return "Marketplace";

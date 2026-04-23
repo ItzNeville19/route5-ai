@@ -7,12 +7,7 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import {
   X,
   ListChecks,
-  FolderOpen,
   BarChart3,
-  Gauge,
-  LineChart,
-  FileBarChart,
-  AlertTriangle,
   Users,
   Palette,
   LifeBuoy,
@@ -22,7 +17,6 @@ import {
 } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { useI18n } from "@/components/i18n/I18nProvider";
 
 const tierLabel =
   process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
@@ -32,24 +26,17 @@ type WorkspaceMobileSidebarProps = {
   onClose: () => void;
 };
 
-const OPS_AND_ACCOUNT: {
+const ACCOUNT: {
   title: string;
   items: { href: string; label: string; icon: (typeof ListChecks) }[];
 }[] = [
   {
-    title: "Operations",
-    items: [
-      { href: "/leadership", label: "Leadership", icon: BarChart3 },
-      { href: "/workspace/dashboard", label: "Execution", icon: Gauge },
-      { href: "/team-insights", label: "Team insights", icon: LineChart },
-      { href: "/reports", label: "Reports", icon: FileBarChart },
-      { href: "/workspace/escalations", label: "Escalations", icon: AlertTriangle },
-    ],
+    title: "People",
+    items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
   },
   {
     title: "Account",
     items: [
-      { href: "/workspace/organization", label: "Organization", icon: Users },
       { href: "/workspace/customize", label: "Customize", icon: Palette },
       { href: "/workspace/help", label: "Help", icon: LifeBuoy },
       { href: "/settings", label: "Settings", icon: Settings },
@@ -62,7 +49,6 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
   const pathname = usePathname() ?? "";
   const { user } = useUser();
   const { entitlements } = useWorkspaceData();
-  const { t } = useI18n();
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
@@ -71,14 +57,14 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
       {
         title: "Work",
         items: [
+          { href: "/overview", label: "Home", icon: BarChart3 },
           { href: "/desk", label: "Desk", icon: ListChecks },
-          { href: "/projects", label: t("sidebar.projects"), icon: FolderOpen },
-          { href: "/workspace/commitments", label: t("sidebar.commitmentTracker"), icon: ListTodo },
+          { href: "/workspace/commitments", label: "Task tracker", icon: ListTodo },
         ],
       },
-      ...OPS_AND_ACCOUNT,
+      ...ACCOUNT,
     ],
-    [t]
+    []
   );
 
   return (
@@ -119,8 +105,6 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                   const active =
                     pathname === item.href ||
                     (item.href === "/desk" && (pathname === "/desk" || pathname === "/feed")) ||
-                    (item.href === "/projects" && pathname.startsWith("/projects/")) ||
-                    (item.href === "/workspace/escalations" && pathname.startsWith("/workspace/escalations")) ||
                     (item.href === "/workspace/commitments" && pathname.startsWith("/workspace/commitments"));
                   return (
                     <Link

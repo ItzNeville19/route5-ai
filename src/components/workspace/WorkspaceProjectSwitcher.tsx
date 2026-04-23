@@ -38,7 +38,7 @@ export default function WorkspaceProjectSwitcher() {
   const [lastStableProject, setLastStableProject] = useState<(typeof projects)[number] | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const pathProjectId = pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? null;
+  const pathProjectId = pathname.match(/^\/(?:projects|companies)\/([^/]+)/)?.[1] ?? null;
   const deskProjectId = pathname.startsWith("/desk") ? searchParams.get("projectId") : null;
 
   const current = useMemo(() => {
@@ -98,7 +98,7 @@ export default function WorkspaceProjectSwitcher() {
       setSelectedId(id);
       writeStoredId(id);
       setOpen(false);
-      router.push(`/projects/${id}`);
+      router.push(`/companies/${id}`);
     },
     [router]
   );
@@ -125,12 +125,12 @@ export default function WorkspaceProjectSwitcher() {
         className="inline-flex min-h-8 max-w-[min(52vw,220px)] shrink-0 items-center gap-1.5 rounded-[var(--r5-radius-pill)] border border-dashed border-r5-border-subtle bg-r5-surface-secondary/80 px-2.5 text-[12px] font-medium text-r5-text-secondary transition hover:border-r5-text-tertiary hover:text-r5-text-primary sm:max-w-[240px]"
       >
         <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
-        <span className="truncate">New project</span>
+        <span className="truncate">New company</span>
       </button>
     );
   }
 
-  const label = stableCurrent?.name ?? "Project";
+  const label = stableCurrent?.name ?? "Company";
   const iconEmoji = stableCurrent?.iconEmoji?.trim();
 
   return (
@@ -171,7 +171,7 @@ export default function WorkspaceProjectSwitcher() {
           className="absolute left-0 top-[calc(100%+6px)] z-50 min-w-[260px] max-w-[min(100vw-2rem,320px)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md"
         >
           <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
-            Projects
+            Companies
           </p>
           <div className="max-h-[min(60vh,280px)] overflow-y-auto">
             {projects.map((p) => {
@@ -202,14 +202,14 @@ export default function WorkspaceProjectSwitcher() {
               className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
             >
               <Plus className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden />
-              New project…
+              New company…
             </button>
             <Link
-              href="/projects"
+              href="/companies"
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
             >
-              All projects
+              All companies
             </Link>
           </div>
         </div>

@@ -11,25 +11,25 @@ import WorkspaceCommitmentsHeaderPanel from "@/components/workspace/WorkspaceCom
 import WorkspaceProjectSwitcher from "@/components/workspace/WorkspaceProjectSwitcher";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { useCapture } from "@/components/capture/CaptureProvider";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
 import { Route5WordmarkInline } from "@/components/brand/Route5BrandMark";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
+import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
 
 export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?: () => void }) {
   const pathname = usePathname() ?? "";
   const { open: openPalette } = useCommandPalette();
   const exp = useWorkspaceExperience();
   useWorkspaceData();
-  const { open: openCapture } = useCapture();
 
   const sidebarHidden = exp.prefs.sidebarHidden === true;
   const pageTitle = getWorkspacePageTitle(pathname);
+  const modLabel = primaryModLabelFromNavigator();
 
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
-      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-[var(--r5-space-2)] px-[var(--r5-content-padding-x-mobile)] py-1.5 sm:px-[var(--r5-content-padding-x)]">
-        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)]">
+      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] flex-wrap items-center justify-between gap-[var(--r5-space-2)] px-[var(--r5-content-padding-x-mobile)] py-1.5 sm:flex-nowrap sm:px-[var(--r5-content-padding-x)]">
+        <div className="flex min-w-0 flex-1 items-center gap-[var(--r5-space-2)] max-sm:w-full">
           <button
             type="button"
             onClick={() => {
@@ -66,18 +66,20 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               />
             }
           >
-            <WorkspaceProjectSwitcher />
+            <div className="hidden sm:block">
+              <WorkspaceProjectSwitcher />
+            </div>
           </Suspense>
-          <h1 className="min-w-0 flex-1 max-sm:max-w-[min(100%,min(72vw,200px))] line-clamp-2 break-words text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary sm:max-w-[min(100%,320px)]">
+          <h1 className="min-w-0 flex-1 max-sm:max-w-[min(100%,min(70vw,220px))] max-sm:line-clamp-1 break-words text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary sm:max-w-[min(100%,320px)]">
             {pageTitle}
           </h1>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-[var(--r5-space-2)]">
+        <div className="flex w-full shrink-0 items-center justify-end gap-[var(--r5-space-2)] max-sm:pl-10 sm:w-auto sm:pl-0">
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex h-8 items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
+            className="inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
             aria-label="Search"
           >
             <Search
@@ -87,7 +89,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
             />
             <span className="hidden sm:inline">Search</span>
             <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-secondary xl:inline">
-              ⌘K
+              {modLabel}K
             </kbd>
           </button>
 
@@ -96,22 +98,22 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
 
           <button
             type="button"
-            onClick={() => openCapture()}
-            className="group inline-flex h-8 items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
-            aria-label="Open Capture"
+            onClick={() => window.dispatchEvent(new Event("route5:new-project-open"))}
+            className="group inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
+            aria-label="Add company"
           >
             <Plus
               className="h-[length:var(--r5-icon-nav)] w-[length:var(--r5-icon-nav)]"
               strokeWidth={2}
               aria-hidden
             />
-            <span className="hidden sm:inline">Capture</span>
+            <span className="hidden sm:inline">Add company</span>
             <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-tertiary group-hover:inline sm:group-hover:inline">
-              ⌘J
+              {modLabel}N
             </kbd>
           </button>
 
-          <div className="pl-1">
+          <div className="pl-0 sm:pl-1">
             <UserButton
               appearance={{
                 ...route5ClerkAppearance,

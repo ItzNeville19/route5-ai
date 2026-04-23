@@ -16,6 +16,7 @@ import {
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
 import { checkPlanLimit, planLimitResponse } from "@/lib/billing/gate";
+import { requireOrgRole } from "@/lib/workspace/org-members";
 
 export const runtime = "nodejs";
 
@@ -54,11 +55,20 @@ export async function GET(req: Request) {
   const order = url.searchParams.get("order") === "desc" ? "desc" : "asc";
 
   try {
+    const roleAccess = await requireOrgRole(userId, ["admin", "manager", "member"]);
+    if (!roleAccess.ok) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const orgId = await ensureOrganizationForClerkUser(userId);
+    const requestedOwner = url.searchParams.get("owner") ?? undefined;
+    const ownerScope =
+      roleAccess.role === "admin"
+        ? requestedOwner
+        : userId;
     const commitments = await listOrgCommitments(userId, {
       status: url.searchParams.get("status") ?? undefined,
       priority: url.searchParams.get("priority") ?? undefined,
-      owner: url.searchParams.get("owner") ?? undefined,
+      owner: ownerScope,
       projectId: url.searchParams.get("projectId") ?? undefined,
       dateFrom: url.searchParams.get("dateFrom") ?? undefined,
       dateTo: url.searchParams.get("dateTo") ?? undefined,
@@ -97,23 +107,28 @@ export async function POST(req: Request) {
   }
 
   try {
+    const roleAccess = await requireOrgRole(userId, ["admin", "manager", "member"]);
+    if (!roleAccess.ok) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const orgId = await ensureOrganizationForClerkUser(userId);
     const gate = await checkPlanLimit(orgId, "commitments");
     if (!gate.allowed && gate.upgrade) {
       return planLimitResponse(gate.upgrade);
     }
+    const ownerId = roleAccess.role === "admin" ? body.ownerId : userId;
     const row = await createOrgCommitment(userId, {
       title: body.title,
       description: body.description ?? null,
-      ownerId: body.ownerId,
+      ownerId,
       deadline: new Date(body.deadline).toISOString(),
       priority: body.priority,
     });
     broadcastOrgCommitmentEvent(orgId, { kind: "commitment_created", id: row.id });
-    if (body.ownerId !== userId) {
+    if (ownerId !== userId) {
       void notifyOrgCommitmentAssignment({
         orgId,
-        ownerClerkId: body.ownerId,
+        ownerClerkId: ownerId,
         title: body.title,
         deadline: row.deadline,
         priority: body.priority,

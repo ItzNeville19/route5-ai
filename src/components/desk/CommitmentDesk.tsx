@@ -8,7 +8,6 @@ import { useUser } from "@clerk/nextjs";
 import { nanoid } from "nanoid";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Activity,
   AlertOctagon,
   AlertTriangle,
   ArrowUpRight,
@@ -45,7 +44,6 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import { deskUrl } from "@/lib/desk-routes";
 import { deskHrefWithProjectFilter, executionMetricFallbackHrefs } from "@/lib/workspace/commitment-links";
 import { formatRelativeLong } from "@/lib/relative-time";
 import { STATUS_ACCENT, STATUS_LABEL, STATUS_PILL } from "@/components/desk/desk-constants";
@@ -167,7 +165,7 @@ export default function CommitmentDesk() {
     const welcome = searchParams.get("welcome");
     if (welcome !== "joined-org") return;
     pushToast(
-      "Welcome to your organization. Shared projects and commitments are now available.",
+      "Welcome to your organization. Shared companies and tasks are now available.",
       "success"
     );
     try {
@@ -281,7 +279,7 @@ export default function CommitmentDesk() {
     e.preventDefault();
     const raw = inputText.trim();
     if (!projectId || !raw) {
-      pushToast("Choose a project and paste text.", "error");
+      pushToast("Choose a company and paste text.", "error");
       return;
     }
     setCaptureBusy(true);
@@ -300,12 +298,12 @@ export default function CommitmentDesk() {
         error?: string;
       };
       if (!res.ok) {
-        pushToast(data.error ?? "Could not propose commitments.", "error");
+        pushToast(data.error ?? "Could not propose tasks from notes.", "error");
         return;
       }
       const drafts = data.drafts ?? [];
       if (drafts.length === 0) {
-        pushToast("No commitments found — try bullets, numbered lines, or TODO: items.", "error");
+        pushToast("No tasks found in that text — try bullets, numbered lines, or TODO: items.", "error");
         return;
       }
       setProposedRows(
@@ -316,7 +314,7 @@ export default function CommitmentDesk() {
         }))
       );
       setCaptureStep("review");
-      pushToast(`${drafts.length} commitment(s) ready — assign owners and commit.`, "success");
+      pushToast(`${drafts.length} task(s) ready — assign owners and save.`, "success");
     } finally {
       setCaptureBusy(false);
     }
@@ -355,7 +353,7 @@ export default function CommitmentDesk() {
         error?: string;
       };
       if (!res.ok) {
-        pushToast(data.error ?? "Could not save commitments.", "error");
+        pushToast(data.error ?? "Could not save tasks.", "error");
         return;
       }
       const n = data.commitments?.length ?? 0;
@@ -486,7 +484,7 @@ export default function CommitmentDesk() {
         await patchCommitmentById(row.id, { status: "completed" });
       }
       setLastBulkCompleted({ ids: todo.map((r) => r.id) });
-      pushToast(`Marked ${todo.length} commitment${todo.length === 1 ? "" : "s"} complete.`, "success");
+      pushToast(`Marked ${todo.length} task${todo.length === 1 ? "" : "s"} complete.`, "success");
     } finally {
       setSaving(false);
     }
@@ -506,35 +504,17 @@ export default function CommitmentDesk() {
     }
   }
 
-  const unassignedCount = useMemo(
-    () => intel?.riskFeed.filter((r) => r.riskReason === "unassigned").length ?? 0,
-    [intel]
-  );
-
   const wordCount = useMemo(
     () => inputText.trim().split(/\s+/).filter(Boolean).length,
     [inputText]
   );
 
-  const teamLoadMax = useMemo(() => {
-    if (!intel?.teamLoad.length) return 1;
-    return Math.max(1, ...intel.teamLoad.map((t) => t.activeCount));
-  }, [intel]);
-
   const currentProject = projects.find((p) => p.id === projectId);
 
-  /** Metric tiles → filtered Desk or org tracker when no project exists yet. */
+  /** Metric tiles open the real org task tracker module with filters. */
   const statLinks = useMemo(() => {
-    const pid = projectId || projects[0]?.id;
-    if (!pid) return executionMetricFallbackHrefs();
-    return {
-      active: deskHrefWithProjectFilter(pid, "open"),
-      overdue: deskHrefWithProjectFilter(pid, "overdue"),
-      atRisk: deskHrefWithProjectFilter(pid, "at_risk"),
-      unassigned: deskHrefWithProjectFilter(pid, "unassigned"),
-      weekClosed: deskHrefWithProjectFilter(pid, "history"),
-    };
-  }, [projectId, projects]);
+    return executionMetricFallbackHrefs();
+  }, []);
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-[1680px] flex-col gap-10 pb-20 pt-1 sm:pt-2">
@@ -679,13 +659,13 @@ export default function CommitmentDesk() {
         <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[268px]">
           <div className="rounded-[20px] border border-[color-mix(in_srgb,var(--workspace-accent)_24%,var(--workspace-border))] bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/55 p-4 shadow-[0_8px_36px_-18px_color-mix(in_srgb,var(--workspace-accent)_14%,transparent)] backdrop-blur-sm">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
-              Project
+              Company
             </p>
             {loadingProjects ? (
               <p className="mt-3 text-[13px] text-[var(--workspace-muted-fg)]">Loading…</p>
             ) : projects.length === 0 ? (
               <p className="mt-3 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-                No projects yet — create one from Overview.
+                No companies yet — create one from Overview.
               </p>
             ) : (
               <ul className="mt-3 space-y-2">
@@ -711,7 +691,7 @@ export default function CommitmentDesk() {
                           </span>
                           {active && currentProject ? (
                             <span className="mt-0.5 block text-[11px] text-[var(--workspace-muted-fg)]">
-                              Editing commitments
+                              Editing tasks
                             </span>
                           ) : null}
                         </span>
@@ -766,7 +746,7 @@ export default function CommitmentDesk() {
             <div className="flex min-h-[360px] flex-1 flex-col border-[var(--workspace-border)] xl:w-[min(52%,640px)] xl:border-r">
               <div className="flex items-end justify-between gap-3 border-b border-[var(--workspace-border)]/90 px-4 py-4 sm:px-5">
                 <div>
-                  <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Commitments</h2>
+                  <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Tasks</h2>
                   <p className="mt-0.5 text-[12px] text-[var(--workspace-muted-fg)]">
                     {currentProject ? (
                       <>
@@ -803,7 +783,7 @@ export default function CommitmentDesk() {
               </div>
               <div className="max-h-[min(68vh,760px)] space-y-2.5 overflow-y-auto p-3 sm:p-4">
                 {!projectId ? (
-                  <EmptyState title="Pick a project" body="Select a workspace project to load commitments." />
+                  <EmptyState title="Pick a company" body="Select a company to load its tasks." />
                 ) : loadingList ? (
                   <div className="flex justify-center py-16">
                     <Loader2 className="h-7 w-7 animate-spin text-[var(--workspace-accent)]" />
@@ -811,7 +791,7 @@ export default function CommitmentDesk() {
                 ) : commitments.length === 0 ? (
                   <EmptyState
                     title="Nothing in this filter"
-                    body="Try another view or add a decision from Desk — propose commitments from notes, then commit."
+                    body="Try another view, or paste notes to extract tasks for this company."
                     action={
                       <button
                         type="button"
@@ -819,7 +799,7 @@ export default function CommitmentDesk() {
                         className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)] hover:bg-[var(--workspace-nav-hover)]"
                       >
                         <Plus className="h-3.5 w-3.5" />
-                        Add decision
+                        Add from notes
                       </button>
                     }
                   />
@@ -1161,133 +1141,14 @@ export default function CommitmentDesk() {
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
                   <Target className="h-10 w-10 text-[var(--workspace-border)]" aria-hidden />
                   <p className="max-w-xs text-[13px] text-[var(--workspace-muted-fg)]">
-                    Select a commitment to update status, owner, and notes. Your changes sync to Overview and
-                    digest.
+                    Select a task to update status, owner, and notes. Your changes stay in sync with your home
+                    page and digests.
                   </p>
                 </div>
               )}
             </div>
           </div>
         </main>
-
-        {/* Right intelligence */}
-        <aside className="flex w-full shrink-0 flex-col gap-4 lg:w-[300px]">
-          <div className="rounded-[20px] border border-[color-mix(in_srgb,var(--workspace-accent)_24%,var(--workspace-border))] bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_color-mix(in_srgb,var(--workspace-accent)_12%,transparent)]">
-            <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color-mix(in_srgb,var(--workspace-accent)_18%,transparent)] text-[var(--workspace-accent)]">
-                <Target className="h-4 w-4" aria-hidden />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-[var(--workspace-fg)]">Workload signals</p>
-                <p className="text-[11px] leading-snug text-[var(--workspace-muted-fg)]">
-                  Who&apos;s overloaded, what&apos;s unassigned, and overlapping due dates — act from the list at left.
-                </p>
-              </div>
-            </div>
-            {loadingIntel ? (
-              <p className="mt-4 text-[12px] text-[var(--workspace-muted-fg)]">Loading…</p>
-            ) : intel ? (
-              <ul className="mt-4 space-y-3 text-[12px]">
-                <li className="flex items-center justify-between rounded-xl bg-[var(--workspace-surface)]/40 px-3 py-2">
-                  <span className="text-[var(--workspace-muted-fg)]">Owners over capacity</span>
-                  <span className="font-semibold tabular-nums text-[var(--workspace-fg)]">
-                    {intel.teamLoad.filter((t) => t.overloaded).length || "0"}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between rounded-xl bg-[var(--workspace-surface)]/40 px-3 py-2">
-                  <span className="text-[var(--workspace-muted-fg)]">Unassigned in this workspace</span>
-                  <span className="font-semibold tabular-nums text-[color-mix(in_srgb,var(--workspace-danger-fg)_88%,var(--workspace-fg))]">
-                    {unassignedCount}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between rounded-xl bg-[var(--workspace-surface)]/40 px-3 py-2">
-                  <span className="text-[var(--workspace-muted-fg)]">Deadline conflicts</span>
-                  <span className="font-semibold tabular-nums text-[var(--workspace-fg)]">
-                    {intel.conflictingDeadlines.length}
-                  </span>
-                </li>
-              </ul>
-            ) : (
-              <p className="mt-4 text-[12px] text-[var(--workspace-muted-fg)]">No data.</p>
-            )}
-          </div>
-
-          {intel && intel.recentActivity.length > 0 ? (
-            <div className="rounded-[20px] border border-[color-mix(in_srgb,var(--workspace-accent)_24%,var(--workspace-border))] bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_color-mix(in_srgb,var(--workspace-accent)_12%,transparent)]">
-              <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
-                  Recent motion
-                </p>
-              </div>
-              <ul className="mt-3 space-y-2">
-                {intel.recentActivity.slice(0, 5).map((a, i) => (
-                  <li key={`${a.commitmentId}-${i}`}>
-                    <Link
-                      href={deskUrl({ projectId: a.projectId })}
-                      className="block rounded-xl border border-transparent px-2 py-2 transition hover:border-[var(--workspace-border)] hover:bg-[var(--workspace-nav-hover)]"
-                    >
-                      <p className="line-clamp-2 text-[12px] font-medium text-[var(--workspace-fg)]">{a.title}</p>
-                      <p className="mt-0.5 text-[10px] text-[var(--workspace-muted-fg)]">
-                        {a.projectName} · {formatRelativeLong(a.at, "en")}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {intel && intel.teamLoad.length > 0 ? (
-            <div className="rounded-[20px] border border-[color-mix(in_srgb,var(--workspace-accent)_24%,var(--workspace-border))] bg-gradient-to-b from-[var(--workspace-surface)]/88 to-[var(--workspace-canvas)]/60 p-4 shadow-[0_8px_36px_-18px_color-mix(in_srgb,var(--workspace-accent)_12%,transparent)]">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--workspace-muted-fg)]">
-                Team load
-              </p>
-              <ul className="mt-3 space-y-3">
-                {intel.teamLoad.slice(0, 8).map((t) => (
-                  <li key={t.key}>
-                    <div className="flex items-center justify-between gap-2 text-[12px]">
-                      <span
-                        className={`min-w-0 truncate ${t.overloaded ? "font-semibold text-[color-mix(in_srgb,var(--workspace-danger-fg)_92%,var(--workspace-fg))]" : "text-[var(--workspace-fg)]"}`}
-                      >
-                        {t.label}
-                      </span>
-                      <span className="shrink-0 font-mono text-[11px] tabular-nums text-[var(--workspace-muted-fg)]">
-                        {t.activeCount}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--workspace-border)]/60">
-                      <motion.div
-                        className={`h-2 rounded-full ${t.overloaded ? "bg-[color-mix(in_srgb,var(--workspace-danger-fg)_85%,var(--workspace-accent))]" : "bg-[color-mix(in_srgb,var(--workspace-accent)_75%,#38bdf8)]/90"}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, (t.activeCount / teamLoadMax) * 100)}%` }}
-                        transition={{ type: "spring", stiffness: 120, damping: 22 }}
-                      />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {intel && intel.conflictingDeadlines.length > 0 ? (
-            <div className="rounded-[20px] border border-amber-500/25 bg-gradient-to-br from-amber-500/10 to-transparent p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-[var(--workspace-fg)]">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-[color-mix(in_srgb,var(--workspace-danger-fg)_85%,var(--workspace-fg))]" aria-hidden />
-                <p className="text-[12px] font-semibold">Conflicting deadlines</p>
-              </div>
-              <ul className="mt-3 space-y-2 text-[11px] text-[var(--workspace-muted-fg)]">
-                {intel.conflictingDeadlines.map((c, i) => (
-                  <li key={i} className="rounded-lg bg-black/15 px-2 py-2">
-                    <span className="font-medium text-[var(--workspace-fg)]">{c.ownerLabel}</span> on{" "}
-                    {c.dueDate.slice(0, 10)}
-                    <div className="mt-1 text-[11px] leading-snug">{c.titles.join(" · ")}</div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </aside>
       </div>
       </div>
 
@@ -1310,12 +1171,12 @@ export default function CommitmentDesk() {
             >
               <div className="border-b border-[var(--workspace-border)]/80 bg-gradient-to-r from-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] to-transparent px-5 py-4">
                 <h3 className="text-[17px] font-semibold text-[var(--workspace-fg)]">
-                  {captureStep === "paste" ? "Paste notes" : "Review commitments"}
+                  {captureStep === "paste" ? "Paste notes" : "Review tasks"}
                 </h3>
                 <p className="mt-1 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
                   {captureStep === "paste"
-                    ? "We turn bullets and action lines into a list you own — nothing is saved until you commit."
-                    : "Assign owners and due dates, then commit. Assignees get an in-app notification."}
+                    ? "We turn bullets and action lines into tasks you can assign — nothing is saved until you finish."
+                    : "Assign owners and due dates, then save. People you assign get an in-app notification."}
                 </p>
                 {captureStep === "paste" ? (
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -1376,7 +1237,7 @@ export default function CommitmentDesk() {
                       ) : (
                         <Sparkles className="h-4 w-4" aria-hidden />
                       )}
-                      Propose commitments
+                      Propose tasks
                     </button>
                   </div>
                 </form>
@@ -1433,7 +1294,7 @@ export default function CommitmentDesk() {
                         className="rounded-2xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/50 p-3.5"
                       >
                         <label className="block text-[10px] font-semibold uppercase tracking-wide text-[var(--workspace-muted-fg)]">
-                          Commitment
+                          Task
                           <textarea
                             value={row.title}
                             onChange={(e) => updateProposedRow(row.key, { title: e.target.value })}
@@ -1526,7 +1387,7 @@ export default function CommitmentDesk() {
                         ) : (
                           <Target className="h-4 w-4" aria-hidden />
                         )}
-                        Commit
+                        Save tasks
                       </button>
                     </div>
                   </div>
@@ -1560,7 +1421,7 @@ export default function CommitmentDesk() {
               <div className="flex items-start justify-between gap-3 border-b border-[var(--workspace-border)] px-5 py-4">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
-                    Commitment
+                    Task
                   </p>
                   <h2 id="desk-fs-title" className="mt-1 text-[clamp(1.05rem,2.5vw,1.25rem)] font-semibold leading-snug text-[var(--workspace-fg)]">
                     {selected.title}

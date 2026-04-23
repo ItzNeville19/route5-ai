@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
+import { primaryModLabelFromNavigator } from "@/lib/platform-shortcuts";
 
 /**
  * Workspace keyboard shortcuts — toggle with ? outside inputs, or open via
@@ -12,6 +13,7 @@ import { X } from "lucide-react";
 export default function WorkspaceShortcuts() {
   const pathname = usePathname();
   const [helpOpen, setHelpOpen] = useState(false);
+  const modLabel = primaryModLabelFromNavigator();
 
   useEffect(() => {
     const open = () => setHelpOpen(true);
@@ -135,7 +137,7 @@ export default function WorkspaceShortcuts() {
                 <p className="text-[12px] font-semibold text-zinc-100">Search everything</p>
                 <p className="mt-1.5 text-[12px] leading-snug text-zinc-300">
                   <kbd className="rounded-md border border-white/20 bg-black/35 px-1.5 py-0.5 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    ⌘K
+                    {modLabel}K
                   </kbd>{" "}
                   opens the command palette — jump to Desk, Capture, Marketplace, Team, Settings, and more. Use{" "}
                   <kbd className="rounded border border-white/20 bg-black/35 px-1 py-0.5 font-mono text-[10px]">
@@ -210,14 +212,9 @@ export default function WorkspaceShortcuts() {
                 </li>
                 <li className="flex items-center justify-between gap-3 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Select all visible</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      ⌘A
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      Ctrl+A
-                    </kbd>
-                  </span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
+                    {modLabel}A
+                  </kbd>
                 </li>
               </ul>
 
@@ -228,47 +225,32 @@ export default function WorkspaceShortcuts() {
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Command palette</span>
                   <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    ⌘K
+                    {modLabel}K
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Capture panel</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      ⌘J
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      Ctrl+J
-                    </kbd>
-                  </span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
+                    {modLabel}J
+                  </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Updates &amp; digest</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      ⌘⇧U
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      Ctrl+Shift+U
-                    </kbd>
-                  </span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
+                    {modLabel === "⌘" ? "⌘⇧U" : "Ctrl+Shift+U"}
+                  </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
-                  <span className="text-[13px] font-medium text-zinc-200">New project</span>
+                  <span className="text-[13px] font-medium text-zinc-200">New company</span>
                   <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    ⌘N
+                    {modLabel}N
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Toggle sidebar</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      ⌘\
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      Ctrl+\
-                    </kbd>
-                  </span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
+                    {modLabel}\\
+                  </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">This shortcuts sheet</span>
@@ -279,19 +261,14 @@ export default function WorkspaceShortcuts() {
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Palette (alternate)</span>
                   <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                    ⌘Space
+                    {modLabel}Space
                   </kbd>
                 </li>
                 <li className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
                   <span className="text-[13px] font-medium text-zinc-200">Save popover edits</span>
-                  <span className="flex gap-1.5">
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      ⌘Enter
-                    </kbd>
-                    <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
-                      Ctrl+Enter
-                    </kbd>
-                  </span>
+                  <kbd className="rounded-lg border border-white/15 bg-white/[0.06] px-2 py-1 font-mono text-[11px] text-[var(--workspace-fg)]">
+                    {modLabel}Enter
+                  </kbd>
                 </li>
               </ul>
 

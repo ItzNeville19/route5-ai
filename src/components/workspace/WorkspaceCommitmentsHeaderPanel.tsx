@@ -7,12 +7,11 @@ import { usePathname } from "next/navigation";
 import { ArrowUpRight, Calendar, CheckCircle2, Circle, ListTodo, Loader2, X } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
-import { deskHrefWithProjectFilter, orgCommitmentsHref } from "@/lib/workspace/commitment-links";
+import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
+import { orgCommitmentsHref } from "@/lib/workspace/commitment-links";
 
-function deskFilterForRisk(r: CommitmentRiskItem): "overdue" | "unassigned" | "at_risk" {
-  if (r.riskReason === "overdue") return "overdue";
-  if (r.riskReason === "unassigned") return "unassigned";
-  return "at_risk";
+function taskDetailHref(id: string): string {
+  return `/workspace/commitments?id=${encodeURIComponent(id)}`;
 }
 
 /** iOS Reminders–inspired panel: neutral grays, rounded groups, checklist rows, no “notification” badge. */
@@ -30,8 +29,49 @@ export default function WorkspaceCommitmentsHeaderPanel() {
     try {
       const res = await fetch("/api/workspace/execution", { credentials: "same-origin" });
       const data = (await res.json().catch(() => ({}))) as { overview?: ExecutionOverview };
-      if (res.ok && data.overview) setOverview(data.overview);
-      else setOverview(null);
+      if (res.ok && data.overview) {
+        setOverview(data.overview);
+        return;
+      }
+      const fallbackRes = await fetch("/api/commitments?sort=deadline&order=asc", {
+        credentials: "same-origin",
+      });
+      const fallbackData = (await fallbackRes.json().catch(() => ({}))) as {
+        commitments?: OrgCommitmentRow[];
+      };
+      if (!fallbackRes.ok) {
+        setOverview(null);
+        return;
+      }
+      const rows = fallbackData.commitments ?? [];
+      const openRows = rows.filter((row) => row.status !== "completed");
+      const fallbackOverview = {
+        summary: {
+          activeTotal: openRows.length,
+          pctCompletedThisWeek: 0,
+          atRiskCount: openRows.filter((row) => row.status === "at_risk").length,
+          overdueCount: openRows.filter((row) => row.status === "overdue").length,
+          unassignedCount: openRows.filter((row) => !row.ownerId?.trim()).length,
+        },
+        riskFeed: openRows
+          .filter((row) => row.status === "overdue" || row.status === "at_risk" || !row.ownerId?.trim())
+          .slice(0, 12)
+          .map((row) => ({
+            id: row.id,
+            title: row.title,
+            ownerUserId: row.ownerId?.trim() || null,
+            ownerLabel: row.ownerId?.trim() || "Unassigned",
+            projectId: row.projectId ?? "",
+            projectName: row.projectId ? "Company" : "No company",
+            riskReason: row.status === "overdue" ? "overdue" : !row.ownerId?.trim() ? "unassigned" : "stalled",
+            urgencyScore: row.status === "overdue" ? 3 : !row.ownerId?.trim() ? 2 : 1,
+            dueDate: row.deadline,
+          })) as unknown as CommitmentRiskItem[],
+        teamLoad: [],
+        recentActivity: [],
+        conflictingDeadlines: [],
+      } as ExecutionOverview;
+      setOverview(fallbackOverview);
     } finally {
       setLoading(false);
     }
@@ -60,7 +100,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-zinc-300/90 bg-white p-[var(--r5-space-2)] text-zinc-800 shadow-[var(--r5-shadow-elevated)] ring-1 ring-black/[0.04] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-zinc-50 hover:text-zinc-950"
+        className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary p-[var(--r5-space-2)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover"
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label={t("header.commitments.open")}
@@ -78,24 +118,24 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                 onClick={() => setOpen(false)}
               />
               <aside
-                className="fixed left-3 right-3 top-16 z-[200] flex max-h-[min(88dvh,720px)] w-auto flex-col overflow-hidden rounded-[14px] border border-black/[0.08] bg-[#f2f2f7] font-[system-ui,-apple-system,BlinkMacSystemFont,'Segoe_UI',sans-serif] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.45)] sm:left-auto sm:right-4 sm:top-[calc(var(--r5-header-height)+8px)] sm:w-[min(100vw-2rem,380px)] sm:max-h-[min(88dvh,740px)]"
+                className="fixed left-3 right-3 top-16 z-[200] flex max-h-[min(88dvh,720px)] w-auto flex-col overflow-hidden rounded-[14px] border border-r5-border-subtle bg-r5-surface-primary shadow-[0_20px_60px_-15px_rgba(0,0,0,0.45)] sm:left-auto sm:right-4 sm:top-[calc(var(--r5-header-height)+8px)] sm:w-[min(100vw-2rem,380px)] sm:max-h-[min(88dvh,740px)]"
                 role="dialog"
                 aria-label={t("header.commitments.dialogTitle")}
                 aria-modal="true"
               >
-                <header className="flex shrink-0 items-center justify-between gap-2 border-b border-black/[0.06] bg-[#f2f2f7]/98 px-3 py-2.5 backdrop-blur-md">
+                <header className="flex shrink-0 items-center justify-between gap-2 border-b border-r5-border-subtle bg-r5-surface-primary/95 px-3 py-2.5 backdrop-blur-md">
                   <div className="min-w-0 flex-1 text-center">
-                    <p className="text-[17px] font-semibold leading-snug tracking-[-0.02em] text-[#000000]">
+                    <p className="text-[17px] font-semibold leading-snug tracking-[-0.02em] text-r5-text-primary">
                       {t("header.commitments.remindersTitle")}
                     </p>
-                    <p className="mt-0.5 px-2 text-[11px] leading-snug text-[#8e8e93]">
+                    <p className="mt-0.5 px-2 text-[11px] leading-snug text-r5-text-secondary">
                       {t("header.commitments.remindersSubtitle")}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="absolute right-2 top-2 rounded-full p-2 text-[#8e8e93] transition hover:bg-black/[0.05] hover:text-[#000000]"
+                    className="absolute right-2 top-2 rounded-full p-2 text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
                     aria-label={t("modal.newProject.close")}
                   >
                     <X className="h-[18px] w-[18px]" strokeWidth={2.25} />
@@ -104,19 +144,19 @@ export default function WorkspaceCommitmentsHeaderPanel() {
 
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3 pt-2">
                   {loading ? (
-                    <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-[#8e8e93]">
-                      <Loader2 className="h-5 w-5 animate-spin text-[#007aff]" />
+                    <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-r5-text-secondary">
+                      <Loader2 className="h-5 w-5 animate-spin text-r5-accent" />
                       {t("header.commitments.loading")}
                     </div>
                   ) : !summary ? (
-                    <div className="mx-1 rounded-[12px] bg-white px-4 py-10 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]">
-                      <p className="text-[13px] text-[#8e8e93]">{t("header.commitments.unavailable")}</p>
+                    <div className="mx-1 rounded-[12px] bg-r5-surface-secondary px-4 py-10 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
+                      <p className="text-[13px] text-r5-text-secondary">{t("header.commitments.unavailable")}</p>
                     </div>
                   ) : (
                     <>
                       {/* Smart counts — neutral rings (not red notification bubbles) */}
-                      <section className="mx-1 mb-2 rounded-[12px] bg-white px-3 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]">
-                        <p className="mb-2.5 px-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8e8e93]">
+                      <section className="mx-1 mb-2 rounded-[12px] bg-r5-surface-secondary px-3 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
+                        <p className="mb-2.5 px-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-r5-text-secondary">
                           {t("header.commitments.countsSection")}
                         </p>
                         <div className="flex flex-wrap justify-center gap-3 px-1">
@@ -149,11 +189,11 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             onNavigate={() => setOpen(false)}
                           />
                         </div>
-                        <div className="mt-3 flex gap-2 border-t border-black/[0.06] pt-3">
+                        <div className="mt-3 flex gap-2 border-t border-r5-border-subtle pt-3">
                           <Link
                             href="/workspace/commitments"
                             onClick={() => setOpen(false)}
-                            className={`flex min-h-[44px] items-center justify-center rounded-[10px] bg-[#007aff] px-3 text-[15px] font-medium text-white transition active:opacity-90 ${onDesk ? "w-full flex-1" : "flex-1"}`}
+                            className={`flex min-h-[44px] items-center justify-center rounded-[10px] bg-r5-accent px-3 text-[15px] font-medium text-white transition active:opacity-90 ${onDesk ? "w-full flex-1" : "flex-1"}`}
                           >
                             {t("header.commitments.openFullTracker")}
                           </Link>
@@ -161,7 +201,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             <Link
                               href="/desk"
                               onClick={() => setOpen(false)}
-                              className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-[#e5e5ea] px-3 text-[15px] font-semibold text-[#000000] transition hover:bg-[#d1d1d6]"
+                              className="flex min-h-[44px] flex-1 items-center justify-center rounded-[10px] bg-r5-surface-hover px-3 text-[15px] font-semibold text-r5-text-primary transition hover:opacity-90"
                             >
                               {t("header.commitments.openDesk")}
                             </Link>
@@ -171,25 +211,25 @@ export default function WorkspaceCommitmentsHeaderPanel() {
 
                       {/* Checklist-style attention list */}
                       <section className="mx-1 mb-2">
-                        <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8e8e93]">
+                        <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-r5-text-secondary">
                           {t("header.commitments.attentionSection")}
                         </p>
                         {riskPreview.length === 0 ? (
-                          <div className="overflow-hidden rounded-[12px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]">
+                          <div className="overflow-hidden rounded-[12px] bg-r5-surface-secondary shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
                             <div className="flex flex-col items-center px-4 py-10 text-center">
-                              <CheckCircle2 className="h-9 w-9 text-[#34c759]" strokeWidth={1.5} />
-                              <p className="mt-2 text-[15px] font-semibold text-[#000000]">
+                              <CheckCircle2 className="h-9 w-9 text-r5-status-completed" strokeWidth={1.5} />
+                              <p className="mt-2 text-[15px] font-semibold text-r5-text-primary">
                                 {t("header.commitments.allClear")}
                               </p>
-                              <p className="mt-1 max-w-[240px] text-[13px] leading-snug text-[#8e8e93]">
+                              <p className="mt-1 max-w-[240px] text-[13px] leading-snug text-r5-text-secondary">
                                 {t("header.commitments.allClearHint")}
                               </p>
                             </div>
                           </div>
                         ) : (
-                          <ul className="overflow-hidden rounded-[12px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]">
+                          <ul className="overflow-hidden rounded-[12px] bg-r5-surface-secondary shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
                             {riskPreview.map((r, i) => {
-                              const href = deskHrefWithProjectFilter(r.projectId, deskFilterForRisk(r));
+                              const href = taskDetailHref(r.id);
                               const reason =
                                 r.riskReason === "overdue"
                                   ? t("commitment.metrics.overdue")
@@ -198,22 +238,22 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                                     : t("commitment.metrics.atRisk");
                               const showDivider = i < riskPreview.length - 1;
                               return (
-                                <li key={r.id} className={showDivider ? "border-b border-black/[0.06]" : ""}>
+                                <li key={r.id} className={showDivider ? "border-b border-r5-border-subtle" : ""}>
                                   <Link
                                     href={href}
                                     onClick={() => setOpen(false)}
-                                    className="flex min-h-[52px] items-start gap-3 px-3 py-2.5 transition hover:bg-[#f9f9f9] active:bg-[#f2f2f7]"
+                                    className="flex min-h-[52px] items-start gap-3 px-3 py-2.5 transition hover:bg-r5-surface-hover active:opacity-90"
                                   >
-                                    <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-[#c7c7cc] bg-white">
-                                      <Circle className="h-[14px] w-[14px] text-[#c7c7cc]" strokeWidth={2} aria-hidden />
+                                    <span className="mt-0.5 flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border border-r5-border-subtle bg-r5-surface-primary">
+                                      <Circle className="h-[14px] w-[14px] text-r5-text-secondary" strokeWidth={2} aria-hidden />
                                     </span>
                                     <span className="min-w-0 flex-1">
-                                      <span className="line-clamp-2 text-[15px] font-normal leading-snug text-[#000000]">
+                                      <span className="line-clamp-2 text-[15px] font-normal leading-snug text-r5-text-primary">
                                         {r.title}
                                       </span>
-                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-[#8e8e93]">
+                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[12px] text-r5-text-secondary">
                                         <span>{r.projectName}</span>
-                                        <span className="font-medium text-[#007aff]">{reason}</span>
+                                        <span className="font-medium text-r5-accent">{reason}</span>
                                         {r.dueDate ? (
                                           <span className="inline-flex items-center gap-1 tabular-nums">
                                             <Calendar className="h-3 w-3 opacity-70" aria-hidden />
@@ -226,7 +266,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                                         ) : null}
                                       </span>
                                     </span>
-                                    <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-[#c7c7cc]" aria-hidden />
+                                    <ArrowUpRight className="mt-1 h-4 w-4 shrink-0 text-r5-text-secondary" aria-hidden />
                                   </Link>
                                 </li>
                               );
@@ -235,8 +275,8 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                         )}
                       </section>
 
-                      <section className="mx-1 overflow-hidden rounded-[12px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-black/[0.06]">
-                        <p className="border-b border-black/[0.06] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#8e8e93]">
+                      <section className="mx-1 overflow-hidden rounded-[12px] bg-r5-surface-secondary shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
+                        <p className="border-b border-r5-border-subtle px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-r5-text-secondary">
                           {t("header.commitments.more")}
                         </p>
                         <RemindersRowLink
@@ -285,11 +325,11 @@ function RemindersCountRing({
   const inner = (
     <>
       <div
-        className={`flex h-[52px] w-[52px] items-center justify-center rounded-full border-[2.5px] bg-[#fafafa] text-[20px] font-semibold tabular-nums transition hover:bg-[#f0f0f0] active:scale-[0.98] ${ring}`}
+        className={`flex h-[52px] w-[52px] items-center justify-center rounded-full border-[2.5px] bg-r5-surface-primary text-[20px] font-semibold tabular-nums transition hover:bg-r5-surface-hover active:scale-[0.98] ${ring}`}
       >
         {value > 99 ? "99+" : value}
       </div>
-      <span className="max-w-[72px] text-center text-[10px] font-medium leading-tight text-[#8e8e93]">{label}</span>
+      <span className="max-w-[72px] text-center text-[10px] font-medium leading-tight text-r5-text-secondary">{label}</span>
     </>
   );
   return (
@@ -297,7 +337,7 @@ function RemindersCountRing({
       <Link
         href={href}
         onClick={onNavigate}
-        className="flex flex-col items-center gap-1 rounded-[14px] outline-none ring-[#007aff]/40 transition hover:opacity-95 focus-visible:ring-2"
+        className="flex flex-col items-center gap-1 rounded-[14px] outline-none ring-r5-accent/40 transition hover:opacity-95 focus-visible:ring-2"
       >
         {inner}
       </Link>
@@ -323,8 +363,8 @@ function RemindersRowLink({
       href={href}
       onClick={onNavigate}
       className={`flex min-h-[44px] items-center justify-between px-3 py-2 text-[15px] ${
-        accent === "primary" ? "font-normal text-[#007aff]" : "text-[#3a3a3c]"
-      } transition hover:bg-[#f9f9f9] active:bg-[#f2f2f7] ${last ? "" : "border-b border-black/[0.06]"}`}
+        accent === "primary" ? "font-normal text-r5-accent" : "text-r5-text-primary"
+      } transition hover:bg-r5-surface-hover active:opacity-90 ${last ? "" : "border-b border-r5-border-subtle"}`}
     >
       <span>{label}</span>
       <ArrowUpRight className="h-4 w-4 opacity-50" aria-hidden />

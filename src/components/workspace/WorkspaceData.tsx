@@ -48,12 +48,15 @@ type WorkspaceDataValue = {
   summary: WorkspaceSummaryState;
   /** Commitment engine aggregates — same payload as GET /api/workspace/execution. */
   executionOverview: ExecutionOverview | null;
+  orgRole: "admin" | "manager" | "member" | null;
   entitlements: EntitlementsPayload | null;
   loadingProjects: boolean;
   loadingSummary: boolean;
+  loadingOrganization: boolean;
   loadingEntitlements: boolean;
   refreshProjects: () => Promise<void>;
   refreshSummary: () => Promise<void>;
+  refreshOrganization: () => Promise<void>;
   refreshEntitlements: () => Promise<void>;
   refreshAll: () => Promise<void>;
   getProjectById: (projectId: string) => Project | undefined;
@@ -109,9 +112,11 @@ export function WorkspaceDataProvider({
   const [projects, setProjects] = useState<Project[]>([]);
   const [summary, setSummary] = useState<WorkspaceSummaryState>(EMPTY_SUMMARY);
   const [executionOverview, setExecutionOverview] = useState<ExecutionOverview | null>(null);
+  const [orgRole, setOrgRole] = useState<"admin" | "manager" | "member" | null>(null);
   const [entitlements, setEntitlements] = useState<EntitlementsPayload | null>(null);
   const [loadingProjects, setLoadingProjects] = useState(true);
   const [loadingSummary, setLoadingSummary] = useState(true);
+  const [loadingOrganization, setLoadingOrganization] = useState(true);
   const [loadingEntitlements, setLoadingEntitlements] = useState(true);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
@@ -168,6 +173,33 @@ export function WorkspaceDataProvider({
       setEntitlements(null);
     } finally {
       setLoadingEntitlements(false);
+    }
+  }, []);
+
+  const refreshOrganization = useCallback(async () => {
+    setLoadingOrganization(true);
+    try {
+      const res = await fetch("/api/workspace/organization", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        me?: { role?: string | null };
+      };
+      if (!res.ok) {
+        setOrgRole(null);
+        return;
+      }
+      const role = data.me?.role;
+      if (role === "admin" || role === "manager" || role === "member") {
+        setOrgRole(role);
+      } else {
+        setOrgRole(null);
+      }
+    } catch {
+      setOrgRole(null);
+    } finally {
+      setLoadingOrganization(false);
     }
   }, []);
 
@@ -235,8 +267,8 @@ export function WorkspaceDataProvider({
   }, [activeProjectId]);
 
   const refreshAll = useCallback(async () => {
-    await Promise.all([refreshProjects(), refreshSummary(), refreshEntitlements()]);
-  }, [refreshProjects, refreshSummary, refreshEntitlements]);
+    await Promise.all([refreshProjects(), refreshSummary(), refreshOrganization(), refreshEntitlements()]);
+  }, [refreshProjects, refreshSummary, refreshOrganization, refreshEntitlements]);
 
   useEffect(() => {
     void refreshAll();
@@ -270,12 +302,15 @@ export function WorkspaceDataProvider({
       projects,
       summary,
       executionOverview,
+      orgRole,
       entitlements,
       loadingProjects,
       loadingSummary,
+      loadingOrganization,
       loadingEntitlements,
       refreshProjects,
       refreshSummary,
+      refreshOrganization,
       refreshEntitlements,
       refreshAll,
       getProjectById,
@@ -284,12 +319,15 @@ export function WorkspaceDataProvider({
       projects,
       summary,
       executionOverview,
+      orgRole,
       entitlements,
       loadingProjects,
       loadingSummary,
+      loadingOrganization,
       loadingEntitlements,
       refreshProjects,
       refreshSummary,
+      refreshOrganization,
       refreshEntitlements,
       refreshAll,
       getProjectById,

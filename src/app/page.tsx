@@ -7,9 +7,9 @@ import { barlowCondensedLanding, outfitLanding } from "@/lib/fonts-landing";
 import { getAuthUserIdSafe } from "@/lib/auth/require-user";
 
 export const metadata: Metadata = {
-  title: "Route5 | Execution clarity for teams that ship under scrutiny",
+  title: "Route5 | Who owns what, and when it is due",
   description:
-    "System of record for decisions and commitments—owners, deadlines, execution health. Not team-chat theater. 14-day trial, no card; contact us to continue.",
+    "Route5 is the workspace where tasks, owners, and deadlines stay tied to real companies—not lost in chat. Try it free; talk to us for enterprise rollout.",
 };
 
 export const dynamic = "force-dynamic";
