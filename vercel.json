@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/morning-digest",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/weekly-summary",

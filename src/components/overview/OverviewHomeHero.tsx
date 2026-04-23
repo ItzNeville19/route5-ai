@@ -121,7 +121,7 @@ export default function OverviewHomeHero({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-50 shadow-[0_24px_64px_-28px_rgba(15,23,42,0.18)] dark:border-slate-700/90 dark:bg-slate-950/40 dark:shadow-[0_28px_70px_-24px_rgba(0,0,0,0.55)]"
+      className="relative min-h-[12rem] overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-secondary/85 shadow-[var(--r5-shadow-elevated)] ring-1 ring-black/[0.06] dark:bg-r5-surface-primary/55 dark:ring-white/[0.08]"
     >
       <OverviewTimeOfDayArt
         period={period}
@@ -131,17 +131,17 @@ export default function OverviewHomeHero({
       />
 
       <div className="relative z-[1] flex flex-col gap-4 p-[var(--r5-space-5)] sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-        <div className="min-w-0 max-w-[46rem] flex-1 rounded-xl border border-white/70 bg-white/93 px-5 py-4 shadow-[0_12px_40px_-18px_rgba(15,23,42,0.25)] backdrop-blur-md dark:border-white/10 dark:bg-slate-950/92 dark:shadow-[0_16px_44px_-14px_rgba(0,0,0,0.65)]">
-          <p className="text-[length:var(--r5-font-caption)] tracking-[0.04em] text-slate-600 dark:text-slate-300">
-            <span className="font-semibold text-slate-900 dark:text-slate-50">{dateLine}</span>
-            <span className="mx-1.5 text-slate-400 dark:text-slate-500">·</span>
-            <span className="text-slate-700 dark:text-slate-200">
+        <div className="min-w-0 max-w-[46rem] flex-1 rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-5 py-4 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md ring-1 ring-black/[0.07] dark:ring-white/[0.09]">
+          <p className="text-[length:var(--r5-font-caption)] tracking-[0.04em] text-r5-text-secondary">
+            <span className="font-semibold text-r5-text-primary">{dateLine}</span>
+            <span className="mx-1.5 text-r5-text-tertiary">·</span>
+            <span className="text-r5-text-primary">
               {timeLine}
-              {zoneAbbrev ? <span className="text-slate-500 dark:text-slate-400"> {zoneAbbrev}</span> : null}
+              {zoneAbbrev ? <span className="text-r5-text-tertiary"> {zoneAbbrev}</span> : null}
             </span>
             {placeLabel ? (
               <>
-                <span className="mx-1.5 text-slate-400 dark:text-slate-500">·</span>
+                <span className="mx-1.5 text-r5-text-tertiary">·</span>
                 {onCycleHeroWall ? (
                   <button
                     type="button"
@@ -152,29 +152,29 @@ export default function OverviewHomeHero({
                     {placeLabel}
                   </button>
                 ) : (
-                  <span className="text-slate-600 dark:text-slate-400">{placeLabel}</span>
+                  <span className="text-r5-text-secondary">{placeLabel}</span>
                 )}
               </>
             ) : null}
           </p>
-          <h1 className="mt-[var(--r5-space-3)] text-[clamp(1.35rem,4vw,1.75rem)] font-semibold tracking-[-0.02em] text-slate-900 dark:text-white">
+          <h1 className="mt-[var(--r5-space-3)] text-[clamp(1.35rem,4vw,1.75rem)] font-semibold tracking-[-0.02em] text-r5-text-primary">
             {greeting}
             {firstName ? (
               <>
                 {", "}
-                <span className="text-slate-950 dark:text-white">{firstName}</span>
+                <span className="text-r5-text-primary">{firstName}</span>
               </>
             ) : null}
           </h1>
-          <p className="mt-1 text-[15px] font-semibold text-slate-800 dark:text-slate-100">
+          <p className="mt-1 text-[15px] font-semibold text-r5-text-primary">
             {headlineForPeriod(period)}
           </p>
-          <p className="mt-[var(--r5-space-2)] max-w-[56ch] text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="mt-[var(--r5-space-2)] max-w-[56ch] text-[13px] leading-relaxed text-r5-text-secondary">
             {leadForPeriod(period)}
           </p>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-white/65 bg-white/82 px-3 py-3 shadow-sm backdrop-blur-md dark:border-white/12 dark:bg-slate-950/78 sm:justify-end">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 rounded-xl border border-r5-border-subtle bg-r5-surface-primary px-3 py-3 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md ring-1 ring-black/[0.06] dark:ring-white/[0.08] sm:justify-end">
           {children}
         </div>
       </div>

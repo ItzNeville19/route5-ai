@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Check, ChevronDown, FolderKanban, Plus } from "lucide-react";
@@ -40,7 +41,10 @@ export default function WorkspaceProjectSwitcher() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showColdSkeleton, setShowColdSkeleton] = useState(false);
   const [lastStableProject, setLastStableProject] = useState<(typeof projects)[number] | null>(null);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [portalReady, setPortalReady] = useState(false);
 
   const pathProjectId = pathname.match(/^\/(?:projects|companies)\/([^/]+)/)?.[1] ?? null;
   const deskProjectId = pathname.startsWith("/desk") ? searchParams.get("projectId") : null;
@@ -80,12 +84,58 @@ export default function WorkspaceProjectSwitcher() {
   }, [selectedId]);
 
   useEffect(() => {
+    setPortalReady(true);
+  }, []);
+
+  const updateMenuPosition = useCallback(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const vw = typeof window !== "undefined" ? window.innerWidth : 400;
+    const maxW = Math.min(vw - 32, 320);
+    setMenuPos({
+      top: rect.bottom + 6,
+      left: Math.max(8, Math.min(rect.left, vw - maxW - 8)),
+      width: Math.min(maxW, Math.max(260, rect.width)),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPosition();
+  }, [open, projects.length, updateMenuPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onScrollOrResize = () => updateMenuPosition();
+    window.addEventListener("resize", onScrollOrResize);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    return () => {
+      window.removeEventListener("resize", onScrollOrResize);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+    };
+  }, [open, updateMenuPosition]);
+
+  useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (anchorRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
   useEffect(() => {
@@ -150,12 +200,74 @@ export default function WorkspaceProjectSwitcher() {
   const label = stableCurrent?.name ?? "Company";
   const iconEmoji = stableCurrent?.iconEmoji?.trim();
 
+  const dropdown =
+    open && portalReady && menuPos && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={menuRef}
+            role="listbox"
+            style={{
+              position: "fixed",
+              top: menuPos.top,
+              left: menuPos.left,
+              width: menuPos.width,
+              zIndex: 10000,
+            }}
+            className="overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md"
+          >
+            <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
+              Companies
+            </p>
+            <div className="max-h-[min(60vh,280px)] overflow-y-auto">
+              {projects.map((p) => {
+                const active = p.id === selectedId;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="option"
+                    aria-selected={active}
+                    onClick={() => selectProject(p.id)}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-r5-surface-hover ${
+                      active ? "bg-r5-surface-secondary/80 text-r5-text-primary" : "text-r5-text-secondary"
+                    }`}
+                    title={p.name}
+                  >
+                    <span className="w-5 shrink-0 text-center text-[14px]">{p.iconEmoji?.trim() || "◆"}</span>
+                    <span className="min-w-0 flex-1 truncate">{p.name}</span>
+                    {active ? <Check className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden /> : null}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="border-t border-r5-border-subtle p-1">
+              {canAddCompany ? (
+                <button
+                  type="button"
+                  onClick={openNew}
+                  className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+                >
+                  <Plus className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden />
+                  {t("header.companies.addNew")}
+                </button>
+              ) : null}
+              <Link
+                href="/companies"
+                onClick={() => setOpen(false)}
+                className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+              >
+                All companies
+              </Link>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
-    <div
-      ref={rootRef}
-      className="relative z-[200] min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]"
-    >
+    <div className="relative z-[200] min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]">
       <button
+        ref={anchorRef}
         type="button"
         onClick={() => {
           setOpen((v) => {
@@ -185,57 +297,7 @@ export default function WorkspaceProjectSwitcher() {
         />
       </button>
 
-      {open ? (
-        <div
-          role="listbox"
-          className="absolute left-0 top-[calc(100%+6px)] z-[300] min-w-[260px] max-w-[min(100vw-2rem,320px)] overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md"
-        >
-          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
-            Companies
-          </p>
-          <div className="max-h-[min(60vh,280px)] overflow-y-auto">
-            {projects.map((p) => {
-              const active = p.id === selectedId;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => selectProject(p.id)}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-r5-surface-hover ${
-                    active ? "bg-r5-surface-secondary/80 text-r5-text-primary" : "text-r5-text-secondary"
-                  }`}
-                  title={p.name}
-                >
-                  <span className="w-5 shrink-0 text-center text-[14px]">{p.iconEmoji?.trim() || "◆"}</span>
-                  <span className="min-w-0 flex-1 truncate">{p.name}</span>
-                  {active ? <Check className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden /> : null}
-                </button>
-              );
-            })}
-          </div>
-          <div className="border-t border-r5-border-subtle p-1">
-            {canAddCompany ? (
-              <button
-                type="button"
-                onClick={openNew}
-                className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
-              >
-                <Plus className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden />
-                {t("header.companies.addNew")}
-              </button>
-            ) : null}
-            <Link
-              href="/companies"
-              onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
-            >
-              All companies
-            </Link>
-          </div>
-        </div>
-      ) : null}
+      {dropdown}
     </div>
   );
 }
