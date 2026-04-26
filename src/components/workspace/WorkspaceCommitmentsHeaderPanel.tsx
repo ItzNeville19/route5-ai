@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -12,7 +11,6 @@ import {
   ChevronRight,
   Circle,
   ListTodo,
-  Plus,
   UserRound,
   X,
 } from "lucide-react";
@@ -43,8 +41,6 @@ function cleanTaskTitle(raw: string | undefined | null): string {
 /** iOS Reminders–inspired panel: neutral grays, rounded groups, checklist rows, no “notification” badge. */
 export default function WorkspaceCommitmentsHeaderPanel() {
   const { t, intlLocale } = useI18n();
-  const pathname = usePathname();
-  const onDesk = pathname === "/desk" || pathname?.startsWith("/desk/");
   const [open, setOpen] = useState(false);
   const { filteredCommitments, loading } = useCommitments();
 
@@ -139,19 +135,14 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                 onMouseDown={(event) => event.stopPropagation()}
               >
                 <header className="relative flex shrink-0 items-center justify-between gap-1 border-b border-r5-border-subtle bg-r5-surface-primary/95 px-2 py-2 pl-2 pr-1 backdrop-blur-md sm:pl-2">
-                  <button
-                    type="button"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-r5-accent transition hover:bg-r5-surface-hover"
-                    aria-label={t("header.commitments.addTask")}
-                    onClick={() => {
-                      setOpen(false);
-                      window.dispatchEvent(
-                        new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
-                      );
-                    }}
+                  <Link
+                    href="/desk"
+                    className="flex h-8 min-w-[72px] shrink-0 items-center justify-center rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-2 text-[11px] font-semibold text-r5-text-primary transition hover:bg-r5-surface-hover"
+                    aria-label={t("header.commitments.openDesk")}
+                    onClick={() => setOpen(false)}
                   >
-                    <Plus className="h-5 w-5" strokeWidth={2.25} aria-hidden />
-                  </button>
+                    Open Desk
+                  </Link>
                   <div className="min-w-0 flex-1 px-1 text-center">
                     <p className="text-[17px] font-semibold leading-snug tracking-[-0.02em] text-r5-text-primary">
                       {t("header.commitments.remindersTitle")}
@@ -225,19 +216,17 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           <Link
                             href="/desk"
                             onClick={() => setOpen(false)}
-                            className={`flex min-h-[40px] items-center justify-center rounded-xl border border-r5-border-subtle bg-r5-surface-primary text-[16px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover active:opacity-90 ${onDesk ? "w-full" : "w-full"}`}
+                            className="flex min-h-[40px] w-full items-center justify-center rounded-xl border border-r5-border-subtle bg-r5-surface-primary text-[16px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover active:opacity-90"
                           >
                             {t("header.commitments.openFullTracker")}
                           </Link>
-                          {!onDesk ? (
-                            <Link
-                              href="/desk"
-                              onClick={() => setOpen(false)}
-                              className="flex min-h-[40px] w-full items-center justify-center rounded-xl text-[16px] font-medium text-r5-accent transition active:opacity-80"
-                            >
-                              {t("header.commitments.openDesk")}
-                            </Link>
-                          ) : null}
+                          <Link
+                            href="/overview"
+                            onClick={() => setOpen(false)}
+                            className="flex min-h-[40px] w-full items-center justify-center rounded-xl text-[16px] font-medium text-r5-accent transition active:opacity-80"
+                          >
+                            Open overview
+                          </Link>
                         </div>
                       </section>
 
@@ -343,7 +332,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                         />
                         <RemindersRowLink
                           href="/overview"
-                          label={t("header.commitments.openFullTracker")}
+                          label="Open overview"
                           accent="muted"
                           onNavigate={() => setOpen(false)}
                           last

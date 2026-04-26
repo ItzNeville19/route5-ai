@@ -38,6 +38,7 @@ export const REGIONS_BY_IANA: Record<string, RegionOption[]> = {
     { key: "salt_lake_city_ut", label: "Salt Lake City, UT" },
   ],
   "America/Los_Angeles": [
+    { key: "henderson_nv", label: "Henderson, NV" },
     { key: "laguna_beach_ca", label: "Laguna Beach, CA" },
     { key: "los_angeles_ca", label: "Los Angeles" },
     { key: "las_vegas_nv", label: "Las Vegas, NV" },
@@ -141,7 +142,7 @@ export const REGIONS_BY_IANA: Record<string, RegionOption[]> = {
  * maps the system clock zone (from `Intl`) to a friendly “you are here” label.
  */
 export const PREFERRED_REGION_KEY_BY_IANA: Record<string, string> = {
-  "America/New_York": "nyc",
+  "America/New_York": "pittsford_ny",
   "America/Chicago": "chicago_il",
   "America/Denver": "denver_co",
   "America/Los_Angeles": "los_angeles_ca",

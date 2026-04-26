@@ -24,7 +24,7 @@ type NavItem =
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements, orgRole } = useWorkspaceData();
+  const { entitlements } = useWorkspaceData();
   const { t } = useI18n();
   const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
@@ -43,15 +43,13 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           { href: "__notifications__", label: "Notifications", icon: Bell },
           { href: "/settings", label: "Settings", icon: Settings },
           { href: "/workspace/customize", label: "Customize", icon: Palette },
-          ...(orgRole === "admin" || orgRole === "manager"
-            ? [{ href: "/workspace/organization", label: "Organization", icon: Users } satisfies NavItem]
-            : []),
+          { href: "/workspace/organization", label: "Organization", icon: Users },
           { href: "/workspace/help", label: "Help", icon: LifeBuoy },
           { href: "__shortcuts__", label: t("sidebar.shortcuts"), icon: Keyboard },
         ] satisfies NavItem[],
       },
     ],
-    [orgRole, t]
+    [t]
   );
 
   return (

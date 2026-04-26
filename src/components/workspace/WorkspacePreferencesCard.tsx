@@ -10,6 +10,7 @@ import {
   normalizeRegionKeyForTimezone,
   regionsForTimezone,
 } from "@/lib/workspace-regions";
+import { inferPreciseRegionKeyFromCoords } from "@/lib/workspace-location";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { UI_LOCALES, type UiLocaleCode } from "@/lib/i18n/ui-locales";
@@ -34,6 +35,8 @@ export default function WorkspacePreferencesCard() {
   const { t, setUiLocale } = useI18n();
   const [tz, setTz] = useState(normalizeLegacyIana(exp.prefs.workspaceTimezone ?? guessTz()));
   const [regionKey, setRegionKey] = useState(exp.prefs.workspaceRegionKey ?? "");
+  const [detectingLocation, setDetectingLocation] = useState(false);
+  const [locationHint, setLocationHint] = useState<string | null>(null);
 
   useEffect(() => {
     setTz(normalizeLegacyIana(exp.prefs.workspaceTimezone ?? guessTz()));
@@ -64,6 +67,43 @@ export default function WorkspacePreferencesCard() {
   );
 
   const gradientsOn = exp.prefs.appearanceGradients !== false;
+
+  const detectPreciseLocation = useCallback(async () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setLocationHint("Precise location is unavailable on this device.");
+      return;
+    }
+    setDetectingLocation(true);
+    setLocationHint(null);
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 30000,
+        });
+      });
+      const preciseKey = inferPreciseRegionKeyFromCoords(
+        position.coords.latitude,
+        position.coords.longitude,
+        tz
+      );
+      if (preciseKey) {
+        setRegionKey(preciseKey);
+        setLocationHint("Precise location captured. Apply to save.");
+      } else {
+        const fallback = inferRegionKeyForTimezone(tz);
+        if (fallback) {
+          setRegionKey(fallback);
+        }
+        setLocationHint("Location found, but exact place is outside saved regions. Using closest timezone match.");
+      }
+    } catch {
+      setLocationHint("Unable to read precise location. Check browser location permission and try again.");
+    } finally {
+      setDetectingLocation(false);
+    }
+  }, [tz]);
 
   return (
     <section
@@ -166,6 +206,14 @@ export default function WorkspacePreferencesCard() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
+            onClick={() => void detectPreciseLocation()}
+            disabled={detectingLocation}
+            className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 text-[12px] font-semibold text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)] disabled:opacity-60"
+          >
+            {detectingLocation ? "Detecting..." : "Use precise location"}
+          </button>
+          <button
+            type="button"
             onClick={applyLocation}
             className="rounded-lg bg-[var(--workspace-fg)] px-3 py-2 text-[12px] font-semibold text-[var(--workspace-canvas)] transition hover:opacity-95"
           >
@@ -174,6 +222,7 @@ export default function WorkspacePreferencesCard() {
           <p className="workspace-pref-secondary text-[11px]">
             {t("prefs.browserZone")}: <span className="font-medium text-[var(--workspace-fg)]">{guessTz()}</span>
           </p>
+          {locationHint ? <p className="workspace-pref-secondary text-[11px]">{locationHint}</p> : null}
           <p className="workspace-pref-secondary mt-2 max-w-xl text-[12px] leading-relaxed">
             {t("prefs.timezoneSyncNote")}
           </p>

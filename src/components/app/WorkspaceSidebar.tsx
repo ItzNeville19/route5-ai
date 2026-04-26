@@ -89,7 +89,7 @@ function NavRow({
 
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
-  const { entitlements, orgRole } = useWorkspaceData();
+  const { entitlements } = useWorkspaceData();
   const { user } = useUser();
   const { t } = useI18n();
   const path = pathname ?? "";
@@ -155,14 +155,12 @@ export default function WorkspaceSidebar() {
               icon={Palette}
               label="Customize"
             />
-            {orgRole === "admin" || orgRole === "manager" ? (
-              <NavRow
-                href="/workspace/organization"
-                active={path === "/workspace/organization"}
-                icon={Users}
-                label="Organization"
-              />
-            ) : null}
+            <NavRow
+              href="/workspace/organization"
+              active={path === "/workspace/organization"}
+              icon={Users}
+              label="Organization"
+            />
             <NavRow href="/workspace/help" active={path === "/workspace/help"} icon={LifeBuoy} label="Help" />
             <NavRow
               active={false}

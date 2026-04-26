@@ -366,41 +366,39 @@ export default function CommitmentDesk() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-3 pb-8">
+    <div className="mx-auto flex w-full max-w-[min(100%,1480px)] flex-col gap-2.5 pb-8">
       <DeskGreetingBubble compact />
-      <div className="route5-card relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
+      <div className="route5-card relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.45)]">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent"
           aria-hidden
         />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
           Desk
         </p>
-        <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.01em] text-r5-text-primary">
+        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-r5-text-primary">
           Accountability Desk
         </h1>
         <p className="mt-1 max-w-[70ch] text-[12px] leading-relaxed text-r5-text-secondary">
-          Assign clearly, acknowledge ownership, enforce follow-through, and verify completion.
+          Premium command center for assignment, ownership, execution, and verification.
         </p>
         <p className="mt-1 text-[11px] text-r5-text-tertiary">
           Role: {orgRole ?? "member"} {canAdmin ? "· admin controls enabled" : "· execution controls only"}
         </p>
-        {canAdmin ? (
-          <div className="mt-2">
-            <Link
-              href="/workspace/organization"
-              className="route5-pressable inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
-            >
-              Organization & members
-            </Link>
-          </div>
-        ) : null}
+        <div className="mt-2">
+          <Link
+            href="/workspace/organization"
+            className="route5-pressable inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+          >
+            Organization & members
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-2.5 lg:grid-cols-[220px_minmax(0,1fr)_360px]">
+      <div className="grid gap-2 lg:grid-cols-[210px_minmax(0,1fr)_390px]">
         <aside className="space-y-2.5">
           <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
               Company
             </p>
             <select
@@ -418,7 +416,7 @@ export default function CommitmentDesk() {
           </div>
 
           <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
               Filters
             </p>
             <div className="mt-1.5 grid gap-1">
@@ -432,9 +430,9 @@ export default function CommitmentDesk() {
                   key={option.id}
                   type="button"
                   onClick={() => setFilter(option.id as DeskFilter)}
-                  className={`route5-pressable rounded-lg border px-2.5 py-1.5 text-left text-[12px] font-medium ${
+                  className={`route5-pressable rounded-full border px-2.5 py-1.5 text-left text-[11px] font-semibold ${
                     filter === option.id
-                      ? "border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary"
+                      ? "border-sky-300/30 bg-r5-surface-secondary text-r5-text-primary"
                       : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover"
                   }`}
                 >
@@ -451,8 +449,8 @@ export default function CommitmentDesk() {
           </div>
         </aside>
 
-        <section className="route5-card min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
-          <div className="border-b border-r5-border-subtle px-3.5 py-2.5">
+        <section className="route5-card min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
+          <div className="border-b border-r5-border-subtle px-3 py-2.5">
             <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-r5-text-primary">Commitments</h2>
             <p className="text-[12px] text-r5-text-secondary">
               {loading ? "Loading..." : `${rows.length} items`}
@@ -475,12 +473,13 @@ export default function CommitmentDesk() {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
-                    className={`route5-row w-full rounded-lg border px-3 py-2 text-left transition-[background-color,border-color,box-shadow,transform] ${
+                    className={`route5-row w-full rounded-xl border px-3 py-2 text-left transition-[background-color,border-color,box-shadow,transform] ${
                       selected?.id === row.id
-                        ? "border-r5-border-subtle bg-r5-surface-secondary shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
+                        ? "border-sky-300/35 bg-r5-surface-secondary shadow-[0_8px_22px_-18px_rgba(56,189,248,0.45)]"
                         : "border-r5-border-subtle hover:bg-r5-surface-hover"
                     }`}
                   >
+                    <div className="mb-1 h-px w-full bg-gradient-to-r from-sky-300/35 via-indigo-300/20 to-transparent" aria-hidden />
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-[13px] font-semibold text-r5-text-primary">{row.title}</p>
                       <span className="rounded-full border border-r5-border-subtle bg-r5-surface-primary px-2 py-0.5 text-[10px] font-medium text-r5-text-secondary">
