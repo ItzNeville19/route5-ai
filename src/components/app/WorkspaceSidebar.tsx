@@ -23,7 +23,7 @@ const tierLabel =
 
 function NavSectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-[var(--r5-space-3)] pb-1 pt-4 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-text-tertiary first:pt-1">
+    <p className="px-[var(--r5-space-2)] pb-1 pt-4 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.16em] text-r5-text-tertiary first:pt-1">
       {children}
     </p>
   );
@@ -43,15 +43,15 @@ function NavRow({
   onClick?: () => void;
 }) {
   const base =
-    "flex w-full min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-card)] px-[var(--r5-space-3)] text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-regular)] leading-none transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
+    "flex w-full min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-3)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
   const state = active
-    ? "bg-r5-accent/15 text-r5-text-primary ring-1 ring-inset ring-r5-accent/35 shadow-sm"
-    : "text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary";
+    ? "border border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+    : "border border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary";
 
   const inner = (
     <>
       <Icon
-        className={active ? "shrink-0 text-r5-accent" : "shrink-0 text-r5-text-secondary"}
+        className={active ? "shrink-0 text-r5-text-primary" : "shrink-0 text-r5-text-secondary"}
         style={{ width: "var(--r5-icon-nav)", height: "var(--r5-icon-nav)" }}
         strokeWidth={1.75}
         aria-hidden
@@ -97,14 +97,14 @@ export default function WorkspaceSidebar() {
   return (
     <aside
       data-route5-sidebar="desktop"
-      className="route5-brand-sidebar-edge agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/95 backdrop-blur-2xl [@media(pointer:fine)]:sticky [@media(pointer:fine)]:top-0 [@media(pointer:fine)]:flex [@media(pointer:fine)]:self-start md:sticky md:top-0 md:flex md:self-start"
+      className="route5-brand-sidebar-edge agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/98 backdrop-blur-2xl [@media(pointer:fine)]:sticky [@media(pointer:fine)]:top-0 [@media(pointer:fine)]:flex [@media(pointer:fine)]:self-start md:sticky md:top-0 md:flex md:self-start"
       aria-label={t("sidebar.navAria")}
     >
-      <div className="shrink-0 px-[var(--r5-space-3)] pb-[var(--r5-space-2)] pt-[var(--r5-space-4)]">
+      <div className="shrink-0 border-b border-r5-border-subtle px-[var(--r5-space-4)] pb-[var(--r5-space-3)] pt-[var(--r5-space-4)]">
         <div className="flex items-start justify-between gap-[var(--r5-space-2)]">
           <div className="min-w-0 flex-1">
             <Route5WordmarkLink className="truncate" />
-            <p className="mt-[var(--r5-space-2)] line-clamp-2 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.12em] text-r5-text-tertiary">
+            <p className="mt-[var(--r5-space-2)] line-clamp-1 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.12em] text-r5-text-tertiary">
               {ROUTE5_SIGNATURE.tagline}
             </p>
           </div>
@@ -113,15 +113,13 @@ export default function WorkspaceSidebar() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <nav
-          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
+          className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)] pt-[var(--r5-space-2)]"
           aria-label={t("sidebar.navAria")}
         >
-          <div className="mb-2 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#22c55e] p-[1px]">
-            <div className="rounded-[10px] bg-r5-surface-primary px-3 py-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
-                Workspace
-              </p>
-            </div>
+          <div className="mb-2 rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/65 px-3 py-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
+              Workspace
+            </p>
           </div>
           <div className="space-y-[var(--r5-space-1)]">
             <NavRow href="/overview" active={path === "/overview"} icon={Home} label="Home" />

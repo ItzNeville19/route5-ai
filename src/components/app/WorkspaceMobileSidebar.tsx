@@ -64,7 +64,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-r5-border-subtle px-4 py-3">
+        <div className="flex items-center justify-between border-b border-r5-border-subtle px-4 py-3.5">
           <div>
             <p className="text-sm font-semibold text-r5-text-primary">Route5</p>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
@@ -84,7 +84,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
         <nav className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {navSections.map((section) => (
             <div key={section.title} className="mb-4">
-              <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
+              <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-tertiary">
                 {section.title}
               </p>
               <div className="space-y-1">
@@ -99,7 +99,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                           window.dispatchEvent(new Event("route5:shortcuts-open"));
                           onClose();
                         }}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                        className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden />
                         <span>{item.label}</span>
@@ -115,7 +115,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                           window.dispatchEvent(new Event("route5:notifications-open"));
                           onClose();
                         }}
-                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                        className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden />
                         <span>{item.label}</span>
@@ -128,13 +128,13 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                       key={`${section.title}-${item.label}`}
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium ${
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-medium ${
                         active
-                          ? "bg-r5-accent/15 text-r5-text-primary ring-1 ring-inset ring-r5-accent/35"
-                          : "text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                          ? "border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary"
+                          : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       }`}
                     >
-                      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-r5-accent" : ""}`} />
+                      <Icon className={`h-4 w-4 shrink-0 ${active ? "text-r5-text-primary" : ""}`} />
                       <span>{item.label}</span>
                     </Link>
                   );

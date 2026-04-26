@@ -9,6 +9,7 @@ import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
 import WorkspaceCommitmentsHeaderPanel from "@/components/workspace/WorkspaceCommitmentsHeaderPanel";
 import WorkspaceProjectSwitcher from "@/components/workspace/WorkspaceProjectSwitcher";
+import WorkspaceHeaderGreeting from "@/components/app/WorkspaceHeaderGreeting";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
@@ -27,9 +28,10 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
   const sidebarHidden = exp.prefs.sidebarHidden === true;
   const pageTitle = getWorkspacePageTitle(pathname);
   const modLabel = primaryModLabelFromNavigator();
+  const showWelcomeTop = pathname === "/overview" || pathname === "/desk";
 
   return (
-    <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle">
+    <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle/90">
       <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-2 px-[var(--r5-content-padding-x-mobile)] sm:gap-[var(--r5-space-2)] sm:px-[var(--r5-content-padding-x)]">
         <div className="flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-[var(--r5-space-2)]">
           <button
@@ -41,7 +43,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               }
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary text-r5-text-secondary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -54,7 +56,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </button>
           <Link
             href="/desk"
-            className="mr-0.5 inline-flex shrink-0 self-center"
+            className="mr-0.5 inline-flex shrink-0 self-center opacity-95"
             title="Route5 — Desk"
             aria-label="Route5 home"
           >
@@ -72,16 +74,29 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               <WorkspaceProjectSwitcher />
             </div>
           </Suspense>
-          <h1 className="min-w-0 flex-1 truncate self-center text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
-            {pageTitle}
-          </h1>
+          <div className="min-w-0 flex-1 self-center">
+            {showWelcomeTop ? (
+              <>
+                <h1 className="truncate text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary md:hidden">
+                  {pageTitle}
+                </h1>
+                <div className="hidden md:block">
+                  <WorkspaceHeaderGreeting />
+                </div>
+              </>
+            ) : (
+              <h1 className="truncate text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
+                {pageTitle}
+              </h1>
+            )}
+          </div>
         </div>
 
-        <div className="flex min-h-8 shrink-0 items-center justify-end gap-2 self-center sm:gap-[var(--r5-space-2)]">
+        <div className="flex min-h-8 shrink-0 items-center justify-end gap-1.5 self-center sm:gap-2">
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
+            className="inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2.5 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
             aria-label="Search"
           >
             <Search
@@ -105,7 +120,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
                 new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
               )
             }
-            className="group inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary px-2.5 text-[12px] font-[var(--r5-font-weight-regular)] text-r5-text-primary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
+            className="group inline-flex h-8 w-8 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2.5 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover sm:w-auto sm:justify-start"
             aria-label={t("header.create.openTask")}
           >
             <Plus

@@ -2053,39 +2053,39 @@ body {
 /* Pink — rose & fuchsia mesh (light; plum-gray secondary, never same as canvas). */
 .theme-route5-command.theme-agent-shell.workspace-theme-pink {
   color-scheme: light;
-  color: #1a0f24;
-  --workspace-fg: #1a0f24;
-  --workspace-muted-fg: #5b4760;
-  --workspace-border: rgba(88, 28, 72, 0.12);
-  --workspace-surface: rgba(255, 255, 255, 0.94);
-  --workspace-canvas: #fdf2f8;
-  --workspace-mission-bg: rgba(255, 252, 254, 0.92);
-  --workspace-nav-hover: rgba(190, 24, 93, 0.07);
-  --workspace-nav-active: rgba(190, 24, 93, 0.11);
-  --workspace-nav-chip: rgba(28, 20, 36, 0.05);
-  --workspace-accent: #db2777;
-  --workspace-accent-hover: #be185d;
-  --workspace-sidebar: rgba(255, 252, 254, 0.98);
+  color: #111827;
+  --workspace-fg: #111827;
+  --workspace-muted-fg: #4b5563;
+  --workspace-border: rgba(17, 24, 39, 0.12);
+  --workspace-surface: rgba(255, 255, 255, 0.96);
+  --workspace-canvas: #f5f7fb;
+  --workspace-mission-bg: rgba(255, 255, 255, 0.94);
+  --workspace-nav-hover: rgba(59, 130, 246, 0.08);
+  --workspace-nav-active: rgba(59, 130, 246, 0.12);
+  --workspace-nav-chip: rgba(17, 24, 39, 0.045);
+  --workspace-accent: #2563eb;
+  --workspace-accent-hover: #1d4ed8;
+  --workspace-sidebar: rgba(255, 255, 255, 0.98);
   --workspace-on-accent: #ffffff;
   --workspace-lime: #15803d;
   --workspace-lime-muted: rgba(21, 128, 61, 0.65);
   --workspace-danger-fg: #b91c1c;
   --workspace-success-fg: #15803d;
-  --workspace-info-surface: rgba(219, 39, 119, 0.1);
-  --workspace-info-border: rgba(219, 39, 119, 0.22);
-  --ios-label: #1a0f24;
-  --ios-secondary: #5b4760;
-  --ios-separator: rgba(88, 28, 72, 0.1);
-  --ios-group-bg: rgba(255, 252, 254, 0.96);
+  --workspace-info-surface: rgba(37, 99, 235, 0.1);
+  --workspace-info-border: rgba(37, 99, 235, 0.22);
+  --ios-label: #111827;
+  --ios-secondary: #4b5563;
+  --ios-separator: rgba(17, 24, 39, 0.08);
+  --ios-group-bg: rgba(255, 255, 255, 0.96);
 }
 
 .theme-route5-command.theme-agent-shell.workspace-theme-pink .agent-canvas {
-  background-color: #fce7f3;
+  background-color: #f5f7fb;
   background-image:
-    radial-gradient(ellipse 110% 90% at 18% 0%, rgba(244, 114, 182, 0.38), transparent 55%),
-    radial-gradient(ellipse 95% 72% at 100% 12%, rgba(217, 70, 239, 0.22), transparent 52%),
-    radial-gradient(ellipse 78% 58% at 0% 100%, rgba(251, 113, 133, 0.22), transparent 54%),
-    linear-gradient(188deg, #fff1f2 0%, #fce7f3 42%, #fbcfe8 100%);
+    radial-gradient(ellipse 100% 80% at 20% -10%, rgba(99, 102, 241, 0.12), transparent 60%),
+    radial-gradient(ellipse 90% 70% at 100% 8%, rgba(14, 165, 233, 0.09), transparent 58%),
+    radial-gradient(ellipse 76% 54% at -4% 100%, rgba(59, 130, 246, 0.08), transparent 55%),
+    linear-gradient(188deg, #ffffff 0%, #f7f8fc 45%, #eef2f7 100%);
 }
 
 /* Cosmic — aurora teal & violet nebula (dark; bright muted, never mid-gray on ink). */
@@ -3191,21 +3191,14 @@ body {
 .theme-route5-command.theme-agent-shell .route5-brand-header-accent {
   height: 2px;
   width: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(56, 189, 248, 0.45) 18%,
-    rgba(251, 191, 36, 0.28) 50%,
-    rgba(14, 165, 233, 0.4) 82%,
-    transparent 100%
-  );
-  opacity: 0.85;
+  background: linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.18) 30%, rgba(15, 23, 42, 0.2) 50%, rgba(14, 165, 233, 0.16) 70%, transparent 100%);
+  opacity: 0.62;
 }
 
 /** Sidebar: inward coastal edge. */
 .theme-route5-command.theme-agent-shell aside.agent-sidebar.route5-brand-sidebar-edge {
   box-shadow:
-    inset -1px 0 0 rgba(56, 189, 248, 0.1),
+    inset -1px 0 0 rgba(15, 23, 42, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
