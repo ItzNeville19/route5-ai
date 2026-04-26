@@ -368,7 +368,7 @@ export default function CommitmentDesk() {
   return (
     <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-3 pb-8">
       <DeskGreetingBubble compact />
-      <div className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
+      <div className="route5-card relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent"
           aria-hidden
@@ -389,7 +389,7 @@ export default function CommitmentDesk() {
           <div className="mt-2">
             <Link
               href="/workspace/organization"
-              className="inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+              className="route5-pressable inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
             >
               Organization & members
             </Link>
@@ -399,7 +399,7 @@ export default function CommitmentDesk() {
 
       <div className="grid gap-2.5 lg:grid-cols-[220px_minmax(0,1fr)_360px]">
         <aside className="space-y-2.5">
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
+          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
               Company
             </p>
@@ -417,7 +417,7 @@ export default function CommitmentDesk() {
             </select>
           </div>
 
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
+          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
               Filters
             </p>
@@ -432,7 +432,7 @@ export default function CommitmentDesk() {
                   key={option.id}
                   type="button"
                   onClick={() => setFilter(option.id as DeskFilter)}
-                  className={`rounded-lg border px-2.5 py-1.5 text-left text-[12px] font-medium ${
+                  className={`route5-pressable rounded-lg border px-2.5 py-1.5 text-left text-[12px] font-medium ${
                     filter === option.id
                       ? "border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary"
                       : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover"
@@ -451,7 +451,7 @@ export default function CommitmentDesk() {
           </div>
         </aside>
 
-        <section className="min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+        <section className="route5-card min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
           <div className="border-b border-r5-border-subtle px-3.5 py-2.5">
             <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-r5-text-primary">Commitments</h2>
             <p className="text-[12px] text-r5-text-secondary">
@@ -475,7 +475,7 @@ export default function CommitmentDesk() {
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
-                    className={`w-full rounded-lg border px-3 py-2 text-left transition-[background-color,border-color,box-shadow] ${
+                    className={`route5-row w-full rounded-lg border px-3 py-2 text-left transition-[background-color,border-color,box-shadow,transform] ${
                       selected?.id === row.id
                         ? "border-r5-border-subtle bg-r5-surface-secondary shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
                         : "border-r5-border-subtle hover:bg-r5-surface-hover"
@@ -501,7 +501,7 @@ export default function CommitmentDesk() {
           {canAdmin ? (
           <form
             onSubmit={onCreate}
-            className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
+            className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
           >
             <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Create commitment</h3>
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-1.5">
@@ -520,7 +520,7 @@ export default function CommitmentDesk() {
               <button
                 type="button"
                 onClick={applyTemplate}
-                className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                className="route5-pressable rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
               >
                 Apply
               </button>
@@ -575,7 +575,7 @@ export default function CommitmentDesk() {
             {formError ? <p className="mt-2 text-[12px] text-red-500">{formError}</p> : null}
             <button
               type="submit"
-              className="mt-2.5 w-full rounded-lg bg-r5-accent px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)]"
+              className="route5-pressable mt-2.5 w-full rounded-lg bg-r5-accent px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)]"
             >
               Create
             </button>
@@ -583,7 +583,7 @@ export default function CommitmentDesk() {
           ) : null}
 
           {canAdmin ? (
-            <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+            <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
               <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Templates</h3>
               <input
                 className="mt-2 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
@@ -633,7 +633,7 @@ export default function CommitmentDesk() {
               <button
                 type="button"
                 onClick={() => void saveTemplate()}
-                className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                className="route5-pressable mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
               >
                 Save template
               </button>
@@ -648,7 +648,7 @@ export default function CommitmentDesk() {
                       <button
                         type="button"
                         onClick={() => void removeTemplate(template.id)}
-                        className="rounded-md border border-red-400/30 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-300 hover:bg-red-500/15"
+                        className="route5-pressable rounded-md border border-red-400/30 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-300 hover:bg-red-500/15"
                       >
                         Delete
                       </button>
@@ -659,7 +659,7 @@ export default function CommitmentDesk() {
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
             <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Details</h3>
             {selected ? (
               <div className="mt-2 space-y-2">
@@ -732,7 +732,7 @@ export default function CommitmentDesk() {
                     type="button"
                     disabled={savingDetails}
                     onClick={() => void saveDetails()}
-                    className="w-full rounded-xl bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)] disabled:opacity-60"
+                    className="route5-pressable w-full rounded-xl bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)] disabled:opacity-60"
                   >
                     {savingDetails ? "Saving..." : "Save changes"}
                   </button>
@@ -742,7 +742,7 @@ export default function CommitmentDesk() {
                     type="button"
                     onClick={() => void acknowledgeSelected()}
                     disabled={!canEditSelected}
-                    className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                    className="route5-pressable w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
                   >
                     Acknowledge ownership
                   </button>
@@ -767,7 +767,7 @@ export default function CommitmentDesk() {
                     type="button"
                     onClick={() => void requestDueDateChange()}
                     disabled={!canEditSelected}
-                    className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                    className="route5-pressable mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
                   >
                     Request due date change
                   </button>
@@ -783,14 +783,14 @@ export default function CommitmentDesk() {
                         <button
                           type="button"
                           onClick={() => void decideDueDateRequest("approve")}
-                          className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
+                          className="route5-pressable rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
                         >
                           Approve
                         </button>
                         <button
                           type="button"
                           onClick={() => void decideDueDateRequest("reject")}
-                          className="rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
+                          className="route5-pressable rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
                         >
                           Reject
                         </button>
@@ -811,14 +811,14 @@ export default function CommitmentDesk() {
                     <button
                       type="button"
                       onClick={() => void approveCompletion()}
-                      className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
+                      className="route5-pressable rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
                     >
                       Approve done
                     </button>
                     <button
                       type="button"
                       onClick={() => void reopenCommitment()}
-                      className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-1.5 text-[12px] font-medium text-amber-300 hover:bg-amber-500/15"
+                      className="route5-pressable rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-1.5 text-[12px] font-medium text-amber-300 hover:bg-amber-500/15"
                     >
                       Reopen
                     </button>
@@ -848,7 +848,7 @@ export default function CommitmentDesk() {
                   type="button"
                   onClick={() => void removeSelected()}
                   disabled={!canAdmin}
-                  className="w-full rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-[13px] font-medium text-red-600 hover:bg-red-500/15"
+                  className="route5-pressable w-full rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-[13px] font-medium text-red-600 hover:bg-red-500/15"
                 >
                   Delete commitment
                 </button>

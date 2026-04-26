@@ -41,7 +41,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               }
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}
-            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 text-r5-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            className="route5-pressable inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 text-r5-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,transform,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -86,7 +86,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="route5-pressable inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,transform,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label="Search"
           >
             <Search
@@ -110,7 +110,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
                 new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
               )
             }
-            className="group inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="route5-pressable group inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,box-shadow,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label={t("header.create.openTask")}
           >
             <Plus

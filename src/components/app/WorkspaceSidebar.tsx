@@ -45,7 +45,7 @@ function NavRow({
   onClick?: () => void;
 }) {
   const base =
-    "flex w-full min-h-[34px] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-2)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
+    "route5-nav-row flex w-full min-h-[34px] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-2)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
   const state = active
     ? "border border-sky-400/30 bg-r5-surface-secondary text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_20px_-18px_rgba(56,189,248,0.55)]"
     : "border border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary";
@@ -175,7 +175,7 @@ export default function WorkspaceSidebar() {
       </div>
 
       <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-1.5 py-1.5 backdrop-blur-xl">
-        <div className="flex items-center gap-1.5 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 px-1.5 py-1 shadow-[0_4px_14px_-16px_rgba(15,23,42,0.55)]">
+        <div className="route5-card flex items-center gap-1.5 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 px-1.5 py-1 shadow-[0_4px_14px_-16px_rgba(15,23,42,0.55)]">
           <UserButton
             userProfileMode="navigation"
             userProfileUrl="/settings"

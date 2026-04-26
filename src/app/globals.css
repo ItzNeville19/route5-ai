@@ -3628,3 +3628,88 @@ body.theme-glass-site:has(main.landing-premium) {
   }
 }
 
+@keyframes route5-page-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.route5-page-transition {
+  animation: route5-page-enter 260ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+}
+
+.route5-card {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 220ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 180ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .route5-card:hover {
+    transform: translate3d(0, -1px, 0);
+    box-shadow:
+      0 18px 38px -26px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(56, 189, 248, 0.12);
+  }
+}
+
+.route5-row {
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .route5-row:hover {
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+.route5-nav-row {
+  transition:
+    transform 160ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .route5-nav-row:hover {
+    transform: translate3d(0, -1px, 0);
+  }
+}
+
+.route5-pressable {
+  transition:
+    transform 120ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    box-shadow 160ms cubic-bezier(0.2, 0.7, 0.25, 1),
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 140ms ease;
+}
+
+.route5-pressable:active {
+  transform: translate3d(0, 1px, 0) scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route5-page-transition,
+  .route5-card,
+  .route5-row,
+  .route5-nav-row,
+  .route5-pressable {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+

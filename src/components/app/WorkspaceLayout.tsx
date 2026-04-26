@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import WorkspaceHeader from "@/components/WorkspaceHeader";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
 import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
@@ -45,6 +45,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   }, [useCanvasPhotography, resolvedTheme.resolvedId]);
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   useEffect(() => {
     const closeMobile = () => setMobileSidebarOpen(false);
@@ -139,7 +140,9 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <WorkspacePersistenceBanner />
           <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0">
             <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-4)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-5)]">
-              {children}
+              <div key={pathname} className="route5-page-transition">
+                {children}
+              </div>
             </div>
           </main>
         </div>

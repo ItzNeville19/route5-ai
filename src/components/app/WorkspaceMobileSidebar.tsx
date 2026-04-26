@@ -60,11 +60,11 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
       aria-hidden={!open}
     >
       <div
-        className={`absolute inset-0 bg-black/60 transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity duration-200 ease-out ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
       <aside
-        className={`absolute inset-y-0 left-0 flex w-[86vw] max-w-[320px] flex-col border-r border-r5-border-subtle bg-r5-surface-primary/98 shadow-2xl backdrop-blur-xl transition-transform duration-200 ${
+        className={`absolute inset-y-0 left-0 flex w-[86vw] max-w-[320px] flex-col border-r border-r5-border-subtle bg-r5-surface-primary/98 shadow-2xl backdrop-blur-xl transition-transform duration-200 ease-out ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -78,7 +78,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-r5-border-subtle text-r5-text-secondary"
+            className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-r5-border-subtle text-r5-text-secondary"
             aria-label="Close menu"
           >
             <X className="h-4 w-4" />
@@ -103,7 +103,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                           window.dispatchEvent(new Event("route5:shortcuts-open"));
                           onClose();
                         }}
-                        className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                        className="route5-nav-row flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden />
                         <span>{item.label}</span>
@@ -119,7 +119,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                           window.dispatchEvent(new Event("route5:notifications-open"));
                           onClose();
                         }}
-                        className="flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                        className="route5-nav-row flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-left text-[13px] font-medium text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden />
                         <span>{item.label}</span>
@@ -132,7 +132,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                       key={`${section.title}-${item.label}`}
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-medium ${
+                      className={`route5-nav-row flex items-center gap-2 rounded-xl border px-3 py-2 text-[13px] font-medium ${
                         active
                           ? "border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary"
                           : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary"
