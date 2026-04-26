@@ -101,7 +101,7 @@
   --r5-content-padding-x: 24px;
   --r5-content-padding-x-mobile: 16px;
   /* Shell layout (Step 2) — sync with src/lib/design-tokens.ts R5_LAYOUT */
-  --r5-sidebar-width: 208px;
+  --r5-sidebar-width: 200px;
   --r5-header-height: 40px;
   --r5-nav-item-height: 36px;
   --r5-mobile-nav-height: 64px;

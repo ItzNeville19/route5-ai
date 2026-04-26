@@ -13,17 +13,21 @@ export default function OverviewPage() {
 
   return (
     <div className="mx-auto w-full max-w-[min(100%,1200px)] space-y-4 pb-10">
-      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_6px_18px_-16px_rgba(15,23,42,0.35)]">
-        <p className="text-[11px] font-semibold tracking-[0.08em] text-r5-text-secondary">
+      <section className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.4)]">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-indigo-500/12 via-sky-500/8 to-transparent"
+          aria-hidden
+        />
+        <p className="relative text-[11px] font-semibold tracking-[0.08em] text-r5-text-secondary">
           Home
         </p>
-        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.01em] text-r5-text-primary">
+        <h1 className="relative mt-1 text-[22px] font-semibold tracking-[-0.01em] text-r5-text-primary">
           Execution command view
         </h1>
-        <p className="mt-1.5 max-w-[68ch] text-[13px] leading-relaxed text-r5-text-secondary">
-          Read-only visibility into commitments, ownership, and risk. Move to Desk for all updates.
+        <p className="relative mt-1.5 max-w-[62ch] text-[13px] leading-relaxed text-r5-text-secondary">
+          Real-time accountability across commitments, ownership, and risk.
         </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="relative mt-3 flex flex-wrap gap-2">
           <Link
             href="/desk"
             className="inline-flex rounded-full bg-r5-accent px-4 py-2 text-[12px] font-semibold text-white shadow-[0_4px_14px_-12px_rgba(59,130,246,0.65)]"
@@ -39,41 +43,35 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_6px_22px_-18px_rgba(15,23,42,0.4)]">
-        <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-r5-text-primary">Team load</h2>
-        <p className="mt-1 text-[12px] text-r5-text-secondary">
-          Active commitment count by owner.
-        </p>
+      <section className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Active" value={metrics.active} hint="Not done" />
+        <MetricCard label="Overdue" value={metrics.overdue} hint="Past due date" />
+        <MetricCard label="At Risk" value={metrics.atRisk} hint="Overdue, stale, or unassigned" />
+        <MetricCard label="Unassigned" value={metrics.unassigned} hint="Owner missing (all commitments)" />
+      </section>
+
+      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.4)]">
+        <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Team load</h2>
         {loading ? (
           <p className="mt-2 text-[13px] text-r5-text-secondary">Loading...</p>
         ) : error ? (
           <p className="mt-2 text-[13px] text-red-500">{error}</p>
         ) : teamLoadRows.length === 0 ? (
-          <div className="mt-3 rounded-xl border border-dashed border-r5-border-subtle bg-r5-surface-secondary/55 px-4 py-6 text-center">
-            <p className="text-[13px] font-medium text-r5-text-primary">No active commitments yet</p>
-            <p className="mt-1 text-[12px] text-r5-text-secondary">
-              Team workload appears here when commitments are assigned and in progress.
-            </p>
+          <div className="mt-2 rounded-xl border border-dashed border-r5-border-subtle bg-r5-surface-secondary/55 px-3 py-4 text-center">
+            <p className="text-[12px] font-medium text-r5-text-primary">No active commitments yet</p>
           </div>
         ) : (
-          <ul className="mt-3 divide-y divide-r5-border-subtle">
+          <ul className="mt-2 divide-y divide-r5-border-subtle">
             {teamLoadRows.map((row) => (
-              <li key={row.owner} className="flex items-center justify-between py-2 text-[13px]">
+              <li key={row.owner} className="flex items-center justify-between py-1.5 text-[13px]">
                 <span className="text-r5-text-primary">{row.owner}</span>
                 <span className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-2 py-0.5 text-[11px] font-medium text-r5-text-secondary">
-                  {row.activeCount} active
+                  {row.activeCount}
                 </span>
               </li>
             ))}
           </ul>
         )}
-      </section>
-
-      <section className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Active" value={metrics.active} hint="Not done" />
-        <MetricCard label="Overdue" value={metrics.overdue} hint="Past due date" />
-        <MetricCard label="At Risk" value={metrics.atRisk} hint="Overdue, stale, or unassigned" />
-        <MetricCard label="Unassigned" value={metrics.unassigned} hint="No owner" />
       </section>
     </div>
   );

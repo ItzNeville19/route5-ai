@@ -165,8 +165,8 @@ export default function WorkspaceSidebar() {
         </nav>
       </div>
 
-      <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-[var(--r5-space-3)] py-[var(--r5-space-3)] backdrop-blur-xl">
-        <div className="flex items-center gap-[var(--r5-space-3)] rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-[var(--r5-space-3)] shadow-[var(--r5-shadow-elevated)]">
+      <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-[var(--r5-space-2)] py-[var(--r5-space-2)] backdrop-blur-xl">
+        <div className="flex items-center gap-2 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-2 shadow-[0_4px_14px_-16px_rgba(15,23,42,0.55)]">
           <UserButton
             userProfileMode="navigation"
             userProfileUrl="/settings"
@@ -174,7 +174,7 @@ export default function WorkspaceSidebar() {
               ...route5ClerkAppearance,
               elements: {
                 ...route5ClerkAppearance.elements,
-                avatarBox: "h-9 w-9 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
+                avatarBox: "h-8 w-8 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
                 userButtonAvatarImage: "h-full w-full object-cover",
                 userButtonPopoverCard:
                   "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
@@ -182,10 +182,10 @@ export default function WorkspaceSidebar() {
             }}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[length:var(--r5-font-body)] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
+            <p className="truncate text-[12px] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
               {displayName}
             </p>
-            <p className="mt-[var(--r5-space-1)] text-[10px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
+            <p className="mt-0.5 text-[10px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
               {entitlements?.tierLabel ?? tierLabel}
             </p>
           </div>
