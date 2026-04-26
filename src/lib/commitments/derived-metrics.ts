@@ -9,6 +9,7 @@ export function isOverdue(row: Commitment): boolean {
 }
 
 export function isUnassigned(row: Commitment): boolean {
+  if (row.status === "done") return false;
   return !row.owner || !row.owner.trim();
 }
 

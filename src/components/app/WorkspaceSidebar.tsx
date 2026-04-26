@@ -165,8 +165,8 @@ export default function WorkspaceSidebar() {
         </nav>
       </div>
 
-      <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-[var(--r5-space-2)] py-[var(--r5-space-2)] backdrop-blur-xl">
-        <div className="flex items-center gap-2 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 p-2 shadow-[0_4px_14px_-16px_rgba(15,23,42,0.55)]">
+      <div className="shrink-0 border-t border-r5-border-subtle bg-r5-surface-primary/90 px-1.5 py-1.5 backdrop-blur-xl">
+        <div className="flex items-center gap-1.5 rounded-[var(--r5-radius-card)] border border-r5-border-subtle bg-r5-surface-secondary/60 px-1.5 py-1 shadow-[0_4px_14px_-16px_rgba(15,23,42,0.55)]">
           <UserButton
             userProfileMode="navigation"
             userProfileUrl="/settings"
@@ -174,7 +174,7 @@ export default function WorkspaceSidebar() {
               ...route5ClerkAppearance,
               elements: {
                 ...route5ClerkAppearance.elements,
-                avatarBox: "h-8 w-8 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
+                avatarBox: "h-7 w-7 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
                 userButtonAvatarImage: "h-full w-full object-cover",
                 userButtonPopoverCard:
                   "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
@@ -182,10 +182,10 @@ export default function WorkspaceSidebar() {
             }}
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
+            <p className="truncate text-[11px] font-[var(--r5-font-weight-semibold)] leading-tight text-r5-text-primary">
               {displayName}
             </p>
-            <p className="mt-0.5 text-[10px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
+            <p className="mt-0 text-[9px] font-[var(--r5-font-weight-regular)] text-r5-text-tertiary">
               {entitlements?.tierLabel ?? tierLabel}
             </p>
           </div>

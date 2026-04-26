@@ -30,8 +30,8 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
 
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle/90">
-      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-1.5 px-[var(--r5-content-padding-x-mobile)] sm:gap-2 sm:px-[var(--r5-content-padding-x)]">
-        <div className="flex min-h-0 min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+      <div className="mx-auto flex min-h-[var(--r5-header-height)] max-w-[min(100%,1440px)] items-center justify-between gap-1 px-[var(--r5-content-padding-x-mobile)] sm:gap-1.5 sm:px-[var(--r5-content-padding-x)]">
+        <div className="flex min-h-0 min-w-0 flex-1 items-center gap-1 sm:gap-1.5">
           <button
             type="button"
             onClick={() => {
@@ -41,7 +41,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               }
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary text-r5-text-secondary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary text-r5-text-secondary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -54,7 +54,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </button>
           <Link
             href="/desk"
-            className="mr-0.5 inline-flex shrink-0 self-center opacity-95"
+            className="mr-0 inline-flex shrink-0 self-center opacity-95"
             title="Route5 — Desk"
             aria-label="Route5 home"
           >
@@ -82,11 +82,11 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           </div>
         </div>
 
-        <div className="flex min-h-8 shrink-0 items-center justify-end gap-1.5 self-center sm:gap-1.5">
+        <div className="flex min-h-7 shrink-0 items-center justify-end gap-1 self-center">
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex h-7 w-7 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label="Search"
           >
             <Search
@@ -110,7 +110,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
                 new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
               )
             }
-            className="group inline-flex h-7 w-7 items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="group inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label={t("header.create.openTask")}
           >
             <Plus

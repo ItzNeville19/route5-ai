@@ -11,7 +11,7 @@ import { getWorkspaceIanaTimeZone } from "@/lib/workspace-regions";
 import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
 import {
   PHOTO_FALLBACK_PUBLIC,
-  overviewHeroMeshStyle,
+  WORKSPACE_THEME_PHOTO_VARIANTS,
   pickWorkspaceThemePhoto,
   workspacePhotoUrl,
 } from "@/lib/workspace-theme-photos";
@@ -28,6 +28,7 @@ export default function DeskGreetingBubble({ compact = false }: { compact?: bool
   const { intlLocale } = useI18n();
   const minuteClockTick = useAlignedMinuteTick();
   const [photoFailed, setPhotoFailed] = useState(false);
+  const [photoSeed, setPhotoSeed] = useState(0);
 
   const displayName =
     user?.fullName?.trim() ||
@@ -57,12 +58,18 @@ export default function DeskGreetingBubble({ compact = false }: { compact?: bool
     return getDeskContextLine(effectiveIana, exp.prefs.workspaceRegionKey, intlLocale);
   }, [effectiveIana, exp.prefs.workspaceRegionKey, intlLocale, minuteClockTick]);
 
-  /** One photograph + light bottom fade for text — no decorative mesh overlays. Rotates daily per theme pool. */
-  const placePhoto = useMemo(
-    () => pickWorkspaceThemePhoto(liveTheme.resolvedId, new Date()),
-    [liveTheme.resolvedId]
-  );
-  const canvasMode = (exp.prefs.workspaceCanvasBackground ?? "gradient") === "photo" ? "photo" : "gradient";
+  useEffect(() => {
+    setPhotoSeed(Math.floor(Math.random() * 1000));
+  }, []);
+
+  /** Always use photographs in Desk greeting; pick a different variant each load for a fresh premium feel. */
+  const placePhoto = useMemo(() => {
+    const pool = WORKSPACE_THEME_PHOTO_VARIANTS[liveTheme.resolvedId];
+    if (!pool?.length) {
+      return pickWorkspaceThemePhoto(liveTheme.resolvedId, new Date());
+    }
+    return pool[photoSeed % pool.length] ?? pool[0];
+  }, [liveTheme.resolvedId, photoSeed]);
 
   const placePhotoUrl = workspacePhotoUrl(placePhoto.path, 960);
   const imgSrc = photoFailed ? PHOTO_FALLBACK_PUBLIC : placePhotoUrl;
@@ -79,38 +86,30 @@ export default function DeskGreetingBubble({ compact = false }: { compact?: bool
         }`}
         aria-label={`${headline} ${contextLine}`}
       >
-        {canvasMode === "photo" ? (
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imgSrc}
-              alt=""
-              className={`h-full w-full scale-105 object-cover object-center ${compact ? "min-h-[8rem]" : "min-h-[12.5rem]"}`}
-              decoding="async"
-              loading="eager"
-              onError={() => setPhotoFailed(true)}
-            />
-            <div
-              className="absolute inset-0"
-              aria-hidden
-              style={{
-                backgroundImage: placePhoto.scrim,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
-            <div
-              className="absolute inset-0 bg-gradient-to-t from-slate-950/[0.82] via-slate-950/35 to-transparent"
-              aria-hidden
-            />
-          </div>
-        ) : (
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgSrc}
+            alt=""
+            className={`h-full w-full scale-105 object-cover object-center ${compact ? "min-h-[8rem]" : "min-h-[12.5rem]"}`}
+            decoding="async"
+            loading="eager"
+            onError={() => setPhotoFailed(true)}
+          />
           <div
-            className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]"
-            style={overviewHeroMeshStyle("afternoon", 0)}
+            className="absolute inset-0"
+            aria-hidden
+            style={{
+              backgroundImage: placePhoto.scrim,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div
+            className="absolute inset-0 bg-gradient-to-t from-slate-950/[0.82] via-slate-950/35 to-transparent"
             aria-hidden
           />
-        )}
+        </div>
 
         <div
           className={`relative z-[6] text-center ${compact ? "px-5 pb-6 pt-5 sm:px-7 sm:pb-7 sm:pt-6" : "px-7 pb-11 pt-9 sm:px-9 sm:pb-12 sm:pt-10"}`}
