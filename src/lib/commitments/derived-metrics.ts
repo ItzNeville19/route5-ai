@@ -9,12 +9,10 @@ export function isOverdue(row: Commitment): boolean {
 }
 
 export function isUnassigned(row: Commitment): boolean {
-  if (row.status === "done") return false;
   return !row.owner || !row.owner.trim();
 }
 
 export function isAtRisk(row: Commitment): boolean {
-  if (row.status === "done") return false;
   if (isOverdue(row)) return true;
   if (isUnassigned(row)) return true;
   const updated = new Date(row.updatedAt).getTime();

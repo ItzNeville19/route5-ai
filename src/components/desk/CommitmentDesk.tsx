@@ -79,14 +79,23 @@ export default function CommitmentDesk() {
   const rows = useMemo(() => {
     return filteredCommitments.filter((row) => {
       if (filter === "my_work") {
-        const me = user?.fullName?.trim() || user?.firstName?.trim();
-        return !!me && row.owner?.trim().toLowerCase() === me.toLowerCase();
+        const owner = row.owner?.trim().toLowerCase() ?? "";
+        if (!owner) return false;
+        const me = [
+          user?.fullName?.trim(),
+          user?.firstName?.trim(),
+          [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim(),
+          user?.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
+        ]
+          .filter((value): value is string => Boolean(value))
+          .map((value) => value.toLowerCase());
+        return me.some((value) => owner === value);
       }
       if (filter === "at_risk") return isAtRisk(row);
       if (filter === "overdue") return isOverdue(row);
       return true;
     });
-  }, [filteredCommitments, filter, user?.firstName, user?.fullName]);
+  }, [filteredCommitments, filter, user?.firstName, user?.fullName, user?.lastName, user?.primaryEmailAddress?.emailAddress]);
 
   const selected: Commitment | null = useMemo(
     () => rows.find((row) => row.id === selectedId) ?? rows[0] ?? null,
@@ -174,7 +183,11 @@ export default function CommitmentDesk() {
   return (
     <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-4 pb-10">
       <DeskGreetingBubble compact />
-      <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
+      <div className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent"
+          aria-hidden
+        />
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
           Desk
         </p>

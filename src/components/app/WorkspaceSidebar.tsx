@@ -46,7 +46,7 @@ function NavRow({
   const base =
     "flex w-full min-h-[34px] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-2)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
   const state = active
-    ? "border border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+    ? "border border-sky-400/30 bg-r5-surface-secondary text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_20px_-18px_rgba(56,189,248,0.55)]"
     : "border border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary";
 
   const inner = (
@@ -117,7 +117,7 @@ export default function WorkspaceSidebar() {
           className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)] pt-[var(--r5-space-2)]"
           aria-label={t("sidebar.navAria")}
         >
-          <div className="mb-2 rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/65 px-2.5 py-1.5">
+          <div className="mb-2 rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/65 px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[10px] font-semibold tracking-[0.1em] text-r5-text-secondary">
               Workspace
             </p>

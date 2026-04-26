@@ -7,15 +7,15 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
 export default function OverviewPage() {
   useWorkspaceData();
-  const { metrics, loading, error } = useCommitments();
+  const { metrics, filteredCommitments, loading, error } = useCommitments();
 
   const teamLoadRows = useMemo(() => metrics.teamLoad.slice(0, 8), [metrics.teamLoad]);
 
   return (
     <div className="mx-auto w-full max-w-[min(100%,1200px)] space-y-3 pb-8">
-      <section className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_8px_22px_-18px_rgba(15,23,42,0.4)]">
+      <section className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_12px_30px_-24px_rgba(14,165,233,0.35)]">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-indigo-500/12 via-sky-500/8 to-transparent"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_95%_65%_at_10%_-20%,rgba(56,189,248,0.16),transparent_60%),radial-gradient(ellipse_70%_55%_at_100%_0%,rgba(99,102,241,0.16),transparent_58%)]"
           aria-hidden
         />
         <p className="relative text-[11px] font-semibold tracking-[0.08em] text-r5-text-secondary">
@@ -26,6 +26,9 @@ export default function OverviewPage() {
         </h1>
         <p className="relative mt-1 max-w-[62ch] text-[12px] leading-relaxed text-r5-text-secondary">
           Live visibility into commitments, ownership, and execution risk.
+        </p>
+        <p className="relative mt-1 text-[11px] text-r5-text-tertiary">
+          {filteredCommitments.length} total commitments in current company scope
         </p>
         <div className="relative mt-2.5 flex flex-wrap gap-2">
           <Link
@@ -47,10 +50,10 @@ export default function OverviewPage() {
         <MetricCard label="Active" value={metrics.active} hint="Not done" />
         <MetricCard label="Overdue" value={metrics.overdue} hint="Past due date" />
         <MetricCard label="At Risk" value={metrics.atRisk} hint="Overdue, stale, or unassigned" />
-        <MetricCard label="Unassigned" value={metrics.unassigned} hint="Owner missing (active only)" />
+        <MetricCard label="Unassigned" value={metrics.unassigned} hint="Owner missing" />
       </section>
 
-      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.4)]">
+      <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_8px_22px_-20px_rgba(14,165,233,0.3)]">
         <h2 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Team load</h2>
         {loading ? (
           <p className="mt-1.5 text-[12px] text-r5-text-secondary">Loading...</p>
@@ -66,7 +69,7 @@ export default function OverviewPage() {
               <li key={row.owner} className="flex items-center justify-between py-1 text-[12px]">
                 <span className="text-r5-text-primary">{row.owner}</span>
                 <span className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-2 py-0.5 text-[11px] font-medium text-r5-text-secondary">
-                  {row.activeCount}
+                  {row.activeCount} active
                 </span>
               </li>
             ))}
@@ -79,7 +82,8 @@ export default function OverviewPage() {
 
 function MetricCard({ label, value, hint }: { label: string; value: number; hint: string }) {
   return (
-    <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_4px_12px_-14px_rgba(15,23,42,0.5)]">
+    <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_10px_24px_-22px_rgba(14,165,233,0.4)]">
+      <div className="mb-1 h-px w-full bg-gradient-to-r from-sky-400/45 via-indigo-400/35 to-transparent" aria-hidden />
       <p className="text-[11px] font-semibold tracking-[0.03em] text-r5-text-secondary">
         {label}
       </p>

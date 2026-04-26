@@ -41,7 +41,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               }
               exp.setPrefs({ sidebarHidden: !sidebarHidden });
             }}
-            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary text-r5-text-secondary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+            className="inline-flex h-[26px] w-[26px] shrink-0 items-center justify-center self-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 text-r5-text-secondary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,transform] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
             title={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
             aria-pressed={!sidebarHidden}
             aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"}
@@ -86,7 +86,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
           <button
             type="button"
             onClick={() => openPalette()}
-            className="inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label="Search"
           >
             <Search
@@ -110,7 +110,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
                 new CustomEvent("route5:new-project-open", { detail: { mode: "task" } })
               )
             }
-            className="group inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[0_1px_1px_rgba(15,23,42,0.06)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
+            className="group inline-flex h-[26px] w-[26px] items-center justify-center gap-[var(--r5-gap-icon-label)] rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/90 px-2 text-[12px] font-[var(--r5-font-weight-medium)] text-r5-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_1px_2px_rgba(2,6,23,0.35)] transition-[background-color,color,box-shadow] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover md:w-auto md:justify-start"
             aria-label={t("header.create.openTask")}
           >
             <Plus
@@ -124,13 +124,13 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
             </kbd>
           </button>
 
-          <div className="pl-0 sm:pl-0.5">
+          <div className="pl-0.5">
             <UserButton
               appearance={{
                 ...route5ClerkAppearance,
                 elements: {
                   ...route5ClerkAppearance.elements,
-                  avatarBox: "h-8 w-8 ring-2 ring-white/10",
+                  avatarBox: "h-7 w-7 ring-1 ring-white/15",
                   userButtonPopoverCard:
                     "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
                 },

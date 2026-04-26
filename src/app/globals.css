@@ -2467,16 +2467,16 @@ body {
 .theme-route5-command .agent-header-liquid {
   background: linear-gradient(
     180deg,
-    rgba(18, 18, 24, 0.72) 0%,
-    rgba(8, 8, 12, 0.55) 100%
+    rgba(12, 18, 30, 0.78) 0%,
+    rgba(6, 10, 18, 0.6) 100%
   );
   backdrop-filter: blur(40px) saturate(200%);
   -webkit-backdrop-filter: blur(40px) saturate(200%);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(56, 189, 248, 0.2);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 20px 50px -30px rgba(139, 92, 246, 0.22),
-    0 0 60px -40px rgba(217, 249, 157, 0.06);
+    0 20px 50px -30px rgba(14, 165, 233, 0.24),
+    0 0 60px -40px rgba(99, 102, 241, 0.14);
 }
 
 .theme-route5-command.theme-agent-shell .agent-composer {
@@ -3165,11 +3165,11 @@ body {
 .route5-brand-canvas,
 .workspace-coastal-main {
   background-image:
-    radial-gradient(ellipse 118% 62% at 50% -16%, rgba(56, 189, 248, 0.09), transparent 58%),
-    radial-gradient(ellipse 78% 46% at 0% 10%, rgba(253, 186, 116, 0.07), transparent 54%),
-    radial-gradient(ellipse 72% 42% at 100% 14%, rgba(165, 243, 252, 0.065), transparent 52%),
-    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(14, 116, 144, 0.06), transparent 55%);
-  background-color: color-mix(in srgb, var(--r5-surface-primary) 84%, #0b1220 16%);
+    radial-gradient(ellipse 118% 62% at 50% -16%, rgba(56, 189, 248, 0.14), transparent 58%),
+    radial-gradient(ellipse 78% 46% at 0% 10%, rgba(99, 102, 241, 0.08), transparent 54%),
+    radial-gradient(ellipse 72% 42% at 100% 14%, rgba(34, 211, 238, 0.08), transparent 52%),
+    radial-gradient(ellipse 90% 50% at 50% 100%, rgba(14, 116, 144, 0.08), transparent 55%);
+  background-color: color-mix(in srgb, var(--r5-surface-primary) 82%, #050b16 18%);
 }
 
 /** Column beside sidebar: faint horizon (below stacked chrome). */
@@ -3189,12 +3189,14 @@ body {
 }
 
 .theme-route5-command.theme-agent-shell .agent-header {
-  background: color-mix(in srgb, var(--r5-surface-primary) 90%, #0f172a 10%);
-  box-shadow: inset 0 -1px 0 rgba(15, 23, 42, 0.08);
+  background: color-mix(in srgb, var(--r5-surface-primary) 88%, #0f172a 12%);
+  box-shadow:
+    inset 0 -1px 0 rgba(56, 189, 248, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .theme-route5-command.theme-agent-shell aside.agent-sidebar.route5-brand-sidebar-edge {
-  background: color-mix(in srgb, var(--r5-surface-primary) 94%, #0f172a 6%);
+  background: color-mix(in srgb, var(--r5-surface-primary) 93%, #0f172a 7%);
 }
 
 /** Header: hairline sunset → sea under the liquid bar. */
@@ -3208,8 +3210,9 @@ body {
 /** Sidebar: inward coastal edge. */
 .theme-route5-command.theme-agent-shell aside.agent-sidebar.route5-brand-sidebar-edge {
   box-shadow:
-    inset -1px 0 0 rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    inset -1px 0 0 rgba(56, 189, 248, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    8px 0 28px -24px rgba(2, 132, 199, 0.4);
 }
 
 /** Mobile tab bar: brand top glow + elevated surface (avoids “white on white” on light meshes). */
