@@ -7,6 +7,7 @@ import {
   listPendingOrganizationInvitations,
   listOrganizationMembers,
   requireOrgRole,
+  updateOrganizationMemberRole,
   type OrgRole,
 } from "@/lib/workspace/org-members";
 import { countActiveCommitmentsByOwnerForOrg } from "@/lib/org-commitments/active-counts-by-owner";
@@ -73,6 +74,31 @@ function normalizeRole(input: unknown): OrgRole | null {
   return null;
 }
 
+const FOUNDER_ADMIN_EMAILS = new Set(["neville@rayze.xyz"]);
+
+async function ensureFounderAdminAccess({
+  userId,
+  orgId,
+  currentRole,
+}: {
+  userId: string;
+  orgId: string;
+  currentRole: OrgRole;
+}): Promise<OrgRole> {
+  if (currentRole === "admin") return currentRole;
+  try {
+    const clerk = await clerkClient();
+    const me = await clerk.users.getUser(userId);
+    const email = me.primaryEmailAddress?.emailAddress?.trim().toLowerCase();
+    if (!email || !FOUNDER_ADMIN_EMAILS.has(email)) return currentRole;
+    await updateOrganizationMemberRole({ orgId, userId, role: "admin" });
+    broadcastOrgMembersChanged(orgId, { kind: "member_updated", userId });
+    return "admin";
+  } catch {
+    return currentRole;
+  }
+}
+
 export async function GET() {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
@@ -82,6 +108,11 @@ export async function GET() {
   if (!access.ok || access.orgId !== orgId) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+  const effectiveRole = await ensureFounderAdminAccess({
+    userId,
+    orgId,
+    currentRole: access.role,
+  });
 
   try {
     const [members, pendingInvitations, activeCountByUser] = await Promise.all([
@@ -174,7 +205,7 @@ export async function GET() {
       orgId,
       orgName: org.name,
       uiPolicy: org.uiPolicy,
-      me: { userId, role: access.role },
+      me: { userId, role: effectiveRole },
       members: dto,
       invitations,
     });
@@ -193,7 +224,17 @@ export async function POST(req: Request) {
   const orgId = await ensureOrganizationForClerkUser(userId);
   const access = await requireOrgRole(userId, ["admin"]);
   if (!access.ok || access.orgId !== orgId) {
-    return NextResponse.json({ error: "Only admins can invite members" }, { status: 403 });
+    const promotedRole = await ensureFounderAdminAccess({
+      userId,
+      orgId,
+      currentRole: access.ok && access.orgId === orgId ? access.role : "member",
+    });
+    if (promotedRole !== "admin") {
+      return NextResponse.json({ error: "Only admins can invite members" }, { status: 403 });
+    }
+  }
+  if (access.ok && access.orgId === orgId) {
+    await ensureFounderAdminAccess({ userId, orgId, currentRole: access.role });
   }
 
   let body: { email?: string; role?: string };
@@ -261,7 +302,16 @@ export async function PATCH(req: Request) {
   const orgId = await ensureOrganizationForClerkUser(userId);
   const access = await requireOrgRole(userId, ["admin"]);
   if (!access.ok || access.orgId !== orgId) {
-    return NextResponse.json({ error: "Only admins can update organization settings" }, { status: 403 });
+    const promotedRole = await ensureFounderAdminAccess({
+      userId,
+      orgId,
+      currentRole: access.ok && access.orgId === orgId ? access.role : "member",
+    });
+    if (promotedRole !== "admin") {
+      return NextResponse.json({ error: "Only admins can update organization settings" }, { status: 403 });
+    }
+  } else {
+    await ensureFounderAdminAccess({ userId, orgId, currentRole: access.role });
   }
 
   let body: { uiPolicy?: unknown };
