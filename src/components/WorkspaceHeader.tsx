@@ -9,7 +9,6 @@ import { useCommandPalette } from "@/components/CommandPalette";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
 import WorkspaceCommitmentsHeaderPanel from "@/components/workspace/WorkspaceCommitmentsHeaderPanel";
 import WorkspaceProjectSwitcher from "@/components/workspace/WorkspaceProjectSwitcher";
-import WorkspaceHeaderGreeting from "@/components/app/WorkspaceHeaderGreeting";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { getWorkspacePageTitle } from "@/lib/workspace-page-title";
@@ -28,7 +27,6 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
   const sidebarHidden = exp.prefs.sidebarHidden === true;
   const pageTitle = getWorkspacePageTitle(pathname);
   const modLabel = primaryModLabelFromNavigator();
-  const showWelcomeTop = pathname === "/overview" || pathname === "/desk";
 
   return (
     <header className="agent-header agent-header-liquid sticky top-0 z-30 border-b border-r5-border-subtle/90">
@@ -75,20 +73,12 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
             </div>
           </Suspense>
           <div className="min-w-0 flex-1 self-center">
-            {showWelcomeTop ? (
-              <>
-                <h1 className="truncate text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary md:hidden">
-                  {pageTitle}
-                </h1>
-                <div className="hidden md:block">
-                  <WorkspaceHeaderGreeting />
-                </div>
-              </>
-            ) : (
-              <h1 className="truncate text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary">
-                {pageTitle}
-              </h1>
-            )}
+            <h1
+              className="text-left text-[14px] font-[var(--r5-font-weight-semibold)] leading-tight tracking-[-0.01em] text-r5-text-primary"
+              title={pageTitle}
+            >
+              {pageTitle}
+            </h1>
           </div>
         </div>
 
@@ -104,7 +94,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               strokeWidth={2}
               aria-hidden
             />
-            <span className="hidden lg:inline">Search</span>
+            <span className="hidden xl:inline">Search</span>
             <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-secondary 2xl:inline">
               {modLabel}K
             </kbd>
@@ -128,7 +118,7 @@ export default function WorkspaceHeader({ onSidebarToggle }: { onSidebarToggle?:
               strokeWidth={2}
               aria-hidden
             />
-            <span className="hidden xl:inline">{t("header.create.addTask")}</span>
+            <span className="hidden 2xl:inline">{t("header.create.addTask")}</span>
             <kbd className="hidden rounded-[var(--r5-radius-badge)] border border-r5-border-subtle bg-r5-surface-primary px-[var(--r5-space-2)] py-0.5 font-mono text-[10px] text-r5-text-tertiary group-hover:inline xl:group-hover:inline">
               {modLabel}N
             </kbd>
