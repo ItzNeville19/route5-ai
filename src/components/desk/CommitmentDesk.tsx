@@ -50,6 +50,13 @@ export default function CommitmentDesk() {
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<CommitmentStatus>("pending");
   const [formError, setFormError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [savingDetails, setSavingDetails] = useState(false);
+  const [detailTitle, setDetailTitle] = useState("");
+  const [detailDescription, setDetailDescription] = useState("");
+  const [detailOwner, setDetailOwner] = useState("");
+  const [detailDueDate, setDetailDueDate] = useState("");
+  const [detailStatus, setDetailStatus] = useState<CommitmentStatus>("pending");
 
   useEffect(() => {
     if (projectId) return;
@@ -77,6 +84,15 @@ export default function CommitmentDesk() {
     if (selected?.id) setSelectedId(selected.id);
   }, [selected?.id]);
 
+  useEffect(() => {
+    if (!selected) return;
+    setDetailTitle(selected.title);
+    setDetailDescription(selected.description ?? "");
+    setDetailOwner(selected.owner ?? "");
+    setDetailDueDate(toInputDate(selected.dueDate));
+    setDetailStatus(selected.status);
+  }, [selected]);
+
   async function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFormError(null);
@@ -89,19 +105,57 @@ export default function CommitmentDesk() {
       setFormError("Pick a company first.");
       return;
     }
-    await createCommitment({
-      projectId,
-      title: trimmed,
-      description: description.trim() || null,
-      owner: owner.trim() || null,
-      dueDate: fromInputDate(dueDate),
-      status,
-    });
-    setTitle("");
-    setDescription("");
-    setOwner("");
-    setDueDate("");
-    setStatus("pending");
+    try {
+      await createCommitment({
+        projectId,
+        title: trimmed,
+        description: description.trim() || null,
+        owner: owner.trim() || null,
+        dueDate: fromInputDate(dueDate),
+        status,
+      });
+      setTitle("");
+      setDescription("");
+      setOwner("");
+      setDueDate("");
+      setStatus("pending");
+      setActionError(null);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Could not create commitment.");
+    }
+  }
+
+  async function saveDetails() {
+    if (!selected) return;
+    if (!detailTitle.trim()) {
+      setActionError("Title is required.");
+      return;
+    }
+    setSavingDetails(true);
+    try {
+      await updateCommitment(selected.id, {
+        title: detailTitle.trim(),
+        description: detailDescription.trim() || null,
+        owner: detailOwner.trim() || null,
+        dueDate: fromInputDate(detailDueDate),
+        status: detailStatus,
+      });
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not save commitment.");
+    } finally {
+      setSavingDetails(false);
+    }
+  }
+
+  async function removeSelected() {
+    if (!selected) return;
+    try {
+      await deleteCommitment(selected.id);
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not delete commitment.");
+    }
   }
 
   return (
@@ -173,6 +227,7 @@ export default function CommitmentDesk() {
               {loading ? "Loading..." : `${rows.length} items`}
             </p>
             {error ? <p className="mt-1 text-[12px] text-red-500">{error}</p> : null}
+            {actionError ? <p className="mt-1 text-[12px] text-red-500">{actionError}</p> : null}
           </div>
           <div className="max-h-[70vh] overflow-y-auto p-3">
             {rows.length === 0 ? (
@@ -263,39 +318,31 @@ export default function CommitmentDesk() {
               <div className="mt-2 space-y-2">
                 <input
                   className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px]"
-                  value={selected.title}
-                  onChange={(e) => void updateCommitment(selected.id, { title: e.target.value })}
+                  value={detailTitle}
+                  onChange={(e) => setDetailTitle(e.target.value)}
                 />
                 <textarea
                   rows={3}
                   className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px]"
-                  value={selected.description ?? ""}
-                  onChange={(e) =>
-                    void updateCommitment(selected.id, { description: e.target.value || null })
-                  }
+                  value={detailDescription}
+                  onChange={(e) => setDetailDescription(e.target.value)}
                 />
                 <input
                   className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px]"
-                  value={selected.owner ?? ""}
+                  value={detailOwner}
                   placeholder="Owner"
-                  onChange={(e) => void updateCommitment(selected.id, { owner: e.target.value || null })}
+                  onChange={(e) => setDetailOwner(e.target.value)}
                 />
                 <input
                   type="datetime-local"
                   className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px]"
-                  value={toInputDate(selected.dueDate)}
-                  onChange={(e) =>
-                    void updateCommitment(selected.id, { dueDate: fromInputDate(e.target.value) })
-                  }
+                  value={detailDueDate}
+                  onChange={(e) => setDetailDueDate(e.target.value)}
                 />
                 <select
                   className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px]"
-                  value={selected.status}
-                  onChange={(e) =>
-                    void updateCommitment(selected.id, {
-                      status: e.target.value as CommitmentStatus,
-                    })
-                  }
+                  value={detailStatus}
+                  onChange={(e) => setDetailStatus(e.target.value as CommitmentStatus)}
                 >
                   <option value="pending">Pending</option>
                   <option value="in_progress">In progress</option>
@@ -303,7 +350,15 @@ export default function CommitmentDesk() {
                 </select>
                 <button
                   type="button"
-                  onClick={() => void deleteCommitment(selected.id)}
+                  disabled={savingDetails}
+                  onClick={() => void saveDetails()}
+                  className="w-full rounded-lg bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+                >
+                  {savingDetails ? "Saving..." : "Save changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeSelected()}
                   className="w-full rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-2 text-[13px] font-medium text-red-500"
                 >
                   Delete commitment

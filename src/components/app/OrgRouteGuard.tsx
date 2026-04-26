@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
 /**
- * Redirects non-admins off routes hidden by the org's UI policy (set by admins in Organization).
+ * Keeps legacy/deprecated workspace routes mapped to the MVP surface.
  */
 export default function OrgRouteGuard() {
   const { loadingOrganization } = useWorkspaceData();
@@ -16,7 +16,21 @@ export default function OrgRouteGuard() {
     if (loadingOrganization) return;
     const currentPath = pathname.split("?")[0];
     const deprecatedToDesk = ["/feed", "/workspace/commitments", "/capture", "/workspace/assign-task"];
-    const deprecatedToHome = ["/workspace/org-feed", "/workspace/dashboard", "/leadership"];
+    const deprecatedToHome = [
+      "/workspace/org-feed",
+      "/workspace/dashboard",
+      "/leadership",
+      "/workspace/team-work",
+      "/workspace/team",
+      "/workspace/billing",
+      "/workspace/apps",
+      "/workspace/developer",
+      "/workspace/escalations",
+      "/workspace/audit",
+      "/workspace/integrations",
+      "/workspace/digest",
+      "/workspace/my-inbox",
+    ];
 
     if (deprecatedToDesk.some((pfx) => currentPath === pfx || currentPath.startsWith(`${pfx}/`))) {
       router.replace("/desk");

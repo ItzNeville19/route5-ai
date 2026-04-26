@@ -82,22 +82,22 @@ export function CommitmentsProvider({ children }: { children: React.ReactNode })
     async (payload: CommitmentCreatePayload) => {
       const created = await createCommitmentRequest(payload);
       setCommitments((prev) => [created, ...prev]);
-      if (projectId && created.projectId !== projectId) {
-        await refresh();
-      }
+      await refresh();
     },
-    [projectId, refresh]
+    [refresh]
   );
 
   const updateCommitment = useCallback(async (id: string, updates: CommitmentUpdatePayload) => {
     const updated = await updateCommitmentRequest(id, updates);
     setCommitments((prev) => prev.map((row) => (row.id === id ? updated : row)));
-  }, []);
+    await refresh();
+  }, [refresh]);
 
   const deleteCommitment = useCallback(async (id: string) => {
     await deleteCommitmentRequest(id);
     setCommitments((prev) => prev.filter((row) => row.id !== id));
-  }, []);
+    await refresh();
+  }, [refresh]);
 
   const filteredCommitments = useMemo(() => {
     if (!projectId) return commitments;
