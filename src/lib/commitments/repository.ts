@@ -38,14 +38,14 @@ type DbRow = {
   project_id: string;
   title: string;
   description: string | null;
-  owner: string | null;
+  owner?: string | null;
   owner_display_name: string | null;
   owner_user_id: string | null;
   status: string;
   due_date: string | null;
   created_at: string;
-  updated_at: string | null;
-  last_updated_at: string | null;
+  updated_at?: string | null;
+  last_updated_at?: string | null;
 };
 
 function requireSupabaseConfigured() {
@@ -92,11 +92,11 @@ export async function fetchCommitments(
   let query = supabase
     .from("commitments")
     .select(
-      "id, project_id, title, description, owner, owner_display_name, owner_user_id, status, due_date, created_at, updated_at, last_updated_at"
+      "id, project_id, title, description, owner_display_name, owner_user_id, status, due_date, created_at, last_updated_at"
     )
     .in("project_id", filters?.projectId ? [filters.projectId] : projectIds)
     .is("archived_at", null)
-    .order("updated_at", { ascending: false, nullsFirst: false });
+    .order("last_updated_at", { ascending: false, nullsFirst: false });
 
   if (filters?.status && filters.status !== "active") {
     query = query.eq("status", filters.status);
@@ -126,7 +126,6 @@ export async function createCommitment(
       clerk_user_id: userId,
       title: input.title.trim(),
       description: input.description ?? null,
-      owner: input.owner?.trim() || null,
       owner_display_name: input.owner?.trim() || null,
       owner_user_id: null,
       source: "manual",
@@ -134,13 +133,12 @@ export async function createCommitment(
       status,
       priority: "medium",
       due_date: input.dueDate ?? null,
-      updated_at: now,
       last_updated_at: now,
       activity_log: [],
       archived_at: null,
     })
     .select(
-      "id, project_id, title, description, owner, owner_display_name, owner_user_id, status, due_date, created_at, updated_at, last_updated_at"
+      "id, project_id, title, description, owner_display_name, owner_user_id, status, due_date, created_at, last_updated_at"
     )
     .single();
   if (error) throw error;
@@ -164,19 +162,16 @@ export async function updateCommitment(
       title: updates.title?.trim() ?? existing.title,
       description:
         updates.description === undefined ? existing.description : updates.description,
-      owner:
-        updates.owner === undefined ? existing.owner : updates.owner?.trim() || null,
       owner_display_name:
         updates.owner === undefined ? existing.owner : updates.owner?.trim() || null,
       status: updates.status ?? existing.status,
       due_date: updates.dueDate === undefined ? existing.dueDate : updates.dueDate,
-      updated_at: now,
       last_updated_at: now,
     })
     .eq("id", id)
     .eq("project_id", existing.projectId)
     .select(
-      "id, project_id, title, description, owner, owner_display_name, owner_user_id, status, due_date, created_at, updated_at, last_updated_at"
+      "id, project_id, title, description, owner_display_name, owner_user_id, status, due_date, created_at, last_updated_at"
     )
     .maybeSingle();
   if (error) throw error;
