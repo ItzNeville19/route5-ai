@@ -22,7 +22,28 @@ const patchSchema = z
     description: z.string().max(20_000).optional().nullable(),
     owner: z.string().max(200).optional().nullable(),
     due_date: z.string().max(48).optional().nullable(),
-    status: z.enum(["pending", "in_progress", "done"]).optional(),
+    status: z
+      .enum(["pending", "accepted", "in_progress", "blocked", "done", "reopened"])
+      .optional(),
+    blocker_reason: z.string().max(1000).optional().nullable(),
+    completion_note: z.string().max(5000).optional().nullable(),
+    completion_proof_url: z.string().url().max(2000).optional().nullable(),
+    manager_decision: z.enum(["approve", "reopen"]).optional().nullable(),
+    manager_comment: z.string().max(2000).optional().nullable(),
+    due_date_request: z
+      .object({
+        requestedDate: z.string().max(64),
+        reason: z.string().max(1000).optional().nullable(),
+      })
+      .optional()
+      .nullable(),
+    due_date_request_decision: z
+      .object({
+        action: z.enum(["approve", "reject"]),
+        comment: z.string().max(2000).optional().nullable(),
+      })
+      .optional()
+      .nullable(),
   })
   .strict();
 
@@ -87,6 +108,13 @@ export async function PATCH(
       owner: patch.owner,
       dueDate: patch.due_date,
       status: patch.status,
+      blockerReason: patch.blocker_reason,
+      completionNote: patch.completion_note,
+      completionProofUrl: patch.completion_proof_url,
+      managerDecision: patch.manager_decision,
+      managerComment: patch.manager_comment,
+      dueDateRequest: patch.due_date_request,
+      dueDateRequestDecision: patch.due_date_request_decision,
     });
     if (!row) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

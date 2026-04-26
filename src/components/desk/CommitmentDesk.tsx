@@ -5,8 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useCommitments } from "@/components/commitments/CommitmentsProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isAtRisk, isOverdue } from "@/lib/commitments/derived-metrics";
-import type { Commitment, CommitmentStatus } from "@/lib/commitments/types";
+import { isAtRisk, isBlocked, isOverdue, isUnaccepted } from "@/lib/commitments/derived-metrics";
+import type { Commitment, CommitmentSource, CommitmentStatus } from "@/lib/commitments/types";
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 
 type DeskFilter = "all" | "my_work" | "at_risk" | "overdue";
@@ -26,8 +26,11 @@ function fromInputDate(value: string): string | null {
 
 const STATUS_LABEL: Record<CommitmentStatus, string> = {
   pending: "Pending",
+  accepted: "Accepted",
   in_progress: "In progress",
+  blocked: "Blocked",
   done: "Done",
+  reopened: "Reopened",
 };
 
 export default function CommitmentDesk() {
@@ -52,6 +55,7 @@ export default function CommitmentDesk() {
   const [owner, setOwner] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [status, setStatus] = useState<CommitmentStatus>("pending");
+  const [source, setSource] = useState<CommitmentSource>("manual");
   const [formError, setFormError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [savingDetails, setSavingDetails] = useState(false);
@@ -60,6 +64,12 @@ export default function CommitmentDesk() {
   const [detailOwner, setDetailOwner] = useState("");
   const [detailDueDate, setDetailDueDate] = useState("");
   const [detailStatus, setDetailStatus] = useState<CommitmentStatus>("pending");
+  const [detailBlockerReason, setDetailBlockerReason] = useState("");
+  const [detailCompletionNote, setDetailCompletionNote] = useState("");
+  const [detailCompletionProofUrl, setDetailCompletionProofUrl] = useState("");
+  const [requestDueDate, setRequestDueDate] = useState("");
+  const [requestDueReason, setRequestDueReason] = useState("");
+  const [managerComment, setManagerComment] = useState("");
 
   useEffect(() => {
     const focusId = searchParams.get("focus");
@@ -113,6 +123,11 @@ export default function CommitmentDesk() {
     setDetailOwner(selected.owner ?? "");
     setDetailDueDate(toInputDate(selected.dueDate));
     setDetailStatus(selected.status);
+    setDetailBlockerReason(selected.blockerReason ?? "");
+    setDetailCompletionNote(selected.completion.note ?? "");
+    setDetailCompletionProofUrl(selected.completion.proofUrl ?? "");
+    setRequestDueDate(selected.dueDateRequest?.requestedDate ? toInputDate(selected.dueDateRequest.requestedDate) : "");
+    setRequestDueReason(selected.dueDateRequest?.reason ?? "");
   }, [selected]);
 
   async function onCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -135,12 +150,14 @@ export default function CommitmentDesk() {
         owner: owner.trim() || null,
         dueDate: fromInputDate(dueDate),
         status,
+        source,
       });
       setTitle("");
       setDescription("");
       setOwner("");
       setDueDate("");
       setStatus("pending");
+      setSource("manual");
       setActionError(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Could not create commitment.");
@@ -153,6 +170,14 @@ export default function CommitmentDesk() {
       setActionError("Title is required.");
       return;
     }
+    if (detailStatus === "blocked" && !detailBlockerReason.trim()) {
+      setActionError("Blocked commitments require a blocker reason.");
+      return;
+    }
+    if (detailStatus === "done" && !detailCompletionNote.trim() && !detailCompletionProofUrl.trim()) {
+      setActionError("Completion requires a note or proof link.");
+      return;
+    }
     setSavingDetails(true);
     try {
       await updateCommitment(selected.id, {
@@ -161,6 +186,9 @@ export default function CommitmentDesk() {
         owner: detailOwner.trim() || null,
         dueDate: fromInputDate(detailDueDate),
         status: detailStatus,
+        blockerReason: detailStatus === "blocked" ? detailBlockerReason.trim() : null,
+        completionNote: detailCompletionNote.trim() || null,
+        completionProofUrl: detailCompletionProofUrl.trim() || null,
       });
       setActionError(null);
     } catch (error) {
@@ -177,6 +205,84 @@ export default function CommitmentDesk() {
       setActionError(null);
     } catch (error) {
       setActionError(error instanceof Error ? error.message : "Could not delete commitment.");
+    }
+  }
+
+  async function acknowledgeSelected() {
+    if (!selected) return;
+    try {
+      await updateCommitment(selected.id, { status: "accepted" });
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not acknowledge commitment.");
+    }
+  }
+
+  async function requestDueDateChange() {
+    if (!selected || !requestDueDate) {
+      setActionError("Provide a requested due date.");
+      return;
+    }
+    try {
+      await updateCommitment(selected.id, {
+        dueDateRequest: {
+          requestedDate: fromInputDate(requestDueDate) ?? requestDueDate,
+          reason: requestDueReason.trim() || null,
+        },
+      });
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not request due date change.");
+    }
+  }
+
+  async function decideDueDateRequest(action: "approve" | "reject") {
+    if (!selected) return;
+    try {
+      await updateCommitment(selected.id, {
+        dueDateRequestDecision: {
+          action,
+          comment: managerComment.trim() || null,
+        },
+        ...(action === "approve" && selected.dueDateRequest?.requestedDate
+          ? { dueDate: selected.dueDateRequest.requestedDate }
+          : {}),
+      });
+      setManagerComment("");
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not review due date request.");
+    }
+  }
+
+  async function approveCompletion() {
+    if (!selected) return;
+    try {
+      await updateCommitment(selected.id, {
+        managerDecision: "approve",
+        managerComment: managerComment.trim() || null,
+      });
+      setManagerComment("");
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not approve completion.");
+    }
+  }
+
+  async function reopenCommitment() {
+    if (!selected) return;
+    if (!managerComment.trim()) {
+      setActionError("Reopen requires a manager comment.");
+      return;
+    }
+    try {
+      await updateCommitment(selected.id, {
+        managerDecision: "reopen",
+        managerComment: managerComment.trim(),
+      });
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not reopen commitment.");
     }
   }
 
@@ -244,6 +350,12 @@ export default function CommitmentDesk() {
                 </button>
               ))}
             </div>
+            <div className="mt-3 grid grid-cols-2 gap-1.5 text-[11px] text-r5-text-secondary">
+              <p>Owed: {rows.filter((row) => row.status !== "done").length}</p>
+              <p>Blocked: {rows.filter(isBlocked).length}</p>
+              <p>Overdue: {rows.filter(isOverdue).length}</p>
+              <p>Needs ack: {rows.filter(isUnaccepted).length}</p>
+            </div>
           </div>
         </aside>
 
@@ -284,7 +396,7 @@ export default function CommitmentDesk() {
                       </span>
                     </div>
                     <p className="mt-1 text-[11px] leading-relaxed text-r5-text-secondary">
-                      {row.owner?.trim() || "Unassigned"} {row.dueDate ? `· Due ${new Date(row.dueDate).toLocaleDateString()}` : "· No due date"}
+                      {row.owner?.trim() || "Unassigned"} {row.dueDate ? `· Due ${new Date(row.dueDate).toLocaleDateString()}` : "· No due date"} · {row.source}
                     </p>
                   </button>
                 ))}
@@ -330,8 +442,21 @@ export default function CommitmentDesk() {
               onChange={(e) => setStatus(e.target.value as CommitmentStatus)}
             >
               <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
               <option value="in_progress">In progress</option>
+              <option value="blocked">Blocked</option>
+              <option value="reopened">Reopened</option>
               <option value="done">Done</option>
+            </select>
+            <select
+              className="mt-2 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+              value={source}
+              onChange={(e) => setSource(e.target.value as CommitmentSource)}
+            >
+              <option value="manual">Manual</option>
+              <option value="meeting">Meeting</option>
+              <option value="email">Email</option>
+              <option value="slack">Slack</option>
             </select>
             {formError ? <p className="mt-2 text-[12px] text-red-500">{formError}</p> : null}
             <button
@@ -375,9 +500,33 @@ export default function CommitmentDesk() {
                   onChange={(e) => setDetailStatus(e.target.value as CommitmentStatus)}
                 >
                   <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
                   <option value="in_progress">In progress</option>
+                  <option value="blocked">Blocked</option>
+                  <option value="reopened">Reopened</option>
                   <option value="done">Done</option>
                 </select>
+                {detailStatus === "blocked" ? (
+                  <input
+                    className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                    placeholder="Blocker reason (required)"
+                    value={detailBlockerReason}
+                    onChange={(e) => setDetailBlockerReason(e.target.value)}
+                  />
+                ) : null}
+                <textarea
+                  rows={2}
+                  className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                  placeholder="Completion note"
+                  value={detailCompletionNote}
+                  onChange={(e) => setDetailCompletionNote(e.target.value)}
+                />
+                <input
+                  className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                  placeholder="Proof URL (optional)"
+                  value={detailCompletionProofUrl}
+                  onChange={(e) => setDetailCompletionProofUrl(e.target.value)}
+                />
                 <button
                   type="button"
                   disabled={savingDetails}
@@ -386,6 +535,107 @@ export default function CommitmentDesk() {
                 >
                   {savingDetails ? "Saving..." : "Save changes"}
                 </button>
+                {selected.status === "pending" || selected.status === "reopened" ? (
+                  <button
+                    type="button"
+                    onClick={() => void acknowledgeSelected()}
+                    className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                  >
+                    Acknowledge ownership
+                  </button>
+                ) : null}
+                <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/45 p-2">
+                  <p className="text-[11px] font-semibold text-r5-text-secondary">Due date request</p>
+                  <input
+                    type="datetime-local"
+                    className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                    value={requestDueDate}
+                    onChange={(e) => setRequestDueDate(e.target.value)}
+                  />
+                  <input
+                    className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                    placeholder="Reason"
+                    value={requestDueReason}
+                    onChange={(e) => setRequestDueReason(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void requestDueDateChange()}
+                    className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+                  >
+                    Request due date change
+                  </button>
+                  {selected.dueDateRequest?.status === "pending" ? (
+                    <div className="mt-1.5 space-y-1.5">
+                      <input
+                        className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                        placeholder="Manager comment"
+                        value={managerComment}
+                        onChange={(e) => setManagerComment(e.target.value)}
+                      />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void decideDueDateRequest("approve")}
+                          className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void decideDueDateRequest("reject")}
+                          className="rounded-lg border border-red-400/30 bg-red-500/10 px-2.5 py-1.5 text-[12px] font-medium text-red-300 hover:bg-red-500/15"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/45 p-2">
+                  <p className="text-[11px] font-semibold text-r5-text-secondary">Manager verification</p>
+                  <input
+                    className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                    placeholder="Manager comment"
+                    value={managerComment}
+                    onChange={(e) => setManagerComment(e.target.value)}
+                  />
+                  <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void approveCompletion()}
+                      className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-2.5 py-1.5 text-[12px] font-medium text-emerald-300 hover:bg-emerald-500/15"
+                    >
+                      Approve done
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void reopenCommitment()}
+                      className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-2.5 py-1.5 text-[12px] font-medium text-amber-300 hover:bg-amber-500/15"
+                    >
+                      Reopen
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/45 p-2">
+                  <p className="text-[11px] font-semibold text-r5-text-secondary">Activity timeline</p>
+                  {selected.activityTimeline.length === 0 ? (
+                    <p className="mt-1.5 text-[12px] text-r5-text-secondary">No events yet.</p>
+                  ) : (
+                    <ul className="mt-1.5 space-y-1.5">
+                      {selected.activityTimeline.slice().reverse().map((event) => (
+                        <li key={event.id} className="rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2 py-1.5">
+                          <p className="text-[11px] font-medium text-r5-text-primary">
+                            {event.type.replaceAll("_", " ")}
+                          </p>
+                          <p className="text-[10px] text-r5-text-secondary">
+                            {new Date(event.at).toLocaleString()} {event.note ? `· ${event.note}` : ""}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => void removeSelected()}

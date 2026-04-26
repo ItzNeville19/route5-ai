@@ -2,7 +2,16 @@ import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { fetchCommitments } from "@/lib/commitments/repository";
-import { isAtRisk, isOverdue, isUnassigned, teamLoad } from "@/lib/commitments/derived-metrics";
+import {
+  completedToday,
+  isAtRisk,
+  isBlocked,
+  isDueSoon,
+  isOverdue,
+  isUnaccepted,
+  isUnassigned,
+  teamLoad,
+} from "@/lib/commitments/derived-metrics";
 import { enforceRateLimits, userAndIpRateScopes } from "@/lib/security/request-guards";
 
 export const runtime = "nodejs";
@@ -29,14 +38,35 @@ export async function GET(req: Request) {
     const atRiskRows = active.filter((row) => isAtRisk(row));
     const overdueRows = active.filter((row) => isOverdue(row));
     const unassignedRows = active.filter((row) => isUnassigned(row));
+    const blockedRows = active.filter((row) => isBlocked(row));
+    const unacceptedRows = active.filter((row) => isUnaccepted(row));
+    const dueSoonRows = active.filter((row) => isDueSoon(row));
+    const completedTodayCount = rows.filter((row) => completedToday(row)).length;
     const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
     const completedThisWeek = done.filter((row) => new Date(row.updatedAt).getTime() >= weekStart).length;
     const completedPct = Math.round((completedThisWeek / Math.max(1, active.length + completedThisWeek)) * 100);
 
     const riskFeed = atRiskRows
       .map((row) => {
-        const riskReason = isOverdue(row) ? "overdue" : isUnassigned(row) ? "unassigned" : "stalled";
-        const urgencyScore = riskReason === "overdue" ? 100 : riskReason === "unassigned" ? 80 : 60;
+        const riskReason = isOverdue(row)
+          ? "overdue"
+          : isBlocked(row)
+            ? "blocked"
+            : isUnaccepted(row)
+              ? "unaccepted"
+              : isUnassigned(row)
+                ? "unassigned"
+                : "stalled";
+        const urgencyScore =
+          riskReason === "overdue"
+            ? 100
+            : riskReason === "blocked"
+              ? 90
+              : riskReason === "unaccepted"
+                ? 85
+                : riskReason === "unassigned"
+                  ? 80
+                  : 60;
         return {
           id: row.id,
           projectId: row.projectId,
@@ -69,6 +99,10 @@ export async function GET(req: Request) {
         atRiskCount: atRiskRows.length,
         overdueCount: overdueRows.length,
         unassignedCount: unassignedRows.length,
+        blockedCount: blockedRows.length,
+        unacceptedCount: unacceptedRows.length,
+        dueSoonCount: dueSoonRows.length,
+        completedTodayCount,
       },
       riskFeed,
       teamLoad: teamLoad(rows).map((entry) => ({

@@ -1,6 +1,8 @@
 import type {
   Commitment,
   CommitmentCreatePayload,
+  CommitmentEvent,
+  CommitmentSource,
   CommitmentStatus,
   CommitmentUpdatePayload,
 } from "@/lib/commitments/types";
@@ -13,6 +15,12 @@ function normalize(row: {
   description: string | null;
   owner: string | null;
   status: CommitmentStatus;
+  source?: CommitmentSource;
+  blockerReason?: string | null;
+  dueDateRequest?: Commitment["dueDateRequest"];
+  completion?: Commitment["completion"];
+  acknowledgedAt?: string | null;
+  activityTimeline?: CommitmentEvent[];
   dueDate?: string | null;
   due_date?: string | null;
   createdAt?: string;
@@ -27,9 +35,20 @@ function normalize(row: {
     description: row.description,
     owner: row.owner,
     status: row.status,
+    source: row.source ?? "manual",
+    blockerReason: row.blockerReason ?? null,
+    dueDateRequest: row.dueDateRequest ?? null,
+    completion: row.completion ?? {
+      note: null,
+      proofUrl: null,
+      status: "none",
+      managerComment: null,
+    },
+    acknowledgedAt: row.acknowledgedAt ?? null,
     dueDate: row.dueDate ?? row.due_date ?? null,
     createdAt: row.createdAt ?? row.created_at ?? new Date().toISOString(),
     updatedAt: row.updatedAt ?? row.updated_at ?? new Date().toISOString(),
+    activityTimeline: row.activityTimeline ?? [],
   };
 }
 
@@ -58,6 +77,7 @@ export async function createCommitment(payload: CommitmentCreatePayload): Promis
       due_date: payload.dueDate ?? null,
       project_id: payload.projectId,
       status: payload.status ?? "pending",
+      source: payload.source ?? "manual",
     }),
   });
   const data = (await res.json().catch(() => ({}))) as {
@@ -82,6 +102,13 @@ export async function updateCommitment(
       owner: updates.owner,
       due_date: updates.dueDate,
       status: updates.status,
+      blocker_reason: updates.blockerReason,
+      completion_note: updates.completionNote,
+      completion_proof_url: updates.completionProofUrl,
+      manager_decision: updates.managerDecision,
+      manager_comment: updates.managerComment,
+      due_date_request: updates.dueDateRequest,
+      due_date_request_decision: updates.dueDateRequestDecision,
     }),
   });
   const data = (await res.json().catch(() => ({}))) as {

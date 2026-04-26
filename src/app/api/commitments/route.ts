@@ -22,7 +22,10 @@ const postSchema = z
     owner: z.string().max(200).optional().nullable(),
     due_date: z.string().max(64).optional().nullable(),
     project_id: z.string().uuid(),
-    status: z.enum(["pending", "in_progress", "done"]).optional(),
+    status: z
+      .enum(["pending", "accepted", "in_progress", "blocked", "done", "reopened"])
+      .optional(),
+    source: z.enum(["meeting", "email", "slack", "manual"]).optional(),
   })
   .strict();
 
@@ -43,7 +46,12 @@ export async function GET(req: Request) {
   const projectId = url.searchParams.get("project_id") ?? undefined;
   const statusRaw = url.searchParams.get("status");
   const status: CommitmentStatus | "active" | undefined =
-    statusRaw === "pending" || statusRaw === "in_progress" || statusRaw === "done"
+    statusRaw === "pending" ||
+    statusRaw === "accepted" ||
+    statusRaw === "in_progress" ||
+    statusRaw === "blocked" ||
+    statusRaw === "done" ||
+    statusRaw === "reopened"
       ? statusRaw
       : statusRaw === "active"
         ? "active"
@@ -94,6 +102,7 @@ export async function POST(req: Request) {
       owner: body.owner ?? null,
       dueDate: body.due_date ?? null,
       status: body.status ?? "pending",
+      source: body.source ?? "manual",
     });
     return NextResponse.json({ commitment: row });
   } catch (e) {

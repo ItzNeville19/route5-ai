@@ -49,8 +49,15 @@ export default function OverviewPage() {
       <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Active" value={metrics.active} hint="Not done" />
         <MetricCard label="Overdue" value={metrics.overdue} hint="Past due date" />
-        <MetricCard label="At Risk" value={metrics.atRisk} hint="Overdue, stale, or unassigned" />
+        <MetricCard label="At Risk" value={metrics.atRisk} hint="Overdue, blocked, stale, unaccepted, or unassigned" />
         <MetricCard label="Unassigned" value={metrics.unassigned} hint="Owner missing" />
+      </section>
+
+      <section className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Blocked" value={metrics.blocked} hint="Needs unblock action" />
+        <MetricCard label="Unaccepted" value={metrics.unaccepted} hint="Awaiting acknowledgment" />
+        <MetricCard label="Due Soon" value={metrics.dueSoon} hint="Within next 48 hours" />
+        <MetricCard label="Completed Today" value={metrics.completedToday} hint="Done and updated today" />
       </section>
 
       <section className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_8px_22px_-20px_rgba(14,165,233,0.3)]">

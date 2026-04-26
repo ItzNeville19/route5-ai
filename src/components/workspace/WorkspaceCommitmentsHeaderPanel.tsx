@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useCommitments } from "@/components/commitments/CommitmentsProvider";
-import { isAtRisk, isOverdue, isUnassigned } from "@/lib/commitments/derived-metrics";
+import { isAtRisk, isBlocked, isOverdue, isUnaccepted, isUnassigned } from "@/lib/commitments/derived-metrics";
 
 function taskDetailHref(id: string): string {
   return `/desk?focus=${encodeURIComponent(id)}`;
@@ -78,12 +78,25 @@ export default function WorkspaceCommitmentsHeaderPanel() {
     const ranked = active
       .filter((row) => isAtRisk(row))
       .map((row) => {
-        const reason: "overdue" | "unassigned" | "stalled" = isOverdue(row)
+        const reason: "overdue" | "blocked" | "unaccepted" | "unassigned" | "stalled" = isOverdue(row)
           ? "overdue"
+          : isBlocked(row)
+            ? "blocked"
+            : isUnaccepted(row)
+              ? "unaccepted"
           : isUnassigned(row)
             ? "unassigned"
             : "stalled";
-        const urgencyScore = reason === "overdue" ? 100 : reason === "unassigned" ? 80 : 60;
+        const urgencyScore =
+          reason === "overdue"
+            ? 100
+            : reason === "blocked"
+              ? 90
+              : reason === "unaccepted"
+                ? 85
+                : reason === "unassigned"
+                  ? 80
+                  : 60;
         return { row, reason, urgencyScore };
       })
       .sort((a, b) => {
@@ -255,6 +268,10 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                               const reasonKey =
                                 r.reason === "overdue"
                                   ? t("header.commitments.reasonOverdue")
+                                  : r.reason === "blocked"
+                                    ? "Blocked"
+                                    : r.reason === "unaccepted"
+                                      ? "Awaiting acknowledgment"
                                   : r.reason === "unassigned"
                                     ? t("header.commitments.reasonUnassigned")
                                     : t("header.commitments.reasonAtRisk");

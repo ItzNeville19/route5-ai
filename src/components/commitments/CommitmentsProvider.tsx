@@ -15,9 +15,13 @@ import {
   updateCommitment as updateCommitmentRequest,
 } from "@/lib/commitments/client";
 import {
+  completedToday,
   isActive,
   isAtRisk,
+  isBlocked,
+  isDueSoon,
   isOverdue,
+  isUnaccepted,
   isUnassigned,
   teamLoad,
 } from "@/lib/commitments/derived-metrics";
@@ -43,6 +47,10 @@ type CommitmentsContextValue = {
     overdue: number;
     atRisk: number;
     unassigned: number;
+    blocked: number;
+    unaccepted: number;
+    dueSoon: number;
+    completedToday: number;
     teamLoad: Array<{ owner: string; activeCount: number }>;
   };
 };
@@ -111,6 +119,10 @@ export function CommitmentsProvider({ children }: { children: React.ReactNode })
       overdue: rows.filter(isOverdue).length,
       atRisk: rows.filter(isAtRisk).length,
       unassigned: rows.filter(isUnassigned).length,
+      blocked: rows.filter(isBlocked).length,
+      unaccepted: rows.filter(isUnaccepted).length,
+      dueSoon: rows.filter(isDueSoon).length,
+      completedToday: rows.filter(completedToday).length,
       teamLoad: teamLoad(rows),
     };
   }, [filteredCommitments]);
