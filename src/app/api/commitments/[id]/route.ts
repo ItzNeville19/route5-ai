@@ -2,21 +2,17 @@ import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
-import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import {
-  getOrgCommitmentDetail,
-  softDeleteOrgCommitment,
-  updateOrgCommitment,
-} from "@/lib/org-commitments/repository";
-import { broadcastOrgCommitmentEvent } from "@/lib/org-commitments/broadcast";
-import { notifyOrgCommitmentAssignment } from "@/lib/org-commitments/notify-assignment";
+  deleteCommitment,
+  fetchCommitments,
+  updateCommitment,
+} from "@/lib/commitments/repository";
 import {
   enforceRateLimits,
   isWorkspaceResourceId,
   parseJsonBody,
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
-import { verifyProjectOwned } from "@/lib/workspace/store";
 
 export const runtime = "nodejs";
 
@@ -24,12 +20,9 @@ const patchSchema = z
   .object({
     title: z.string().min(1).max(2000).optional(),
     description: z.string().max(20_000).optional().nullable(),
-    ownerId: z.string().min(1).max(128).optional(),
-    projectId: z.string().uuid().nullable().optional(),
-    deadline: z.string().min(1).max(48).optional(),
-    priority: z.enum(["critical", "high", "medium", "low"]).optional(),
-    status: z.enum(["not_started", "in_progress", "on_track", "at_risk", "overdue", "completed"]).optional(),
-    completed: z.boolean().optional(),
+    owner: z.string().max(200).optional().nullable(),
+    due_date: z.string().max(48).optional().nullable(),
+    status: z.enum(["pending", "in_progress", "done"]).optional(),
   })
   .strict();
 
@@ -45,12 +38,12 @@ export async function GET(
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
   try {
-    const orgId = await ensureOrganizationForClerkUser(userId);
-    const detail = await getOrgCommitmentDetail(userId, id);
-    if (!detail) {
+    const commitments = await fetchCommitments(userId);
+    const commitment = commitments.find((row) => row.id === id);
+    if (!commitment) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ orgId, commitment: detail });
+    return NextResponse.json({ commitment });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
   }
@@ -65,7 +58,7 @@ export async function PATCH(
   const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
-    userAndIpRateScopes(req, "org-commitments:patch", userId, {
+    userAndIpRateScopes(req, "commitments:patch", userId, {
       userLimit: 120,
       ipLimit: 240,
     })
@@ -81,38 +74,22 @@ export async function PATCH(
   if (!parsed.ok) return parsed.response;
 
   try {
-    const orgId = await ensureOrganizationForClerkUser(userId);
     const patch = parsed.data;
-    if (patch.projectId) {
-      const owned = await verifyProjectOwned(userId, patch.projectId);
-      if (!owned) {
-        return NextResponse.json({ error: "Invalid project" }, { status: 400 });
+    if (patch.due_date) {
+      const due = new Date(patch.due_date).getTime();
+      if (!Number.isFinite(due)) {
+        return NextResponse.json({ error: "Invalid due date" }, { status: 400 });
       }
     }
-    const { row, previousOwnerId } = await updateOrgCommitment(userId, id, {
+    const row = await updateCommitment(userId, id, {
       title: patch.title,
       description: patch.description,
-      ownerId: patch.ownerId,
-      projectId: patch.projectId,
-      deadline: patch.deadline ? new Date(patch.deadline).toISOString() : undefined,
-      priority: patch.priority,
+      owner: patch.owner,
+      dueDate: patch.due_date,
       status: patch.status,
-      completed: patch.completed,
     });
-    broadcastOrgCommitmentEvent(orgId, { kind: "commitment_updated", id });
-    if (
-      patch.ownerId &&
-      patch.ownerId !== previousOwnerId &&
-      patch.ownerId !== userId
-    ) {
-      void notifyOrgCommitmentAssignment({
-        orgId,
-        ownerClerkId: patch.ownerId,
-        title: row.title,
-        deadline: row.deadline,
-        priority: row.priority,
-        commitmentId: row.id,
-      });
+    if (!row) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json({ commitment: row });
   } catch (e) {
@@ -132,7 +109,7 @@ export async function DELETE(
   const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
-    userAndIpRateScopes(req, "org-commitments:delete", userId, {
+    userAndIpRateScopes(req, "commitments:delete", userId, {
       userLimit: 40,
       ipLimit: 80,
     })
@@ -145,12 +122,10 @@ export async function DELETE(
   }
 
   try {
-    const orgId = await ensureOrganizationForClerkUser(userId);
-    const ok = await softDeleteOrgCommitment(userId, id);
+    const ok = await deleteCommitment(userId, id);
     if (!ok) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    broadcastOrgCommitmentEvent(orgId, { kind: "commitment_deleted", id });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });

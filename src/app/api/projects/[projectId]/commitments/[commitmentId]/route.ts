@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import {
-  deleteCommitmentForUser,
-  updateCommitmentForUser,
-} from "@/lib/workspace/store";
+  deleteCommitment,
+  fetchCommitments,
+  updateCommitment,
+} from "@/lib/commitments/repository";
 import {
   enforceRateLimits,
   isWorkspaceResourceId,
@@ -19,12 +20,9 @@ const patchSchema = z
   .object({
     title: z.string().min(1).max(2000).optional(),
     description: z.string().max(20_000).optional().nullable(),
-    ownerUserId: z.string().max(128).optional().nullable(),
-    ownerDisplayName: z.string().max(200).optional().nullable(),
-    status: z.enum(["active", "at_risk", "overdue", "completed"]).optional(),
-    priority: z.enum(["low", "medium", "high"]).optional(),
+    owner: z.string().max(200).optional().nullable(),
+    status: z.enum(["pending", "in_progress", "done"]).optional(),
     dueDate: z.string().max(48).optional().nullable(),
-    note: z.string().min(1).max(20_000).optional(),
   })
   .strict();
 
@@ -53,7 +51,11 @@ export async function PATCH(
   if (!parsed.ok) return parsed.response;
 
   try {
-    const commitment = await updateCommitmentForUser(userId, projectId, commitmentId, parsed.data);
+    const existing = await fetchCommitments(userId, { projectId });
+    if (!existing.some((row) => row.id === commitmentId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const commitment = await updateCommitment(userId, commitmentId, parsed.data);
     if (!commitment) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -85,7 +87,11 @@ export async function DELETE(
   }
 
   try {
-    const ok = await deleteCommitmentForUser(userId, projectId, commitmentId);
+    const existing = await fetchCommitments(userId, { projectId });
+    if (!existing.some((row) => row.id === commitmentId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const ok = await deleteCommitment(userId, commitmentId);
     if (!ok) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

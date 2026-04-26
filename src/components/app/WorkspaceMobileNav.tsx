@@ -2,10 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
-import { BarChart3, Keyboard, ListChecks, ListTodo, Settings } from "lucide-react";
-import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
+import { BarChart3, Keyboard, ListChecks, Settings } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 function LinkTab({
@@ -54,11 +51,8 @@ function ShortcutsTab({ label }: { label: string }) {
 }
 
 export default function WorkspaceMobileNav() {
-  const { user } = useUser();
   const pathname = usePathname() ?? "";
   const path = pathname.split("?")[0] ?? pathname;
-  const { orgUiPolicy, orgRole } = useWorkspaceData();
-  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole, user?.id ?? null);
   const { t } = useI18n();
 
   return (
@@ -66,24 +60,10 @@ export default function WorkspaceMobileNav() {
       className="route5-brand-mobile-nav-edge fixed inset-x-0 bottom-0 z-40 flex h-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] items-stretch border-t border-r5-border-subtle pb-[max(0px,env(safe-area-inset-bottom))] pt-[var(--r5-space-2)] backdrop-blur-xl md:hidden [@media(pointer:fine)]:hidden"
       aria-label="Primary"
     >
-      {show("home") ? (
-        <LinkTab href="/overview" label="Home" icon={BarChart3} active={path === "/overview" || path === "/leadership"} />
-      ) : null}
-      {show("desk") ? (
-        <LinkTab href="/desk" label="Desk" icon={ListChecks} active={path === "/desk" || path === "/feed"} />
-      ) : null}
-      {show("tasks") ? (
-        <LinkTab
-          href="/workspace/commitments"
-          label="Tasks"
-          icon={ListTodo}
-          active={path.startsWith("/workspace/commitments")}
-        />
-      ) : null}
+      <LinkTab href="/overview" label="Home" icon={BarChart3} active={path === "/overview" || path === "/leadership"} />
+      <LinkTab href="/desk" label="Desk" icon={ListChecks} active={path === "/desk" || path === "/feed"} />
       <ShortcutsTab label={t("sidebar.shortcuts")} />
-      {show("settings") ? (
-        <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
-      ) : null}
+      <LinkTab href="/settings" label="Settings" icon={Settings} active={path === "/settings"} />
     </nav>
   );
 }

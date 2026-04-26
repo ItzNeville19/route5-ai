@@ -573,8 +573,33 @@ export function buildPaletteItems(params: {
     ...site,
     ...legalSignedIn,
   ]);
+  const blockedHrefPrefixes = [
+    "/capture",
+    "/workspace/commitments",
+    "/workspace/org-feed",
+    "/workspace/dashboard",
+    "/workspace/assign-task",
+    "/workspace/team-work",
+    "/workspace/team",
+    "/workspace/billing",
+    "/workspace/apps",
+    "/workspace/developer",
+    "/workspace/escalations",
+    "/workspace/audit",
+    "/workspace/integrations",
+    "/workspace/digest",
+    "/workspace/my-inbox",
+  ];
+  const mvpList = list.filter((item) => {
+    if (item.action === "open-capture" || item.action === "open-new-task") return false;
+    const href = item.href;
+    if (!href) return true;
+    return !blockedHrefPrefixes.some(
+      (prefix) => href === prefix || href.startsWith(`${prefix}/`)
+    );
+  });
   if (!canCreateCompany) {
-    return list.filter((item) => item.id !== "new-project");
+    return mvpList.filter((item) => item.id !== "new-project");
   }
-  return list;
+  return mvpList;
 }

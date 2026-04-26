@@ -11,6 +11,7 @@ import { getWorkspaceIanaTimeZone } from "@/lib/workspace-regions";
 import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
 import {
   PHOTO_FALLBACK_PUBLIC,
+  overviewHeroMeshStyle,
   pickWorkspaceThemePhoto,
   workspacePhotoUrl,
 } from "@/lib/workspace-theme-photos";
@@ -59,8 +60,9 @@ export default function DeskGreetingBubble() {
   /** One photograph + light bottom fade for text — no decorative mesh overlays. Rotates daily per theme pool. */
   const placePhoto = useMemo(
     () => pickWorkspaceThemePhoto(liveTheme.resolvedId, new Date()),
-    [liveTheme.resolvedId, minuteClockTick]
+    [liveTheme.resolvedId]
   );
+  const canvasMode = (exp.prefs.workspaceCanvasBackground ?? "gradient") === "photo" ? "photo" : "gradient";
 
   const placePhotoUrl = workspacePhotoUrl(placePhoto.path, 960);
   const imgSrc = photoFailed ? PHOTO_FALLBACK_PUBLIC : placePhotoUrl;
@@ -75,31 +77,38 @@ export default function DeskGreetingBubble() {
         className="relative w-full max-w-[min(100%,26rem)] overflow-hidden rounded-[28px] border border-white/[0.14] shadow-[0_0_0_1px_rgba(56,189,248,0.06),0_28px_56px_-20px_rgba(0,0,0,0.45),0_12px_40px_-12px_rgba(14,165,233,0.12)] sm:max-w-lg"
         aria-label={`${headline} ${contextLine}`}
       >
-        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imgSrc}
-            alt=""
-            className="h-full min-h-[12.5rem] w-full scale-105 object-cover object-center"
-            decoding="async"
-            loading="eager"
-            onError={() => setPhotoFailed(true)}
-          />
+        {canvasMode === "photo" ? (
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc}
+              alt=""
+              className="h-full min-h-[12.5rem] w-full scale-105 object-cover object-center"
+              decoding="async"
+              loading="eager"
+              onError={() => setPhotoFailed(true)}
+            />
+            <div
+              className="absolute inset-0"
+              aria-hidden
+              style={{
+                backgroundImage: placePhoto.scrim,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }}
+            />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-slate-950/[0.82] via-slate-950/35 to-transparent"
+              aria-hidden
+            />
+          </div>
+        ) : (
           <div
-            className="absolute inset-0"
-            aria-hidden
-            style={{
-              backgroundImage: placePhoto.scrim,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-          />
-          {/* Single legibility ramp — text only */}
-          <div
-            className="absolute inset-0 bg-gradient-to-t from-slate-950/[0.82] via-slate-950/35 to-transparent"
+            className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-[inherit]"
+            style={overviewHeroMeshStyle("afternoon", 0)}
             aria-hidden
           />
-        </div>
+        )}
 
         <div className="relative z-[6] px-7 pb-11 pt-9 text-center sm:px-9 sm:pb-12 sm:pt-10">
           <p

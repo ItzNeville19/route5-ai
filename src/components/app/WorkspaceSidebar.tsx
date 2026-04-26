@@ -6,24 +6,16 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import type { LucideIcon } from "lucide-react";
 import {
-  BarChart3,
   Bell,
-  ClipboardList,
-  CreditCard,
   Keyboard,
   LifeBuoy,
-  Layers3,
   LayoutGrid,
-  ListTodo,
-  Palette,
-  PenSquare,
+  Home,
   Settings,
-  Users,
 } from "lucide-react";
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
-import { isNavKeyVisible, type OrgNavKey } from "@/lib/org-ui-policy";
 import { ROUTE5_SIGNATURE } from "@/lib/brand-signature";
 
 const tierLabel =
@@ -95,14 +87,12 @@ function NavRow({
 
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
+  const { entitlements } = useWorkspaceData();
   const { user } = useUser();
-  const { entitlements, orgUiPolicy, orgRole, loadingOrganization } = useWorkspaceData();
-  const show = (k: OrgNavKey) => isNavKeyVisible(k, orgUiPolicy, orgRole, user?.id ?? null);
   const { t } = useI18n();
   const path = pathname ?? "";
   const displayName =
     user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
-  const adminView = !loadingOrganization && orgRole !== "member";
 
   return (
     <aside
@@ -126,126 +116,45 @@ export default function WorkspaceSidebar() {
           className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)]"
           aria-label={t("sidebar.navAria")}
         >
-          <p className="px-[var(--r5-space-3)] pb-1 pt-1 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.14em] text-r5-text-tertiary">
-            {adminView ? "ADMIN WORKSPACE" : "MY WORKSPACE"}
-          </p>
+          <div className="mb-2 rounded-xl bg-gradient-to-r from-[#6366f1] via-[#8b5cf6] to-[#22c55e] p-[1px]">
+            <div className="rounded-[10px] bg-r5-surface-primary px-3 py-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
+                Workspace
+              </p>
+            </div>
+          </div>
           <div className="space-y-[var(--r5-space-1)]">
-            {adminView ? (
-              <>
-                <NavSectionTitle>ORG OVERVIEW</NavSectionTitle>
-                <NavRow
-                  href="/workspace/org-feed"
-                  active={path.startsWith("/workspace/org-feed")}
-                  icon={Layers3}
-                  label="Org Feed"
-                />
-                <NavRow
-                  href="/workspace/dashboard"
-                  active={path.startsWith("/workspace/dashboard")}
-                  icon={BarChart3}
-                  label="Org Dashboard"
-                />
-
-                <NavSectionTitle>ACTIONS</NavSectionTitle>
-                <NavRow
-                  href="/desk"
-                  active={path === "/desk" || path === "/feed"}
-                  icon={LayoutGrid}
-                  label="Desk"
-                />
-                <NavRow
-                  href="/capture"
-                  active={path === "/capture"}
-                  icon={PenSquare}
-                  label="Capture"
-                />
-                <NavRow
-                  href="/workspace/assign-task"
-                  active={path.startsWith("/workspace/assign-task")}
-                  icon={ClipboardList}
-                  label="Assign Task"
-                />
-
-                <NavSectionTitle>PEOPLE</NavSectionTitle>
-                <NavRow
-                  href="/workspace/organization"
-                  active={path === "/workspace/team" || path === "/workspace/organization"}
-                  icon={Users}
-                  label="Organization"
-                />
-              </>
-            ) : (
-              <>
-                <NavSectionTitle>MY WORK</NavSectionTitle>
-                <NavRow
-                  href="/workspace/my-inbox"
-                  active={path.startsWith("/workspace/my-inbox")}
-                  icon={Layers3}
-                  label="My Inbox"
-                />
-                <NavRow
-                  href="/capture"
-                  active={path === "/capture"}
-                  icon={PenSquare}
-                  label="Capture (AI)"
-                />
-                <NavRow
-                  href="/workspace/commitments"
-                  active={path.startsWith("/workspace/commitments")}
-                  icon={ListTodo}
-                  label="My Tasks"
-                />
-              </>
-            )}
+            <NavRow href="/overview" active={path === "/overview"} icon={Home} label="Home" />
+            <NavRow
+              href="/desk"
+              active={path === "/desk" || path === "/feed"}
+              icon={LayoutGrid}
+              label="Desk"
+            />
           </div>
 
           <div className="my-[var(--r5-space-3)] h-px bg-r5-border-subtle" role="separator" aria-hidden />
 
           <div className="space-y-[var(--r5-space-1)]">
-            <NavSectionTitle>ACCOUNT</NavSectionTitle>
-            <NavRow
-              active={false}
-              icon={Keyboard}
-              label={t("sidebar.shortcuts")}
-              onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
-            />
-            {show("customize") ? (
-              <NavRow
-                href="/workspace/customize"
-                active={path === "/workspace/customize"}
-                icon={Palette}
-                label={t("sidebar.customize")}
-              />
-            ) : null}
-            {show("help") ? (
-              <NavRow
-                href="/workspace/help"
-                active={path === "/workspace/help"}
-                icon={LifeBuoy}
-                label="Help"
-              />
-            ) : null}
-            {show("settings") ? (
-              <NavRow
-                href="/settings"
-                active={path === "/settings"}
-                icon={Settings}
-                label={adminView ? "Settings (org-wide)" : "Settings (personal)"}
-              />
-            ) : null}
-            {adminView && show("billing") ? (
-              <NavRow
-                href="/workspace/billing"
-                active={path.startsWith("/workspace/billing")}
-                icon={CreditCard}
-                label="Billing"
-              />
-            ) : null}
+            <NavSectionTitle>Utilities</NavSectionTitle>
             <NavRow
               active={false}
               icon={Bell}
               label="Notifications"
               onClick={() => window.dispatchEvent(new Event("route5:notifications-open"))}
+            />
+            <NavRow
+              href="/settings"
+              active={path === "/settings"}
+              icon={Settings}
+              label="Settings"
+            />
+            <NavRow href="/workspace/help" active={path === "/workspace/help"} icon={LifeBuoy} label="Help" />
+            <NavRow
+              active={false}
+              icon={Keyboard}
+              label={t("sidebar.shortcuts")}
+              onClick={() => window.dispatchEvent(new Event("route5:shortcuts-open"))}
             />
           </div>
         </nav>

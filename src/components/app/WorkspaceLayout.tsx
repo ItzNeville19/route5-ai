@@ -27,6 +27,7 @@ import WorkspaceBillingBanner from "@/components/billing/WorkspaceBillingBanner"
 import WorkspacePersistenceBanner from "@/components/workspace/WorkspacePersistenceBanner";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesProvider";
+import { CommitmentsProvider } from "@/components/commitments/CommitmentsProvider";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -95,14 +96,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   }, [exp, sidebarHidden]);
 
   useEffect(() => {
-    const core = [
-      "/desk",
-      "/feed",
-      "/projects",
-      "/overview",
-      "/workspace/escalations",
-      "/workspace/dashboard",
-    ];
+    const core = ["/overview", "/desk", "/settings", "/workspace/help"];
     core.forEach((path) => router.prefetch(path));
   }, [router]);
 
@@ -171,7 +165,9 @@ export default function WorkspaceLayout({
             <BillingLimitQueryListener />
             <CaptureProvider>
               <MemberProfilesProvider>
-                <WorkspaceShell>{children}</WorkspaceShell>
+                <CommitmentsProvider>
+                  <WorkspaceShell>{children}</WorkspaceShell>
+                </CommitmentsProvider>
               </MemberProfilesProvider>
             </CaptureProvider>
           </BillingUpgradeProvider>

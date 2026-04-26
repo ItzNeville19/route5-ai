@@ -5,27 +5,12 @@ import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
-import {
-  X,
-  BarChart3,
-  ClipboardList,
-  Layers3,
-  LayoutGrid,
-  PenSquare,
-  Users,
-  Palette,
-  LifeBuoy,
-  Settings,
-  CreditCard,
-  ListTodo,
-  Keyboard,
-} from "lucide-react";
+import { X, LayoutGrid, Home, LifeBuoy, Settings, Bell, Keyboard } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
-const tierLabel =
-  process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
+const tierLabel = process.env.NEXT_PUBLIC_WORKSPACE_TIER_PRIMARY?.trim() || "Pro";
 
 type WorkspaceMobileSidebarProps = {
   open: boolean;
@@ -34,72 +19,36 @@ type WorkspaceMobileSidebarProps = {
 
 type NavItem =
   | { href: string; label: string; icon: LucideIcon }
-  | { href: "__shortcuts__"; label: string; icon: LucideIcon };
+  | { href: "__shortcuts__" | "__notifications__"; label: string; icon: LucideIcon };
 
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements, orgRole, loadingOrganization } = useWorkspaceData();
+  const { entitlements } = useWorkspaceData();
   const { t } = useI18n();
-  const displayName =
-    user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
-  const adminView = !loadingOrganization && orgRole !== "member";
+  const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
-  const navSections = useMemo(() => {
-    const sections: Array<{
-      title: string;
-      items: NavItem[];
-    }> = [
-      ...(adminView
-        ? [
-            {
-              title: "ORG OVERVIEW",
-              items: [
-                { href: "/workspace/org-feed", label: "Org Feed", icon: Layers3 },
-                { href: "/workspace/dashboard", label: "Org Dashboard", icon: BarChart3 },
-              ],
-            },
-            {
-              title: "ACTIONS",
-              items: [
-                { href: "/desk", label: "Desk", icon: LayoutGrid },
-                { href: "/capture", label: "Capture", icon: PenSquare },
-                { href: "/workspace/assign-task", label: "Assign Task", icon: ClipboardList },
-              ],
-            },
-            {
-              title: "PEOPLE",
-              items: [{ href: "/workspace/organization", label: "Organization", icon: Users }],
-            },
-          ]
-        : [
-            {
-              title: "MY WORK",
-              items: [
-                { href: "/workspace/my-inbox", label: "My Inbox", icon: Layers3 },
-                { href: "/capture", label: "Capture (AI)", icon: PenSquare },
-                { href: "/workspace/commitments", label: "My Tasks", icon: ListTodo },
-              ],
-            },
-          ]),
-    ];
-    sections.push({
-      title: "ACCOUNT",
-      items: [
-        { href: "__shortcuts__" as const, label: t("sidebar.shortcuts"), icon: Keyboard },
-        { href: "/workspace/customize", label: "Customize", icon: Palette },
-        { href: "/workspace/help", label: "Help", icon: LifeBuoy },
-        { href: "/settings", label: adminView ? "Settings (org-wide)" : "Settings (personal)", icon: Settings },
-        ...(adminView ? [{ href: "/workspace/billing", label: "Billing", icon: CreditCard }] : []),
-      ],
-    });
-    return sections;
-  }, [t, adminView]);
-
-  const openShortcuts = () => {
-    window.dispatchEvent(new Event("route5:shortcuts-open"));
-    onClose();
-  };
+  const navSections = useMemo(
+    () => [
+      {
+        title: "Workspace",
+        items: [
+          { href: "/overview", label: "Home", icon: Home },
+          { href: "/desk", label: "Desk", icon: LayoutGrid },
+        ] satisfies NavItem[],
+      },
+      {
+        title: "Utilities",
+        items: [
+          { href: "__notifications__", label: "Notifications", icon: Bell },
+          { href: "/settings", label: "Settings", icon: Settings },
+          { href: "/workspace/help", label: "Help", icon: LifeBuoy },
+          { href: "__shortcuts__", label: t("sidebar.shortcuts"), icon: Keyboard },
+        ] satisfies NavItem[],
+      },
+    ],
+    [t]
+  );
 
   return (
     <div
@@ -119,7 +68,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           <div>
             <p className="text-sm font-semibold text-r5-text-primary">Route5</p>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary">
-              {adminView ? "ADMIN WORKSPACE" : "MY WORKSPACE"}
+              Workspace
             </p>
           </div>
           <button
@@ -146,7 +95,26 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                       <button
                         key={`${section.title}-${item.label}`}
                         type="button"
-                        onClick={openShortcuts}
+                        onClick={() => {
+                          window.dispatchEvent(new Event("route5:shortcuts-open"));
+                          onClose();
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                      >
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  }
+                  if (item.href === "__notifications__") {
+                    return (
+                      <button
+                        key={`${section.title}-${item.label}`}
+                        type="button"
+                        onClick={() => {
+                          window.dispatchEvent(new Event("route5:notifications-open"));
+                          onClose();
+                        }}
                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-r5-text-secondary hover:bg-r5-surface-hover hover:text-r5-text-primary"
                       >
                         <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -187,8 +155,7 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
                   ...route5ClerkAppearance.elements,
                   avatarBox: "h-9 w-9 overflow-hidden rounded-full ring-1 ring-[var(--r5-border-subtle)]",
                   userButtonAvatarImage: "h-full w-full object-cover",
-                  userButtonPopoverCard:
-                    "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
+                  userButtonPopoverCard: "border border-white/10 bg-[#0a0a0a] text-[#fafafa] shadow-2xl",
                 },
               }}
             />

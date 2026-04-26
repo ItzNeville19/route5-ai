@@ -55,6 +55,24 @@ function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
   );
 }
 
+function GradientPreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
+  const gradients: Partial<Record<Exclude<WorkspaceThemeId, "auto">, string>> = {
+    sunrise: "linear-gradient(135deg,#fef3c7,#fde68a,#f5d0fe)",
+    ocean: "linear-gradient(135deg,#bae6fd,#67e8f9,#c4b5fd)",
+    lagunabeach: "linear-gradient(135deg,#99f6e4,#93c5fd,#c4b5fd)",
+    vegas: "linear-gradient(135deg,#1e1b4b,#7c3aed,#ec4899)",
+    nyc: "linear-gradient(135deg,#0f172a,#334155,#6366f1)",
+    dark: "linear-gradient(135deg,#0f172a,#111827,#000000)",
+    light: "linear-gradient(135deg,#f8fafc,#e2e8f0,#ede9fe)",
+  };
+  const bg = gradients[id] ?? "linear-gradient(135deg,#e2e8f0,#c4b5fd,#a3e635)";
+  return (
+    <div className="relative h-14 w-full overflow-hidden rounded-lg border border-black/10 shadow-inner dark:border-white/15">
+      <div className="absolute inset-0" style={{ backgroundImage: bg }} />
+    </div>
+  );
+}
+
 function AutoThemePreviewThumb() {
   const remote = workspacePhotoUrl(WORKSPACE_THEME_AUTO_PREVIEW_PATH, 520);
   const [src, setSrc] = useState(remote);
@@ -189,7 +207,7 @@ export default function WorkspaceThemeSection() {
                 {isAuto ? (
                   <AutoThemePreviewThumb />
                 ) : (
-                  <ThemePreviewSwatch id={id} />
+                  canvasBg === "photo" ? <ThemePreviewSwatch id={id} /> : <GradientPreviewSwatch id={id} />
                 )}
               </div>
               <div className="p-3 pt-2">
