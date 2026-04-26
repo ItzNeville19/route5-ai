@@ -176,6 +176,11 @@ export default function WorkspaceOrganizationClient() {
     () => sortedMembers.filter((m) => m.role !== "admin"),
     [sortedMembers]
   );
+  const adminCount = useMemo(
+    () => sortedMembers.filter((member) => member.role === "admin").length,
+    [sortedMembers]
+  );
+  const canClaimFounderAccess = Boolean(state?.me.userId) && !isAdmin && adminCount === 0;
 
   useEffect(() => {
     if (visibilityScope !== "member") return;
@@ -223,6 +228,30 @@ export default function WorkspaceOrganizationClient() {
         setNotice(data.error ?? "Could not update role.");
         return;
       }
+      await load();
+    } finally {
+      setBusyMemberId(null);
+    }
+  }
+
+  async function claimFounderAccess() {
+    const me = state?.me.userId;
+    if (!me) return;
+    setBusyMemberId(me);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/workspace/organization/members/${encodeURIComponent(me)}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: "admin" }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setNotice(data.error ?? "Could not claim founder access.");
+        return;
+      }
+      setNotice("Founder access enabled. You now have full admin controls.");
       await load();
     } finally {
       setBusyMemberId(null);
@@ -377,9 +406,21 @@ export default function WorkspaceOrganizationClient() {
           </button>
         </div>
         {!isAdmin ? (
-          <p className="mt-2 text-[12px] text-slate-500 dark:text-slate-400">
-            Only admins can invite members.
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <p className="text-[12px] text-slate-500 dark:text-slate-400">
+              Only admins can invite members.
+            </p>
+            {canClaimFounderAccess ? (
+              <button
+                type="button"
+                onClick={() => void claimFounderAccess()}
+                disabled={busyMemberId === state?.me.userId}
+                className="min-h-9 rounded-lg border border-emerald-400/35 bg-emerald-500/10 px-3 text-[12px] font-semibold text-emerald-200 disabled:opacity-50"
+              >
+                {busyMemberId === state?.me.userId ? "Claiming..." : "Claim founder access"}
+              </button>
+            ) : null}
+          </div>
         ) : null}
       </section>
 

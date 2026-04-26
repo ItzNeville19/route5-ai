@@ -13,6 +13,7 @@ export type RegionOption = { key: string; label: string };
 /** Regions per IANA zone (same offset; labels are how we *say* the place in UI). */
 export const REGIONS_BY_IANA: Record<string, RegionOption[]> = {
   "America/New_York": [
+    { key: "bidford_ny", label: "Bidford, NY" },
     { key: "nyc", label: "New York City" },
     { key: "long_island", label: "Long Island" },
     { key: "nassau_ny", label: "Nassau County, NY" },
@@ -142,7 +143,7 @@ export const REGIONS_BY_IANA: Record<string, RegionOption[]> = {
  * maps the system clock zone (from `Intl`) to a friendly “you are here” label.
  */
 export const PREFERRED_REGION_KEY_BY_IANA: Record<string, string> = {
-  "America/New_York": "pittsford_ny",
+  "America/New_York": "bidford_ny",
   "America/Chicago": "chicago_il",
   "America/Denver": "denver_co",
   "America/Los_Angeles": "los_angeles_ca",

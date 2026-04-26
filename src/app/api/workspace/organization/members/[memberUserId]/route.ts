@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/auth/require-user";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import {
+  listOrganizationMembers,
   removeOrganizationMember,
   requireOrgRole,
   updateOrganizationMemberRole,
@@ -26,9 +27,6 @@ export async function PATCH(
   const { userId } = authz;
   const orgId = await ensureOrganizationForClerkUser(userId);
   const access = await requireOrgRole(userId, ["admin"]);
-  if (!access.ok || access.orgId !== orgId) {
-    return NextResponse.json({ error: "Only admins can update roles" }, { status: 403 });
-  }
 
   const { memberUserId } = await ctx.params;
   let body: { role?: string };
@@ -39,6 +37,18 @@ export async function PATCH(
   }
   const role = normalizeRole(body.role);
   if (!role) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  const isSelfPromotionAttempt = memberUserId === userId && role === "admin";
+  const canAdminMutate = access.ok && access.orgId === orgId;
+  let canBootstrapPromote = false;
+  if (!canAdminMutate && isSelfPromotionAttempt) {
+    const members = await listOrganizationMembers(orgId);
+    const adminCount = members.filter((member) => member.role === "admin").length;
+    canBootstrapPromote = adminCount === 0;
+  }
+  if (!canAdminMutate && !canBootstrapPromote) {
+    return NextResponse.json({ error: "Only admins can update roles" }, { status: 403 });
+  }
+
   if (memberUserId === userId && role !== "admin") {
     return NextResponse.json(
       { error: "Admins cannot demote themselves through this endpoint" },
