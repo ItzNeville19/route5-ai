@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useCommitments } from "@/components/commitments/CommitmentsProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -29,6 +30,7 @@ const STATUS_LABEL: Record<CommitmentStatus, string> = {
 };
 
 export default function CommitmentDesk() {
+  const searchParams = useSearchParams();
   const { user } = useUser();
   const { projects, loadingProjects } = useWorkspaceData();
   const {
@@ -57,6 +59,16 @@ export default function CommitmentDesk() {
   const [detailOwner, setDetailOwner] = useState("");
   const [detailDueDate, setDetailDueDate] = useState("");
   const [detailStatus, setDetailStatus] = useState<CommitmentStatus>("pending");
+
+  useEffect(() => {
+    const focusId = searchParams.get("focus");
+    if (focusId) setSelectedId(focusId);
+    const filterParam = searchParams.get("filter");
+    if (filterParam === "all") setFilter("all");
+    if (filterParam === "my_work") setFilter("my_work");
+    if (filterParam === "at_risk" || filterParam === "unassigned") setFilter("at_risk");
+    if (filterParam === "overdue") setFilter("overdue");
+  }, [searchParams]);
 
   useEffect(() => {
     if (projectId) return;

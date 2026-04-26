@@ -1,23 +1,31 @@
 /**
- * Deep links from dashboard metric tiles → org commitments tracker (`/workspace/commitments`)
- * or Desk (`/desk`) when filters are project-scoped (e.g. no owner).
+ * Deep links for commitment execution now resolve to Desk only.
+ * Commitment filtering is a view over one canonical dataset.
  */
 
 import { deskUrl } from "@/lib/desk-routes";
 
-export const ORG_COMMITMENTS = "/workspace/commitments";
+export const ORG_COMMITMENTS = "/desk";
 
-/** Org-wide tracker; optional API `status` (matches OrgCommitmentTracker). */
+/** Commitment tracker is Desk with optional filter. */
 export function orgCommitmentsHref(status?: string): string {
-  if (!status) return ORG_COMMITMENTS;
-  return `${ORG_COMMITMENTS}?status=${encodeURIComponent(status)}`;
+  const base = deskUrl();
+  if (!status) return base;
+  const u = new URL(base, "https://route5.local");
+  if (status === "my") u.searchParams.set("filter", "my_work");
+  else if (status === "overdue") u.searchParams.set("filter", "overdue");
+  else if (status === "at_risk" || status === "unassigned") u.searchParams.set("filter", "at_risk");
+  else u.searchParams.set("filter", "all");
+  return `${u.pathname}${u.search}`;
 }
 
 /** Desk with `filter=` for triage modes that map to desk tabs (requires a project selection on Desk). */
 export function deskFilteredHref(filter: "unassigned" | "overdue" | "at_risk" | "my" | "history"): string {
   const base = deskUrl();
   const u = new URL(base, "https://route5.local");
-  u.searchParams.set("filter", filter);
+  const normalized =
+    filter === "my" ? "my_work" : filter === "history" ? "all" : filter;
+  u.searchParams.set("filter", normalized);
   return `${u.pathname}${u.search}`;
 }
 
@@ -27,7 +35,11 @@ export type DeskFilterParam = "open" | "my" | "at_risk" | "overdue" | "unassigne
 export function deskHrefWithProjectFilter(projectId: string | undefined, filter: DeskFilterParam): string {
   const base = deskUrl(projectId ? { projectId } : {});
   const u = new URL(base, "https://route5.local");
-  if (filter !== "open") u.searchParams.set("filter", filter);
+  if (filter !== "open") {
+    const normalized =
+      filter === "my" ? "my_work" : filter === "history" ? "all" : filter;
+    u.searchParams.set("filter", normalized);
+  }
   else u.searchParams.delete("filter");
   return `${u.pathname}${u.search}`;
 }
@@ -41,10 +53,10 @@ export function executionMetricFallbackHrefs(): {
   weekClosed: string;
 } {
   return {
-    active: ORG_COMMITMENTS,
+    active: deskUrl(),
     overdue: orgCommitmentsHref("overdue"),
     atRisk: orgCommitmentsHref("at_risk"),
-    unassigned: ORG_COMMITMENTS,
-    weekClosed: orgCommitmentsHref("completed"),
+    unassigned: orgCommitmentsHref("unassigned"),
+    weekClosed: deskUrl(),
   };
 }

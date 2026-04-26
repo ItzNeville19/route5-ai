@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,18 +12,16 @@ import {
   ChevronRight,
   Circle,
   ListTodo,
-  Loader2,
   Plus,
   UserRound,
   X,
 } from "lucide-react";
 import { useI18n } from "@/components/i18n/I18nProvider";
-import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
-import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
-import { orgCommitmentsHref } from "@/lib/workspace/commitment-links";
+import { useCommitments } from "@/components/commitments/CommitmentsProvider";
+import { isAtRisk, isOverdue, isUnassigned } from "@/lib/commitments/derived-metrics";
 
 function taskDetailHref(id: string): string {
-  return `/workspace/commitments?id=${encodeURIComponent(id)}`;
+  return `/desk?focus=${encodeURIComponent(id)}`;
 }
 
 const META_LINE =
@@ -42,77 +40,13 @@ function cleanTaskTitle(raw: string | undefined | null): string {
   return t.length > 200 ? `${t.slice(0, 197)}…` : t;
 }
 
-function isGenericProjectLabel(name: string | undefined) {
-  const n = (name ?? "").trim().toLowerCase();
-  return n === "company" || n === "project" || n === "no company";
-}
-
 /** iOS Reminders–inspired panel: neutral grays, rounded groups, checklist rows, no “notification” badge. */
 export default function WorkspaceCommitmentsHeaderPanel() {
   const { t, intlLocale } = useI18n();
   const pathname = usePathname();
   const onDesk = pathname === "/desk" || pathname?.startsWith("/desk/");
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [overview, setOverview] = useState<ExecutionOverview | null>(null);
-
-  const loadExecution = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/workspace/execution", { credentials: "same-origin" });
-      const data = (await res.json().catch(() => ({}))) as { overview?: ExecutionOverview };
-      if (res.ok && data.overview) {
-        setOverview(data.overview);
-        return;
-      }
-      const fallbackRes = await fetch("/api/commitments?sort=deadline&order=asc", {
-        credentials: "same-origin",
-      });
-      const fallbackData = (await fallbackRes.json().catch(() => ({}))) as {
-        commitments?: OrgCommitmentRow[];
-      };
-      if (!fallbackRes.ok) {
-        setOverview(null);
-        return;
-      }
-      const rows = fallbackData.commitments ?? [];
-      const openRows = rows.filter((row) => row.status !== "completed");
-      const fallbackOverview = {
-        summary: {
-          activeTotal: openRows.length,
-          pctCompletedThisWeek: 0,
-          atRiskCount: openRows.filter((row) => row.status === "at_risk").length,
-          overdueCount: openRows.filter((row) => row.status === "overdue").length,
-          unassignedCount: openRows.filter((row) => !row.ownerId?.trim()).length,
-        },
-        riskFeed: openRows
-          .filter((row) => row.status === "overdue" || row.status === "at_risk" || !row.ownerId?.trim())
-          .slice(0, 12)
-          .map((row) => ({
-            id: row.id,
-            title: row.title,
-            ownerUserId: row.ownerId?.trim() || null,
-            ownerLabel: row.ownerId?.trim() || "Unassigned",
-            projectId: row.projectId ?? "",
-            projectName: row.projectId ? "Company" : "No company",
-            riskReason: row.status === "overdue" ? "overdue" : !row.ownerId?.trim() ? "unassigned" : "stalled",
-            urgencyScore: row.status === "overdue" ? 3 : !row.ownerId?.trim() ? 2 : 1,
-            dueDate: row.deadline,
-          })) as unknown as CommitmentRiskItem[],
-        teamLoad: [],
-        recentActivity: [],
-        conflictingDeadlines: [],
-      } as ExecutionOverview;
-      setOverview(fallbackOverview);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    void loadExecution();
-  }, [open, loadExecution]);
+  const { filteredCommitments, loading } = useCommitments();
 
   useEffect(() => {
     if (!open) return;
@@ -123,8 +57,43 @@ export default function WorkspaceCommitmentsHeaderPanel() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const summary = overview?.summary;
-  const riskPreview = useMemo(() => overview?.riskFeed.slice(0, 12) ?? [], [overview]);
+  const summary = useMemo(() => {
+    const active = filteredCommitments.filter((row) => row.status !== "done");
+    const overdue = active.filter((row) => isOverdue(row)).length;
+    const unassigned = active.filter((row) => isUnassigned(row)).length;
+    const atRisk = active.filter((row) => isAtRisk(row)).length;
+    const done = filteredCommitments.filter((row) => row.status === "done").length;
+    const total = Math.max(1, filteredCommitments.length);
+    return {
+      activeTotal: active.length,
+      overdueCount: overdue,
+      atRiskCount: atRisk,
+      unassignedCount: unassigned,
+      pctCompletedThisWeek: Math.round((done / total) * 100),
+    };
+  }, [filteredCommitments]);
+
+  const riskPreview = useMemo(() => {
+    const active = filteredCommitments.filter((row) => row.status !== "done");
+    const ranked = active
+      .filter((row) => isAtRisk(row))
+      .map((row) => {
+        const reason: "overdue" | "unassigned" | "stalled" = isOverdue(row)
+          ? "overdue"
+          : isUnassigned(row)
+            ? "unassigned"
+            : "stalled";
+        const urgencyScore = reason === "overdue" ? 100 : reason === "unassigned" ? 80 : 60;
+        return { row, reason, urgencyScore };
+      })
+      .sort((a, b) => {
+        if (b.urgencyScore !== a.urgencyScore) return b.urgencyScore - a.urgencyScore;
+        const ad = a.row.dueDate ? new Date(a.row.dueDate).getTime() : Number.POSITIVE_INFINITY;
+        const bd = b.row.dueDate ? new Date(b.row.dueDate).getTime() : Number.POSITIVE_INFINITY;
+        return ad - bd;
+      });
+    return ranked.slice(0, 12);
+  }, [filteredCommitments]);
 
   return (
     <div className="relative">
@@ -191,10 +160,10 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                 <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-3 pt-2">
                   {loading ? (
                     <div className="flex items-center justify-center gap-2 py-16 text-[13px] text-r5-text-secondary">
-                      <Loader2 className="h-5 w-5 animate-spin text-r5-accent" />
+                      <Circle className="h-5 w-5 animate-pulse text-r5-accent" />
                       {t("header.commitments.loading")}
                     </div>
-                  ) : !summary ? (
+                  ) : filteredCommitments.length === 0 ? (
                     <div className="mx-1 rounded-[12px] bg-r5-surface-secondary px-4 py-10 text-center shadow-[0_1px_3px_rgba(0,0,0,0.08)] ring-1 ring-r5-border-subtle">
                       <p className="text-[13px] text-r5-text-secondary">{t("header.commitments.unavailable")}</p>
                     </div>
@@ -209,7 +178,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           <RemindersSmartTile
                             value={summary.activeTotal}
                             label={t("header.commitments.tileAll")}
-                            href={orgCommitmentsHref()}
+                            href="/desk"
                             onNavigate={() => setOpen(false)}
                             tone="blue"
                             icon={ListTodo}
@@ -217,7 +186,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           <RemindersSmartTile
                             value={summary.overdueCount}
                             label={t("header.commitments.tileOverdue")}
-                            href={orgCommitmentsHref("overdue")}
+                            href="/desk"
                             onNavigate={() => setOpen(false)}
                             tone="coral"
                             icon={CalendarClock}
@@ -225,7 +194,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           <RemindersSmartTile
                             value={summary.atRiskCount}
                             label={t("header.commitments.tileAtRisk")}
-                            href={orgCommitmentsHref("at_risk")}
+                            href="/desk"
                             onNavigate={() => setOpen(false)}
                             tone="amber"
                             icon={AlertTriangle}
@@ -233,7 +202,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           <RemindersSmartTile
                             value={summary.unassignedCount}
                             label={t("header.commitments.tileUnassigned")}
-                            href={orgCommitmentsHref()}
+                            href="/desk"
                             onNavigate={() => setOpen(false)}
                             tone="violet"
                             icon={UserRound}
@@ -241,7 +210,7 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                         </div>
                         <div className="mt-2 flex flex-col gap-1.5 border-t border-r5-border-subtle pt-2.5">
                           <Link
-                            href="/workspace/commitments"
+                            href="/desk"
                             onClick={() => setOpen(false)}
                             className={`flex min-h-[40px] items-center justify-center rounded-xl border border-r5-border-subtle bg-r5-surface-primary text-[16px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover active:opacity-90 ${onDesk ? "w-full" : "w-full"}`}
                           >
@@ -282,31 +251,32 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                             role="list"
                           >
                             {riskPreview.map((r, i) => {
-                              const href = taskDetailHref(r.id);
+                              const href = taskDetailHref(r.row.id);
                               const reasonKey =
-                                r.riskReason === "overdue"
+                                r.reason === "overdue"
                                   ? t("header.commitments.reasonOverdue")
-                                  : r.riskReason === "unassigned"
+                                  : r.reason === "unassigned"
                                     ? t("header.commitments.reasonUnassigned")
                                     : t("header.commitments.reasonAtRisk");
                               const showDivider = i < riskPreview.length - 1;
-                              const title = cleanTaskTitle(r.title);
+                              const title = cleanTaskTitle(r.row.title);
                               const subParts: string[] = [];
-                              if (r.dueDate) {
+                              if (r.row.dueDate) {
                                 subParts.push(
-                                  new Date(r.dueDate).toLocaleDateString(intlLocale, {
+                                  new Date(r.row.dueDate).toLocaleDateString(intlLocale, {
                                     month: "short",
                                     day: "numeric",
                                   })
                                 );
                               }
-                              if (r.projectName && !isGenericProjectLabel(r.projectName)) {
-                                subParts.push(r.projectName);
+                              const ownerLabel = r.row.owner?.trim() || "Unassigned";
+                              if (ownerLabel) {
+                                subParts.push(ownerLabel);
                               }
-                              if (r.riskReason) subParts.push(reasonKey);
+                              subParts.push(reasonKey);
                               const subline = subParts.join(" · ");
                               return (
-                                <li key={r.id} className={showDivider ? "border-b border-r5-border-subtle" : ""}>
+                                <li key={r.row.id} className={showDivider ? "border-b border-r5-border-subtle" : ""}>
                                   <Link
                                     href={href}
                                     onClick={() => setOpen(false)}
@@ -350,18 +320,13 @@ export default function WorkspaceCommitmentsHeaderPanel() {
                           {t("header.commitments.more")}
                         </p>
                         <RemindersRowLink
-                          href="/workspace/commitments?status=overdue"
-                          label={t("header.commitments.linkOverdue")}
+                          href="/desk"
+                          label={t("header.commitments.openDesk")}
                           onNavigate={() => setOpen(false)}
                         />
                         <RemindersRowLink
-                          href="/workspace/commitments?status=at_risk"
-                          label={t("header.commitments.linkAtRisk")}
-                          onNavigate={() => setOpen(false)}
-                        />
-                        <RemindersRowLink
-                          href="/workspace/chat"
-                          label={t("header.commitments.linkChat")}
+                          href="/overview"
+                          label={t("header.commitments.openFullTracker")}
                           accent="muted"
                           onNavigate={() => setOpen(false)}
                           last
