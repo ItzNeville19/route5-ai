@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useUser, UserButton } from "@clerk/nextjs";
 import type { LucideIcon } from "lucide-react";
-import { X, LayoutGrid, Home, LifeBuoy, Settings, Bell, Keyboard, Palette } from "lucide-react";
+import { X, LayoutGrid, Home, LifeBuoy, Settings, Bell, Keyboard, Palette, Users } from "lucide-react";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -24,7 +24,7 @@ type NavItem =
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements } = useWorkspaceData();
+  const { entitlements, orgRole } = useWorkspaceData();
   const { t } = useI18n();
   const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
 
@@ -43,12 +43,15 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
           { href: "__notifications__", label: "Notifications", icon: Bell },
           { href: "/settings", label: "Settings", icon: Settings },
           { href: "/workspace/customize", label: "Customize", icon: Palette },
+          ...(orgRole === "admin" || orgRole === "manager"
+            ? [{ href: "/workspace/organization", label: "Organization", icon: Users } satisfies NavItem]
+            : []),
           { href: "/workspace/help", label: "Help", icon: LifeBuoy },
           { href: "__shortcuts__", label: t("sidebar.shortcuts"), icon: Keyboard },
         ] satisfies NavItem[],
       },
     ],
-    [t]
+    [orgRole, t]
   );
 
   return (

@@ -12,6 +12,7 @@ import {
   fetchCommitments as fetchCanonicalCommitments,
   type CommitmentStatus,
 } from "@/lib/commitments/repository";
+import { requireOrgRole } from "@/lib/workspace/org-members";
 
 export const runtime = "nodejs";
 
@@ -72,6 +73,10 @@ export async function POST(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  const orgAccess = await requireOrgRole(userId, ["admin", "manager"]);
+  if (!orgAccess.ok) {
+    return NextResponse.json({ error: "Only admins or managers can create commitments." }, { status: 403 });
+  }
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "org-commitments:post", userId, {

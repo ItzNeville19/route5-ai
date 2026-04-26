@@ -13,6 +13,7 @@ import {
   Home,
   Palette,
   Settings,
+  Users,
 } from "lucide-react";
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
 import { useI18n } from "@/components/i18n/I18nProvider";
@@ -88,7 +89,7 @@ function NavRow({
 
 export default function WorkspaceSidebar() {
   const pathname = usePathname();
-  const { entitlements } = useWorkspaceData();
+  const { entitlements, orgRole } = useWorkspaceData();
   const { user } = useUser();
   const { t } = useI18n();
   const path = pathname ?? "";
@@ -154,6 +155,14 @@ export default function WorkspaceSidebar() {
               icon={Palette}
               label="Customize"
             />
+            {orgRole === "admin" || orgRole === "manager" ? (
+              <NavRow
+                href="/workspace/organization"
+                active={path === "/workspace/organization"}
+                icon={Users}
+                label="Organization"
+              />
+            ) : null}
             <NavRow href="/workspace/help" active={path === "/workspace/help"} icon={LifeBuoy} label="Help" />
             <NavRow
               active={false}

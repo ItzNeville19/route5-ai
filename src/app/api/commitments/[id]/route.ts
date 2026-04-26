@@ -1,5 +1,6 @@
 import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import {
@@ -13,6 +14,7 @@ import {
   parseJsonBody,
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
+import { requireOrgRole } from "@/lib/workspace/org-members";
 
 export const runtime = "nodejs";
 
@@ -77,6 +79,8 @@ export async function PATCH(
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  const orgAccess = await requireOrgRole(userId, ["admin", "manager", "member"]);
+  if (!orgAccess.ok) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "commitments:patch", userId, {
@@ -96,6 +100,45 @@ export async function PATCH(
 
   try {
     const patch = parsed.data;
+    if (orgAccess.role === "member") {
+      const existing = (await fetchCommitments(userId)).find((row) => row.id === id);
+      if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      const clerk = await clerkClient();
+      const me = await clerk.users.getUser(userId);
+      const allowedOwners = [
+        me.fullName?.trim(),
+        me.firstName?.trim(),
+        [me.firstName, me.lastName].filter(Boolean).join(" ").trim(),
+        me.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
+      ]
+        .filter((v): v is string => Boolean(v))
+        .map((v) => v.toLowerCase());
+      const owner = existing.owner?.trim().toLowerCase() ?? "";
+      if (!owner || !allowedOwners.includes(owner)) {
+        return NextResponse.json(
+          { error: "Members can only update commitments assigned to them." },
+          { status: 403 }
+        );
+      }
+      if (
+        patch.owner !== undefined ||
+        patch.manager_decision !== undefined ||
+        patch.manager_comment !== undefined ||
+        patch.due_date_request_decision !== undefined ||
+        patch.due_date !== undefined
+      ) {
+        return NextResponse.json({ error: "Admin approval required for this action." }, { status: 403 });
+      }
+    }
+    if (patch.status === "blocked" && !patch.blocker_reason?.trim()) {
+      return NextResponse.json({ error: "Blocked status requires a blocker reason." }, { status: 400 });
+    }
+    if (patch.status === "done" && !patch.completion_note?.trim() && !patch.completion_proof_url?.trim()) {
+      return NextResponse.json(
+        { error: "Completion proof or note is required before marking done." },
+        { status: 400 }
+      );
+    }
     if (patch.due_date) {
       const due = new Date(patch.due_date).getTime();
       if (!Number.isFinite(due)) {
@@ -135,6 +178,10 @@ export async function DELETE(
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
+  const orgAccess = await requireOrgRole(userId, ["admin", "manager"]);
+  if (!orgAccess.ok) {
+    return NextResponse.json({ error: "Only admins or managers can delete commitments." }, { status: 403 });
+  }
   const rateLimited = enforceRateLimits(
     req,
     userAndIpRateScopes(req, "commitments:delete", userId, {

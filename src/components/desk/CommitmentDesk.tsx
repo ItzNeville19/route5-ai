@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -7,6 +8,12 @@ import { useCommitments } from "@/components/commitments/CommitmentsProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isAtRisk, isBlocked, isOverdue, isUnaccepted } from "@/lib/commitments/derived-metrics";
 import type { Commitment, CommitmentSource, CommitmentStatus } from "@/lib/commitments/types";
+import {
+  createCommitmentTemplate,
+  deleteCommitmentTemplate,
+  fetchCommitmentTemplates,
+  type CommitmentTemplate,
+} from "@/lib/commitment-templates/client";
 import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 
 type DeskFilter = "all" | "my_work" | "at_risk" | "overdue";
@@ -36,7 +43,7 @@ const STATUS_LABEL: Record<CommitmentStatus, string> = {
 export default function CommitmentDesk() {
   const searchParams = useSearchParams();
   const { user } = useUser();
-  const { projects, loadingProjects } = useWorkspaceData();
+  const { projects, loadingProjects, orgRole } = useWorkspaceData();
   const {
     filteredCommitments,
     loading,
@@ -70,6 +77,28 @@ export default function CommitmentDesk() {
   const [requestDueDate, setRequestDueDate] = useState("");
   const [requestDueReason, setRequestDueReason] = useState("");
   const [managerComment, setManagerComment] = useState("");
+  const [templates, setTemplates] = useState<CommitmentTemplate[]>([]);
+  const [templateId, setTemplateId] = useState("");
+  const [templateTitle, setTemplateTitle] = useState("");
+  const [templateDescription, setTemplateDescription] = useState("");
+  const [templateOwner, setTemplateOwner] = useState("");
+  const [templateDueOffset, setTemplateDueOffset] = useState(3);
+  const [templateCompletionExpectations, setTemplateCompletionExpectations] = useState("");
+  const [templateSource, setTemplateSource] = useState<CommitmentSource>("manual");
+
+  const canAdmin = orgRole === "admin" || orgRole === "manager";
+  const meLabels = useMemo(
+    () =>
+      [
+        user?.fullName?.trim(),
+        user?.firstName?.trim(),
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim(),
+        user?.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
+      ]
+        .filter((value): value is string => Boolean(value))
+        .map((value) => value.toLowerCase()),
+    [user?.firstName, user?.fullName, user?.lastName, user?.primaryEmailAddress?.emailAddress]
+  );
 
   useEffect(() => {
     const focusId = searchParams.get("focus");
@@ -91,26 +120,21 @@ export default function CommitmentDesk() {
       if (filter === "my_work") {
         const owner = row.owner?.trim().toLowerCase() ?? "";
         if (!owner) return false;
-        const me = [
-          user?.fullName?.trim(),
-          user?.firstName?.trim(),
-          [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim(),
-          user?.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
-        ]
-          .filter((value): value is string => Boolean(value))
-          .map((value) => value.toLowerCase());
-        return me.some((value) => owner === value);
+        return meLabels.some((value) => owner === value);
       }
       if (filter === "at_risk") return isAtRisk(row);
       if (filter === "overdue") return isOverdue(row);
       return true;
     });
-  }, [filteredCommitments, filter, user?.firstName, user?.fullName, user?.lastName, user?.primaryEmailAddress?.emailAddress]);
+  }, [filteredCommitments, filter, meLabels]);
 
   const selected: Commitment | null = useMemo(
     () => rows.find((row) => row.id === selectedId) ?? rows[0] ?? null,
     [rows, selectedId]
   );
+  const canEditSelected = selected
+    ? canAdmin || meLabels.includes((selected.owner ?? "").trim().toLowerCase())
+    : false;
 
   useEffect(() => {
     if (selected?.id) setSelectedId(selected.id);
@@ -129,6 +153,13 @@ export default function CommitmentDesk() {
     setRequestDueDate(selected.dueDateRequest?.requestedDate ? toInputDate(selected.dueDateRequest.requestedDate) : "");
     setRequestDueReason(selected.dueDateRequest?.reason ?? "");
   }, [selected]);
+
+  useEffect(() => {
+    if (!canAdmin) return;
+    void fetchCommitmentTemplates()
+      .then(setTemplates)
+      .catch(() => setTemplates([]));
+  }, [canAdmin]);
 
   async function onCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -162,6 +193,17 @@ export default function CommitmentDesk() {
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Could not create commitment.");
     }
+  }
+
+  function applyTemplate() {
+    const template = templates.find((item) => item.id === templateId);
+    if (!template) return;
+    setTitle(template.title);
+    setDescription(template.description ?? "");
+    setOwner(template.defaultOwner ?? "");
+    setSource(template.source);
+    const due = new Date(Date.now() + template.dueDaysOffset * 24 * 60 * 60 * 1000);
+    setDueDate(toInputDate(due.toISOString()));
   }
 
   async function saveDetails() {
@@ -286,10 +328,47 @@ export default function CommitmentDesk() {
     }
   }
 
+  async function saveTemplate() {
+    if (!templateTitle.trim()) {
+      setActionError("Template title is required.");
+      return;
+    }
+    try {
+      const created = await createCommitmentTemplate({
+        title: templateTitle.trim(),
+        description: templateDescription.trim() || null,
+        defaultOwner: templateOwner.trim() || null,
+        dueDaysOffset: templateDueOffset,
+        completionExpectations: templateCompletionExpectations.trim() || null,
+        source: templateSource,
+      });
+      setTemplates((prev) => [created, ...prev]);
+      setTemplateTitle("");
+      setTemplateDescription("");
+      setTemplateOwner("");
+      setTemplateDueOffset(3);
+      setTemplateCompletionExpectations("");
+      setTemplateSource("manual");
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not save template.");
+    }
+  }
+
+  async function removeTemplate(id: string) {
+    try {
+      await deleteCommitmentTemplate(id);
+      setTemplates((prev) => prev.filter((item) => item.id !== id));
+      setActionError(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not delete template.");
+    }
+  }
+
   return (
-    <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-4 pb-10">
+    <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-3 pb-8">
       <DeskGreetingBubble compact />
-      <div className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
+      <div className="relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent"
           aria-hidden
@@ -297,22 +376,35 @@ export default function CommitmentDesk() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
           Desk
         </p>
-        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.01em] text-r5-text-primary">
-          Commitments execution workspace
+        <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.01em] text-r5-text-primary">
+          Accountability Desk
         </h1>
-        <p className="mt-1.5 max-w-[70ch] text-[13px] leading-relaxed text-r5-text-secondary">
-          Create, assign, and track commitments with immediate updates to ownership, status, and risk.
+        <p className="mt-1 max-w-[70ch] text-[12px] leading-relaxed text-r5-text-secondary">
+          Assign clearly, acknowledge ownership, enforce follow-through, and verify completion.
         </p>
+        <p className="mt-1 text-[11px] text-r5-text-tertiary">
+          Role: {orgRole ?? "member"} {canAdmin ? "· admin controls enabled" : "· execution controls only"}
+        </p>
+        {canAdmin ? (
+          <div className="mt-2">
+            <Link
+              href="/workspace/organization"
+              className="inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+            >
+              Organization & members
+            </Link>
+          </div>
+        ) : null}
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
-        <aside className="space-y-4">
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
+      <div className="grid gap-2.5 lg:grid-cols-[220px_minmax(0,1fr)_360px]">
+        <aside className="space-y-2.5">
+          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
               Company
             </p>
             <select
-              className="mt-2 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+              className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
               value={projectId ?? ""}
               onChange={(e) => setProjectId(e.target.value || null)}
               disabled={loadingProjects || projects.length === 0}
@@ -325,11 +417,11 @@ export default function CommitmentDesk() {
             </select>
           </div>
 
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
+          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">
               Filters
             </p>
-            <div className="mt-2 grid gap-1.5">
+            <div className="mt-1.5 grid gap-1">
               {[
                 { id: "all", label: "All" },
                 { id: "my_work", label: "My Work" },
@@ -340,7 +432,7 @@ export default function CommitmentDesk() {
                   key={option.id}
                   type="button"
                   onClick={() => setFilter(option.id as DeskFilter)}
-                  className={`rounded-xl border px-3 py-2 text-left text-[13px] font-medium ${
+                  className={`rounded-lg border px-2.5 py-1.5 text-left text-[12px] font-medium ${
                     filter === option.id
                       ? "border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary"
                       : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover"
@@ -350,7 +442,7 @@ export default function CommitmentDesk() {
                 </button>
               ))}
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-1.5 text-[11px] text-r5-text-secondary">
+            <div className="mt-2 grid grid-cols-2 gap-1 text-[10px] text-r5-text-secondary">
               <p>Owed: {rows.filter((row) => row.status !== "done").length}</p>
               <p>Blocked: {rows.filter(isBlocked).length}</p>
               <p>Overdue: {rows.filter(isOverdue).length}</p>
@@ -360,7 +452,7 @@ export default function CommitmentDesk() {
         </aside>
 
         <section className="min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
-          <div className="border-b border-r5-border-subtle px-4 py-3.5">
+          <div className="border-b border-r5-border-subtle px-3.5 py-2.5">
             <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-r5-text-primary">Commitments</h2>
             <p className="text-[12px] text-r5-text-secondary">
               {loading ? "Loading..." : `${rows.length} items`}
@@ -368,7 +460,7 @@ export default function CommitmentDesk() {
             {error ? <p className="mt-1 text-[12px] text-red-500">{error}</p> : null}
             {actionError ? <p className="mt-1 text-[12px] text-red-500">{actionError}</p> : null}
           </div>
-          <div className="max-h-[70vh] overflow-y-auto p-3">
+          <div className="max-h-[72vh] overflow-y-auto p-2">
             {rows.length === 0 ? (
               <div className="rounded-xl border border-dashed border-r5-border-subtle bg-r5-surface-secondary/55 px-4 py-10 text-center">
                 <p className="text-[13px] font-medium text-r5-text-primary">No commitments in this view</p>
@@ -377,13 +469,13 @@ export default function CommitmentDesk() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-1.5">
                 {rows.map((row) => (
                   <button
                     key={row.id}
                     type="button"
                     onClick={() => setSelectedId(row.id)}
-                    className={`w-full rounded-xl border px-3.5 py-2.5 text-left transition-[background-color,border-color,box-shadow] ${
+                    className={`w-full rounded-lg border px-3 py-2 text-left transition-[background-color,border-color,box-shadow] ${
                       selected?.id === row.id
                         ? "border-r5-border-subtle bg-r5-surface-secondary shadow-[0_1px_3px_rgba(15,23,42,0.08)]"
                         : "border-r5-border-subtle hover:bg-r5-surface-hover"
@@ -405,12 +497,34 @@ export default function CommitmentDesk() {
           </div>
         </section>
 
-        <section className="space-y-4">
+        <section className="space-y-2.5">
+          {canAdmin ? (
           <form
             onSubmit={onCreate}
-            className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
+            className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]"
           >
             <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Create commitment</h3>
+            <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-1.5">
+              <select
+                className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+              >
+                <option value="">Use template (optional)</option>
+                {templates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.title}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={applyTemplate}
+                className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+              >
+                Apply
+              </button>
+            </div>
             <input
               className="mt-2 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
               placeholder="Title (required)"
@@ -461,13 +575,91 @@ export default function CommitmentDesk() {
             {formError ? <p className="mt-2 text-[12px] text-red-500">{formError}</p> : null}
             <button
               type="submit"
-              className="mt-3 w-full rounded-xl bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)]"
+              className="mt-2.5 w-full rounded-lg bg-r5-accent px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)]"
             >
               Create
             </button>
           </form>
+          ) : null}
 
-          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+          {canAdmin ? (
+            <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
+              <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Templates</h3>
+              <input
+                className="mt-2 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                placeholder="Template title"
+                value={templateTitle}
+                onChange={(e) => setTemplateTitle(e.target.value)}
+              />
+              <textarea
+                rows={2}
+                className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                placeholder="Template description"
+                value={templateDescription}
+                onChange={(e) => setTemplateDescription(e.target.value)}
+              />
+              <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+                <input
+                  className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                  placeholder="Default owner"
+                  value={templateOwner}
+                  onChange={(e) => setTemplateOwner(e.target.value)}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  max={365}
+                  className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                  value={templateDueOffset}
+                  onChange={(e) => setTemplateDueOffset(Number(e.target.value || 0))}
+                />
+              </div>
+              <input
+                className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                placeholder="Completion expectations"
+                value={templateCompletionExpectations}
+                onChange={(e) => setTemplateCompletionExpectations(e.target.value)}
+              />
+              <select
+                className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+                value={templateSource}
+                onChange={(e) => setTemplateSource(e.target.value as CommitmentSource)}
+              >
+                <option value="manual">Manual</option>
+                <option value="meeting">Meeting</option>
+                <option value="email">Email</option>
+                <option value="slack">Slack</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => void saveTemplate()}
+                className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+              >
+                Save template
+              </button>
+              <ul className="mt-2 space-y-1">
+                {templates.slice(0, 6).map((template) => (
+                  <li
+                    key={template.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/45 px-2 py-1.5"
+                  >
+                    <p className="truncate text-[11px] text-r5-text-primary">{template.title}</p>
+                    {template.orgId ? (
+                      <button
+                        type="button"
+                        onClick={() => void removeTemplate(template.id)}
+                        className="rounded-md border border-red-400/30 bg-red-500/10 px-2 py-0.5 text-[10px] text-red-300 hover:bg-red-500/15"
+                      >
+                        Delete
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_10px_28px_-24px_rgba(15,23,42,0.5)]">
             <h3 className="text-[14px] font-semibold tracking-[-0.01em] text-r5-text-primary">Details</h3>
             {selected ? (
               <div className="mt-2 space-y-2">
@@ -475,29 +667,34 @@ export default function CommitmentDesk() {
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   value={detailTitle}
                   onChange={(e) => setDetailTitle(e.target.value)}
+                  disabled={!canEditSelected}
                 />
                 <textarea
                   rows={3}
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   value={detailDescription}
                   onChange={(e) => setDetailDescription(e.target.value)}
+                  disabled={!canEditSelected}
                 />
                 <input
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   value={detailOwner}
                   placeholder="Owner"
                   onChange={(e) => setDetailOwner(e.target.value)}
+                  disabled={!canAdmin}
                 />
                 <input
                   type="datetime-local"
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   value={detailDueDate}
                   onChange={(e) => setDetailDueDate(e.target.value)}
+                  disabled={!canEditSelected}
                 />
                 <select
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   value={detailStatus}
                   onChange={(e) => setDetailStatus(e.target.value as CommitmentStatus)}
+                  disabled={!canEditSelected}
                 >
                   <option value="pending">Pending</option>
                   <option value="accepted">Accepted</option>
@@ -512,6 +709,7 @@ export default function CommitmentDesk() {
                     placeholder="Blocker reason (required)"
                     value={detailBlockerReason}
                     onChange={(e) => setDetailBlockerReason(e.target.value)}
+                    disabled={!canEditSelected}
                   />
                 ) : null}
                 <textarea
@@ -520,25 +718,30 @@ export default function CommitmentDesk() {
                   placeholder="Completion note"
                   value={detailCompletionNote}
                   onChange={(e) => setDetailCompletionNote(e.target.value)}
+                  disabled={!canEditSelected}
                 />
                 <input
                   className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                   placeholder="Proof URL (optional)"
                   value={detailCompletionProofUrl}
                   onChange={(e) => setDetailCompletionProofUrl(e.target.value)}
+                  disabled={!canEditSelected}
                 />
-                <button
-                  type="button"
-                  disabled={savingDetails}
-                  onClick={() => void saveDetails()}
-                  className="w-full rounded-xl bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)] disabled:opacity-60"
-                >
-                  {savingDetails ? "Saving..." : "Save changes"}
-                </button>
+                {canEditSelected ? (
+                  <button
+                    type="button"
+                    disabled={savingDetails}
+                    onClick={() => void saveDetails()}
+                    className="w-full rounded-xl bg-r5-accent px-3 py-2 text-[13px] font-semibold text-white shadow-[0_8px_22px_-16px_rgba(59,130,246,0.7)] disabled:opacity-60"
+                  >
+                    {savingDetails ? "Saving..." : "Save changes"}
+                  </button>
+                ) : null}
                 {selected.status === "pending" || selected.status === "reopened" ? (
                   <button
                     type="button"
                     onClick={() => void acknowledgeSelected()}
+                    disabled={!canEditSelected}
                     className="w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[13px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
                   >
                     Acknowledge ownership
@@ -551,21 +754,24 @@ export default function CommitmentDesk() {
                     className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                     value={requestDueDate}
                     onChange={(e) => setRequestDueDate(e.target.value)}
+                    disabled={!canEditSelected}
                   />
                   <input
                     className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
                     placeholder="Reason"
                     value={requestDueReason}
                     onChange={(e) => setRequestDueReason(e.target.value)}
+                    disabled={!canEditSelected}
                   />
                   <button
                     type="button"
                     onClick={() => void requestDueDateChange()}
+                    disabled={!canEditSelected}
                     className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
                   >
                     Request due date change
                   </button>
-                  {selected.dueDateRequest?.status === "pending" ? (
+                  {selected.dueDateRequest?.status === "pending" && canAdmin ? (
                     <div className="mt-1.5 space-y-1.5">
                       <input
                         className="w-full rounded-lg border border-r5-border-subtle bg-r5-surface-primary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
@@ -592,6 +798,7 @@ export default function CommitmentDesk() {
                     </div>
                   ) : null}
                 </div>
+                {canAdmin ? (
                 <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/45 p-2">
                   <p className="text-[11px] font-semibold text-r5-text-secondary">Manager verification</p>
                   <input
@@ -617,6 +824,7 @@ export default function CommitmentDesk() {
                     </button>
                   </div>
                 </div>
+                ) : null}
                 <div className="rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/45 p-2">
                   <p className="text-[11px] font-semibold text-r5-text-secondary">Activity timeline</p>
                   {selected.activityTimeline.length === 0 ? (
@@ -639,6 +847,7 @@ export default function CommitmentDesk() {
                 <button
                   type="button"
                   onClick={() => void removeSelected()}
+                  disabled={!canAdmin}
                   className="w-full rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-[13px] font-medium text-red-600 hover:bg-red-500/15"
                 >
                   Delete commitment
