@@ -366,43 +366,43 @@ export default function CommitmentDesk() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[min(100%,1480px)] flex-col gap-2.5 pb-8">
+    <div className="mx-auto flex w-full max-w-[min(100%,1500px)] flex-col gap-3 pb-8">
       <DeskGreetingBubble compact />
-      <div className="route5-card relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_10px_28px_-20px_rgba(15,23,42,0.45)]">
+      <section className="route5-card relative overflow-hidden rounded-2xl border border-r5-border-subtle bg-r5-surface-primary px-4 py-3 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/10 via-indigo-500/10 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-r from-sky-500/12 via-indigo-500/10 to-transparent"
           aria-hidden
         />
-        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
-          Desk
-        </p>
-        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-r5-text-primary">
-          Accountability Desk
-        </h1>
-        <p className="mt-1 max-w-[70ch] text-[12px] leading-relaxed text-r5-text-secondary">
-          Premium command center for assignment, ownership, execution, and verification.
-        </p>
-        <p className="mt-1 text-[11px] text-r5-text-tertiary">
-          Role: {orgRole ?? "member"} {canAdmin ? "· admin controls enabled" : "· execution controls only"}
-        </p>
-        <div className="mt-2">
-          <Link
-            href="/workspace/organization"
-            className="route5-pressable inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
-          >
-            Organization & members
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid gap-2 lg:grid-cols-[210px_minmax(0,1fr)_390px]">
-        <aside className="space-y-2.5">
-          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
-              Company
+        <div className="relative flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">Desk</p>
+            <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.015em] text-r5-text-primary">
+              Accountability Desk
+            </h1>
+            <p className="mt-1 max-w-[70ch] text-[12px] leading-relaxed text-r5-text-secondary">
+              Plan, assign, follow through, and verify every critical commitment.
             </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1 text-[11px] font-medium text-r5-text-secondary">
+              {orgRole ?? "member"} · {canAdmin ? "full controls" : "execution controls"}
+            </span>
+            <Link
+              href="/workspace/organization"
+              className="route5-pressable inline-flex rounded-full border border-r5-border-subtle bg-r5-surface-secondary px-3 py-1.5 text-[11px] font-medium text-r5-text-primary hover:bg-r5-surface-hover"
+            >
+              Organization & members
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-3 xl:grid-cols-[250px_minmax(0,1fr)]">
+        <aside className="space-y-3">
+          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_8px_22px_-20px_rgba(15,23,42,0.45)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">Company</p>
             <select
-              className="mt-1.5 w-full rounded-lg border border-r5-border-subtle bg-r5-surface-secondary px-2.5 py-1.5 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
+              className="mt-2 w-full rounded-xl border border-r5-border-subtle bg-r5-surface-secondary px-3 py-2 text-[12px] text-r5-text-primary focus:border-r5-accent/50 focus:outline-none"
               value={projectId ?? ""}
               onChange={(e) => setProjectId(e.target.value || null)}
               disabled={loadingProjects || projects.length === 0}
@@ -415,11 +415,9 @@ export default function CommitmentDesk() {
             </select>
           </div>
 
-          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-2.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
-              Filters
-            </p>
-            <div className="mt-1.5 grid gap-1">
+          <div className="route5-card rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3 shadow-[0_8px_22px_-20px_rgba(15,23,42,0.45)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">Filters</p>
+            <div className="mt-2 space-y-1.5">
               {[
                 { id: "all", label: "All" },
                 { id: "my_work", label: "My Work" },
@@ -430,73 +428,85 @@ export default function CommitmentDesk() {
                   key={option.id}
                   type="button"
                   onClick={() => setFilter(option.id as DeskFilter)}
-                  className={`route5-pressable rounded-full border px-2.5 py-1.5 text-left text-[11px] font-semibold ${
+                  className={`route5-pressable w-full rounded-xl border px-3 py-2 text-left text-[12px] font-semibold ${
                     filter === option.id
-                      ? "border-sky-300/30 bg-r5-surface-secondary text-r5-text-primary"
-                      : "border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover"
+                      ? "border-sky-300/35 bg-r5-surface-secondary text-r5-text-primary"
+                      : "border-r5-border-subtle/50 bg-r5-surface-primary text-r5-text-secondary hover:bg-r5-surface-hover"
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-1 text-[10px] text-r5-text-secondary">
-              <p>Owed: {rows.filter((row) => row.status !== "done").length}</p>
-              <p>Blocked: {rows.filter(isBlocked).length}</p>
-              <p>Overdue: {rows.filter(isOverdue).length}</p>
-              <p>Needs ack: {rows.filter(isUnaccepted).length}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 py-1.5">
+                <p className="text-r5-text-tertiary">Owed</p>
+                <p className="font-semibold text-r5-text-primary">{rows.filter((row) => row.status !== "done").length}</p>
+              </div>
+              <div className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 py-1.5">
+                <p className="text-r5-text-tertiary">Blocked</p>
+                <p className="font-semibold text-r5-text-primary">{rows.filter(isBlocked).length}</p>
+              </div>
+              <div className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 py-1.5">
+                <p className="text-r5-text-tertiary">Overdue</p>
+                <p className="font-semibold text-r5-text-primary">{rows.filter(isOverdue).length}</p>
+              </div>
+              <div className="rounded-lg border border-r5-border-subtle bg-r5-surface-secondary/60 px-2 py-1.5">
+                <p className="text-r5-text-tertiary">Needs Ack</p>
+                <p className="font-semibold text-r5-text-primary">{rows.filter(isUnaccepted).length}</p>
+              </div>
             </div>
           </div>
         </aside>
 
-        <section className="route5-card min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
-          <div className="border-b border-r5-border-subtle px-3 py-2.5">
-            <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-r5-text-primary">Commitments</h2>
-            <p className="text-[12px] text-r5-text-secondary">
-              {loading ? "Loading..." : `${rows.length} items`}
-            </p>
-            {error ? <p className="mt-1 text-[12px] text-red-500">{error}</p> : null}
-            {actionError ? <p className="mt-1 text-[12px] text-red-500">{actionError}</p> : null}
+        <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="route5-card min-w-0 rounded-2xl border border-r5-border-subtle bg-r5-surface-primary shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
+            <div className="border-b border-r5-border-subtle px-3.5 py-3">
+              <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-r5-text-primary">Commitments</h2>
+              <p className="text-[12px] text-r5-text-secondary">{loading ? "Loading..." : `${rows.length} items`}</p>
+              {error ? <p className="mt-1 text-[12px] text-red-500">{error}</p> : null}
+              {actionError ? <p className="mt-1 text-[12px] text-red-500">{actionError}</p> : null}
+            </div>
+            <div className="max-h-[75vh] overflow-y-auto p-2.5">
+              {rows.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-r5-border-subtle bg-r5-surface-secondary/55 px-4 py-10 text-center">
+                  <p className="text-[13px] font-medium text-r5-text-primary">No commitments in this view</p>
+                  <p className="mt-1 text-[12px] text-r5-text-secondary">
+                    Create a commitment or switch filters to continue execution.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {rows.map((row) => (
+                    <button
+                      key={row.id}
+                      type="button"
+                      onClick={() => setSelectedId(row.id)}
+                      className={`route5-row w-full rounded-xl border px-3 py-2.5 text-left ${
+                        selected?.id === row.id
+                          ? "border-sky-300/35 bg-r5-surface-secondary shadow-[0_10px_24px_-20px_rgba(56,189,248,0.45)]"
+                          : "border-r5-border-subtle hover:bg-r5-surface-hover"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[13px] font-semibold text-r5-text-primary">{row.title}</p>
+                        <span className="rounded-full border border-r5-border-subtle bg-r5-surface-primary px-2 py-0.5 text-[10px] font-medium text-r5-text-secondary">
+                          {STATUS_LABEL[row.status]}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-r5-text-secondary">
+                        {row.owner?.trim() || "Unassigned"}{" "}
+                        {row.dueDate ? `· Due ${new Date(row.dueDate).toLocaleDateString()}` : "· No due date"} ·{" "}
+                        {row.source}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="max-h-[72vh] overflow-y-auto p-2">
-            {rows.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-r5-border-subtle bg-r5-surface-secondary/55 px-4 py-10 text-center">
-                <p className="text-[13px] font-medium text-r5-text-primary">No commitments in this view</p>
-                <p className="mt-1 text-[12px] text-r5-text-secondary">
-                  Create a commitment or switch filters to continue execution.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {rows.map((row) => (
-                  <button
-                    key={row.id}
-                    type="button"
-                    onClick={() => setSelectedId(row.id)}
-                    className={`route5-row w-full rounded-xl border px-3 py-2 text-left transition-[background-color,border-color,box-shadow,transform] ${
-                      selected?.id === row.id
-                        ? "border-sky-300/35 bg-r5-surface-secondary shadow-[0_8px_22px_-18px_rgba(56,189,248,0.45)]"
-                        : "border-r5-border-subtle hover:bg-r5-surface-hover"
-                    }`}
-                  >
-                    <div className="mb-1 h-px w-full bg-gradient-to-r from-sky-300/35 via-indigo-300/20 to-transparent" aria-hidden />
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[13px] font-semibold text-r5-text-primary">{row.title}</p>
-                      <span className="rounded-full border border-r5-border-subtle bg-r5-surface-primary px-2 py-0.5 text-[10px] font-medium text-r5-text-secondary">
-                        {STATUS_LABEL[row.status]}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] leading-relaxed text-r5-text-secondary">
-                      {row.owner?.trim() || "Unassigned"} {row.dueDate ? `· Due ${new Date(row.dueDate).toLocaleDateString()}` : "· No due date"} · {row.source}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
 
-        <section className="space-y-2.5">
+          <div className="space-y-2.5">
           {canAdmin ? (
           <form
             onSubmit={onCreate}
@@ -860,6 +870,7 @@ export default function CommitmentDesk() {
                 </p>
               </div>
             )}
+          </div>
           </div>
         </section>
       </div>
