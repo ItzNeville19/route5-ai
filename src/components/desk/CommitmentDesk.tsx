@@ -7,6 +7,7 @@ import { useCommitments } from "@/components/commitments/CommitmentsProvider";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { isAtRisk, isOverdue } from "@/lib/commitments/derived-metrics";
 import type { Commitment, CommitmentStatus } from "@/lib/commitments/types";
+import DeskGreetingBubble from "@/components/desk/DeskGreetingBubble";
 
 type DeskFilter = "all" | "my_work" | "at_risk" | "overdue";
 
@@ -171,20 +172,21 @@ export default function CommitmentDesk() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-6 pb-12">
-      <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-5 shadow-[0_8px_30px_-22px_rgba(15,23,42,0.35)]">
+    <div className="mx-auto flex w-full max-w-[min(100%,1400px)] flex-col gap-4 pb-10">
+      <DeskGreetingBubble compact />
+      <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-4 shadow-[0_8px_24px_-22px_rgba(15,23,42,0.35)]">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-r5-text-secondary">
           Desk
         </p>
-        <h1 className="mt-1 text-[24px] font-semibold tracking-[-0.01em] text-r5-text-primary">
+        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.01em] text-r5-text-primary">
           Commitments execution workspace
         </h1>
-        <p className="mt-2 max-w-[70ch] text-[13px] leading-relaxed text-r5-text-secondary">
+        <p className="mt-1.5 max-w-[70ch] text-[13px] leading-relaxed text-r5-text-secondary">
           Create, assign, and track commitments with immediate updates to ownership, status, and risk.
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_360px]">
+      <div className="grid gap-3 lg:grid-cols-[240px_minmax(0,1fr)_340px]">
         <aside className="space-y-4">
           <div className="rounded-2xl border border-r5-border-subtle bg-r5-surface-primary p-3.5 shadow-[0_6px_18px_-18px_rgba(15,23,42,0.45)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-r5-text-secondary">

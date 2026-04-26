@@ -11,6 +11,7 @@ import {
   LifeBuoy,
   LayoutGrid,
   Home,
+  Palette,
   Settings,
 } from "lucide-react";
 import { Route5WordmarkLink } from "@/components/brand/Route5BrandMark";
@@ -23,7 +24,7 @@ const tierLabel =
 
 function NavSectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <p className="px-[var(--r5-space-2)] pb-1 pt-4 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.16em] text-r5-text-tertiary first:pt-1">
+    <p className="px-[var(--r5-space-2)] pb-1 pt-3 text-[10px] font-[var(--r5-font-weight-semibold)] tracking-[0.08em] text-r5-text-tertiary first:pt-1">
       {children}
     </p>
   );
@@ -43,7 +44,7 @@ function NavRow({
   onClick?: () => void;
 }) {
   const base =
-    "flex w-full min-h-[var(--r5-nav-item-height)] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-3)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
+    "flex w-full min-h-[34px] items-center gap-[var(--r5-gap-icon-label)] rounded-xl px-[var(--r5-space-2)] text-[13px] font-[var(--r5-font-weight-medium)] leading-none transition-[background-color,color,box-shadow,border-color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)]";
   const state = active
     ? "border border-r5-border-subtle bg-r5-surface-secondary text-r5-text-primary shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
     : "border border-transparent text-r5-text-secondary hover:border-r5-border-subtle hover:bg-r5-surface-hover hover:text-r5-text-primary";
@@ -100,11 +101,11 @@ export default function WorkspaceSidebar() {
       className="route5-brand-sidebar-edge agent-sidebar relative z-40 hidden h-dvh min-h-0 w-[var(--r5-sidebar-width)] max-h-dvh shrink-0 flex-col overflow-hidden border-r border-r5-border-subtle bg-r5-surface-primary/98 backdrop-blur-2xl [@media(pointer:fine)]:sticky [@media(pointer:fine)]:top-0 [@media(pointer:fine)]:flex [@media(pointer:fine)]:self-start md:sticky md:top-0 md:flex md:self-start"
       aria-label={t("sidebar.navAria")}
     >
-      <div className="shrink-0 border-b border-r5-border-subtle px-[var(--r5-space-4)] pb-[var(--r5-space-3)] pt-[var(--r5-space-4)]">
+      <div className="shrink-0 border-b border-r5-border-subtle px-[var(--r5-space-3)] pb-[var(--r5-space-2)] pt-[var(--r5-space-3)]">
         <div className="flex items-start justify-between gap-[var(--r5-space-2)]">
           <div className="min-w-0 flex-1">
             <Route5WordmarkLink className="truncate" />
-            <p className="mt-[var(--r5-space-2)] line-clamp-1 text-[10px] font-[var(--r5-font-weight-semibold)] uppercase tracking-[0.12em] text-r5-text-tertiary">
+            <p className="mt-[var(--r5-space-1)] line-clamp-1 text-[10px] font-[var(--r5-font-weight-semibold)] tracking-[0.05em] text-r5-text-tertiary">
               {ROUTE5_SIGNATURE.tagline}
             </p>
           </div>
@@ -116,8 +117,8 @@ export default function WorkspaceSidebar() {
           className="no-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-[var(--r5-space-3)] pb-[var(--r5-space-3)] pt-[var(--r5-space-2)]"
           aria-label={t("sidebar.navAria")}
         >
-          <div className="mb-2 rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/65 px-3 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-r5-text-secondary">
+          <div className="mb-2 rounded-xl border border-r5-border-subtle bg-r5-surface-secondary/65 px-2.5 py-1.5">
+            <p className="text-[10px] font-semibold tracking-[0.1em] text-r5-text-secondary">
               Workspace
             </p>
           </div>
@@ -146,6 +147,12 @@ export default function WorkspaceSidebar() {
               active={path === "/settings"}
               icon={Settings}
               label="Settings"
+            />
+            <NavRow
+              href="/workspace/customize"
+              active={path === "/workspace/customize"}
+              icon={Palette}
+              label="Customize"
             />
             <NavRow href="/workspace/help" active={path === "/workspace/help"} icon={LifeBuoy} label="Help" />
             <NavRow

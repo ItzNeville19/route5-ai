@@ -13,7 +13,6 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { getBrowserIanaTimezone } from "@/lib/workspace-location";
-import { getDisplayLocationLabel } from "@/lib/workspace-regions";
 
 /**
  * Compact time-aware greeting for the workspace header center column.
@@ -66,25 +65,6 @@ export default function WorkspaceHeaderGreeting() {
     );
   }, [insightCtx, user?.id, effectiveIana, exp.prefs.workspaceRegionKey, intlLocale, minuteClockTick]);
 
-  const clockLine = useMemo(() => {
-    void minuteClockTick;
-    try {
-      const formatted = new Date().toLocaleTimeString(intlLocale || "en-US", {
-        timeZone: effectiveIana,
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      return formatted;
-    } catch {
-      return "";
-    }
-  }, [minuteClockTick, intlLocale, effectiveIana]);
-
-  const locationLine = useMemo(
-    () => getDisplayLocationLabel(effectiveIana, exp.prefs.workspaceRegionKey),
-    [effectiveIana, exp.prefs.workspaceRegionKey]
-  );
-
   const pulseClass =
     loadingSummary && !reduceMotion ? "motion-safe:animate-pulse motion-reduce:animate-none" : "";
 
@@ -93,20 +73,9 @@ export default function WorkspaceHeaderGreeting() {
 
   return (
     <div className={`min-w-0 max-w-full text-center ${pulseClass}`} title={titleAttr}>
-      <p className="truncate text-[length:var(--r5-font-subheading)] leading-[var(--r5-leading-heading)] text-r5-text-primary">
+      <p className="truncate text-[13px] leading-[var(--r5-leading-heading)] text-r5-text-primary">
         <span className="font-semibold">{headline}</span>
-        <span className="font-normal text-r5-text-secondary">
-          {" "}
-          — {personalSub}
-        </span>
       </p>
-      {(clockLine || locationLine) ? (
-        <p className="mt-0.5 truncate text-[11px] font-medium text-r5-text-tertiary">
-          {clockLine}
-          {clockLine && locationLine ? " · " : ""}
-          {locationLine}
-        </p>
-      ) : null}
       {orgLine ? (
         <p className="mt-0.5 truncate text-[11px] font-medium text-r5-text-tertiary" title={orgLine}>
           {orgLine.length > 96 ? `${orgLine.slice(0, 93)}…` : orgLine}

@@ -22,7 +22,7 @@ const deskScript = Caveat({
   display: "swap",
 });
 
-export default function DeskGreetingBubble() {
+export default function DeskGreetingBubble({ compact = false }: { compact?: boolean }) {
   const { user } = useUser();
   const exp = useWorkspaceExperience();
   const { intlLocale } = useI18n();
@@ -74,7 +74,9 @@ export default function DeskGreetingBubble() {
   return (
     <div className="flex w-full justify-center px-1 sm:px-2">
       <div
-        className="relative w-full max-w-[min(100%,26rem)] overflow-hidden rounded-[28px] border border-white/[0.14] shadow-[0_0_0_1px_rgba(56,189,248,0.06),0_28px_56px_-20px_rgba(0,0,0,0.45),0_12px_40px_-12px_rgba(14,165,233,0.12)] sm:max-w-lg"
+        className={`relative w-full max-w-[min(100%,26rem)] overflow-hidden border border-white/[0.14] shadow-[0_0_0_1px_rgba(56,189,248,0.06),0_24px_46px_-22px_rgba(0,0,0,0.5)] sm:max-w-lg ${
+          compact ? "rounded-[20px]" : "rounded-[28px]"
+        }`}
         aria-label={`${headline} ${contextLine}`}
       >
         {canvasMode === "photo" ? (
@@ -83,7 +85,7 @@ export default function DeskGreetingBubble() {
             <img
               src={imgSrc}
               alt=""
-              className="h-full min-h-[12.5rem] w-full scale-105 object-cover object-center"
+              className={`h-full w-full scale-105 object-cover object-center ${compact ? "min-h-[8rem]" : "min-h-[12.5rem]"}`}
               decoding="async"
               loading="eager"
               onError={() => setPhotoFailed(true)}
@@ -110,16 +112,18 @@ export default function DeskGreetingBubble() {
           />
         )}
 
-        <div className="relative z-[6] px-7 pb-11 pt-9 text-center sm:px-9 sm:pb-12 sm:pt-10">
+        <div
+          className={`relative z-[6] text-center ${compact ? "px-5 pb-6 pt-5 sm:px-7 sm:pb-7 sm:pt-6" : "px-7 pb-11 pt-9 sm:px-9 sm:pb-12 sm:pt-10"}`}
+        >
           <p
-            className={`${deskScript.className} mx-auto max-w-[20ch] text-balance text-[clamp(1.65rem,5vw,2.45rem)] font-semibold leading-[1.12] tracking-[0.01em] text-[#fffdf8] drop-shadow-[0_2px_14px_rgba(15,23,42,0.45)]`}
+            className={`${deskScript.className} mx-auto max-w-[20ch] text-balance font-semibold leading-[1.12] tracking-[0.01em] text-[#fffdf8] drop-shadow-[0_2px_14px_rgba(15,23,42,0.45)] ${compact ? "text-[clamp(1.45rem,4vw,2rem)]" : "text-[clamp(1.65rem,5vw,2.45rem)]"}`}
             style={{
               textShadow: "0 1px 0 rgba(255,255,255,0.12)",
             }}
           >
             {headline}
           </p>
-          <p className="mt-3 text-[12px] font-medium leading-relaxed tracking-[0.06em] text-sky-50/90 sm:text-[13px]">
+          <p className={`font-medium leading-relaxed tracking-[0.06em] text-sky-50/90 ${compact ? "mt-1.5 text-[11px] sm:text-[12px]" : "mt-3 text-[12px] sm:text-[13px]"}`}>
             {contextLine}
           </p>
         </div>

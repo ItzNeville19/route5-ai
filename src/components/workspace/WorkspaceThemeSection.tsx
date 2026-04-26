@@ -57,15 +57,30 @@ function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
 
 function GradientPreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
   const gradients: Partial<Record<Exclude<WorkspaceThemeId, "auto">, string>> = {
+    classic: "linear-gradient(135deg,#e9d5ff,#c4b5fd,#a3e635)",
     sunrise: "linear-gradient(135deg,#fef3c7,#fde68a,#f5d0fe)",
+    morning: "linear-gradient(135deg,#fff7ed,#fde68a,#f8fafc)",
+    daytime: "linear-gradient(135deg,#f5f3ff,#e9d5ff,#dbeafe)",
     ocean: "linear-gradient(135deg,#bae6fd,#67e8f9,#c4b5fd)",
+    sunset: "linear-gradient(135deg,#fde68a,#fb7185,#c4b5fd)",
+    ember: "linear-gradient(135deg,#fecaca,#fb7185,#7c3aed)",
     lagunabeach: "linear-gradient(135deg,#99f6e4,#93c5fd,#c4b5fd)",
+    sanfrancisco: "linear-gradient(135deg,#cbd5e1,#bfdbfe,#c4b5fd)",
+    nevada: "linear-gradient(135deg,#fed7aa,#fdba74,#fcd34d)",
+    mumbai: "linear-gradient(135deg,#ffedd5,#fdba74,#f59e0b)",
+    columbia: "linear-gradient(135deg,#fef3c7,#d6d3d1,#86efac)",
+    studio: "linear-gradient(135deg,#f5f5f4,#e7e5e4,#ddd6fe)",
+    forest: "linear-gradient(135deg,#dcfce7,#86efac,#bbf7d0)",
     vegas: "linear-gradient(135deg,#1e1b4b,#7c3aed,#ec4899)",
     nyc: "linear-gradient(135deg,#0f172a,#334155,#6366f1)",
+    cosmic: "linear-gradient(135deg,#020617,#0f172a,#0e7490)",
+    oled: "linear-gradient(135deg,#020617,#000000,#111827)",
+    evening: "linear-gradient(135deg,#0f172a,#1e293b,#334155)",
+    night: "linear-gradient(135deg,#111827,#0f172a,#1f2937)",
     dark: "linear-gradient(135deg,#0f172a,#111827,#000000)",
     light: "linear-gradient(135deg,#f8fafc,#e2e8f0,#ede9fe)",
   };
-  const bg = gradients[id] ?? "linear-gradient(135deg,#e2e8f0,#c4b5fd,#a3e635)";
+  const bg = gradients[id] ?? gradients.classic!;
   return (
     <div className="relative h-14 w-full overflow-hidden rounded-lg border border-black/10 shadow-inner dark:border-white/15">
       <div className="absolute inset-0" style={{ backgroundImage: bg }} />
