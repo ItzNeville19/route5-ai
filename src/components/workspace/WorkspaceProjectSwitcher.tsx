@@ -234,7 +234,9 @@ export default function WorkspaceProjectSwitcher() {
                     title={p.name}
                   >
                     <span className="w-5 shrink-0 text-center text-[14px]">{p.iconEmoji?.trim() || "◆"}</span>
-                    <span className="min-w-0 flex-1 truncate">{p.name}</span>
+                    <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">
+                      {p.name}
+                    </span>
                     {active ? <Check className="h-4 w-4 shrink-0 text-r5-accent" strokeWidth={2} aria-hidden /> : null}
                   </button>
                 );
@@ -290,7 +292,9 @@ export default function WorkspaceProjectSwitcher() {
         ) : (
           <FolderKanban className="h-3.5 w-3.5 shrink-0 text-r5-text-secondary" strokeWidth={2} aria-hidden />
         )}
-        <span className="min-w-0 flex-1 truncate">{label}</span>
+        <span className="min-w-0 flex-1 whitespace-normal break-words leading-tight">
+          {label}
+        </span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 text-r5-text-tertiary transition ${open ? "rotate-180" : ""}`}
           aria-hidden

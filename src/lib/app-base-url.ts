@@ -9,6 +9,11 @@ function isLocalHostname(hostname: string): boolean {
   return h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]";
 }
 
+function normalizeOrigin(raw: string): string {
+  const withProtocol = raw.startsWith("http") ? raw : `https://${raw}`;
+  return withProtocol.replace(/\/+$/, "");
+}
+
 function isLocalDevelopmentUrl(raw: string): boolean {
   const trimmed = raw.trim();
   if (!trimmed) return false;
@@ -25,19 +30,19 @@ export function appBaseUrl(): string {
   const vercel = process.env.VERCEL_URL?.trim();
 
   if (process.env.VERCEL && vercel && (!explicit || isLocalDevelopmentUrl(explicit))) {
-    return vercel.startsWith("http") ? vercel : `https://${vercel}`;
+    return normalizeOrigin(vercel);
   }
 
   if (explicit && !isLocalDevelopmentUrl(explicit)) {
-    return explicit.startsWith("http") ? explicit : `https://${explicit}`;
+    return normalizeOrigin(explicit);
   }
 
   if (vercel) {
-    return vercel.startsWith("http") ? vercel : `https://${vercel}`;
+    return normalizeOrigin(vercel);
   }
 
   if (explicit) {
-    return explicit.startsWith("http") ? explicit : `https://${explicit}`;
+    return normalizeOrigin(explicit);
   }
 
   return "http://localhost:3000";

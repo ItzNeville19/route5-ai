@@ -1,10 +1,9 @@
-import { requireUserId } from "@/lib/auth/require-user";
 import { NextResponse } from "next/server";
-import { computeLiveDashboardMetrics } from "@/lib/dashboard/compute";
-import { fetchMetricRowsForOrg } from "@/lib/dashboard/store";
-import { resolveOwnerDisplayNames } from "@/lib/dashboard/resolve-owners";
+import { requireUserId } from "@/lib/auth/require-user";
 import { ensureOrganizationForClerkUser } from "@/lib/workspace/org-bridge";
 import { getActiveMembershipForUser } from "@/lib/workspace/org-members";
+import { fetchRecentCommitmentActivity } from "@/lib/dashboard/store";
+import { resolveOwnerDisplayNames } from "@/lib/dashboard/resolve-owners";
 import { publicWorkspaceError } from "@/lib/public-api-message";
 import { enforceRateLimits, userAndIpRateScopes } from "@/lib/security/request-guards";
 
@@ -16,7 +15,7 @@ export async function GET(req: Request) {
   const { userId } = authz;
   const rateLimited = enforceRateLimits(
     req,
-    userAndIpRateScopes(req, "dashboard:metrics", userId, {
+    userAndIpRateScopes(req, "dashboard:activity", userId, {
       userLimit: 120,
       ipLimit: 240,
     })
@@ -32,11 +31,14 @@ export async function GET(req: Request) {
     const scope: "org" | "self" =
       requestedScope === "self" ? "self" : canViewOrg ? "org" : "self";
     const orgId = await ensureOrganizationForClerkUser(userId);
-    const rows = await fetchMetricRowsForOrg(orgId, scope === "self" ? userId : undefined);
-    const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
+    const rows = await fetchRecentCommitmentActivity(orgId, 12, scope === "self" ? userId : undefined);
+    const ownerIds = [...new Set(rows.map((row) => row.owner_id))];
     const names = await resolveOwnerDisplayNames(ownerIds);
-    const metrics = computeLiveDashboardMetrics(rows, names);
-    return NextResponse.json({ orgId, metrics, scope, role, canViewOrg });
+    const activity = rows.map((row) => ({
+      ...row,
+      owner_name: names.get(row.owner_id) ?? row.owner_id.slice(-8),
+    }));
+    return NextResponse.json({ orgId, scope, role, canViewOrg, activity });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
   }

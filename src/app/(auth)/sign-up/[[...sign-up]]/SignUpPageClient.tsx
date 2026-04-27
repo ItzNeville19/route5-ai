@@ -3,11 +3,12 @@
 import { SignUp, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { WORKSPACE_HOME_HREF } from "@/lib/app-routes";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+import { getSafeAuthRedirectFromSearch } from "@/lib/auth/redirect-url";
 
 function SignUpClerkMissing() {
   return (
@@ -30,6 +31,13 @@ function SignUpClerkMissing() {
 function SignUpWithClerk() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
+  const [redirectUrl, setRedirectUrl] = useState<string>("/onboarding");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    setRedirectUrl(getSafeAuthRedirectFromSearch(q, "/onboarding"));
+  }, []);
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
@@ -70,10 +78,11 @@ function SignUpWithClerk() {
         </p>
         <div className="flex w-full min-h-[420px] justify-center [&_.cl-rootBox]:w-full [&_.cl-rootBox]:max-w-[420px]">
           <SignUp
-            routing="hash"
+            routing="path"
+            path="/sign-up"
             signInUrl="/login"
-            fallbackRedirectUrl="/onboarding"
-            signInFallbackRedirectUrl={WORKSPACE_HOME_HREF}
+            fallbackRedirectUrl={redirectUrl}
+            signInFallbackRedirectUrl={redirectUrl}
             appearance={{
               ...route5ClerkAppearance,
               elements: {

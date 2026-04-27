@@ -101,7 +101,8 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
           <div className="flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-6 sm:px-6">
             <div className="w-full max-w-[440px] [&_.cl-rootBox]:w-full">
               <SignIn
-                routing="hash"
+                routing="path"
+                path="/login"
                 signUpUrl="/sign-up"
                 fallbackRedirectUrl="/desk"
                 signUpFallbackRedirectUrl="/onboarding"

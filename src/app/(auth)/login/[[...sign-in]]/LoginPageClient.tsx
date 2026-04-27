@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import { WORKSPACE_HOME_HREF } from "@/lib/app-routes";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import { isOnboardingComplete } from "@/lib/onboarding-storage";
+import { getSafeAuthRedirectFromSearch } from "@/lib/auth/redirect-url";
 
 function closeMobileNavFromLogin() {
   window.dispatchEvent(new CustomEvent("close-site-mobile-nav"));
@@ -59,11 +60,13 @@ function LoginWithClerk() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
   const [signedOutBanner, setSignedOutBanner] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string>(WORKSPACE_HOME_HREF);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const q = new URLSearchParams(window.location.search);
     if (q.get("signedOut") === "1") setSignedOutBanner(true);
+    setRedirectUrl(getSafeAuthRedirectFromSearch(q, WORKSPACE_HOME_HREF));
   }, []);
 
   useEffect(() => {
@@ -123,10 +126,11 @@ function LoginWithClerk() {
         </p>
         <div className="flex w-full min-h-[420px] justify-center [&_.cl-rootBox]:w-full [&_.cl-rootBox]:max-w-[420px]">
           <SignIn
-            routing="hash"
+            routing="path"
+            path="/login"
             signUpUrl="/sign-up"
-            fallbackRedirectUrl={WORKSPACE_HOME_HREF}
-            signUpFallbackRedirectUrl={WORKSPACE_HOME_HREF}
+            fallbackRedirectUrl={redirectUrl}
+            signUpFallbackRedirectUrl={redirectUrl}
             appearance={{
               ...route5ClerkAppearance,
               elements: {

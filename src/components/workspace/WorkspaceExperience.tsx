@@ -268,7 +268,12 @@ export function WorkspaceExperienceProvider({
     if (workspacePaletteLight) {
       parts.push("workspace-palette-light");
     }
-    if (prefs.appearanceGradients === false) parts.push("workspace-no-gradients");
+    if (
+      prefs.appearanceGradients === false &&
+      (prefs.workspaceCanvasBackground ?? "gradient") !== "photo"
+    ) {
+      parts.push("workspace-no-gradients");
+    }
     parts.push(
       `workspace-surface-${resolveWorkspaceSurfaceMaterial(prefs.surfaceMaterial)}`
     );
@@ -278,6 +283,7 @@ export function WorkspaceExperienceProvider({
     prefs.focusMode,
     prefs.sidebarHidden,
     prefs.appearanceGradients,
+    prefs.workspaceCanvasBackground,
     prefs.surfaceMaterial,
     workspaceTheme.cssClass,
     workspacePaletteLight,

@@ -4,14 +4,21 @@ import { getSqliteHandle } from "@/lib/workspace/sqlite";
 import type { MetricCommitmentRow } from "@/lib/dashboard/compute";
 import { computeSnapshotPayload } from "@/lib/dashboard/compute";
 
-export async function fetchMetricRowsForOrg(orgId: string): Promise<MetricCommitmentRow[]> {
+export async function fetchMetricRowsForOrg(
+  orgId: string,
+  ownerId?: string
+): Promise<MetricCommitmentRow[]> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
-    const { data, error } = await supabase
+    let query = supabase
       .from("org_commitments")
       .select("id, status, deadline, completed_at, owner_id, title, created_at")
       .eq("org_id", orgId)
       .is("deleted_at", null);
+    if (ownerId) {
+      query = query.eq("owner_id", ownerId);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     return (data ?? []).map((r) => ({
       id: String((r as Record<string, unknown>).id),
@@ -27,12 +34,18 @@ export async function fetchMetricRowsForOrg(orgId: string): Promise<MetricCommit
     }));
   }
   const d = getSqliteHandle();
+  const params: unknown[] = [orgId];
+  let whereOwner = "";
+  if (ownerId) {
+    whereOwner = " AND owner_id = ?";
+    params.push(ownerId);
+  }
   const rows = d
     .prepare(
       `SELECT id, status, deadline, completed_at, owner_id, title, created_at
-       FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL`
+       FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL${whereOwner}`
     )
-    .all(orgId) as Record<string, unknown>[];
+    .all(...params) as Record<string, unknown>[];
   return rows.map((r) => ({
     id: String(r.id),
     status: String(r.status),
@@ -41,6 +54,77 @@ export async function fetchMetricRowsForOrg(orgId: string): Promise<MetricCommit
     owner_id: String(r.owner_id),
     title: String(r.title),
     created_at: String(r.created_at),
+  }));
+}
+
+export type DashboardActivityRow = {
+  id: string;
+  title: string;
+  status: string;
+  owner_id: string;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+};
+
+export async function fetchRecentCommitmentActivity(
+  orgId: string,
+  limit = 12,
+  ownerId?: string
+): Promise<DashboardActivityRow[]> {
+  const boundedLimit = Math.max(1, Math.min(50, limit));
+  if (isSupabaseConfigured()) {
+    const supabase = getServiceClient();
+    let query = supabase
+      .from("org_commitments")
+      .select("id, title, status, owner_id, created_at, updated_at, completed_at")
+      .eq("org_id", orgId)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(boundedLimit);
+    if (ownerId) {
+      query = query.eq("owner_id", ownerId);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: String((row as Record<string, unknown>).id),
+      title: String((row as Record<string, unknown>).title),
+      status: String((row as Record<string, unknown>).status),
+      owner_id: String((row as Record<string, unknown>).owner_id),
+      created_at: String((row as Record<string, unknown>).created_at),
+      updated_at: String((row as Record<string, unknown>).updated_at),
+      completed_at:
+        (row as Record<string, unknown>).completed_at == null
+          ? null
+          : String((row as Record<string, unknown>).completed_at),
+    }));
+  }
+  const d = getSqliteHandle();
+  const params: unknown[] = [orgId];
+  let ownerWhere = "";
+  if (ownerId) {
+    ownerWhere = " AND owner_id = ?";
+    params.push(ownerId);
+  }
+  params.push(boundedLimit);
+  const rows = d
+    .prepare(
+      `SELECT id, title, status, owner_id, created_at, updated_at, completed_at
+       FROM org_commitments
+       WHERE org_id = ? AND deleted_at IS NULL${ownerWhere}
+       ORDER BY updated_at DESC
+       LIMIT ?`
+    )
+    .all(...params) as Record<string, unknown>[];
+  return rows.map((row) => ({
+    id: String(row.id),
+    title: String(row.title),
+    status: String(row.status),
+    owner_id: String(row.owner_id),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    completed_at: row.completed_at == null ? null : String(row.completed_at),
   }));
 }
 

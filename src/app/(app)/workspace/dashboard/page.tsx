@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import ExecutiveDashboard from "@/components/workspace/ExecutiveDashboard";
+import ExecutiveDashboard from "@/components/workspace/ExecutiveDashboardNeo";
 
 export const metadata: Metadata = {
   title: "Dashboard — Route5",

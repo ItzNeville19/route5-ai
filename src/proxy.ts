@@ -52,7 +52,7 @@ function resolveClerkProxy(): NextMiddleware {
   return clerkProxyHandler;
 }
 
-export function proxy(request: NextRequest, event: NextFetchEvent) {
+export default function proxy(request: NextRequest, event: NextFetchEvent) {
   if (!isClerkFullyConfigured()) {
     return NextResponse.next();
   }

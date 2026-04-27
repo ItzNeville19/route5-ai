@@ -209,7 +209,7 @@ export default function ProjectsHub() {
                 href={`/projects/${project.id}`}
                 className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle/80 bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
               >
-                <p title={project.name} className="line-clamp-2 break-words text-[13px] font-medium text-r5-text-primary">
+                <p title={project.name} className="break-words text-[13px] font-medium text-r5-text-primary">
                   {project.name}
                 </p>
                 <p className="mt-[var(--r5-space-1)] text-[11px] text-r5-text-secondary">
@@ -236,7 +236,7 @@ export default function ProjectsHub() {
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
                     {project.iconEmoji?.trim() ? project.iconEmoji.trim() : <FolderOpen className="h-5 w-5 text-r5-text-secondary" />}
                   </span>
-                  <span title={project.name} className="line-clamp-2 break-words text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
+                  <span title={project.name} className="break-words text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
                     {project.name}
                   </span>
                 </span>
