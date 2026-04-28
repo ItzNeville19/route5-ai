@@ -69,17 +69,24 @@ export default function ContactForm() {
     };
   }, []);
 
-  /** Deep links: `/contact?topic=integration&app=Slack`, `/contact?subject=…` */
+  /** Deep links: `/contact?topic=…`, `/contact?subject=…`, `/contact?utm_source=pricing|download`. */
   useEffect(() => {
     if (urlHydratedRef.current || typeof window === "undefined") return;
     const p = new URLSearchParams(window.location.search);
     const subjectQ = p.get("subject")?.trim();
+    const utmSource = p.get("utm_source")?.trim();
+    const fromPricing = utmSource === "pricing";
+    const fromDownloadPage = utmSource === "download";
     if (subjectQ) {
       setMailtoSubjectOverride(subjectQ);
+    } else if (fromPricing) {
+      setMailtoSubjectOverride("Route5 — pricing inquiry");
+    } else if (fromDownloadPage) {
+      setMailtoSubjectOverride("Route5 — desktop rollout");
     }
     const app = p.get("app")?.trim();
     const topic = p.get("topic")?.trim();
-    if (!app && !topic && !subjectQ) return;
+    if (!app && !topic && !subjectQ && !fromPricing && !fromDownloadPage) return;
     urlHydratedRef.current = true;
     setForm((prev) => {
       const next = { ...prev };
@@ -95,6 +102,14 @@ export default function ContactForm() {
       }
       if (subjectQ && !next.message.trim()) {
         next.message = `Regarding: ${subjectQ}`;
+      }
+      if (fromPricing && !next.message.trim()) {
+        next.message =
+          "I'm interested in Route5 pricing and rollout for my organization. Please use my team details below.";
+      }
+      if (fromDownloadPage && !next.message.trim()) {
+        next.message =
+          "I'm interested in a managed Route5 desktop rollout for my organization. Please use my team details below.";
       }
       return next;
     });

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Route5",
@@ -128,37 +130,29 @@ neville@rayze.xyz`,
 
 export default function TermsPage() {
   return (
-    <div className="route5-brand-marketing-page theme-glass-site min-h-screen text-[#1d1d1f]">
-      <nav className="border-b border-black/[0.08] bg-white/45 backdrop-blur-xl">
+    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell min-h-screen text-zinc-100">
+      <Navbar />
+      <nav className="border-b border-white/10 bg-black/25 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">
-          <Link
-            href="/"
-            className="text-[15px] font-semibold tracking-[-0.03em] text-[#1d1d1f]"
-          >
+          <Link href="/" className="text-[15px] font-semibold tracking-[-0.03em] text-white">
             Route5
           </Link>
-          <span className="text-sm text-[#86868b]">/</span>
-          <span className="text-sm text-[#6e6e73]">Terms of Service</span>
+          <span className="text-sm text-zinc-500">/</span>
+          <span className="text-sm text-zinc-300">Terms of Service</span>
         </div>
       </nav>
 
       <div className="mx-auto max-w-3xl px-6 py-16 lg:max-w-4xl lg:py-24">
         <div className="mb-12">
-          <h1 className="mb-4 text-4xl font-bold tracking-[-0.03em] text-[#1d1d1f]">
-            Terms of Service
-          </h1>
-          <p className="text-[#6e6e73]">
-            Effective date: March 18, 2026 · Last updated: April 8, 2026
-          </p>
+          <h1 className="mb-4 text-4xl font-bold tracking-[-0.03em] text-white">Terms of Service</h1>
+          <p className="text-zinc-300">Effective date: March 18, 2026 · Last updated: April 8, 2026</p>
         </div>
 
         <div className="space-y-10">
           {sections.map((section) => (
             <div key={section.title}>
-              <h2 className="mb-4 text-xl font-semibold tracking-[-0.02em] text-[#1d1d1f]">
-                {section.title}
-              </h2>
-              <div className="space-y-3 leading-relaxed text-[#6e6e73]">
+              <h2 className="mb-4 text-xl font-semibold tracking-[-0.02em] text-white">{section.title}</h2>
+              <div className="space-y-3 leading-relaxed text-zinc-200">
                 {section.content.split("\n\n").map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
@@ -167,15 +161,13 @@ export default function TermsPage() {
           ))}
         </div>
 
-        <div className="mt-16 border-t border-black/[0.08] pt-8">
-          <Link
-            href="/"
-            className="text-sm font-medium text-[#0071e3] transition hover:text-[#0077ed]"
-          >
+        <div className="mt-16 border-t border-white/10 pt-8">
+          <Link href="/" className="text-sm font-medium text-sky-400 transition hover:text-sky-300">
             ← Back to Route5
           </Link>
         </div>
       </div>
-    </div>
+      <Footer tone="command" />
+    </main>
   );
 }

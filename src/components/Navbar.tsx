@@ -106,7 +106,17 @@ export default function Navbar() {
   /** Signed-out guides (/docs, /support) use the workspace theme — keep nav text light on dark. */
   const isPublicGuideChrome =
     pathname === "/support" || pathname === "/docs" || pathname?.startsWith("/docs/");
-  const navUsesDarkChrome = isAuthPage || isPublicGuideChrome;
+  /** Standard marketing pages: dark nav chrome (high contrast, matches pricing). */
+  const isMarketingSiteChrome =
+    pathname === "/product" ||
+    pathname === "/contact" ||
+    pathname === "/pricing" ||
+    pathname === "/download" ||
+    pathname === "/trust" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/benefits";
+  const navUsesDarkChrome = isAuthPage || isPublicGuideChrome || isMarketingSiteChrome;
 
   const navLinkClass = navUsesDarkChrome
     ? "text-[13px] font-medium text-zinc-300 transition-colors duration-200 hover:text-white"
@@ -118,6 +128,9 @@ export default function Navbar() {
     if (href === "/pricing") return pathname === "/pricing";
     if (href === "/download") return pathname === "/download";
     if (href === "/contact") return pathname === "/contact";
+    if (href === "/terms") return pathname === "/terms";
+    if (href === "/trust") return pathname === "/trust";
+    if (href === "/privacy") return pathname === "/privacy";
     return false;
   }
 

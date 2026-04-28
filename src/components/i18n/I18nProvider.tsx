@@ -16,7 +16,11 @@ import {
 } from "@/lib/i18n/ui-locales";
 import { translate } from "@/lib/i18n/translate";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
-import { loadWorkspacePrefs, saveWorkspacePrefs } from "@/lib/workspace-prefs";
+import {
+  loadWorkspacePrefs,
+  mergeWorkspacePrefsPatch,
+  saveWorkspacePrefs,
+} from "@/lib/workspace-prefs";
 
 const PREFS_STORAGE_KEY = "route5:workspacePrefs.v1";
 
@@ -70,7 +74,10 @@ export function PublicI18nProvider({ children }: { children: React.ReactNode }) 
 
   const setUiLocale = useCallback((code: UiLocaleCode | undefined) => {
     const prev = loadWorkspacePrefs();
-    saveWorkspacePrefs({ ...prev, uiLocale: code });
+    const next = mergeWorkspacePrefsPatch(prev, {
+      uiLocale: code === undefined ? null : code,
+    });
+    saveWorkspacePrefs(next);
     setUiLocaleState(resolveUiLocale(code));
   }, []);
 
@@ -108,7 +115,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setUiLocale = useCallback(
     (code: UiLocaleCode | undefined) => {
-      exp.setPrefs({ uiLocale: code });
+      exp.setPrefs({ uiLocale: code === undefined ? null : code });
     },
     [exp]
   );

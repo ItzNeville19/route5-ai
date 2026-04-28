@@ -16,11 +16,13 @@ import {
   Eye,
   History,
   Home,
+  LayoutGrid,
   Mail,
   Palette,
   PlusCircle,
   Settings,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import WorkspaceNotificationsPopover from "@/components/workspace/WorkspaceNotificationsPopover";
@@ -29,6 +31,7 @@ import WorkspaceHelpPanel from "@/components/workspace/WorkspaceHelpPanel";
 import WorkspaceHeaderSearch from "@/components/workspace/WorkspaceHeaderSearch";
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 import { useWorkspaceChromeActions } from "@/components/workspace/WorkspaceChromeActions";
+import { resolveDesktopDownloadHref } from "@/lib/desktop-install-url";
 
 function classNames(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -117,6 +120,8 @@ export default function WorkspaceTopToolbar() {
     };
   }, [leadOpen, syncLeadMenuPosition]);
 
+  const desktopDownloadHref = resolveDesktopDownloadHref();
+  const desktopDownloadExternal = /^https?:\/\//i.test(desktopDownloadHref);
   const suffix = useMemo(() => {
     const params = new URLSearchParams(search.toString());
     params.set("view", surfaceMode);
@@ -151,13 +156,19 @@ export default function WorkspaceTopToolbar() {
     router.replace(qs ? `${pathname}?${qs}` : `${pathname}?view=admin`, { scroll: false });
   };
 
+  const employeeToolbarCrowded = canLead && surfaceMode === "employee";
+
   const menuItem =
     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
 
   return (
     <>
       <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
-        <div className="route5-ocean-toolbar-surface route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5">
+        <div
+          className={`route5-ocean-toolbar-surface route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 ${
+            employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
+          }`}
+        >
           <div className="pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl" aria-hidden />
 
@@ -266,10 +277,11 @@ export default function WorkspaceTopToolbar() {
                 <button
                   type="button"
                   onClick={goLeadView}
-                  className="route5-pressable inline-flex max-w-[140px] shrink-0 items-center justify-center truncate rounded-full border border-cyan-400/35 bg-cyan-500/[0.12] px-2 py-0.5 text-[10px] font-semibold leading-tight text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] transition hover:border-cyan-300/40 hover:bg-cyan-500/[0.18] sm:max-w-none sm:px-2.5 sm:text-[11px]"
+                  className="route5-pressable inline-flex max-w-[min(100vw,11rem)] shrink-0 items-center justify-center truncate rounded-full border border-cyan-400/35 bg-cyan-500/[0.12] px-2 py-0.5 text-[10px] font-semibold leading-tight text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] transition hover:border-cyan-300/40 hover:bg-cyan-500/[0.18] sm:max-w-none sm:px-2.5 sm:text-[11px]"
                   title="Return to organization metrics and Lead tools"
                 >
-                  Back to team overview
+                  <span className="sm:hidden">Team view</span>
+                  <span className="hidden sm:inline">Back to team overview</span>
                 </button>
               ) : null}
 
@@ -354,14 +366,45 @@ export default function WorkspaceTopToolbar() {
                             Employee Preview
                           </button>
                           <Link
-                            href="/download"
+                            href="/workspace/organization"
                             role="menuitem"
                             className={menuItem}
                             onClick={() => setLeadOpen(false)}
                           >
-                            <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
-                            Desktop client
+                            <Users className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                            Organization
                           </Link>
+                          <Link
+                            href="/?site=1"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => setLeadOpen(false)}
+                          >
+                            <LayoutGrid className="h-4 w-4 text-emerald-200/90" strokeWidth={2} />
+                            Marketing site
+                          </Link>
+                          {desktopDownloadExternal ? (
+                            <a
+                              href={desktopDownloadHref}
+                              role="menuitem"
+                              className={menuItem}
+                              onClick={() => setLeadOpen(false)}
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                              Download desktop client
+                            </a>
+                          ) : (
+                            <Link
+                              href={desktopDownloadHref}
+                              role="menuitem"
+                              className={menuItem}
+                              onClick={() => setLeadOpen(false)}
+                            >
+                              <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                              Download desktop client
+                            </Link>
+                          )}
                           <Link
                             href="/settings"
                             role="menuitem"

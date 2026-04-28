@@ -54,8 +54,9 @@ function normalize(row: {
 
 export async function fetchCommitments(projectId?: string): Promise<Commitment[]> {
   const params = new URLSearchParams();
+  params.set("desk", "1");
   if (projectId) params.set("project_id", projectId);
-  const suffix = params.toString() ? `?${params.toString()}` : "";
+  const suffix = `?${params.toString()}`;
   const res = await fetch(`/api/commitments${suffix}`, { credentials: "same-origin" });
   const data = (await res.json().catch(() => ({}))) as {
     commitments?: Commitment[];

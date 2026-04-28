@@ -16,6 +16,7 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import EmployeeCommitmentUpdateDrawer from "@/components/workspace/EmployeeCommitmentUpdateDrawer";
 
 type ActivityRow = {
   id: string;
@@ -85,11 +86,16 @@ export default function EmployeePreviewPanel() {
   const { orgRole, organizationId } = useWorkspaceData();
   const { prefs } = useWorkspaceExperience();
   const search = useSearchParams();
-  const viewQs = search.get("view") === "employee" ? "?view=employee" : "";
+  const tasksHref = useMemo(() => {
+    return search.get("view") === "employee"
+      ? "/workspace/my-inbox?view=employee"
+      : "/workspace/my-inbox";
+  }, [search]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
+  const [commitmentUpdateRow, setCommitmentUpdateRow] = useState<ActivityRow | null>(null);
 
   const canOrg = orgRole === "admin" || orgRole === "manager";
   const surfaceMode = resolveWorkspaceSurfaceMode(canOrg, search.get("view"), prefs.defaultWorkspaceView);
@@ -187,13 +193,18 @@ export default function EmployeePreviewPanel() {
 
   return (
     <div className="mx-auto w-full max-w-[920px] space-y-4 animate-[route5-page-enter_0.35s_ease-out_both] pb-6">
+      <EmployeeCommitmentUpdateDrawer
+        row={commitmentUpdateRow}
+        onClose={() => setCommitmentUpdateRow(null)}
+        onApplied={() => window.dispatchEvent(new Event("route5:commitments-changed"))}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1 text-[12px] text-[var(--workspace-muted-fg)]">
         <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Work shortcuts">
           <Link
-            href={`/workspace/commitments${viewQs}`}
+            href={tasksHref}
             className="font-semibold text-[var(--workspace-accent)] transition hover:opacity-90"
           >
-            Commitments
+            My inbox
           </Link>
           <Link
             href="/workspace/notifications"
@@ -209,7 +220,7 @@ export default function EmployeePreviewPanel() {
         </nav>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href={`/workspace/commitments${viewQs}`}
+            href={tasksHref}
             className="route5-pressable inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_40%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] px-3.5 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)]"
           >
             <ClipboardList className="h-3.5 w-3.5" aria-hidden />
@@ -257,7 +268,7 @@ export default function EmployeePreviewPanel() {
                 <li key={row.id} className="flex flex-wrap items-start justify-between gap-3 py-3.5 first:pt-1">
                   <div className="min-w-0 flex-1">
                     <Link
-                      href={`/workspace/commitments${viewQs}`}
+                      href={tasksHref}
                       className="text-[15px] font-semibold text-[var(--workspace-fg)] transition hover:text-[var(--workspace-accent)]"
                     >
                       {row.title}
@@ -279,12 +290,13 @@ export default function EmployeePreviewPanel() {
                       <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">No due date set</p>
                     )}
                   </div>
-                  <Link
-                    href={`/workspace/commitments${viewQs}`}
+                  <button
+                    type="button"
+                    onClick={() => setCommitmentUpdateRow(row)}
                     className="route5-pressable shrink-0 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_38%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_10%,transparent)] px-3.5 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)]"
                   >
                     Update
-                  </Link>
+                  </button>
                 </li>
               );
             })

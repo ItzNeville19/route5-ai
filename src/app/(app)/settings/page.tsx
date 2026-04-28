@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-
-const desktopDownloadUrl = process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL?.trim() || "";
 import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebhookCard";
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
+import OrganizationDangerZone from "@/components/settings/OrganizationDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
 import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
+import {
+  getDesktopDownloadUrl,
+  isDesktopDownloadConfigured,
+} from "@/lib/desktop-install-url";
 
 function SettingsSection({
   id,
@@ -23,20 +26,30 @@ function SettingsSection({
   return (
     <section
       id={id}
-      className={`rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-4)] ${id ? "scroll-mt-28" : ""}`}
+      className={`rounded-[var(--r5-radius-lg)] border border-white/12 bg-[#0e141c]/95 p-[var(--r5-space-4)] shadow-sm backdrop-blur-sm ${id ? "scroll-mt-28" : ""}`}
     >
-      <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">{title}</h2>
-      <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-r5-text-secondary">{description}</p>
+      <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-[var(--r5-text-primary)]">
+        {title}
+      </h2>
+      <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)]">
+        {description}
+      </p>
       <div className="mt-[var(--r5-space-4)]">{children}</div>
     </section>
   );
 }
 
 export default function WorkspaceSettingsPage() {
+  const desktopDownloadUrl = getDesktopDownloadUrl();
+  const showDirectMacInstaller = isDesktopDownloadConfigured();
+
   return (
-    <div className="mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
+    <div className="route5-settings-surface mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
       <div>
-        <Link href="/workspace/dashboard" className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary">
+        <Link
+          href="/workspace/dashboard"
+          className="text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)] transition hover:text-[var(--r5-text-primary)]"
+        >
           ← Dashboard
         </Link>
       </div>
@@ -49,6 +62,7 @@ export default function WorkspaceSettingsPage() {
         <div className="space-y-[var(--r5-space-4)]">
           <SettingsClerkUserProfile />
           <AccountDangerZone />
+          <OrganizationDangerZone />
         </div>
       </SettingsSection>
 
@@ -63,35 +77,52 @@ export default function WorkspaceSettingsPage() {
       <SettingsSection
         id="settings-desktop"
         title="Desktop app"
-        description="Electron desktop build — same workspace as web, packaged for macOS (.dmg) or your CI output."
+        description="When Route5 provides an installer for your organization, it uses the same workspace as the web app in a dedicated window."
       >
-        <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">
-          On macOS, open the disk image and drag Route5 into Applications. The app runs a local Next.js standalone
-          server inside Electron — not a separate native UI toolkit.
+        <p className="text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)]">
+          On Mac, open the disk image and drag Route5 into Applications. On Windows, run the installer your team ships
+          from IT.
         </p>
         <div className="mt-[var(--r5-space-3)] flex flex-col gap-[var(--r5-space-2)] sm:flex-row sm:flex-wrap">
           <Link
             href="/download"
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-white/[0.11]"
           >
-            Install options &amp; build instructions
-            <span className="text-r5-text-secondary" aria-hidden>
+            Desktop &amp; install options
+            <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
               ↗
             </span>
           </Link>
-          {desktopDownloadUrl ? (
+          {showDirectMacInstaller ? (
             <a
               href={desktopDownloadUrl}
               rel="noopener noreferrer"
-              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-emerald-500/25"
             >
-              Download hosted build
-              <span className="text-r5-text-secondary" aria-hidden>
+              Download Mac installer
+              <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
                 ↗
               </span>
             </a>
-          ) : null}
+          ) : (
+            <Link
+              href="/download"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-emerald-500/25"
+            >
+              Get the Mac build (download page)
+              <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
+                ↗
+              </span>
+            </Link>
+          )}
         </div>
+        {!showDirectMacInstaller ? (
+          <p className="mt-[var(--r5-space-3)] text-[13px] leading-relaxed text-[var(--r5-text-secondary)]">
+            A direct <span className="font-mono text-[var(--r5-text-primary)]">.dmg</span> link appears here when your
+            team sets <span className="font-mono text-[var(--r5-text-primary)]">NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL</span>{" "}
+            — until then, use the download page (no broken file link).
+          </p>
+        ) : null}
       </SettingsSection>
 
       <SettingsSection
@@ -101,7 +132,7 @@ export default function WorkspaceSettingsPage() {
       >
         <Link
           href="/workspace/notifications/preferences"
-          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-r5-text-primary transition hover:bg-r5-surface-hover"
+          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-[var(--r5-text-primary)] transition hover:bg-white/[0.11]"
         >
           Open notification preferences
         </Link>
@@ -131,10 +162,12 @@ export default function WorkspaceSettingsPage() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="rounded-[var(--r5-radius-md)] border border-r5-border-subtle bg-r5-surface-primary/40 px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-r5-surface-hover"
+                className="rounded-[var(--r5-radius-md)] border border-white/12 bg-white/[0.05] px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-white/[0.09]"
               >
-                <p className="text-[length:var(--r5-font-body)] font-medium text-r5-text-primary">{item.name}</p>
-                <p className="mt-[var(--r5-space-1)] text-[12px] text-r5-text-secondary">Open integration</p>
+                <p className="text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)]">
+                  {item.name}
+                </p>
+                <p className="mt-[var(--r5-space-1)] text-[12px] text-[var(--r5-text-secondary)]">Open integration</p>
               </Link>
             ))}
           </div>

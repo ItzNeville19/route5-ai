@@ -33,6 +33,11 @@
 # local asset renders / exports (large binaries — not tracked)
 /ad-output/
 
+# Desktop installers — copy from dist-electron after `npm run electron:dist`, or use NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL to a CDN URL
+/public/installers/*.dmg
+/public/installers/*.zip
+!/public/installers/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*

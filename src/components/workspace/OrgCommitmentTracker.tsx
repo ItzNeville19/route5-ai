@@ -28,6 +28,10 @@ import {
   ORG_STATUS_LABEL,
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
+import {
+  coerceOrgCommitmentDetailFromApi,
+  coerceOrgCommitmentRowFromApi,
+} from "@/lib/org-commitments/coerce-canonical-for-tracker";
 import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -45,9 +49,11 @@ const STATUSES = [
 
 const PRIORITIES = ["critical", "high", "medium", "low"] as const;
 
-function ownerLabel(ownerId: string, selfId: string | undefined) {
-  if (selfId && ownerId === selfId) return "You";
-  return ownerId.length > 12 ? `${ownerId.slice(0, 10)}…` : ownerId;
+function ownerLabel(ownerId: string | undefined, selfId: string | undefined) {
+  const id = ownerId?.trim();
+  if (!id) return "—";
+  if (selfId && id === selfId) return "You";
+  return id.length > 12 ? `${id.slice(0, 10)}…` : id;
 }
 
 export default function OrgCommitmentTracker() {
@@ -144,7 +150,8 @@ export default function OrgCommitmentTracker() {
         return;
       }
       if (data.orgId) setOrgId(data.orgId);
-      setRows(data.commitments ?? []);
+      const rawRows = data.commitments ?? [];
+      setRows(rawRows.map((r) => coerceOrgCommitmentRowFromApi(r)));
     } finally {
       setLoadingList(false);
     }
@@ -165,7 +172,7 @@ export default function OrgCommitmentTracker() {
         setDetail(null);
         return;
       }
-      const c = data.commitment;
+      const c = coerceOrgCommitmentDetailFromApi(data.commitment);
       setDetail(c ?? null);
       if (c) {
         setEditTitle(c.title);
@@ -663,14 +670,14 @@ export default function OrgCommitmentTracker() {
                           <p className="text-[14px] font-semibold leading-snug text-zinc-950">{c.title}</p>
                           <div className="flex flex-wrap gap-1.5">
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_STATUS_PILL[c.status]}`}
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_STATUS_PILL[c.status] ?? "bg-zinc-100 text-zinc-800 ring-1 ring-zinc-300/90"}`}
                             >
-                              {ORG_STATUS_LABEL[c.status]}
+                              {ORG_STATUS_LABEL[c.status] ?? String(c.status)}
                             </span>
                             <span
-                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_PRIORITY_PILL[c.priority]}`}
+                              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_PRIORITY_PILL[c.priority] ?? "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-300/90"}`}
                             >
-                              {ORG_PRIORITY_LABEL[c.priority]}
+                              {ORG_PRIORITY_LABEL[c.priority] ?? String(c.priority)}
                             </span>
                           </div>
                         </div>
@@ -770,11 +777,15 @@ export default function OrgCommitmentTracker() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${ORG_STATUS_PILL[detail.status]}`}>
-                    {ORG_STATUS_LABEL[detail.status]}
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${ORG_STATUS_PILL[detail.status] ?? "bg-zinc-100 text-zinc-800 ring-1 ring-zinc-300/90"}`}
+                  >
+                    {ORG_STATUS_LABEL[detail.status] ?? String(detail.status)}
                   </span>
-                  <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${ORG_PRIORITY_PILL[detail.priority]}`}>
-                    {ORG_PRIORITY_LABEL[detail.priority]}
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${ORG_PRIORITY_PILL[detail.priority] ?? "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-300/90"}`}
+                  >
+                    {ORG_PRIORITY_LABEL[detail.priority] ?? String(detail.priority)}
                   </span>
                 </div>
 
@@ -916,7 +927,7 @@ export default function OrgCommitmentTracker() {
                     Comments
                   </p>
                   <ul className="mt-2 max-h-40 space-y-2 overflow-y-auto text-[13px]">
-                    {detail.comments.map((cm) => (
+                    {(detail.comments ?? []).map((cm) => (
                       <li key={cm.id} className="rounded-xl border border-[var(--workspace-border)]/80 bg-[var(--workspace-surface)]/40 px-3 py-2">
                         <p className="whitespace-pre-wrap text-[var(--workspace-fg)]">{cm.content}</p>
                         <p className="mt-1 text-[10px] text-[var(--workspace-muted-fg)]">
@@ -947,7 +958,7 @@ export default function OrgCommitmentTracker() {
                     Attachments
                   </p>
                   <ul className="mt-2 space-y-1 text-[13px]">
-                    {detail.attachments.map((a) => (
+                    {(detail.attachments ?? []).map((a) => (
                       <li key={a.id}>
                         <a
                           href={a.fileUrl}
@@ -980,7 +991,7 @@ export default function OrgCommitmentTracker() {
                     Depends on
                   </p>
                   <ul className="mt-2 space-y-1 text-[13px] text-[var(--workspace-fg)]">
-                    {detail.dependencies.map((d) => (
+                    {(detail.dependencies ?? []).map((d) => (
                       <li key={d.id}>
                         <button
                           type="button"
@@ -1023,7 +1034,7 @@ export default function OrgCommitmentTracker() {
                     History
                   </p>
                   <ul className="mt-2 max-h-48 space-y-2 overflow-y-auto text-[12px] text-[var(--workspace-muted-fg)]">
-                    {detail.history.map((h) => (
+                    {(detail.history ?? []).map((h) => (
                       <li key={h.id}>
                         <span className="font-medium text-[var(--workspace-fg)]">{h.fieldChanged}</span>{" "}
                         {h.oldValue ?? "—"} → {h.newValue ?? "—"}{" "}

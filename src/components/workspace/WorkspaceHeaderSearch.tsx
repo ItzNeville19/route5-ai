@@ -11,7 +11,7 @@ export default function WorkspaceHeaderSearch() {
     <button
       type="button"
       onClick={() => open()}
-      className="route5-header-search hidden min-w-0 max-w-[min(100%,280px)] flex-1 items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-emerald-100/42 shadow-inner shadow-black/25 transition hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-emerald-100/72 md:flex lg:max-w-[300px]"
+      className="route5-header-search inline-flex min-w-0 max-w-[min(100%,200px)] flex-1 items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-emerald-100/52 shadow-inner shadow-black/25 transition hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-emerald-100/80 sm:max-w-[min(100%,260px)] md:max-w-[min(100%,280px)] lg:max-w-[300px]"
       aria-label="Search workspace — Command K"
     >
       <Search className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={2} />

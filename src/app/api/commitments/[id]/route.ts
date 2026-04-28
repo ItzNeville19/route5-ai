@@ -15,10 +15,17 @@ import {
   userAndIpRateScopes,
 } from "@/lib/security/request-guards";
 import { requireOrgRole } from "@/lib/workspace/org-members";
+import {
+  getOrgCommitmentDetail,
+  updateOrgCommitment,
+  softDeleteOrgCommitment,
+} from "@/lib/org-commitments/repository";
+import { broadcastOrgCommitmentEvent } from "@/lib/org-commitments/broadcast";
+import type { OrgCommitmentPriority, OrgCommitmentStatus } from "@/lib/org-commitment-types";
 
 export const runtime = "nodejs";
 
-const patchSchema = z
+const canonicalPatchSchema = z
   .object({
     title: z.string().min(1).max(2000).optional(),
     description: z.string().max(20_000).optional().nullable(),
@@ -49,10 +56,29 @@ const patchSchema = z
   })
   .strict();
 
-export async function GET(
-  req: Request,
-  ctx: { params: Promise<{ id: string }> }
-) {
+const orgPatchSchema = z
+  .object({
+    title: z.string().min(1).max(2000).optional(),
+    description: z.string().max(20_000).optional().nullable(),
+    ownerId: z.string().min(1).max(128).optional(),
+    projectId: z.string().max(128).nullable().optional(),
+    deadline: z.string().max(64).optional(),
+    priority: z.enum(["critical", "high", "medium", "low"]).optional(),
+    status: z
+      .enum([
+        "not_started",
+        "in_progress",
+        "on_track",
+        "at_risk",
+        "overdue",
+        "completed",
+      ])
+      .optional(),
+    completed: z.boolean().optional(),
+  })
+  .strict();
+
+export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
@@ -60,22 +86,92 @@ export async function GET(
   if (!isWorkspaceResourceId(id)) {
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
+
   try {
+    const detail = await getOrgCommitmentDetail(userId, id);
+    if (detail) return NextResponse.json({ commitment: detail });
     const commitments = await fetchCommitments(userId);
-    const commitment = commitments.find((row) => row.id === id);
-    if (!commitment) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    return NextResponse.json({ commitment });
+    const canonical = commitments.find((row) => row.id === id);
+    if (!canonical) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ commitment: canonical });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
   }
 }
 
-export async function PATCH(
-  req: Request,
-  ctx: { params: Promise<{ id: string }> }
+async function canonicalPatchPipeline(
+  userId: string,
+  request: Request,
+  id: string,
+  role: string
 ) {
+  const parsed = await parseJsonBody(request, canonicalPatchSchema);
+  if (!parsed.ok) return parsed.response;
+  const patch = parsed.data;
+  if (role === "member") {
+    const existing = (await fetchCommitments(userId)).find((row) => row.id === id);
+    if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const clerk = await clerkClient();
+    const me = await clerk.users.getUser(userId);
+    const allowedOwners = [
+      me.fullName?.trim(),
+      me.firstName?.trim(),
+      [me.firstName, me.lastName].filter(Boolean).join(" ").trim(),
+      me.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
+    ]
+      .filter((v): v is string => Boolean(v))
+      .map((v) => v.toLowerCase());
+    const owner = existing.owner?.trim().toLowerCase() ?? "";
+    if (!owner || !allowedOwners.includes(owner)) {
+      return NextResponse.json(
+        { error: "Members can only update commitments assigned to them." },
+        { status: 403 }
+      );
+    }
+    if (
+      patch.owner !== undefined ||
+      patch.manager_decision !== undefined ||
+      patch.manager_comment !== undefined ||
+      patch.due_date_request_decision !== undefined ||
+      patch.due_date !== undefined
+    ) {
+      return NextResponse.json({ error: "Admin approval required for this action." }, { status: 403 });
+    }
+  }
+  if (patch.status === "blocked" && !patch.blocker_reason?.trim()) {
+    return NextResponse.json({ error: "Blocked status requires a blocker reason." }, { status: 400 });
+  }
+  if (patch.status === "done" && !patch.completion_note?.trim() && !patch.completion_proof_url?.trim()) {
+    return NextResponse.json(
+      { error: "Completion proof or note is required before marking done." },
+      { status: 400 }
+    );
+  }
+  if (patch.due_date) {
+    const due = new Date(patch.due_date).getTime();
+    if (!Number.isFinite(due)) {
+      return NextResponse.json({ error: "Invalid due date" }, { status: 400 });
+    }
+  }
+  const row = await updateCommitment(userId, id, {
+    title: patch.title,
+    description: patch.description,
+    owner: patch.owner,
+    dueDate: patch.due_date,
+    status: patch.status,
+    blockerReason: patch.blocker_reason,
+    completionNote: patch.completion_note,
+    completionProofUrl: patch.completion_proof_url,
+    managerDecision: patch.manager_decision,
+    managerComment: patch.manager_comment,
+    dueDateRequest: patch.due_date_request,
+    dueDateRequestDecision: patch.due_date_request_decision,
+  });
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json({ commitment: row });
+}
+
+export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
@@ -95,73 +191,70 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  const parsed = await parseJsonBody(req, patchSchema);
-  if (!parsed.ok) return parsed.response;
-
   try {
+    const existingOrg = await getOrgCommitmentDetail(userId, id);
+    if (!existingOrg) {
+      return await canonicalPatchPipeline(userId, req, id, orgAccess.role);
+    }
+
+    const parsed = await parseJsonBody(req, orgPatchSchema);
+    if (!parsed.ok) return parsed.response;
     const patch = parsed.data;
-    if (orgAccess.role === "member") {
-      const existing = (await fetchCommitments(userId)).find((row) => row.id === id);
-      if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
-      const clerk = await clerkClient();
-      const me = await clerk.users.getUser(userId);
-      const allowedOwners = [
-        me.fullName?.trim(),
-        me.firstName?.trim(),
-        [me.firstName, me.lastName].filter(Boolean).join(" ").trim(),
-        me.primaryEmailAddress?.emailAddress?.split("@")[0]?.trim(),
-      ]
-        .filter((v): v is string => Boolean(v))
-        .map((v) => v.toLowerCase());
-      const owner = existing.owner?.trim().toLowerCase() ?? "";
-      if (!owner || !allowedOwners.includes(owner)) {
+
+    const isLead = orgAccess.role === "admin" || orgAccess.role === "manager";
+    if (!isLead && existingOrg.ownerId.trim() !== userId.trim()) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!isLead) {
+      if (
+        patch.ownerId !== undefined ||
+        patch.projectId !== undefined ||
+        patch.deadline !== undefined ||
+        patch.priority !== undefined ||
+        patch.title !== undefined ||
+        patch.description !== undefined
+      ) {
         return NextResponse.json(
-          { error: "Members can only update commitments assigned to them." },
+          { error: "Only leads can edit title, description, owner, priority, or due date." },
           { status: 403 }
         );
       }
-      if (
-        patch.owner !== undefined ||
-        patch.manager_decision !== undefined ||
-        patch.manager_comment !== undefined ||
-        patch.due_date_request_decision !== undefined ||
-        patch.due_date !== undefined
-      ) {
-        return NextResponse.json({ error: "Admin approval required for this action." }, { status: 403 });
+    }
+
+    let deadlineIso = patch.deadline !== undefined ? patch.deadline : undefined;
+    if (deadlineIso !== undefined) {
+      const t = new Date(deadlineIso).getTime();
+      if (!Number.isFinite(t)) {
+        return NextResponse.json({ error: "Invalid deadline" }, { status: 400 });
       }
+      deadlineIso = new Date(deadlineIso).toISOString();
     }
-    if (patch.status === "blocked" && !patch.blocker_reason?.trim()) {
-      return NextResponse.json({ error: "Blocked status requires a blocker reason." }, { status: 400 });
-    }
-    if (patch.status === "done" && !patch.completion_note?.trim() && !patch.completion_proof_url?.trim()) {
-      return NextResponse.json(
-        { error: "Completion proof or note is required before marking done." },
-        { status: 400 }
-      );
-    }
-    if (patch.due_date) {
-      const due = new Date(patch.due_date).getTime();
-      if (!Number.isFinite(due)) {
-        return NextResponse.json({ error: "Invalid due date" }, { status: 400 });
-      }
-    }
-    const row = await updateCommitment(userId, id, {
-      title: patch.title,
-      description: patch.description,
-      owner: patch.owner,
-      dueDate: patch.due_date,
-      status: patch.status,
-      blockerReason: patch.blocker_reason,
-      completionNote: patch.completion_note,
-      completionProofUrl: patch.completion_proof_url,
-      managerDecision: patch.manager_decision,
-      managerComment: patch.manager_comment,
-      dueDateRequest: patch.due_date_request,
-      dueDateRequestDecision: patch.due_date_request_decision,
-    });
-    if (!row) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+
+    type PatchOrg = Partial<{
+      title: string;
+      description: string | null;
+      ownerId: string;
+      projectId: string | null;
+      deadline: string;
+      priority: OrgCommitmentPriority;
+      status: OrgCommitmentStatus;
+      completed: boolean;
+    }>;
+
+    const orgPatch: PatchOrg = {
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+      ...(patch.description !== undefined ? { description: patch.description } : {}),
+      ...(patch.ownerId !== undefined ? { ownerId: patch.ownerId } : {}),
+      ...(patch.projectId !== undefined ? { projectId: patch.projectId } : {}),
+      ...(deadlineIso !== undefined ? { deadline: deadlineIso } : {}),
+      ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
+      ...(patch.status !== undefined ? { status: patch.status } : {}),
+      ...(patch.completed !== undefined ? { completed: patch.completed } : {}),
+    };
+
+    const { row } = await updateOrgCommitment(userId, id, orgPatch);
+    broadcastOrgCommitmentEvent(existingOrg.orgId, { kind: "updated", commitmentId: row.id, t: Date.now() });
     return NextResponse.json({ commitment: row });
   } catch (e) {
     if (e instanceof Error && e.message === "NOT_FOUND") {
@@ -171,10 +264,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: Request,
-  ctx: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
@@ -197,10 +287,15 @@ export async function DELETE(
   }
 
   try {
-    const ok = await deleteCommitment(userId, id);
-    if (!ok) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const existingOrg = await getOrgCommitmentDetail(userId, id);
+    if (existingOrg) {
+      const ok = await softDeleteOrgCommitment(userId, id);
+      if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      broadcastOrgCommitmentEvent(existingOrg.orgId, { kind: "deleted", commitmentId: id, t: Date.now() });
+      return NextResponse.json({ ok: true });
     }
+    const ok = await deleteCommitment(userId, id);
+    if (!ok) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });

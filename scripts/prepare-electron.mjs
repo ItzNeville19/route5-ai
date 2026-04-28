@@ -10,7 +10,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const appName = pkg.name || "app";
-const standaloneApp = path.join(root, ".next", "standalone", appName);
+/** Next can emit either `.next/standalone/<pkg>/server.js` or flat `.next/standalone/server.js`. */
+const standaloneFlat = path.join(root, ".next", "standalone");
+const standaloneNested = path.join(root, ".next", "standalone", appName);
+const standaloneApp = fs.existsSync(path.join(standaloneNested, "server.js"))
+  ? standaloneNested
+  : standaloneFlat;
 const serverJs = path.join(standaloneApp, "server.js");
 
 if (!fs.existsSync(serverJs)) {

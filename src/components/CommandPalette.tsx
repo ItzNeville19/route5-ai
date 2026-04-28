@@ -258,6 +258,8 @@ export function CommandPaletteProvider({
   const ws = useWorkspaceDataOptional();
   const canAddCompanyInWorkspace =
     ws != null && !ws.loadingOrganization && canCreateCompany(ws.orgRole);
+  const canWorkspaceLead =
+    ws != null && !ws.loadingOrganization && (ws.orgRole === "admin" || ws.orgRole === "manager");
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const deferredQuery = useDeferredValue(query);
@@ -361,6 +363,7 @@ export function CommandPaletteProvider({
         people,
         openActionsCount,
         canCreateCompany: canAddCompanyInWorkspace,
+        canWorkspaceLead,
       }),
     [
       signedInEffective,
@@ -371,6 +374,7 @@ export function CommandPaletteProvider({
       people,
       openActionsCount,
       canAddCompanyInWorkspace,
+      canWorkspaceLead,
     ]
   );
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 /** Shown on the public home when the visitor already has a session — fast path back to work. */
 export default function HomeSessionBar() {
   return (
-    <div className="relative z-[5] border-b border-blue-200/80 bg-gradient-to-r from-sky-50 via-white to-blue-50">
+    <div className="fixed left-0 right-0 top-14 z-[995] border-b border-blue-200/80 bg-gradient-to-r from-sky-50 via-white to-blue-50 shadow-sm">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-8 lg:px-10">
         <p className="text-[13px] leading-snug text-slate-700">
           <span className="font-semibold text-slate-900">You&apos;re signed in.</span>{" "}

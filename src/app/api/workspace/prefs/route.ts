@@ -68,8 +68,10 @@ const prefsPatchSchema = z
     extractionProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
     llmProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
     uiLocale: z
-      .string()
-      .refine((s): s is UiLocaleCode => isUiLocaleCode(s))
+      .union([
+        z.string().refine((s): s is UiLocaleCode => isUiLocaleCode(s)),
+        z.null(),
+      ])
       .optional(),
     surfaceMaterial: z.enum(["liquid", "standard", "flat"]).optional(),
     commandCenterDensity: z.enum(["compact", "comfortable"]).optional(),
@@ -143,6 +145,12 @@ export async function POST(req: Request) {
     const existing = (user.privateMetadata as Record<string, unknown> | undefined)?.[META_KEY];
     const base = isPlainPrefs(existing) ? existing : {};
     const merged: WorkspacePrefsV1 = { ...base, ...patch };
+    if (
+      Object.prototype.hasOwnProperty.call(patch, "uiLocale") &&
+      patch.uiLocale === null
+    ) {
+      delete merged.uiLocale;
+    }
     await client.users.updateUser(userId, {
       privateMetadata: {
         ...user.privateMetadata,

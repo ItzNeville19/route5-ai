@@ -17,6 +17,7 @@ import {
   mergeRemoteWorkspacePrefs,
   mergeWorkspacePrefsPatch,
   saveWorkspacePrefs,
+  workspacePrefsForApiSync,
   WORKSPACE_TZ_PENDING_SYNC_KEY,
   type WorkspacePrefsV1,
 } from "@/lib/workspace-prefs";
@@ -120,7 +121,7 @@ export function WorkspaceExperienceProvider({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ prefs }),
+        body: JSON.stringify({ prefs: workspacePrefsForApiSync(prefs) }),
       }).then((r) => {
         if (r.ok) clearWorkspaceTzPendingSync();
       });
@@ -177,6 +178,9 @@ export function WorkspaceExperienceProvider({
       }
       if (remoteReady && patch.guidedTourCompleted !== undefined) {
         persistPrefsPatchNow({ guidedTourCompleted: patch.guidedTourCompleted });
+      }
+      if (remoteReady && Object.prototype.hasOwnProperty.call(patch, "uiLocale")) {
+        persistPrefsPatchNow({ uiLocale: patch.uiLocale ?? null });
       }
     },
     [remoteReady, persistPrefsPatchNow]

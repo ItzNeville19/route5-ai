@@ -31,16 +31,16 @@ export const metadata: Metadata = {
 
 export default function BenefitsPage() {
   return (
-    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
+    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
       <Navbar />
       <article className="relative z-10 mx-auto max-w-[860px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">
           Route5 · benefits
         </p>
-        <h1 className="mt-4 text-[clamp(1.9rem,4.7vw,2.8rem)] font-semibold tracking-[-0.04em] text-[#1d1d1f]">
+        <h1 className="mt-4 text-[clamp(1.9rem,4.7vw,2.8rem)] font-semibold tracking-[-0.04em] text-white">
           Stay small enough long enough, then scale with control.
         </h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
+        <p className="mt-4 text-[17px] leading-relaxed text-zinc-200">
           Teams pay for outcomes, not dashboards. Route5 is built so commitments stay owned,
           visible, and easy to execute every day.
         </p>
@@ -49,41 +49,39 @@ export default function BenefitsPage() {
           {BENEFITS.map((item) => (
             <div
               key={item.title}
-              className="rounded-2xl border border-black/[0.08] bg-white/80 px-5 py-5 backdrop-blur"
+              className="rounded-2xl border border-white/12 bg-white/[0.06] px-5 py-5 backdrop-blur"
             >
-              <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-[#1d1d1f]">
-                {item.title}
-              </h2>
-              <p className="mt-2 text-[15px] leading-relaxed text-[#6e6e73]">{item.body}</p>
+              <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-white">{item.title}</h2>
+              <p className="mt-2 text-[15px] leading-relaxed text-zinc-200">{item.body}</p>
             </div>
           ))}
         </section>
 
-        <section className="mt-12 rounded-2xl border border-black/[0.08] bg-black/[0.02] px-5 py-6">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
+        <section className="mt-12 rounded-2xl border border-white/12 bg-white/[0.05] px-5 py-6">
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-emerald-200/75">
             Continue after trial
           </h2>
-          <p className="mt-3 text-[16px] leading-relaxed text-[#1d1d1f]">
+          <p className="mt-3 text-[16px] leading-relaxed text-zinc-100">
             Every workspace gets a 14-day free trial with no card required. After that, contact us
             to continue on the right plan.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             <a
               href={mailtoHref("Route5 — Continue after trial")}
-              className="btn-primary inline-flex rounded-full px-6 py-3 text-[14px] font-semibold"
+              className="inline-flex rounded-full bg-sky-500 px-6 py-3 text-[14px] font-semibold text-[#041210] shadow-md shadow-cyan-500/20 transition hover:bg-sky-400"
             >
               Contact {CONTACT_EMAIL}
             </a>
             <Link
               href="/desk"
-              className="inline-flex items-center rounded-full border border-black/[0.12] bg-white/80 px-6 py-3 text-[14px] font-medium text-[#1d1d1f] transition hover:bg-white"
+              className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.08] px-6 py-3 text-[14px] font-medium text-white transition hover:bg-white/[0.12]"
             >
               Open Desk
             </Link>
           </div>
         </section>
       </article>
-      <Footer />
+      <Footer tone="command" />
     </main>
   );
 }

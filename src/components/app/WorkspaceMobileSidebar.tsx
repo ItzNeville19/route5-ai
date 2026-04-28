@@ -24,12 +24,26 @@ type NavItem =
 export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobileSidebarProps) {
   const pathname = usePathname() ?? "";
   const { user } = useUser();
-  const { entitlements } = useWorkspaceData();
+  const { entitlements, orgRole } = useWorkspaceData();
   const { t } = useI18n();
   const displayName = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Account";
+  const canLeadOrg = orgRole === "admin" || orgRole === "manager";
 
   const navSections = useMemo(
-    () => [
+    () => {
+      const utilItems: NavItem[] = [
+        { href: "__notifications__", label: "Notifications", icon: Bell },
+        { href: "/settings", label: "Settings", icon: Settings },
+        { href: "/workspace/customize", label: "Customize", icon: Palette },
+      ];
+      if (canLeadOrg) {
+        utilItems.push({ href: "/workspace/organization", label: "Organization", icon: Users });
+      }
+      utilItems.push(
+        { href: "/workspace/help", label: "Help", icon: LifeBuoy },
+        { href: "__shortcuts__", label: t("sidebar.shortcuts"), icon: Keyboard }
+      );
+      return [
       {
         title: "Workspace",
         items: [
@@ -39,17 +53,11 @@ export default function WorkspaceMobileSidebar({ open, onClose }: WorkspaceMobil
       },
       {
         title: "Utilities",
-        items: [
-          { href: "__notifications__", label: "Notifications", icon: Bell },
-          { href: "/settings", label: "Settings", icon: Settings },
-          { href: "/workspace/customize", label: "Customize", icon: Palette },
-          { href: "/workspace/organization", label: "Organization", icon: Users },
-          { href: "/workspace/help", label: "Help", icon: LifeBuoy },
-          { href: "__shortcuts__", label: t("sidebar.shortcuts"), icon: Keyboard },
-        ] satisfies NavItem[],
+        items: utilItems satisfies NavItem[],
       },
-    ],
-    [t]
+    ];
+    },
+    [canLeadOrg, t]
   );
 
   return (

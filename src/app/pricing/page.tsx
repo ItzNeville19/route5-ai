@@ -28,10 +28,10 @@ export default async function PricingPage() {
           <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.4rem)] font-semibold tracking-[-0.03em] text-white">
             Plans built around how your org buys software
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-300">
+          <p className="mx-auto mt-4 max-w-2xl text-[16px] leading-relaxed text-zinc-200">
             {PRICING_INTRO}
           </p>
-          <p className="mx-auto mt-4 max-w-2xl text-[14px] leading-relaxed text-zinc-400">
+          <p className="mx-auto mt-4 max-w-2xl text-[14px] leading-relaxed text-zinc-300">
             {TRIAL_BODY}
           </p>
         </div>

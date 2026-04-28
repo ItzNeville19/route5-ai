@@ -71,40 +71,6 @@ function periodToOceanMod(p: OverviewHeroPeriod): string {
   }
 }
 
-/** Warm sky → navy stack + layered wave silhouettes — matches prefs gradient canvas art direction. */
-function OceanGradientBackdrop({ period }: { period: OverviewHeroPeriod }) {
-  const mod = periodToOceanMod(period);
-  return (
-    <div
-      className={`route5-welcome-ocean pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] ${mod}`}
-      aria-hidden
-    >
-      <div className="route5-welcome-ocean-sky absolute inset-0 rounded-[inherit]" />
-      <div className="route5-welcome-ocean-glow" />
-      <div className="route5-welcome-ocean-scrim" />
-      <div className="route5-welcome-ocean-waves">
-        <svg
-          className="absolute inset-x-0 bottom-0 h-full w-[115%] -translate-x-[6.5%] text-[rgba(15,43,71,0.58)] md:w-full md:translate-x-0"
-          viewBox="0 0 1440 200"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path
-            fill="currentColor"
-            d="M0 120 C240 92 380 148 620 118 C840 92 980 138 1180 108 C1290 95 1380 102 1440 118 L1440 210 L0 210 Z"
-            opacity={0.45}
-          />
-          <path
-            fill="currentColor"
-            d="M0 154 C260 126 440 174 680 146 C940 118 1140 168 1440 132 L1440 210 L0 210 Z"
-            opacity={0.28}
-          />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
 export default function WelcomeHeroCard({
   prefs,
   now,
@@ -226,8 +192,8 @@ export default function WelcomeHeroCard({
           <div
             className={
               photoHeroLight
-                ? "route5-welcome-photo-ocean-blend pointer-events-none absolute inset-0 opacity-95"
-                : "pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/15"
+                ? "pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/68 via-transparent to-transparent"
+                : "pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/18 to-transparent"
             }
             aria-hidden
           />
@@ -238,14 +204,21 @@ export default function WelcomeHeroCard({
           aria-hidden
         />
       ) : (
-        <OceanGradientBackdrop period={periodHero} />
+        <OverviewTimeOfDayArt
+          period={periodHero}
+          mode="gradient"
+          rotationIndex={rotationIndex}
+          regionKey={prefs.workspaceRegionKey}
+          readableTone={workspacePaletteLight ? "light" : "default"}
+        />
       )}
 
       {styleKind === "glass" ? (
-        <div className="pointer-events-none absolute inset-0 bg-white/[0.045] backdrop-blur-[3px]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 bg-white/[0.02] backdrop-blur-[2px]" aria-hidden />
       ) : null}
 
-      <div className={`relative z-[1] text-center ${photoHeroLight ? "text-slate-900" : ""}`}>
+      <div className="relative z-[1] mx-auto flex w-full max-w-[660px] flex-col rounded-[clamp(14px,2.5vw,22px)] px-3 py-3 sm:px-5 sm:py-4">
+        <div className={`text-center ${photoHeroLight ? "rounded-2xl border border-black/[0.06] bg-gradient-to-b from-black/[0.12] via-white/10 to-transparent px-2 pb-4 pt-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.35)] backdrop-blur-[6px]" : ""}`}>
         <div className="relative mx-auto max-w-[640px] space-y-0">
           <p
             className={`${heroScript.className} ${headlineSize} leading-[1.1] tracking-[0.012em] ${
@@ -344,6 +317,7 @@ export default function WelcomeHeroCard({
               />
             </div>
           ) : null}
+        </div>
         </div>
       </div>
     </section>

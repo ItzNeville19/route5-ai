@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { UserProfile } from "@clerk/nextjs";
 import { Tag } from "lucide-react";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -11,10 +12,12 @@ import { isLightWorkspacePalette, resolveWorkspaceTheme } from "@/lib/workspace-
  * We drive `appearance.variables` from the same light/dark split as the shell (not from OS alone).
  */
 export default function SettingsClerkUserProfile() {
+  const pathname = usePathname() ?? "";
   const { prefs } = useWorkspaceExperience();
   const tick = useAlignedMinuteTick();
   const { resolvedId } = useMemo(() => resolveWorkspaceTheme(prefs, tick), [prefs, tick]);
-  const light = isLightWorkspacePalette(resolvedId);
+  const onSettingsRoute = pathname.startsWith("/settings");
+  const light = onSettingsRoute ? false : isLightWorkspacePalette(resolvedId);
 
   const appearance = useMemo(
     () => ({

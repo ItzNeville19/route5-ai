@@ -12,6 +12,18 @@ import {
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
 
+function deadlineSortMs(iso: string): number {
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+}
+
+function formatDueHuman(iso: string | null | undefined): string {
+  if (!iso?.trim()) return "No due date";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "No due date";
+  return new Date(t).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 type ListPayload = {
   orgId?: string;
   commitments?: OrgCommitmentRow[];
@@ -70,7 +82,7 @@ export default function MyInboxPage() {
         method: "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(done ? { completed: true, status: "completed" } : { completed: false, status: "in_progress" }),
+        body: JSON.stringify(done ? { completed: true } : { completed: false }),
       });
       await load();
     } finally {
@@ -99,31 +111,28 @@ export default function MyInboxPage() {
     }
   }
 
-  const sorted = useMemo(
-    () => [...rows].sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime()),
-    [rows]
-  );
+  const sorted = useMemo(() => [...rows].sort((a, b) => deadlineSortMs(a.deadline) - deadlineSortMs(b.deadline)), [rows]);
 
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-4 pb-16">
       <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm dark:border-slate-700 dark:bg-slate-950/55">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-r5-text-secondary">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
           MY WORKSPACE
         </p>
-        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em] text-r5-text-primary">My Inbox</h1>
-        <p className="mt-1 text-[13px] text-r5-text-secondary">
+        <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em] text-slate-900 dark:text-zinc-50">My Inbox</h1>
+        <p className="mt-1 text-[13px] text-slate-600 dark:text-slate-300">
           Commitments assigned to you, sorted by deadline.
         </p>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-950/55">
         {loading ? (
-          <div className="flex items-center gap-2 px-4 py-6 text-[13px] text-r5-text-secondary">
+          <div className="flex items-center gap-2 px-4 py-6 text-[13px] text-slate-600 dark:text-slate-300">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading inbox…
           </div>
         ) : sorted.length === 0 ? (
-          <p className="px-4 py-8 text-[13px] text-r5-text-secondary">Nothing assigned right now.</p>
+          <p className="px-4 py-8 text-[13px] text-slate-600 dark:text-slate-300">Nothing assigned right now.</p>
         ) : (
           <ul>
             {sorted.map((task) => {
@@ -132,9 +141,9 @@ export default function MyInboxPage() {
                 <li key={task.id} className="border-b border-slate-200/80 px-4 py-3.5 last:border-0 dark:border-slate-700/70">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="truncate text-[14px] font-semibold text-r5-text-primary">{task.title}</p>
-                      <p className="mt-0.5 text-[12px] text-r5-text-secondary">
-                        Assigned by admin • Due {new Date(task.deadline).toLocaleString()}
+                      <p className="truncate text-[14px] font-semibold text-slate-900 dark:text-zinc-50">{task.title}</p>
+                      <p className="mt-0.5 text-[12px] text-slate-600 dark:text-slate-300">
+                        Assigned by admin • Due {formatDueHuman(task.deadline)}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ORG_PRIORITY_PILL[task.priority]}`}>
@@ -181,7 +190,7 @@ export default function MyInboxPage() {
         )}
       </section>
 
-      <p className="inline-flex items-center gap-1.5 text-[12px] text-r5-text-secondary">
+      <p className="inline-flex items-center gap-1.5 text-[12px] text-slate-600 dark:text-slate-300">
         <AlertTriangle className="h-3.5 w-3.5" />
         Blocked marks attention for admins on org views.
       </p>

@@ -16,9 +16,18 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const userId = await getAuthUserIdSafe();
-  if (userId) {
+  const sp = await searchParams;
+  const raw = sp.site;
+  const site = typeof raw === "string" ? raw : Array.isArray(raw) ? raw[0] : undefined;
+  const bypassToMarketing = site === "1" || site === "marketing";
+
+  if (userId && !bypassToMarketing) {
     redirect("/workspace/dashboard");
   }
 

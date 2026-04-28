@@ -65,9 +65,9 @@ export default function RootLayout({
           <MotionConfigProvider>
             <ClerkProviderWrapper>
               <ChunkLoadRecovery />
-              <CommandPaletteProvider>
-                <PublicI18nProvider>{children}</PublicI18nProvider>
-              </CommandPaletteProvider>
+              <PublicI18nProvider>
+                <CommandPaletteProvider>{children}</CommandPaletteProvider>
+              </PublicI18nProvider>
             </ClerkProviderWrapper>
           </MotionConfigProvider>
         </ClerkRuntimeProvider>

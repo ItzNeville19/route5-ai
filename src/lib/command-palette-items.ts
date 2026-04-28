@@ -124,6 +124,8 @@ export function buildPaletteItems(params: {
   openActionsCount?: number;
   /** When false, omits the “Add company” palette action (e.g. member role). */
   canCreateCompany?: boolean;
+  /** Admin / manager — hides Agent-adjacent workspace shortcuts for IC roles. */
+  canWorkspaceLead?: boolean;
 }): PaletteItem[] {
   const {
     signedIn,
@@ -134,6 +136,7 @@ export function buildPaletteItems(params: {
     people = [],
     openActionsCount = 0,
     canCreateCompany = true,
+    canWorkspaceLead = true,
   } = params;
 
   if (!signedIn) {
@@ -206,21 +209,23 @@ export function buildPaletteItems(params: {
     section: "activity",
   }));
 
-  const commitmentItems: PaletteItem[] = searchCommitments.map((c) => ({
-    id: `commitment-${c.id}`,
-    label: c.title,
-    href: `/workspace/commitments?id=${encodeURIComponent(c.id)}`,
-    description: `${c.ownerName}${c.projectName ? ` · ${c.projectName}` : ""} · ${c.priority} · due ${new Date(c.deadline).toLocaleDateString()}`,
-    keywords: [
-      "commitment",
-      c.ownerName.toLowerCase(),
-      (c.projectName ?? "").toLowerCase(),
-      c.status.toLowerCase(),
-      c.priority.toLowerCase(),
-      c.searchText.slice(0, 320).toLowerCase(),
-    ],
-    section: "activity",
-  }));
+  const commitmentItems: PaletteItem[] = canWorkspaceLead
+    ? searchCommitments.map((c) => ({
+        id: `commitment-${c.id}`,
+        label: c.title,
+        href: `/workspace/commitments?id=${encodeURIComponent(c.id)}`,
+        description: `${c.ownerName}${c.projectName ? ` · ${c.projectName}` : ""} · ${c.priority} · due ${new Date(c.deadline).toLocaleDateString()}`,
+        keywords: [
+          "commitment",
+          c.ownerName.toLowerCase(),
+          (c.projectName ?? "").toLowerCase(),
+          c.status.toLowerCase(),
+          c.priority.toLowerCase(),
+          c.searchText.slice(0, 320).toLowerCase(),
+        ],
+        section: "activity",
+      }))
+    : [];
 
   const peopleItems: PaletteItem[] = people.map((p) => ({
     id: `person-${p.id}`,
@@ -473,6 +478,17 @@ export function buildPaletteItems(params: {
     },
   ];
 
+  const LEAD_ONLY_WORKSPACE_IDS = new Set([
+    "new-task",
+    "audit",
+    "workspace-commitments",
+    "integrations-hub",
+  ]);
+
+  const workspaceRail = canWorkspaceLead
+    ? workspaceHidden
+    : workspaceHidden.filter((item) => !LEAD_ONLY_WORKSPACE_IDS.has(item.id));
+
   const projectItems: PaletteItem[] = projects.map((p) => ({
     id: `project-${p.id}`,
     label: p.name,
@@ -567,7 +583,7 @@ export function buildPaletteItems(params: {
     ...activity,
     ...commitmentItems,
     ...agent,
-    ...workspaceHidden,
+    ...workspaceRail,
     ...projectItems,
     ...peopleItems,
     ...site,

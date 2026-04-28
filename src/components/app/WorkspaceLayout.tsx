@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import { useOrganization } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
 import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
@@ -13,7 +14,7 @@ import {
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
 import { workspaceThemePhotoStyleFromPrefs } from "@/lib/workspace-theme-photos";
-import { WorkspaceDataProvider } from "@/components/workspace/WorkspaceData";
+import { WorkspaceDataProvider, useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import {
   BillingUpgradeProvider,
@@ -29,6 +30,15 @@ import WorkspaceNewTaskDrawer from "@/components/workspace/WorkspaceNewTaskDrawe
 import WorkspaceRunAgentSheet from "@/components/workspace/WorkspaceRunAgentSheet";
 import WorkspaceSendUpdateModal from "@/components/workspace/WorkspaceSendUpdateModal";
 import WorkspaceInteractiveTour from "@/components/workspace/WorkspaceInteractiveTour";
+
+function WorkspaceOrganizationMembershipSync() {
+  const { refreshOrganization } = useWorkspaceData();
+  const { organization, membership } = useOrganization();
+  useEffect(() => {
+    void refreshOrganization();
+  }, [organization?.id, membership?.id, membership?.role, refreshOrganization]);
+  return null;
+}
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -47,7 +57,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "";
 
   const agentShellToneClass = workspacePaletteLight
-    ? "!border-slate-200/75 bg-[linear-gradient(180deg,#fafbfc_0%,#f1f5f9_50%,#e8eef4_100%)] shadow-[0_36px_100px_-60px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)]"
+    ? "!border-slate-200/65 bg-[linear-gradient(180deg,#fcfdfd_0%,#eef3f9_54%,#e4edf6_100%)] shadow-[0_28px_88px_-56px_rgba(15,23,42,0.11),inset_0_1px_0_rgba(255,255,255,0.78)]"
     : "border-[#2a3b2e] bg-[linear-gradient(180deg,#0a1214_0%,#0c1512_48%,#0a0f0e_100%)] shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)]";
 
   return (
@@ -61,6 +71,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <WorkspaceQueryHandler />
       </Suspense>
+      <WorkspaceOrganizationMembershipSync />
       <WorkspaceRoleRedirects />
       <WorkspaceInteractiveTour />
 

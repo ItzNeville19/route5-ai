@@ -43,9 +43,15 @@ function waitForHttp(url, maxMs = 120000) {
 
 function standaloneRoot() {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, "standalone", appName);
+    const base = path.join(process.resourcesPath, "standalone");
+    const nested = path.join(base, appName);
+    if (fs.existsSync(path.join(nested, "server.js"))) return nested;
+    return base;
   }
-  return path.join(__dirname, "..", ".next", "standalone", appName);
+  const base = path.join(__dirname, "..", ".next", "standalone");
+  const nested = path.join(base, appName);
+  if (fs.existsSync(path.join(nested, "server.js"))) return nested;
+  return base;
 }
 
 function ensureNodePath() {

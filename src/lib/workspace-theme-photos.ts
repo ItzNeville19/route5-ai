@@ -39,7 +39,7 @@ function spec(
 }
 
 const SCRIM_LIGHT =
-  "linear-gradient(135deg,rgba(255,255,255,0.92)0%,rgba(255,255,255,0.55)38%,rgba(255,255,255,0.22)72%,rgba(248,250,252,0.35)100%)";
+  "linear-gradient(135deg,rgba(255,255,255,0.62)0%,rgba(255,255,255,0.32)38%,rgba(255,255,255,0.1)72%,rgba(248,250,252,0.15)100%)";
 
 const SCRIM_DARK =
   "linear-gradient(180deg,rgba(2,6,23,0.75)0%,rgba(15,23,42,0.35)42%,rgba(2,6,23,0.82)100%)";
@@ -375,25 +375,25 @@ const HERO_BY_PERIOD: Record<OverviewHeroPeriod, WorkspacePhotoSpec[]> = {
   ],
 };
 
-/** Strong left band so headline stays readable on any photograph (dark typography target). */
+/** Strong left band — headline stays readable; keep photo visible (no full-bleed milk wash). */
 function heroReadabilityLayer(period: OverviewHeroPeriod): string {
   if (period === "night") {
-    return "linear-gradient(92deg,rgba(15,23,42,0.94) 0%,rgba(15,23,42,0.72) 38%,rgba(15,23,42,0.18) 68%,transparent 92%)";
+    return "linear-gradient(92deg,rgba(15,23,42,0.88) 0%,rgba(15,23,42,0.55) 42%,rgba(15,23,42,0.12) 74%,transparent 94%)";
   }
   if (period === "evening") {
-    return "linear-gradient(92deg,rgba(255,255,255,0.97) 0%,rgba(255,251,247,0.78) 38%,rgba(255,255,255,0.28) 72%,rgba(250,245,255,0.06) 100%)";
+    return "linear-gradient(92deg,rgba(255,255,255,0.78) 0%,rgba(255,251,247,0.45) 42%,rgba(255,255,255,0.12) 74%,rgba(250,245,255,0.04) 95%)";
   }
-  return "linear-gradient(92deg,rgba(255,255,255,0.98) 0%,rgba(255,255,255,0.78) 36%,rgba(255,255,255,0.32) 66%,transparent 94%)";
+  return "linear-gradient(92deg,rgba(255,255,255,0.82) 0%,rgba(255,255,255,0.48) 40%,rgba(255,255,255,0.12) 74%,transparent 95%)";
 }
 
-/** Workspace light palette — bright wash + footing so slate text reads on dusk/ocean shots. */
+/** Workspace light palette — lighten top band; reserve bottom scrim for typography in hero. */
 function heroReadabilityLayerLight(period: OverviewHeroPeriod): string {
   const base =
-    "linear-gradient(180deg,rgba(255,255,255,0.78) 0%,rgba(255,255,255,0.42) 46%,rgba(248,250,252,0.15) 78%,rgba(15,23,42,0.12) 100%)";
+    "linear-gradient(180deg,rgba(255,255,255,0.38) 0%,rgba(255,255,255,0.16) 48%,rgba(248,250,252,0.06) 78%,rgba(15,23,42,0.08) 100%)";
   if (period === "night") {
-    return `linear-gradient(92deg,rgba(248,250,252,0.94) 0%,rgba(241,245,249,0.72) 45%,transparent 82%), ${base}`;
+    return `linear-gradient(92deg,rgba(248,250,252,0.78) 0%,rgba(241,245,249,0.42) 52%,transparent 86%), ${base}`;
   }
-  return `linear-gradient(92deg,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0.5) 48%,transparent 85%), ${base}`;
+  return `linear-gradient(92deg,rgba(255,255,255,0.68) 0%,rgba(255,255,255,0.26) 54%,transparent 88%), ${base}`;
 }
 
 export type OverviewHeroReadableTone = "default" | "light";

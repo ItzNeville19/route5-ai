@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { Caveat } from "next/font/google";
+import { barlowCondensedLanding } from "@/lib/fonts-landing";
 import { useMemo, useRef } from "react";
 import {
   motion,
@@ -45,6 +47,12 @@ import { WORKSPACE_THEME_PHOTO, workspacePhotoUrl } from "@/lib/workspace-theme-
 const MARKETING_SF_HERO_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.sanfrancisco.path, 2400);
 const MARKETING_SF_COAST_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.lagunabeach.path, 1600);
 
+const marketingAccentScript = Caveat({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
+
 export default function MarketingHomeClient({
   signedIn = false,
 }: {
@@ -72,10 +80,10 @@ export default function MarketingHomeClient({
         ref={heroRef}
         id="hero"
         aria-label="Product introduction"
-        className="relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24"
+        className={`relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24 ${signedIn ? "pt-[calc(8.25rem+env(safe-area-inset-top,0px))]" : "pt-[calc(4.5rem+env(safe-area-inset-top,0px))]"}`}
       >
         <motion.div
-          className="absolute inset-0 z-0 min-h-full overflow-hidden"
+          className="absolute inset-0 z-0 min-h-full overflow-hidden bg-slate-900"
           style={
             reduceMotion
               ? undefined
@@ -95,13 +103,13 @@ export default function MarketingHomeClient({
             quality={88}
           />
         </motion.div>
-        {/* Readability: strong left scrim for copy; lighter right for mock */}
+        {/* Readability: left column for copy */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/[0.96] via-slate-950/80 to-slate-900/32"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/[0.98] via-slate-950/[0.78] to-slate-900/[0.22]"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/88 via-slate-950/10 to-indigo-950/28"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/[0.9] via-slate-950/12 to-indigo-950/30"
           aria-hidden
         />
         <div
@@ -127,10 +135,12 @@ export default function MarketingHomeClient({
             </motion.div>
             <motion.h1
               variants={staggerChild}
-              className="mt-6 font-landing-display text-[clamp(2.35rem,6vw,3.65rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.4)]"
+              className={`mt-6 text-[clamp(2.35rem,6vw,3.65rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.45)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
             >
               {t("landing.hero.title1")}{" "}
-              <span className="bg-gradient-to-r from-sky-200 via-cyan-200 to-sky-100 bg-clip-text text-transparent">
+              <span
+                className={`${marketingAccentScript.className} text-[clamp(2.05rem,5.4vw,3.05rem)] font-semibold italic text-sky-100 [text-shadow:0_6px_36px_rgba(0,0,0,0.55)]`}
+              >
                 {t("landing.hero.title2")}
               </span>
             </motion.h1>

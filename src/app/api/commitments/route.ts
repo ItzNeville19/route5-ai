@@ -12,9 +12,23 @@ import {
   fetchCommitments as fetchCanonicalCommitments,
   type CommitmentStatus,
 } from "@/lib/commitments/repository";
-import { requireOrgRole } from "@/lib/workspace/org-members";
+import {
+  requireOrgRole,
+  getActiveMembershipForUser,
+} from "@/lib/workspace/org-members";
+import { listOrgCommitments } from "@/lib/org-commitments/repository";
+import type { OrgCommitmentListSort } from "@/lib/org-commitment-types";
 
 export const runtime = "nodejs";
+
+const SORTS: OrgCommitmentListSort[] = [
+  "deadline",
+  "created_at",
+  "updated_at",
+  "priority",
+  "status",
+  "owner_id",
+];
 
 const postSchema = z
   .object({
@@ -44,26 +58,66 @@ export async function GET(req: Request) {
   if (rateLimited) return rateLimited;
 
   const url = new URL(req.url);
-  const projectId = url.searchParams.get("project_id") ?? undefined;
-  const statusRaw = url.searchParams.get("status");
-  const status: CommitmentStatus | "active" | undefined =
-    statusRaw === "pending" ||
-    statusRaw === "accepted" ||
-    statusRaw === "in_progress" ||
-    statusRaw === "blocked" ||
-    statusRaw === "done" ||
-    statusRaw === "reopened"
-      ? statusRaw
-      : statusRaw === "active"
-        ? "active"
-        : undefined;
+  const projectId =
+    url.searchParams.get("project_id") ?? url.searchParams.get("projectId") ?? undefined;
+  const sortRaw = url.searchParams.get("sort") ?? "deadline";
+  const sort: OrgCommitmentListSort = SORTS.includes(sortRaw as OrgCommitmentListSort)
+    ? (sortRaw as OrgCommitmentListSort)
+    : "deadline";
+  const order = url.searchParams.get("order") === "desc" ? "desc" : "asc";
+  const owner = url.searchParams.get("owner") ?? undefined;
+  const deskCanonical = url.searchParams.get("desk") === "1";
 
+  /** Legacy Desk `/lib/commitments/client` asks for canonical project-bound rows. */
+  if (deskCanonical) {
+    const projectId = url.searchParams.get("project_id") ?? undefined;
+    const statusRaw = url.searchParams.get("status");
+    const status: CommitmentStatus | "active" | undefined =
+      statusRaw === "pending" ||
+      statusRaw === "accepted" ||
+      statusRaw === "in_progress" ||
+      statusRaw === "blocked" ||
+      statusRaw === "done" ||
+      statusRaw === "reopened"
+        ? statusRaw
+        : statusRaw === "active"
+          ? "active"
+          : undefined;
+    try {
+      const commitments = await fetchCanonicalCommitments(userId, {
+        projectId,
+        status,
+      });
+      return NextResponse.json({ commitments });
+    } catch (e) {
+      return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
+    }
+  }
+
+  const status = url.searchParams.get("status") ?? undefined;
+  const priority = url.searchParams.get("priority") ?? undefined;
+  const q = url.searchParams.get("q") ?? undefined;
+  const dateFrom = url.searchParams.get("dateFrom") ?? undefined;
+  const dateTo = url.searchParams.get("dateTo") ?? undefined;
+
+  /** Org execution tracker + inbox — list org commitments (shared with Feed, Projects hub, tracker). */
   try {
-    const commitments = await fetchCanonicalCommitments(userId, {
+    const membership = await getActiveMembershipForUser(userId);
+    if (!membership) {
+      return NextResponse.json({ orgId: null, commitments: [] });
+    }
+    const rows = await listOrgCommitments(userId, {
       projectId,
+      sort,
+      order,
+      owner,
       status,
+      priority,
+      q,
+      dateFrom,
+      dateTo,
     });
-    return NextResponse.json({ commitments });
+    return NextResponse.json({ orgId: membership.orgId, commitments: rows });
   } catch (e) {
     return NextResponse.json({ error: publicWorkspaceError(e) }, { status: 503 });
   }

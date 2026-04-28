@@ -72,8 +72,8 @@ export type WorkspacePrefsV1 = {
   extractionProviderId?: string;
   /** LLM preference for future multi-step flows — stored for UI consistency. */
   llmProviderId?: string;
-  /** UI language (en, es, …). Omit to follow the browser. */
-  uiLocale?: UiLocaleCode;
+  /** UI language (en, es, …). Omit to follow the browser. `null` clears a stored choice (API / merge). */
+  uiLocale?: UiLocaleCode | null;
   /** Sidebar, header, and dashboard glass: liquid | balanced standard | flat (no blur). */
   surfaceMaterial?: WorkspaceSurfaceMaterialId;
   /** After workspace onboarding completes, hide the checklist card in the sidebar. */
@@ -212,9 +212,11 @@ export function loadWorkspacePrefs(): WorkspacePrefsV1 {
           ? o.llmProviderId
           : defaultPrefs.llmProviderId,
       uiLocale:
-        typeof o.uiLocale === "string" && isUiLocaleCode(o.uiLocale)
-          ? o.uiLocale
-          : undefined,
+        o.uiLocale === null
+          ? undefined
+          : typeof o.uiLocale === "string" && isUiLocaleCode(o.uiLocale)
+            ? o.uiLocale
+            : undefined,
       surfaceMaterial:
         typeof o.surfaceMaterial === "string" && isWorkspaceSurfaceMaterialId(o.surfaceMaterial)
           ? o.surfaceMaterial
@@ -285,12 +287,26 @@ export function saveWorkspacePrefs(next: WorkspacePrefsV1): void {
   }
 }
 
+/**
+ * Full prefs POST must send `uiLocale: null` when the user chose “system default”
+ * so JSON merges clear the server copy (omitted keys would otherwise preserve old values).
+ */
+export function workspacePrefsForApiSync(prefs: WorkspacePrefsV1): WorkspacePrefsV1 {
+  return { ...prefs, uiLocale: prefs.uiLocale ?? null };
+}
+
 /** Deep-merge a prefs patch (used by client UI and server sync). */
 export function mergeWorkspacePrefsPatch(
   prev: WorkspacePrefsV1,
   patch: Partial<WorkspacePrefsV1>
 ): WorkspacePrefsV1 {
-  const next = { ...prev, ...patch };
+  let next: WorkspacePrefsV1 = { ...prev, ...patch };
+  if (Object.prototype.hasOwnProperty.call(patch, "uiLocale")) {
+    if (patch.uiLocale === null || patch.uiLocale === undefined) {
+      const { uiLocale: _removed, ...rest } = next;
+      next = rest as WorkspacePrefsV1;
+    }
+  }
   if (patch.pinnedProjectIds !== undefined) {
     next.pinnedProjectIds = [...patch.pinnedProjectIds];
   }
