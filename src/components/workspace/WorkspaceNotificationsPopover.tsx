@@ -174,8 +174,13 @@ function resolveNotificationHref(n: OrgNotificationRow): string | null {
   return null;
 }
 
+type NotificationsPopoverProps = {
+  /** Ocean toolbar (`WorkspaceTopToolbar`): muted cyan glass to match shell; default uses desk tokens. */
+  variant?: "neutral" | "ocean";
+};
+
 /** Digest from live summary — red dot until viewed; optional full screen + org notification inbox. */
-export default function WorkspaceNotificationsPopover() {
+export default function WorkspaceNotificationsPopover({ variant = "neutral" }: NotificationsPopoverProps) {
   const router = useRouter();
   const { pushToast, prefs } = useWorkspaceExperience();
   const { intlLocale } = useI18n();
@@ -638,7 +643,7 @@ export default function WorkspaceNotificationsPopover() {
       <Link
         href="/workspace/dashboard"
         onClick={() => handleOpenChange(false)}
-        className="text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary hover:text-zinc-200 hover:underline"
+        className="text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary hover:text-r5-text-primary hover:underline"
       >
         Home
       </Link>
@@ -661,12 +666,16 @@ export default function WorkspaceNotificationsPopover() {
       <button
         type="button"
         onClick={() => handleOpenChange(!open)}
-        className="relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+        className={
+          variant === "ocean"
+            ? "route5-pressable relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/22 text-cyan-200/70 shadow-none transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-cyan-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/25"
+            : "relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
+        }
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Notifications and daily digest"
       >
-        <Bell className="h-4 w-4" strokeWidth={2} aria-hidden />
+        <Bell className={variant === "ocean" ? "h-3.5 w-3.5 opacity-90" : "h-4 w-4"} strokeWidth={2} aria-hidden />
         {showNumberBadge ? (
           <span
             className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-[var(--r5-radius-pill)] bg-r5-status-overdue px-[var(--r5-space-1)] text-[length:var(--r5-font-kbd)] font-semibold text-r5-text-primary"

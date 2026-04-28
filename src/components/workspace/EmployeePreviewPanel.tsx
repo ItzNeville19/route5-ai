@@ -1,18 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import {
+  Bell,
   ChevronDown,
-  ChevronRight,
   ChevronUp,
   CircleCheck,
   ClipboardList,
-  ListTodo,
+  HelpCircle,
   Send,
 } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
+import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 
 type ActivityRow = {
   id: string;
@@ -47,17 +49,49 @@ function statusPhrase(status: string): string {
   return map[s] ?? s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+function dueRelation(deadlineIso: string): "overdue" | "today" | "soon" | "none" {
+  if (!deadlineIso?.trim()) return "none";
+  const d = new Date(deadlineIso);
+  if (Number.isNaN(d.getTime())) return "none";
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startTomorrow = startToday + 86400000;
+  const t = d.getTime();
+  if (t < startToday) return "overdue";
+  if (t < startTomorrow) return "today";
+  const weekAhead = startToday + 7 * 86400000;
+  if (t < weekAhead) return "soon";
+  return "none";
+}
+
+function duePlainEnglish(deadlineIso: string): string | null {
+  const rel = dueRelation(deadlineIso);
+  const formatted = formatDue(deadlineIso);
+  if (!formatted) return null;
+  switch (rel) {
+    case "overdue":
+      return `Was due ${formatted} — catch up when you can`;
+    case "today":
+      return `Due today (${formatted})`;
+    case "soon":
+      return `Due ${formatted}`;
+    default:
+      return `Due ${formatted}`;
+  }
+}
+
 export default function EmployeePreviewPanel() {
-  const { user } = useUser();
   const { orgRole } = useWorkspaceData();
+  const { prefs } = useWorkspaceExperience();
+  const search = useSearchParams();
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDone, setShowDone] = useState(false);
 
-  const firstName =
-    user?.firstName ?? user?.username ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "there";
-
-  const canAssign = orgRole === "admin" || orgRole === "manager";
+  const canOrg = orgRole === "admin" || orgRole === "manager";
+  const surfaceMode = resolveWorkspaceSurfaceMode(canOrg, search.get("view"), prefs.defaultWorkspaceView);
+  /** Members never assign; employee lens hides assign even for admins/leads (IC preview). */
+  const canAssign = canOrg && surfaceMode !== "employee";
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +106,7 @@ export default function EmployeePreviewPanel() {
     };
   }, []);
 
-  const { activeRows, doneRows } = useMemo(() => {
+  const { activeRows, doneRows, overdueCount, dueTodayCount } = useMemo(() => {
     const active: ActivityRow[] = [];
     const done: ActivityRow[] = [];
     for (const row of activity) {
@@ -85,120 +119,163 @@ export default function EmployeePreviewPanel() {
       return ad - bd;
     });
     done.sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
-    return { activeRows: active, doneRows: done };
+    let overdue = 0;
+    let dueToday = 0;
+    for (const row of active) {
+      const rel = dueRelation(row.deadline);
+      if (rel === "overdue") overdue += 1;
+      else if (rel === "today") dueToday += 1;
+    }
+    return { activeRows: active, doneRows: done, overdueCount: overdue, dueTodayCount: dueToday };
   }, [activity]);
 
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-cyan-500/25 border-t-cyan-400" />
+        <div className="h-9 w-9 animate-spin rounded-full border-2 border-[color-mix(in_srgb,var(--workspace-accent)_35%,transparent)] border-t-[var(--workspace-accent)]" />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] space-y-6 animate-[route5-page-enter_0.35s_ease-out_both]">
-      <header className="rounded-[26px] border border-white/[0.06] bg-[linear-gradient(155deg,rgba(10,36,44,0.48),rgba(5,12,18,0.97))] px-7 py-8 shadow-[0_32px_100px_-58px_rgba(14,116,144,0.32)]">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/28 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-200/85">
-          <ListTodo className="h-3.5 w-3.5" />
-          My work
-        </div>
-        <h1 className="mt-5 text-[clamp(1.5rem,3vw,1.85rem)] font-semibold tracking-tight text-white">
-          Hi {firstName} — here&apos;s what&apos;s on your plate
-        </h1>
-        <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/[0.72]">
-          Commitments your team assigned to you show up here. Open one to update status. Finished work moves below — out of the way until you want to review it.
-        </p>
-        <div className="mt-7 flex flex-wrap gap-3">
+    <div className="mx-auto w-full max-w-[920px] space-y-4 animate-[route5-page-enter_0.35s_ease-out_both] pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-1 text-[12px] text-[var(--workspace-muted-fg)]">
+        <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Work shortcuts">
           <Link
             href="/workspace/commitments"
-            className="route5-pressable inline-flex items-center gap-2 rounded-full border border-cyan-500/32 bg-cyan-950/45 px-5 py-2.5 text-sm font-semibold text-cyan-50 shadow-[0_16px_48px_-30px_rgba(8,145,178,0.4)]"
+            className="font-semibold text-[var(--workspace-accent)] transition hover:opacity-90"
           >
-            <ClipboardList className="h-4 w-4" />
-            View all commitments
+            Commitments
+          </Link>
+          <Link
+            href="/workspace/notifications"
+            className="inline-flex items-center gap-1 text-[var(--workspace-fg)] transition hover:text-[var(--workspace-accent)]"
+          >
+            <Bell className="h-3.5 w-3.5 opacity-80" aria-hidden />
+            Alerts
+          </Link>
+          <Link href="/workspace/help" className="inline-flex items-center gap-1 text-[var(--workspace-fg)] transition hover:text-[var(--workspace-accent)]">
+            <HelpCircle className="h-3.5 w-3.5 opacity-80" aria-hidden />
+            Help
+          </Link>
+        </nav>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/workspace/commitments"
+            className="route5-pressable inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_40%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] px-3.5 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)]"
+          >
+            <ClipboardList className="h-3.5 w-3.5" aria-hidden />
+            Open list
           </Link>
           {canAssign ? (
             <Link
               href="/workspace/assign-task"
-              className="route5-pressable inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.05] px-5 py-2.5 text-sm font-semibold text-white/90 hover:border-cyan-500/28 hover:bg-cyan-950/22"
+              className="route5-pressable inline-flex items-center gap-1.5 rounded-full border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-fg)_04%,transparent)] px-3 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)] hover:border-[color-mix(in_srgb,var(--workspace-accent)_45%,var(--workspace-border))]"
             >
-              <Send className="h-4 w-4" />
-              Assign work to someone
+              <Send className="h-3.5 w-3.5" aria-hidden />
+              Assign
             </Link>
           ) : null}
         </div>
-      </header>
+      </div>
 
-      <section className="rounded-[22px] border border-white/[0.06] bg-black/24 p-6 backdrop-blur-sm md:p-7">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <section className="rounded-[18px] border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-4 py-4 backdrop-blur-sm md:px-5 md:py-5">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h2 className="text-base font-semibold text-white">Active</h2>
-            <p className="mt-1 text-sm text-white/50">
-              {activeRows.length === 0 ? "Nothing open — you’re caught up." : `${activeRows.length} open`}
+            <h2 className="text-[15px] font-semibold text-[var(--workspace-fg)]">Your open commitments</h2>
+            <p className="mt-0.5 text-[13px] text-[var(--workspace-muted-fg)]">
+              {activeRows.length === 0
+                ? "Nothing on your list right now."
+                : `${activeRows.length} commitment${activeRows.length === 1 ? "" : "s"}${overdueCount ? ` · ${overdueCount} late` : ""}${
+                    dueTodayCount ? ` · ${dueTodayCount} due today` : ""
+                  }`}
             </p>
           </div>
         </div>
-        <ul className="mt-5 divide-y divide-white/[0.07]">
+
+        <ul className="mt-3 divide-y divide-[var(--workspace-border)]">
           {activeRows.length === 0 ? (
-            <li className="py-14 text-center">
-              <p className="text-sm font-medium text-white/85">You&apos;re clear.</p>
-              <p className="mt-2 text-sm text-white/45">New assignments will appear here.</p>
+            <li className="py-10 text-center">
+              <p className="text-[15px] font-medium text-[var(--workspace-fg)]">You&apos;re all caught up</p>
+              <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+                New assignments appear here with due dates in plain language. Check back after your lead assigns work.
+              </p>
             </li>
           ) : (
-            activeRows.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-start justify-between gap-4 py-4 first:pt-0">
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/workspace/commitments`}
-                    className="text-[15px] font-semibold text-white transition hover:text-emerald-200/95"
-                  >
-                    {row.title}
-                  </Link>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-white/45">
-                    <span>{statusPhrase(row.status)}</span>
-                    {formatDue(row.deadline) ? (
-                      <span className="tabular-nums text-white/55">Due {formatDue(row.deadline)}</span>
-                    ) : null}
+            activeRows.map((row) => {
+              const rel = dueRelation(row.deadline);
+              const dueLine = duePlainEnglish(row.deadline);
+              return (
+                <li key={row.id} className="flex flex-wrap items-start justify-between gap-3 py-3.5 first:pt-1">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      href="/workspace/commitments"
+                      className="text-[15px] font-semibold text-[var(--workspace-fg)] transition hover:text-[var(--workspace-accent)]"
+                    >
+                      {row.title}
+                    </Link>
+                    <p className="mt-1 text-[13px] text-[var(--workspace-muted-fg)]">{statusPhrase(row.status)}</p>
+                    {dueLine ? (
+                      <p
+                        className={`mt-1 text-[12px] ${
+                          rel === "overdue"
+                            ? "font-medium text-[var(--workspace-danger-fg)]"
+                            : rel === "today"
+                              ? "font-medium text-[var(--workspace-accent)]"
+                              : "text-[var(--workspace-muted-fg)]"
+                        }`}
+                      >
+                        {dueLine}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">No due date set</p>
+                    )}
                   </div>
-                </div>
-                <Link
-                  href="/workspace/commitments"
-                  className="route5-pressable shrink-0 rounded-full border border-cyan-500/28 bg-cyan-950/35 px-4 py-2 text-xs font-semibold text-cyan-100"
-                >
-                  Update
-                </Link>
-              </li>
-            ))
+                  <Link
+                    href="/workspace/commitments"
+                    className="route5-pressable shrink-0 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_38%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_10%,transparent)] px-3.5 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)]"
+                  >
+                    Update
+                  </Link>
+                </li>
+              );
+            })
           )}
         </ul>
       </section>
 
       {doneRows.length > 0 ? (
-        <section className="rounded-[22px] border border-white/[0.06] bg-black/[0.18]">
+        <section className="rounded-[18px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_92%,var(--workspace-canvas)_8%)]">
           <button
             type="button"
             onClick={() => setShowDone((v) => !v)}
-            className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left transition hover:bg-white/[0.03]"
+            className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition hover:bg-[var(--workspace-nav-hover)] md:px-5"
           >
-            <span className="flex items-center gap-2 text-sm font-semibold text-white/75">
-              <CircleCheck className="h-4 w-4 text-cyan-400/82" />
-              Completed
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-bold text-white/60">
+            <span className="flex items-center gap-2 text-[13px] font-semibold text-[var(--workspace-fg)]">
+              <CircleCheck className="h-4 w-4 text-[var(--workspace-accent)]" aria-hidden />
+              Completed items
+              <span className="rounded-full bg-[var(--workspace-nav-chip)] px-2 py-0.5 text-[10px] font-bold text-[var(--workspace-muted-fg)]">
                 {doneRows.length}
               </span>
             </span>
-            {showDone ? <ChevronUp className="h-5 w-5 text-white/35" /> : <ChevronDown className="h-5 w-5 text-white/35" />}
+            {showDone ? (
+              <ChevronUp className="h-5 w-5 text-[var(--workspace-muted-fg)]" aria-hidden />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-[var(--workspace-muted-fg)]" aria-hidden />
+            )}
           </button>
           {showDone ? (
-            <ul className="border-t border-white/[0.06] px-6 pb-5 pt-2">
+            <ul className="border-t border-[var(--workspace-border)] px-4 pb-4 pt-1 md:px-5">
               {doneRows.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.05] py-3.5 last:border-0"
+                  className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--workspace-border)] py-3 last:border-0"
                 >
-                  <span className="text-[13px] text-white/55 line-through decoration-white/25">{row.title}</span>
-                  <span className="text-[11px] tabular-nums text-white/35">
-                    Done{" "}
+                  <span className="text-[13px] text-[var(--workspace-muted-fg)] line-through decoration-[var(--workspace-border)]">
+                    {row.title}
+                  </span>
+                  <span className="text-[11px] tabular-nums text-[var(--workspace-muted-fg)]">
+                    Finished{" "}
                     {row.completed_at
                       ? new Date(row.completed_at).toLocaleDateString(undefined, {
                           month: "short",
@@ -212,15 +289,6 @@ export default function EmployeePreviewPanel() {
           ) : null}
         </section>
       ) : null}
-
-      <div className="flex justify-center pb-4">
-        <Link
-          href="/workspace/commitments"
-          className="route5-pressable inline-flex items-center gap-2 text-sm font-semibold text-cyan-400/95 hover:text-cyan-200"
-        >
-          Go to commitments <ChevronRight className="h-4 w-4" />
-        </Link>
-      </div>
     </div>
   );
 }
