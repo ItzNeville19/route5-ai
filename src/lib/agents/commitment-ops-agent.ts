@@ -1,12 +1,19 @@
 import { runEscalationEngine, runEscalationEngineForAllOrgs } from "@/lib/escalations/engine";
 import {
   fetchActiveCommitmentsForOrg,
+  fetchCommitmentsByIds,
   fetchUnresolvedEscalationForCommitment,
+  insertOrgEscalation,
   listEscalationsForApi,
+  updateEscalationNotifyFields,
+  updateEscalationSeverity,
   type EngineCommitmentRow,
 } from "@/lib/escalations/store";
 import { computeDesiredSeverity } from "@/lib/escalations/engine";
+import { notifyEscalationCreated } from "@/lib/escalations/notify";
+import { SEVERITY_RANK } from "@/lib/escalations/types";
 import { sendNotification } from "@/lib/notifications/service";
+import { broadcastOrgDashboardEvent } from "@/lib/org-commitments/broadcast";
 
 export type CommitmentOpsExecutionMode =
   | "suggest_then_approve"
@@ -44,6 +51,15 @@ export type CommitmentOpsRunSummary = {
   generatedAt: string;
   actionsSuggested: number;
   actionsExecuted: number;
+};
+
+export type CommitmentOpsExecuteSummary = {
+  orgId: string;
+  executed: number;
+  nudgesSent: number;
+  escalationsCreated: number;
+  escalationsUpgraded: number;
+  generatedAt: string;
 };
 
 function buildNudgeMessage(commitment: EngineCommitmentRow, severity: CommitmentOpsAction["severity"]) {
@@ -117,6 +133,100 @@ async function executeOwnerNudges(orgId: string, actions: CommitmentOpsAction[])
     sent += 1;
   }
   return sent;
+}
+
+async function executeEscalationActions(
+  orgId: string,
+  actions: CommitmentOpsAction[]
+): Promise<{ executed: number; created: number; upgraded: number }> {
+  const selectedEscalations = actions
+    .filter((action) => action.kind === "escalate")
+    .reduce((acc, action) => {
+      const current = acc.get(action.commitmentId);
+      if (!current || SEVERITY_RANK[action.severity] > SEVERITY_RANK[current.severity]) {
+        acc.set(action.commitmentId, action);
+      }
+      return acc;
+    }, new Map<string, CommitmentOpsAction>());
+  const rows = await fetchCommitmentsByIds(orgId, [...selectedEscalations.keys()]);
+  let created = 0;
+  let upgraded = 0;
+  let executed = 0;
+  for (const row of rows) {
+    const selected = selectedEscalations.get(row.id);
+    if (!selected) continue;
+    const unresolved = await fetchUnresolvedEscalationForCommitment(row.id);
+    if (unresolved?.snoozedUntil && new Date(unresolved.snoozedUntil).getTime() > Date.now()) {
+      continue;
+    }
+    const desired = computeDesiredSeverity(row, Date.now());
+    if (!desired) continue;
+    if (!unresolved) {
+      const createdEscalation = await insertOrgEscalation({
+        orgId,
+        commitmentId: row.id,
+        severity: desired,
+      });
+      const patch = await notifyEscalationCreated({
+        orgId,
+        commitmentId: row.id,
+        title: row.title,
+        deadline: row.deadline,
+        ownerId: row.owner_id,
+        severity: desired,
+        escalation: createdEscalation,
+        isUpgrade: false,
+      });
+      await updateEscalationNotifyFields(createdEscalation.id, {
+        notifiedOwnerAt: patch.notifiedOwnerAt,
+        notifiedManagerAt: patch.notifiedManagerAt,
+        notifiedAdminAt: patch.notifiedAdminAt,
+      });
+      created += 1;
+      executed += 1;
+      continue;
+    }
+    if (SEVERITY_RANK[desired] > SEVERITY_RANK[unresolved.severity]) {
+      await updateEscalationSeverity(unresolved.id, desired);
+      const patch = await notifyEscalationCreated({
+        orgId,
+        commitmentId: row.id,
+        title: row.title,
+        deadline: row.deadline,
+        ownerId: row.owner_id,
+        severity: desired,
+        escalation: { ...unresolved, severity: desired },
+        isUpgrade: true,
+      });
+      await updateEscalationNotifyFields(unresolved.id, {
+        notifiedOwnerAt: patch.notifiedOwnerAt,
+        notifiedManagerAt: patch.notifiedManagerAt,
+        notifiedAdminAt: patch.notifiedAdminAt,
+      });
+      upgraded += 1;
+      executed += 1;
+    }
+  }
+  if (executed > 0) {
+    broadcastOrgDashboardEvent(orgId);
+  }
+  return { executed, created, upgraded };
+}
+
+export async function executeCommitmentOpsActions(
+  orgId: string,
+  actions: CommitmentOpsAction[]
+): Promise<CommitmentOpsExecuteSummary> {
+  const nudgesSent = await executeOwnerNudges(orgId, actions);
+  const escalation = await executeEscalationActions(orgId, actions);
+  return {
+    orgId,
+    executed: nudgesSent + escalation.executed,
+    nudgesSent,
+    escalationsCreated: escalation.created,
+    escalationsUpgraded: escalation.upgraded,
+    generatedAt: new Date().toISOString(),
+  };
 }
 
 export async function runCommitmentOpsAgentForOrg(

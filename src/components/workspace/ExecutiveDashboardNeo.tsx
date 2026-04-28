@@ -48,6 +48,10 @@ type AgentAction = {
   message: string;
 };
 
+function actionKey(action: AgentAction) {
+  return `${action.kind}:${action.commitmentId}:${action.severity}`;
+}
+
 function prettyStatus(status: string): string {
   if (status === "completed") return "done";
   if (status === "in_progress") return "in progress";
@@ -74,6 +78,8 @@ export default function ExecutiveDashboardNeo() {
   const [agentSaving, setAgentSaving] = useState(false);
   const [agentPreview, setAgentPreview] = useState<AgentAction[]>([]);
   const [agentPreviewing, setAgentPreviewing] = useState(false);
+  const [selectedActionKeys, setSelectedActionKeys] = useState<string[]>([]);
+  const [agentExecuting, setAgentExecuting] = useState(false);
   const [agentSummary, setAgentSummary] = useState<{
     created: number;
     upgraded: number;
@@ -288,9 +294,53 @@ export default function ExecutiveDashboardNeo() {
       const data = (await res.json().catch(() => ({}))) as {
         actions?: AgentAction[];
       };
-      if (res.ok) setAgentPreview(data.actions ?? []);
+      if (res.ok) {
+        const actions = data.actions ?? [];
+        setAgentPreview(actions);
+        setSelectedActionKeys(actions.map((action) => actionKey(action)));
+      }
     } finally {
       setAgentPreviewing(false);
+    }
+  }
+
+  async function executeSelectedAgentActions() {
+    const selected = agentPreview.filter((action) =>
+      selectedActionKeys.includes(actionKey(action))
+    );
+    if (selected.length === 0) return;
+    setAgentExecuting(true);
+    try {
+      const res = await fetch("/api/agent/commitment-ops/execute", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actions: selected }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        summary?: {
+          escalationsCreated?: number;
+          escalationsUpgraded?: number;
+          generatedAt?: string;
+        };
+      };
+      if (res.ok) {
+        if (data.summary) {
+          setAgentSummary({
+            created: data.summary.escalationsCreated ?? 0,
+            upgraded: data.summary.escalationsUpgraded ?? 0,
+            stale24: 0,
+            stale48: 0,
+            openEscalations: 0,
+            generatedAt: data.summary.generatedAt ?? new Date().toISOString(),
+          });
+        }
+        setAgentPreview([]);
+        setSelectedActionKeys([]);
+        await loadAll();
+      }
+    } finally {
+      setAgentExecuting(false);
     }
   }
 
@@ -337,7 +387,7 @@ export default function ExecutiveDashboardNeo() {
         ) : null}
       </div>
       <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-300/20 bg-[#0b0f0c]/85 px-3 py-2 text-[12px] text-emerald-100">
-        <span className="font-semibold">Commitment Ops Agent</span>
+        <span className="font-semibold">Agent</span>
         <span className="text-emerald-200/75">
           Automatically escalates stale execution and nudges ownership.
         </span>
@@ -372,6 +422,16 @@ export default function ExecutiveDashboardNeo() {
             <option value="auto_send_limited">Auto send limited</option>
             <option value="fully_automatic">Fully automatic</option>
           </select>
+        ) : null}
+        {agentPreview.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => void executeSelectedAgentActions()}
+            disabled={agentExecuting || selectedActionKeys.length === 0}
+            className="rounded-full border border-emerald-300/30 bg-emerald-500/20 px-3 py-1 text-[11px] font-semibold text-emerald-50"
+          >
+            {agentExecuting ? "Executing…" : `Execute selected (${selectedActionKeys.length})`}
+          </button>
         ) : null}
         {agentSummary ? (
           <span className="text-emerald-200/75">
@@ -442,6 +502,26 @@ export default function ExecutiveDashboardNeo() {
               <StateChip label="On track" value={metrics?.onTrackCount ?? 0} tone="emerald" />
               <StateChip label="At risk" value={metrics?.atRiskCount ?? 0} tone="amber" />
               <StateChip label="Overdue" value={metrics?.overdueCount ?? 0} tone="rose" />
+            </div>
+            <div className="mt-3 h-6 overflow-hidden rounded-full border border-emerald-300/20 bg-black/30">
+              <div className="flex h-full w-full">
+                {Array.from({ length: 52 }).map((_, idx) => {
+                  const total =
+                    (metrics?.onTrackCount ?? 0) +
+                    (metrics?.atRiskCount ?? 0) +
+                    (metrics?.overdueCount ?? 0) ||
+                    1;
+                  const onTrackSlots = Math.round(((metrics?.onTrackCount ?? 0) / total) * 52);
+                  const riskSlots = Math.round(((metrics?.atRiskCount ?? 0) / total) * 52);
+                  const tone =
+                    idx < onTrackSlots
+                      ? "bg-emerald-400/65"
+                      : idx < onTrackSlots + riskSlots
+                        ? "bg-amber-400/65"
+                        : "bg-rose-400/65";
+                  return <div key={idx} className={`h-full w-[2%] border-r border-black/20 ${tone}`} />;
+                })}
+              </div>
             </div>
           </div>
 
@@ -571,15 +651,48 @@ export default function ExecutiveDashboardNeo() {
       </div>
       {agentPreview.length > 0 ? (
         <div className="mt-3 rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
-          <p className="text-[12px] font-semibold text-emerald-100">
-            Agent action preview ({agentPreview.length})
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[12px] font-semibold text-emerald-100">
+              Agent action preview ({agentPreview.length})
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSelectedActionKeys(agentPreview.map((action) => actionKey(action)))}
+                className="rounded-full border border-emerald-300/25 bg-black/30 px-2.5 py-1 text-[11px] text-emerald-100"
+              >
+                Select all
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedActionKeys([])}
+                className="rounded-full border border-emerald-300/25 bg-black/30 px-2.5 py-1 text-[11px] text-emerald-100"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
           <ul className="mt-3 grid gap-2 md:grid-cols-2">
             {agentPreview.slice(0, 8).map((action) => (
               <li
                 key={`${action.kind}-${action.commitmentId}`}
                 className="rounded-xl border border-emerald-200/15 bg-black/25 px-3 py-2"
               >
+                <label className="mb-1 flex items-center gap-2 text-[11px] text-emerald-100/85">
+                  <input
+                    type="checkbox"
+                    checked={selectedActionKeys.includes(actionKey(action))}
+                    onChange={(event) => {
+                      const key = actionKey(action);
+                      setSelectedActionKeys((prev) =>
+                        event.target.checked
+                          ? [...new Set([...prev, key])]
+                          : prev.filter((item) => item !== key)
+                      );
+                    }}
+                  />
+                  Approve
+                </label>
                 <p className="text-[12px] font-semibold text-white">{action.title}</p>
                 <p className="mt-1 text-[11px] text-emerald-200/70">
                   {action.kind.replaceAll("_", " ")} · {action.severity}
