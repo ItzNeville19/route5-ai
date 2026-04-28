@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Caveat } from "next/font/google";
-import { barlowCondensedLanding, outfitLanding } from "@/lib/fonts-landing";
+import { outfitLanding } from "@/lib/fonts-landing";
 import { useMemo, useRef } from "react";
 import {
   motion,
@@ -47,12 +46,6 @@ import { WORKSPACE_THEME_PHOTO, workspacePhotoUrl } from "@/lib/workspace-theme-
 
 const MARKETING_SF_HERO_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.sanfrancisco.path, 2400);
 const MARKETING_SF_COAST_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.lagunabeach.path, 1600);
-
-const marketingAccentScript = Caveat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-});
 
 export default function MarketingHomeClient({
   signedIn = false,
@@ -152,47 +145,46 @@ export default function MarketingHomeClient({
         />
 
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
+          {/* Copy sits on the photo scrims — no dark glass card (classic landing clarity). */}
           <motion.div
-            className="rounded-[28px] border border-white/14 bg-slate-950/65 p-5 shadow-[0_28px_100px_-36px_rgba(0,0,0,0.92)] ring-1 ring-white/18 backdrop-blur-xl sm:p-8 lg:col-span-7"
+            className="lg:col-span-7"
             variants={heroIntroParent}
             initial="hidden"
             animate="show"
           >
             <motion.div variants={heroIntroChild}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md">
                 {t("landing.hero.badge")}
               </span>
             </motion.div>
             <motion.h1
               variants={heroIntroChild}
-              className={`mt-6 text-[clamp(2.65rem,6.8vw,4.05rem)] font-extrabold leading-[1.02] tracking-[-0.038em] text-white [text-shadow:0_3px_36px_rgba(0,0,0,0.72)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
+              className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]"
             >
               {t("landing.hero.title1")}{" "}
-              <span
-                className={`${marketingAccentScript.className} text-[clamp(2.15rem,5.6vw,3.25rem)] font-semibold italic text-sky-200 [text-shadow:0_8px_44px_rgba(0,0,0,0.72)]`}
-              >
+              <span className="bg-gradient-to-r from-sky-200 to-cyan-200 bg-clip-text text-transparent">
                 {t("landing.hero.title2")}
               </span>
             </motion.h1>
             <motion.p
               variants={heroIntroChild}
-              className="mt-6 max-w-xl text-pretty font-[family-name:var(--font-outfit-landing)] text-[17px] font-medium leading-relaxed text-white/96"
+              className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-200"
             >
               {t("landing.hero.lead")}
             </motion.p>
             <motion.p
               variants={heroIntroChild}
-              className="mt-4 max-w-xl font-[family-name:var(--font-outfit-landing)] text-[15px] leading-relaxed text-zinc-200"
+              className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/90"
             >
               {TRIAL_BODY}
             </motion.p>
             <motion.div
               variants={heroIntroChild}
-              className="mt-9 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
+              className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
               <MotionLink
                 href={signedIn ? "/desk" : "/sign-up"}
-                className="inline-flex min-h-[3.25rem] min-w-[11rem] items-center justify-center rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-10 text-[16px] font-semibold text-white shadow-[0_22px_50px_-18px_rgba(37,99,235,0.75)] ring-1 ring-white/25 transition-colors hover:from-blue-400 hover:to-blue-500"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-500 px-8 text-[15px] font-semibold text-white shadow-lg shadow-blue-900/40 transition-colors hover:bg-blue-400"
                 whileHover={
                   reduceMotion ? undefined : { scale: 1.03, y: -2, transition: LANDING_SPRING }
                 }
@@ -202,7 +194,7 @@ export default function MarketingHomeClient({
               </MotionLink>
               <MotionA
                 href={route5WalkthroughMailto()}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-slate-900/40 bg-white px-8 text-[15px] font-semibold text-slate-900 shadow-lg shadow-black/25 ring-1 ring-white/40 transition-colors hover:bg-zinc-100"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-xl border border-white/30 bg-white/10 px-8 text-[15px] font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:border-white/50 hover:bg-white/15"
                 whileHover={
                   reduceMotion ? undefined : { scale: 1.02, y: -1, transition: LANDING_SPRING }
                 }
@@ -212,7 +204,7 @@ export default function MarketingHomeClient({
               </MotionA>
               <MotionLink
                 href="/product"
-                className="inline-flex min-h-12 items-center justify-center gap-1.5 text-[15px] font-medium text-white/90 underline-offset-4 transition-colors hover:text-white hover:underline sm:px-2"
+                className="inline-flex min-h-12 items-center justify-center gap-1.5 text-[15px] font-medium text-slate-200 underline-offset-4 transition-colors hover:text-white hover:underline sm:px-2"
                 whileHover={
                   reduceMotion ? undefined : { x: 3, transition: LANDING_SPRING }
                 }
@@ -231,7 +223,7 @@ export default function MarketingHomeClient({
             </motion.div>
             <motion.p
               variants={heroIntroChild}
-              className="mt-5 text-[12px] font-medium tracking-wide text-zinc-300"
+              className="mt-5 text-[12px] font-medium tracking-wide text-slate-400"
             >
               {t("landing.trial")}
             </motion.p>
