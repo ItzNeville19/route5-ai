@@ -3846,64 +3846,10 @@ body.theme-glass-site:has(main.landing-premium) {
 }
 
 /*
- * Light palette: **no** backdrop-blur — translucent paint + blur samples the dark ocean shell
- * behind the header and reads as black-on-black even when `--light` classes are present.
+ * Light palette (sunset, daytime, …): the top bar is **not** `.route5-ocean-toolbar-surface` —
+ * it is a solid Tailwind white strip in `WorkspaceTopToolbar` so Safari/macOS never composites
+ * the dark ocean gradient “through” the header (black-on-black). Dark themes keep ocean glass.
  */
-.route5-ocean-header .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light,
-.theme-route5-command.theme-agent-shell.workspace-palette-light
-  .route5-ocean-header
-  .route5-ocean-toolbar-surface {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Light workspace themes (Sunrise, Daytime, …): frosted bar + dark iconography — not black glass on a pastel canvas */
-.theme-route5-command.theme-agent-shell.workspace-palette-light .route5-ocean-toolbar-surface {
-  border-color: rgba(15, 23, 42, 0.12);
-  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%);
-  box-shadow:
-    0 16px 48px -40px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-}
-
-/*
- * Co-element modifier (set from React when `workspacePaletteLight`) — wins any cascade/order issues
- * so the sticky bar never stays ocean-dark while copy uses light-palette ink.
- */
-.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light {
-  border-color: rgba(15, 23, 42, 0.12) !important;
-  /* Opaque stops — avoid alpha so nothing from the dark shell shows through */
-  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%) !important;
-  box-shadow:
-    0 16px 48px -40px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
-}
-
-/* Extra paint layer: some WebViews still composite the dark agent shell through — underlay wins. */
-.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%);
-  pointer-events: none;
-}
-
-.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light > .pointer-events-none {
-  z-index: 1;
-}
-
-.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light .route5-workspace-toolbar-inner {
-  position: relative;
-  z-index: 2;
-}
-
-.route5-brand-agent-shell[data-route5-canvas-photo="true"]
-  .route5-ocean-header
-  .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light::after {
-  opacity: 0;
-}
 
 .route5-workspace-toolbar-inner {
   flex-wrap: wrap;

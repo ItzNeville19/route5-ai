@@ -32,6 +32,7 @@ import WorkspaceHeaderSearch from "@/components/workspace/WorkspaceHeaderSearch"
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 import { useWorkspaceChromeActions } from "@/components/workspace/WorkspaceChromeActions";
 import { resolveDesktopDownloadHref } from "@/lib/desktop-install-url";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 function classNames(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -46,6 +47,7 @@ type ToolbarItem = {
 };
 
 export default function WorkspaceTopToolbar() {
+  const { t } = useI18n();
   const pathnameRaw = usePathname();
   const pathname = pathnameRaw?.split("?")[0] ?? "";
   const search = useSearchParams();
@@ -131,11 +133,27 @@ export default function WorkspaceTopToolbar() {
 
   const navItems: ToolbarItem[] = useMemo(
     () => [
-      { id: "dashboard", href: `/workspace/dashboard${suffix}`, label: "Home", icon: Home },
-      { id: "queue", href: `/workspace/agent${suffix}`, label: "Agent", icon: Bot, leadOnly: true },
-      { id: "activity", href: `/workspace/activity${suffix}`, label: "History", icon: History },
+      {
+        id: "dashboard",
+        href: `/workspace/dashboard${suffix}`,
+        label: t("workspace.chrome.nav.home"),
+        icon: Home,
+      },
+      {
+        id: "queue",
+        href: `/workspace/agent${suffix}`,
+        label: t("workspace.chrome.nav.agent"),
+        icon: Bot,
+        leadOnly: true,
+      },
+      {
+        id: "activity",
+        href: `/workspace/activity${suffix}`,
+        label: t("workspace.chrome.nav.history"),
+        icon: History,
+      },
     ],
-    [suffix]
+    [suffix, t]
   );
 
   const visibleNav = navItems.filter((i) => !i.leadOnly || canLead);
@@ -164,22 +182,39 @@ export default function WorkspaceTopToolbar() {
 
   return (
     <>
-      <header className="route5-ocean-header sticky top-0 z-[45] mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
+      <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
+        {/*
+          Light themes: **do not** use `.route5-ocean-toolbar-surface` — its ocean gradient + backdrop
+          stacks poorly on Safari/macOS and reads as black-on-black despite overrides.
+          Dark themes keep the ocean glass surface.
+        */}
         <div
-          className={`route5-ocean-toolbar-surface ${workspacePaletteLight ? "route5-ocean-toolbar-surface--light text-slate-900 [&_svg]:text-slate-800" : ""} route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 ${
-            employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
-          }`}
+          className={
+            workspacePaletteLight
+              ? classNames(
+                  "route5-workspace-toolbar-shell relative overflow-hidden rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-900 shadow-[0_12px_44px_-28px_rgba(15,23,42,0.22)] sm:px-4 sm:py-2.5",
+                  employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
+                )
+              : classNames(
+                  "route5-ocean-toolbar-surface route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5",
+                  employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
+                )
+          }
         >
-          <div
-            className={`pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl ${workspacePaletteLight ? "opacity-40" : ""}`}
-            aria-hidden
-          />
-          <div
-            className={`pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl ${workspacePaletteLight ? "opacity-40" : ""}`}
-            aria-hidden
-          />
+          {!workspacePaletteLight ? (
+            <>
+              <div
+                className="pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl"
+                aria-hidden
+              />
+            </>
+          ) : null}
 
-          <div className="route5-workspace-toolbar-inner relative flex min-h-[38px] items-center gap-2 sm:gap-3 md:min-h-[40px] lg:gap-3.5">
+          <div className="route5-workspace-toolbar-inner relative z-[1] flex min-h-[38px] items-center gap-2 sm:gap-3 md:min-h-[40px] lg:gap-3.5">
             {/* Left: brand + search */}
             <div className="flex min-w-0 min-h-0 flex-1 items-center gap-2 sm:gap-3">
               <Link
@@ -190,7 +225,7 @@ export default function WorkspaceTopToolbar() {
                     ? "ring-cyan-600/20 hover:bg-slate-900/5"
                     : "ring-cyan-400/25 hover:bg-white/[0.04]"
                 )}
-                aria-label="Route 5 Workspace — Home"
+                aria-label={t("workspace.chrome.brandAria")}
               >
                 <span
                   className={classNames(
@@ -209,7 +244,7 @@ export default function WorkspaceTopToolbar() {
                     workspacePaletteLight ? "text-slate-500" : "text-cyan-200/32"
                   )}
                 >
-                  Workspace
+                  {t("workspace.chrome.workspaceLabel")}
                 </span>
               </Link>
               <WorkspaceHeaderSearch />
@@ -229,10 +264,10 @@ export default function WorkspaceTopToolbar() {
                           ? "text-sky-700 ring-cyan-600/25 hover:bg-slate-900/6 hover:text-sky-900"
                           : "text-cyan-200/70 ring-cyan-400/25 hover:bg-white/[0.06] hover:text-cyan-100"
                       )}
-                      title="Companies — browse or add a workspace"
+                      title={t("workspace.chrome.companiesTitle")}
                     >
                       <Building2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
-                      <span className="truncate">Companies</span>
+                      <span className="truncate">{t("workspace.chrome.companies")}</span>
                     </Link>
                   ) : null}
                   {organizationName ? (
@@ -252,7 +287,7 @@ export default function WorkspaceTopToolbar() {
 
             {/* Center: primary nav (icons + labels from md to reduce dead space) */}
             <nav
-              aria-label="Workspace"
+              aria-label={t("workspace.chrome.nav.aria")}
               className="route5-workspace-toolbar-nav hidden min-w-0 shrink items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex md:max-w-[min(44vw,540px)] md:justify-center md:gap-1.5 xl:max-w-none [&::-webkit-scrollbar]:hidden"
             >
               {visibleNav.map((item) => {
@@ -286,7 +321,7 @@ export default function WorkspaceTopToolbar() {
             {/* Right: lead overflow, notifications, customize, help, account */}
             <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
               <nav
-                aria-label="Workspace mobile"
+                aria-label={t("workspace.chrome.nav.aria")}
                 className="flex max-w-[min(46vw,220px)] items-center gap-1 overflow-x-auto pr-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {visibleNav.map((item) => {
@@ -326,10 +361,10 @@ export default function WorkspaceTopToolbar() {
                       ? "border-sky-400/45 bg-sky-500/15 text-sky-900 shadow-none hover:border-sky-400/55 hover:bg-sky-500/22"
                       : "border-cyan-400/35 bg-cyan-500/[0.12] text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] hover:border-cyan-300/40 hover:bg-cyan-500/[0.18]"
                   )}
-                  title="Return to organization metrics and Lead tools"
+                  title={t("workspace.chrome.backToTeamTitle")}
                 >
-                  <span className="sm:hidden">Team view</span>
-                  <span className="hidden sm:inline">Back to team overview</span>
+                  <span className="sm:hidden">{t("workspace.chrome.teamViewShort")}</span>
+                  <span className="hidden sm:inline">{t("workspace.chrome.backToTeam")}</span>
                 </button>
               ) : null}
 
@@ -353,7 +388,7 @@ export default function WorkspaceTopToolbar() {
                     aria-haspopup="menu"
                     aria-controls={leadOpen ? "workspace-lead-actions-menu" : undefined}
                   >
-                    Actions
+                    {t("workspace.chrome.actions")}
                     <ChevronDown className={classNames("h-3 w-3 opacity-80 transition", leadOpen && "rotate-180")} />
                   </button>
                   {mounted &&
@@ -388,7 +423,7 @@ export default function WorkspaceTopToolbar() {
                             }}
                           >
                             <PlusCircle className="h-4 w-4 text-cyan-300/85" strokeWidth={2} />
-                            New Task
+                            {t("workspace.chrome.lead.newTask")}
                           </button>
                           <button
                             type="button"
@@ -400,7 +435,7 @@ export default function WorkspaceTopToolbar() {
                             }}
                           >
                             <Sparkles className="h-4 w-4 text-emerald-300/85" strokeWidth={2} />
-                            Run Agent
+                            {t("workspace.chrome.lead.runAgent")}
                           </button>
                           <button
                             type="button"
@@ -412,11 +447,11 @@ export default function WorkspaceTopToolbar() {
                             }}
                           >
                             <Mail className="h-4 w-4 text-teal-200/80" strokeWidth={2} />
-                            Send Update
+                            {t("workspace.chrome.lead.sendUpdate")}
                           </button>
                           <button type="button" role="menuitem" className={leadMenuItem} onClick={() => goEmployeePreview()}>
                             <Eye className="h-4 w-4 text-white/70" strokeWidth={2} />
-                            Employee Preview
+                            {t("workspace.chrome.lead.employeePreview")}
                           </button>
                           <Link
                             href="/workspace/organization"
@@ -425,7 +460,7 @@ export default function WorkspaceTopToolbar() {
                             onClick={() => setLeadOpen(false)}
                           >
                             <Users className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
-                            Organization
+                            {t("workspace.chrome.lead.organization")}
                           </Link>
                           <Link
                             href="/?site=1"
@@ -434,7 +469,7 @@ export default function WorkspaceTopToolbar() {
                             onClick={() => setLeadOpen(false)}
                           >
                             <LayoutGrid className="h-4 w-4 text-emerald-200/90" strokeWidth={2} />
-                            Marketing site
+                            {t("workspace.chrome.lead.marketingSite")}
                           </Link>
                           {desktopDownloadExternal ? (
                             <a
@@ -445,7 +480,7 @@ export default function WorkspaceTopToolbar() {
                               rel="noopener noreferrer"
                             >
                               <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
-                              Download desktop client
+                              {t("workspace.chrome.lead.downloadDesktop")}
                             </a>
                           ) : (
                             <Link
@@ -455,7 +490,7 @@ export default function WorkspaceTopToolbar() {
                               onClick={() => setLeadOpen(false)}
                             >
                               <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
-                              Download desktop client
+                              {t("workspace.chrome.lead.downloadDesktop")}
                             </Link>
                           )}
                           <Link
@@ -465,7 +500,7 @@ export default function WorkspaceTopToolbar() {
                             onClick={() => setLeadOpen(false)}
                           >
                             <Settings className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
-                            Settings
+                            {t("workspace.chrome.lead.settings")}
                           </Link>
                         </div>
                       </>,
@@ -485,8 +520,8 @@ export default function WorkspaceTopToolbar() {
                     ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
                     : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
                 )}
-                aria-label="Customize workspace"
-                title="Customize"
+                aria-label={t("workspace.chrome.customize")}
+                title={t("workspace.chrome.customize")}
               >
                 <Palette className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
@@ -500,8 +535,8 @@ export default function WorkspaceTopToolbar() {
                     ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
                     : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
                 )}
-                aria-label="Help"
-                title="Help"
+                aria-label={t("workspace.chrome.help")}
+                title={t("workspace.chrome.help")}
               >
                 <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
@@ -515,8 +550,8 @@ export default function WorkspaceTopToolbar() {
                       ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
                       : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
                   )}
-                  aria-label="Settings"
-                  title="Route5 settings"
+                  aria-label={t("workspace.chrome.settings")}
+                  title={t("workspace.chrome.settings")}
                 >
                   <Settings className="h-3.5 w-3.5" strokeWidth={2} />
                 </Link>
