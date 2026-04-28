@@ -3845,15 +3845,22 @@ body.theme-glass-site:has(main.landing-premium) {
   -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
 
+/*
+ * Light palette: **no** backdrop-blur — translucent paint + blur samples the dark ocean shell
+ * behind the header and reads as black-on-black even when `--light` classes are present.
+ */
+.route5-ocean-header .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light,
+.theme-route5-command.theme-agent-shell.workspace-palette-light
+  .route5-ocean-header
+  .route5-ocean-toolbar-surface {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* Light workspace themes (Sunrise, Daytime, …): frosted bar + dark iconography — not black glass on a pastel canvas */
 .theme-route5-command.theme-agent-shell.workspace-palette-light .route5-ocean-toolbar-surface {
   border-color: rgba(15, 23, 42, 0.12);
-  background: linear-gradient(
-    168deg,
-    rgba(255, 255, 255, 0.94) 0%,
-    rgba(248, 250, 252, 0.9) 46%,
-    rgba(241, 245, 249, 0.97) 100%
-  );
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%);
   box-shadow:
     0 16px 48px -40px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
@@ -3865,12 +3872,8 @@ body.theme-glass-site:has(main.landing-premium) {
  */
 .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light {
   border-color: rgba(15, 23, 42, 0.12) !important;
-  background: linear-gradient(
-    168deg,
-    rgba(255, 255, 255, 0.96) 0%,
-    rgba(248, 250, 252, 0.92) 46%,
-    rgba(241, 245, 249, 0.98) 100%
-  ) !important;
+  /* Opaque stops — avoid alpha so nothing from the dark shell shows through */
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%) !important;
   box-shadow:
     0 16px 48px -40px rgba(15, 23, 42, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
