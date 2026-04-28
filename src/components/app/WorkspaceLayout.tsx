@@ -46,6 +46,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const sidebarHidden = prefs.sidebarHidden === true;
   const router = useRouter();
   const pathname = usePathname() ?? "";
+  const isDashboardSurface = pathname === "/workspace/dashboard";
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   useEffect(() => {
     const closeMobile = () => setMobileSidebarOpen(false);
@@ -114,32 +115,48 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       </Suspense>
 
       <div className="flex min-h-dvh w-full">
-        <Suspense fallback={null}>
-          <WorkspaceSidebar />
-        </Suspense>
+        {isDashboardSurface ? null : (
+          <Suspense fallback={null}>
+            <WorkspaceSidebar />
+          </Suspense>
+        )}
         <div
           className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col"
           style={agentCanvasPhotoStyle ?? undefined}
         >
-          <WorkspaceHeader
-            onSidebarToggle={() => {
-              if (typeof window === "undefined") return;
-              const sidebar = document.querySelector<HTMLElement>('[data-route5-sidebar="desktop"]');
-              const desktopSidebarVisible =
-                !!sidebar && window.getComputedStyle(sidebar).display !== "none";
-              const desktopLayout = desktopSidebarVisible || window.innerWidth >= 768;
-              if (!desktopLayout) {
-                setMobileSidebarOpen((v) => !v);
-                return;
-              }
-              setMobileSidebarOpen(false);
-              exp.setPrefs({ sidebarHidden: !sidebarHidden });
-            }}
-          />
-          <WorkspaceBillingBanner />
-          <WorkspacePersistenceBanner />
-          <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0">
-            <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-4)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-5)]">
+          {isDashboardSurface ? null : (
+            <WorkspaceHeader
+              onSidebarToggle={() => {
+                if (typeof window === "undefined") return;
+                const sidebar = document.querySelector<HTMLElement>('[data-route5-sidebar="desktop"]');
+                const desktopSidebarVisible =
+                  !!sidebar && window.getComputedStyle(sidebar).display !== "none";
+                const desktopLayout = desktopSidebarVisible || window.innerWidth >= 768;
+                if (!desktopLayout) {
+                  setMobileSidebarOpen((v) => !v);
+                  return;
+                }
+                setMobileSidebarOpen(false);
+                exp.setPrefs({ sidebarHidden: !sidebarHidden });
+              }}
+            />
+          )}
+          {isDashboardSurface ? null : <WorkspaceBillingBanner />}
+          {isDashboardSurface ? null : <WorkspacePersistenceBanner />}
+          <main
+            className={`route5-brand-canvas min-h-0 flex-1 overflow-y-auto ${
+              isDashboardSurface
+                ? "pb-0"
+                : "pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0"
+            }`}
+          >
+            <div
+              className={`workspace-page-inner relative mx-auto w-full ${
+                isDashboardSurface
+                  ? "max-w-[min(100%,1600px)] px-3 py-3 sm:px-4 sm:py-4"
+                  : "max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-4)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-5)]"
+              }`}
+            >
               <div key={pathname} className="route5-page-transition">
                 {children}
               </div>
@@ -147,8 +164,10 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-      <WorkspaceMobileSidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-      <WorkspaceMobileNav />
+      {isDashboardSurface ? null : (
+        <WorkspaceMobileSidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+      )}
+      {isDashboardSurface ? null : <WorkspaceMobileNav />}
       <NewProjectModal />
     </div>
   );

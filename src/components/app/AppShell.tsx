@@ -104,7 +104,7 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
                 routing="path"
                 path="/login"
                 signUpUrl="/sign-up"
-                fallbackRedirectUrl="/desk"
+                fallbackRedirectUrl="/workspace/dashboard"
                 signUpFallbackRedirectUrl="/onboarding"
                 appearance={{
                   ...route5ClerkAppearance,
@@ -155,7 +155,7 @@ function SignedInAppShell({
       typeof window !== "undefined" &&
       new URLSearchParams(window.location.search).get("replay") === "1";
     if (isOnboardingComplete(userId) && !replay) {
-      router.replace("/desk");
+      router.replace("/workspace/dashboard");
     }
   }, [userId, pathname, router]);
 

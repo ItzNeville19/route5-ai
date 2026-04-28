@@ -15,10 +15,13 @@ export default function OrgRouteGuard() {
   useEffect(() => {
     if (loadingOrganization) return;
     const currentPath = pathname.split("?")[0];
-    const deprecatedToDesk = ["/feed", "/workspace/commitments", "/capture", "/workspace/assign-task"];
-    const deprecatedToHome = [
+    const target = "/workspace/dashboard";
+    const deprecatedRoutes = [
+      "/feed",
+      "/workspace/commitments",
+      "/capture",
+      "/workspace/assign-task",
       "/workspace/org-feed",
-      "/workspace/dashboard",
       "/leadership",
       "/workspace/team-work",
       "/workspace/team",
@@ -32,12 +35,9 @@ export default function OrgRouteGuard() {
       "/workspace/my-inbox",
     ];
 
-    if (deprecatedToDesk.some((pfx) => currentPath === pfx || currentPath.startsWith(`${pfx}/`))) {
-      router.replace("/desk");
-      return;
-    }
-    if (deprecatedToHome.some((pfx) => currentPath === pfx || currentPath.startsWith(`${pfx}/`))) {
-      router.replace("/overview");
+    if (currentPath === target) return;
+    if (deprecatedRoutes.some((pfx) => currentPath === pfx || currentPath.startsWith(`${pfx}/`))) {
+      router.replace(target);
       return;
     }
   }, [loadingOrganization, pathname, router]);
