@@ -79,7 +79,7 @@ export default function WorkspaceAuditPage() {
           <input
             value={owner}
             onChange={(e) => setOwner(e.target.value)}
-            placeholder="Clerk id or name"
+            placeholder="User ID or name"
             className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-2 py-1.5 text-[13px] text-[var(--workspace-fg)]"
           />
         </label>

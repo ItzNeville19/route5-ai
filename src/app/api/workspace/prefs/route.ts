@@ -52,6 +52,14 @@ const prefsPatchSchema = z
       .refine((s): s is UiLocaleCode => isUiLocaleCode(s))
       .optional(),
     surfaceMaterial: z.enum(["liquid", "standard", "flat"]).optional(),
+    commandCenterDensity: z.enum(["compact", "comfortable"]).optional(),
+    welcomeHeroStyle: z.enum(["atmospheric", "minimal", "glass"]).optional(),
+    accentIntensity: z.enum(["subtle", "medium", "strong"]).optional(),
+    welcomeHeroPalette: z.number().int().min(0).max(31).optional(),
+    defaultWorkspaceView: z.enum(["admin", "employee"]).optional(),
+    pinnedCommandActions: z.array(z.string().transform(cleanText).pipe(z.string().max(64))).max(12).optional(),
+    dashboardSectionOrder: z.array(z.string().transform(cleanText).pipe(z.string().max(32))).max(12).optional(),
+    heroLocationOverride: z.string().transform(cleanText).pipe(z.string().max(120)).optional(),
   })
   .strict();
 

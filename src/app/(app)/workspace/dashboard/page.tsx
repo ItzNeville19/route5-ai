@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import AdminCommandCenter from "@/components/workspace/AdminCommandCenter";
+import Route5AdminDashboard from "@/components/workspace/Route5AdminDashboard";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Route5",
-  description: "Execution command center: attention, recovery queue, and team health.",
+  title: "Home — Route 5",
+  description: "Your workspace home — team health, commitments, and quick links.",
 };
 
 export default function WorkspaceDashboardPage() {
-  return <AdminCommandCenter />;
+  return <Route5AdminDashboard />;
 }

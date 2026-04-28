@@ -677,7 +677,7 @@ export default function WorkspaceAssistant() {
             ? "Close workspace assistant"
             : "Open assistant — answers about Route5 using your live workspace context"
         }
-        className="pointer-events-auto fixed bottom-5 right-5 z-[60000] flex h-14 w-14 touch-manipulation items-center justify-center rounded-full bg-[#34c759] text-white shadow-[0_8px_32px_rgba(52,199,89,0.45)] transition hover:scale-[1.03] active:scale-[0.98] md:bottom-8 md:right-8"
+        className="pointer-events-auto fixed bottom-5 right-5 z-[60000] flex h-14 w-14 touch-manipulation items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-teal-700 text-white shadow-[0_10px_36px_rgba(8,145,178,0.42)] transition-transform hover:scale-[1.03] active:scale-[0.98] md:bottom-8 md:right-8"
         style={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif" }}
         aria-label={open ? `Close ${MERIDIAN_SHORT}` : `Open ${MERIDIAN_SHORT}`}
       >
@@ -982,7 +982,7 @@ export default function WorkspaceAssistant() {
                       type="button"
                       onClick={() => void send()}
                       disabled={sending || !input.trim()}
-                      className="mb-0.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full bg-[#0a84ff] text-white shadow-md transition hover:opacity-95 disabled:opacity-35"
+                      className="mb-0.5 flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-600 text-white shadow-md transition-opacity hover:opacity-95 disabled:opacity-35"
                       aria-label="Send"
                     >
                       <Send className="h-5 w-5" strokeWidth={2} />

@@ -21,6 +21,17 @@ Stack: Next.js (App Router), Clerk, Supabase, Stripe, optional OpenAI for struct
 5. Deploy to Vercel (or your host) and add the same env vars in project settings (never commit secrets).
 6. Signed-in workspace docs live under `/docs` (e.g. **Executive brief**, **Sales playbook**, **Product**).
 
+### Workspace (signed-in)
+
+The app shell is a **dark workspace with green accents**: top bar shows **Route 5**, navigation (Home, Assistant, History, Preview, Alerts, Settings, Help), and **Lead** vs **My work** (saved preference + URL `view=`).
+
+| Area | Route | Notes |
+|------|--------|--------|
+| **Home** | `/workspace/dashboard` | Welcome card, team shortcuts, health chart, issues and Assistant preview, recent updates. |
+| **My work** | `/workspace/dashboard?view=employee` | Open commitments, due dates; completed items stay in a collapsible section. |
+| **Customize** | `/workspace/customize` | Density, hero style, accents, default view, pinned shortcuts, optional location label. |
+| **Deploy** | Vercel | Configure env vars in the project; run `npm run launch-check` before promoting a release. |
+
 ### Local development
 
 ```bash

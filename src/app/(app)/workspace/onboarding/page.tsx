@@ -226,7 +226,7 @@ export default function WorkspaceOnboardingPage() {
       <div className="workspace-preview-panel mb-5 p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
-          Route5 setup studio
+            Route5 setup
           </p>
           <Link
             href="/desk"
@@ -239,8 +239,8 @@ export default function WorkspaceOnboardingPage() {
           Build your workspace in five focused steps
         </h2>
         <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          Everything here is live: projects, Desk capture, commitments, and team setup. You leave onboarding with a
-          working command center, not placeholder data.
+          Connect your org, invite people, and wire capture the same way you&apos;ll use in production. Each step saves
+          to your workspace so you can pick up where you left off.
         </p>
       </div>
       <div className="mb-8 flex justify-center gap-1">
@@ -321,8 +321,8 @@ export default function WorkspaceOnboardingPage() {
           </p>
           <h2 className="mt-2 text-[18px] font-semibold text-[var(--workspace-fg)]">Invite teammates</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Paste emails (comma or newline separated). Invites use your live Clerk org — skip if you&apos;re solo for
-            now.
+            Paste emails (comma or newline separated). Invites go to your current organization — skip if you&apos;re solo
+            for now.
           </p>
           <textarea
             className="mt-4 min-h-[100px] w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/40 px-3 py-2 text-[14px] text-[var(--workspace-fg)]"

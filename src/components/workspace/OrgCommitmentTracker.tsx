@@ -563,7 +563,7 @@ export default function OrgCommitmentTracker() {
               <input
                 value={ownerFilter}
                 onChange={(e) => setOwnerFilter(e.target.value)}
-                placeholder="Owner (Clerk user id)"
+                placeholder="Owner user ID"
                 className="min-w-[160px] rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/60 px-3 py-2 text-[13px] text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)]"
               />
               <NativeDatetimeLocalInput
@@ -837,7 +837,7 @@ export default function OrgCommitmentTracker() {
                     className="w-full rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-surface)]/50 px-3 py-2 text-[var(--workspace-fg)]"
                   />
                   <label className="block text-[11px] font-semibold uppercase tracking-wider text-[var(--workspace-muted-fg)]">
-                    Owner (Clerk user id)
+                    Owner user ID
                   </label>
                   <input
                     value={editOwner}

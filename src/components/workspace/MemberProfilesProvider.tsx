@@ -21,7 +21,7 @@ export type MemberProfile = {
 type MemberDirectoryValue = {
   map: Map<string, MemberProfile>;
   get: (userId: string) => MemberProfile | undefined;
-  /** Resolved display name using Clerk profile when available. */
+  /** Resolved display name from the organization directory when available. */
   displayName: (userId: string, selfId: string | undefined, selfDisplayName: string) => string;
   refresh: () => Promise<void>;
   loaded: boolean;

@@ -123,6 +123,36 @@
   --r5-duration-normal: 200ms;
   --r5-duration-slow: 350ms;
   --r5-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Ocean workspace — calm premium canvas (shells, hero, chrome) */
+  --ocean-abyss: #040a0f;
+  --ocean-deep: #071218;
+  --ocean-mid: #0b1822;
+  --ocean-surface: #0d1e2a;
+  --ocean-foam: rgba(165, 243, 252, 0.1);
+  --ocean-glass: rgba(12, 32, 44, 0.55);
+  --ocean-accent: #38bdf8;
+  --ocean-accent-muted: rgba(125, 211, 252, 0.45);
+  --ocean-glow-cyan: rgba(34, 211, 238, 0.14);
+  --ocean-glow-teal: rgba(20, 184, 166, 0.1);
+  --ocean-border-soft: rgba(103, 232, 249, 0.1);
+  --ocean-wave-silhouette: rgba(8, 47, 73, 0.45);
+}
+
+/* Inline SVG wave layer (minimal; no asset requests) — used by hero/shell motifs */
+@keyframes route5-wave-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-4%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route5-wave-animate {
+    animation: none !important;
+  }
 }
 
 @theme inline {
@@ -3649,10 +3679,47 @@ body.theme-glass-site:has(main.landing-premium) {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 14% 10%, rgba(34, 197, 94, 0.18), transparent 36%),
-    radial-gradient(circle at 84% 0%, rgba(20, 184, 166, 0.12), transparent 42%),
-    linear-gradient(180deg, #060a08 0%, #070d0a 100%);
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(56, 189, 248, 0.12), transparent 55%),
+    radial-gradient(circle at 16% 18%, rgba(20, 184, 166, 0.1), transparent 40%),
+    radial-gradient(circle at 92% 8%, rgba(14, 116, 144, 0.14), transparent 38%),
+    linear-gradient(180deg, var(--ocean-abyss) 0%, var(--ocean-deep) 48%, #030711 100%);
   z-index: 0;
+}
+
+/* Main workspace chrome — ocean dusk glass; pairs with prefs photo overlay when set inline */
+.route5-brand-agent-shell {
+  position: relative;
+  isolation: isolate;
+  border-radius: 28px;
+  border: 1px solid var(--ocean-border-soft);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% -15%, rgba(34, 211, 238, 0.08), transparent 52%),
+    linear-gradient(175deg, rgba(10, 28, 36, 0.92) 0%, rgba(5, 12, 18, 0.98) 55%, rgba(4, 8, 14, 0.99) 100%);
+  box-shadow:
+    0 40px 120px -72px rgba(14, 116, 144, 0.35),
+    inset 0 1px 0 rgba(207, 250, 254, 0.06);
+  transform: translateZ(0);
+}
+
+.route5-brand-canvas {
+  position: relative;
+  z-index: 1;
+}
+
+/* Sticky workspace header — fewer competing borders; single glass surface */
+.route5-ocean-toolbar-surface {
+  border: 1px solid var(--ocean-border-soft);
+  background:
+    linear-gradient(168deg, rgba(8, 22, 32, 0.92) 0%, rgba(5, 14, 22, 0.96) 46%, rgba(4, 10, 16, 0.98) 100%);
+  box-shadow:
+    0 16px 48px -40px rgba(34, 211, 238, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transform: translateZ(0);
+}
+
+.route5-ocean-header .route5-ocean-toolbar-surface {
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
 
 .route5-premium-shell-bg > * {
@@ -3744,5 +3811,154 @@ body.theme-glass-site:has(main.landing-premium) {
     transition: none !important;
     transform: none !important;
   }
+}
+
+/* ── Route5 ocean brand — workspace hero & shell ─────────────────── */
+:root {
+  --r5-ocean-sand: #e8e0d6;
+  --r5-ocean-mist: #9aabbd;
+  --r5-ocean-horizon: #3d5668;
+  --r5-ocean-deep: #0c1824;
+  --r5-ocean-accent: #5eead4;
+  --r5-ocean-glow: rgba(94, 234, 212, 0.12);
+}
+
+.route5-ocean-shell {
+  border-color: rgba(34, 94, 99, 0.35) !important;
+  box-shadow:
+    0 40px 120px -72px rgba(16, 185, 129, 0.28),
+    inset 0 1px 0 rgba(165, 243, 252, 0.06) !important;
+}
+
+.route5-ocean-header {
+  --r5-ocean-header-glow: rgba(34, 211, 238, 0.06);
+}
+
+/* Photo canvas preset: soften header bar edge with horizon + wash (see data-route5-canvas-photo on WorkspaceLayout). */
+.route5-brand-agent-shell[data-route5-canvas-photo="true"]
+  .route5-ocean-header
+  .route5-ocean-toolbar-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.38;
+  background:
+    radial-gradient(ellipse 95% 70% at 50% -8%, rgba(165, 243, 252, 0.12), transparent 55%),
+    linear-gradient(
+      178deg,
+      rgba(45, 212, 191, 0.05) 0%,
+      rgba(34, 211, 238, 0.04) 42%,
+      rgba(13, 148, 136, 0.06) 100%
+    ),
+    repeating-linear-gradient(
+      105deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(34, 211, 238, 0.02) 6px,
+      rgba(34, 211, 238, 0.02) 7px
+    );
+  mix-blend-mode: soft-light;
+}
+
+.route5-welcome-photo-ocean-blend {
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(12, 28, 42, 0.25) 45%,
+    rgba(8, 22, 38, 0.72) 100%
+  );
+}
+
+.route5-welcome-ocean .route5-welcome-ocean-sky {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.route5-welcome-ocean .route5-welcome-ocean-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(ellipse 90% 55% at 20% 0%, var(--r5-ocean-glow), transparent 55%);
+  opacity: 0.85;
+}
+
+.route5-welcome-ocean .route5-welcome-ocean-scrim {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(6, 10, 14, 0.05) 0%, rgba(4, 8, 14, 0.72) 55%, rgba(2, 6, 12, 0.92) 100%);
+}
+
+.route5-welcome-ocean .route5-welcome-ocean-waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32%;
+  width: 100%;
+  opacity: 0.55;
+  pointer-events: none;
+  transform: translateZ(0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .route5-welcome-ocean .route5-welcome-ocean-waves {
+    animation: route5-wave-shift 26s linear infinite alternate;
+    will-change: transform;
+  }
+}
+
+.route5-welcome-hero-shell {
+  transform: translateZ(0);
+}
+
+.route5-welcome-ocean--morning .route5-welcome-ocean-sky {
+  background: linear-gradient(180deg, #f0e8de 0%, #b8c4d0 38%, #4a6678 72%, #0f1c26 100%);
+}
+
+.route5-welcome-ocean--afternoon .route5-welcome-ocean-sky {
+  background: linear-gradient(180deg, #e4ddd4 0%, #9aaec0 40%, #355a6e 75%, #0c1822 100%);
+}
+
+.route5-welcome-ocean--evening .route5-welcome-ocean-sky {
+  background: linear-gradient(180deg, #d8cfc4 0%, #7a8fa4 42%, #243d52 78%, #080f18 100%);
+}
+
+.route5-welcome-ocean--night .route5-welcome-ocean-sky {
+  background: linear-gradient(180deg, #1a2430 0%, #152535 35%, #0c1828 70%, #050a10 100%);
+}
+
+.route5-welcome-ocean-minimal.route5-welcome-ocean--morning {
+  background: linear-gradient(165deg, #1e2a32 0%, #121c24 48%, #0a1016 100%);
+}
+
+.route5-welcome-ocean-minimal.route5-welcome-ocean--afternoon {
+  background: linear-gradient(165deg, #1a2830 0%, #101a22 50%, #080e14 100%);
+}
+
+.route5-welcome-ocean-minimal.route5-welcome-ocean--evening {
+  background: linear-gradient(165deg, #18242c 0%, #0e161c 50%, #060a0e 100%);
+}
+
+.route5-welcome-ocean-minimal.route5-welcome-ocean--night {
+  background: linear-gradient(165deg, #12181e 0%, #0a0e12 52%, #050709 100%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .route5-motion-soft {
+    transition:
+      opacity 200ms ease,
+      transform 240ms cubic-bezier(0.2, 0.7, 0.25, 1),
+      box-shadow 220ms ease,
+      border-color 180ms ease;
+  }
+}
+
+.route5-contrast-ring:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--r5-ocean-accent, #5eead4) 55%, transparent);
+  outline-offset: 2px;
 }
 

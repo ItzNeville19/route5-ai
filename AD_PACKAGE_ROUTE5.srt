@@ -1,0 +1,35 @@
+1
+00:00:00,000 --> 00:00:07,000
+Every team has the same problem: decisions happen fast... execution gets lost.
+
+2
+00:00:07,000 --> 00:00:13,000
+Route5 turns scattered signals into accountable execution.
+
+3
+00:00:13,000 --> 00:00:23,000
+Paste meeting notes, email threads, or chat history.
+Route5 extracts real commitments in seconds.
+
+4
+00:00:23,000 --> 00:00:33,000
+Need direct control?
+Assign complete execution briefs, not vague reminders.
+
+5
+00:00:33,000 --> 00:00:42,000
+Assignees get notified instantly, with everything needed to execute.
+
+6
+00:00:42,000 --> 00:00:52,000
+As work moves, leaders see what is on track, at risk, and overdue,
+without chasing updates.
+
+7
+00:00:52,000 --> 00:00:58,000
+Role-aware workspaces keep every team member focused on what matters.
+
+8
+00:00:58,000 --> 00:01:00,000
+Route5. Command the work.
+

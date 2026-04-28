@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import CommandCenterCustomizeSection from "@/components/workspace/CommandCenterCustomizeSection";
 import DashboardCustomizeSection from "@/components/workspace/DashboardCustomizeSection";
 import WorkspaceThemeSection from "@/components/workspace/WorkspaceThemeSection";
 
@@ -9,10 +10,10 @@ export default function WorkspaceCustomizePage() {
     <div className="mx-auto w-full max-w-[min(100%,960px)] pb-24">
       <div className="mb-6">
         <Link
-          href="/overview"
+          href="/workspace/dashboard"
           className="text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
-          ← Overview
+          ← Dashboard
         </Link>
         <h1 className="sr-only">Customize workspace</h1>
         <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[var(--workspace-muted-fg)]">
@@ -25,6 +26,7 @@ export default function WorkspaceCustomizePage() {
         </p>
       </div>
       <WorkspaceThemeSection />
+      <CommandCenterCustomizeSection />
       <DashboardCustomizeSection />
     </div>
   );

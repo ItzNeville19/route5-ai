@@ -80,6 +80,22 @@ export type WorkspacePrefsV1 = {
   onboardingChecklistDismissed?: boolean;
   /** Legacy onboarding field; no longer surfaced in Settings. */
   companyPresetId?: "startup" | "enterprise" | "agency" | "consulting" | "custom";
+  /** Command center layout density (workspace dashboard). */
+  commandCenterDensity?: "compact" | "comfortable";
+  /** Hero welcome card visual treatment. */
+  welcomeHeroStyle?: "atmospheric" | "minimal" | "glass";
+  /** Emerald accent presence for command surfaces. */
+  accentIntensity?: "subtle" | "medium" | "strong";
+  /** Rotates gradient/mesh variant within the same time-of-day bucket (tap hero to cycle). */
+  welcomeHeroPalette?: number;
+  /** Default admin vs employee dashboard framing (toolbar still overrides URL). */
+  defaultWorkspaceView?: "admin" | "employee";
+  /** Quick-link keys shown under the hero — subset of Route5 canonical shortcuts. */
+  pinnedCommandActions?: string[];
+  /** Ordered section ids below the hero (`attention`, `insights`, `operations`, `movement`; legacy `trend`/`owners`/`blockers`/`queue` map accordingly). */
+  dashboardSectionOrder?: string[];
+  /** Optional override for the location line under the greeting (e.g. “Las Vegas, NV”). */
+  heroLocationOverride?: string;
 };
 
 const defaultPrefs: WorkspacePrefsV1 = {
@@ -89,6 +105,12 @@ const defaultPrefs: WorkspacePrefsV1 = {
   workspaceCanvasBackground: "gradient",
   /** Default shell: violet & lime mesh (“classic” / labeled Default in theme picker). */
   appearanceTheme: "classic",
+  commandCenterDensity: "comfortable",
+  welcomeHeroStyle: "atmospheric",
+  accentIntensity: "medium",
+  welcomeHeroPalette: 0,
+  defaultWorkspaceView: "admin",
+  pinnedCommandActions: ["queue", "escalations", "activity"],
 };
 
 export function loadWorkspacePrefs(): WorkspacePrefsV1 {
@@ -190,6 +212,42 @@ export function loadWorkspacePrefs(): WorkspacePrefsV1 {
           o.companyPresetId === "custom")
           ? o.companyPresetId
           : undefined,
+      commandCenterDensity:
+        o.commandCenterDensity === "compact" || o.commandCenterDensity === "comfortable"
+          ? o.commandCenterDensity
+          : undefined,
+      welcomeHeroStyle:
+        o.welcomeHeroStyle === "atmospheric" ||
+        o.welcomeHeroStyle === "minimal" ||
+        o.welcomeHeroStyle === "glass"
+          ? o.welcomeHeroStyle
+          : undefined,
+      accentIntensity:
+        o.accentIntensity === "subtle" || o.accentIntensity === "medium" || o.accentIntensity === "strong"
+          ? o.accentIntensity
+          : undefined,
+      welcomeHeroPalette:
+        typeof o.welcomeHeroPalette === "number" && Number.isFinite(o.welcomeHeroPalette)
+          ? Math.max(0, Math.min(31, Math.floor(o.welcomeHeroPalette)))
+          : undefined,
+      defaultWorkspaceView:
+        o.defaultWorkspaceView === "admin" || o.defaultWorkspaceView === "employee"
+          ? o.defaultWorkspaceView
+          : undefined,
+      pinnedCommandActions: Array.isArray(o.pinnedCommandActions)
+        ? o.pinnedCommandActions
+            .filter((x): x is string => typeof x === "string" && x.length > 0 && x.length < 64)
+            .slice(0, 12)
+        : undefined,
+      dashboardSectionOrder: Array.isArray(o.dashboardSectionOrder)
+        ? o.dashboardSectionOrder
+            .filter((x): x is string => typeof x === "string" && x.length > 0 && x.length < 32)
+            .slice(0, 12)
+        : undefined,
+      heroLocationOverride:
+        typeof o.heroLocationOverride === "string" && o.heroLocationOverride.length < 120
+          ? o.heroLocationOverride.trim()
+          : undefined,
     };
   } catch {
     return { ...defaultPrefs };
@@ -225,6 +283,12 @@ export function mergeWorkspacePrefsPatch(
   }
   if (Array.isArray(next.dashboardAiShortcuts)) {
     next.dashboardAiShortcuts = normalizeDashboardShortcutList(next.dashboardAiShortcuts);
+  }
+  if (patch.pinnedCommandActions !== undefined) {
+    next.pinnedCommandActions = [...patch.pinnedCommandActions];
+  }
+  if (patch.dashboardSectionOrder !== undefined) {
+    next.dashboardSectionOrder = [...patch.dashboardSectionOrder];
   }
   return next;
 }

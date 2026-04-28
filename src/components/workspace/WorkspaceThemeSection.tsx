@@ -188,10 +188,10 @@ export default function WorkspaceThemeSection() {
           Command canvas
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-          Choose between the original <span className="font-medium text-[var(--workspace-fg)]">color &amp; mesh</span>{" "}
-          treatment (signature violet + lime gradients per theme) or layered{" "}
-          <span className="font-medium text-[var(--workspace-fg)]">photography</span> from your selected theme — both stay
-          WCAG-conscious.
+          <span className="font-medium text-[var(--workspace-fg)]">Color &amp; mesh</span> uses each theme&apos;s
+          gradient blend on the workspace shell.{" "}
+          <span className="font-medium text-[var(--workspace-fg)]">Photography</span> swaps in curated Unsplash-style
+          imagery with a readable overlay — the welcome hero follows the same choice when you use the atmospheric style.
         </p>
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
@@ -219,7 +219,7 @@ export default function WorkspaceThemeSection() {
           >
             Photography
             <span className="mt-1 block text-[11px] font-normal leading-snug text-[var(--workspace-muted-fg)]">
-              Curated imagery layered on the canvas (Overview hero follows the same setting).
+              Unsplash-style photos plus overlay; matches the welcome hero when atmospheric + photo is on.
             </span>
           </button>
         </div>

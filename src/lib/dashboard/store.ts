@@ -62,6 +62,7 @@ export type DashboardActivityRow = {
   title: string;
   status: string;
   owner_id: string;
+  deadline: string;
   created_at: string;
   updated_at: string;
   completed_at: string | null;
@@ -77,7 +78,7 @@ export async function fetchRecentCommitmentActivity(
     const supabase = getServiceClient();
     let query = supabase
       .from("org_commitments")
-      .select("id, title, status, owner_id, created_at, updated_at, completed_at")
+      .select("id, title, status, owner_id, deadline, created_at, updated_at, completed_at")
       .eq("org_id", orgId)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false })
@@ -92,6 +93,7 @@ export async function fetchRecentCommitmentActivity(
       title: String((row as Record<string, unknown>).title),
       status: String((row as Record<string, unknown>).status),
       owner_id: String((row as Record<string, unknown>).owner_id),
+      deadline: String((row as Record<string, unknown>).deadline ?? ""),
       created_at: String((row as Record<string, unknown>).created_at),
       updated_at: String((row as Record<string, unknown>).updated_at),
       completed_at:
@@ -110,7 +112,7 @@ export async function fetchRecentCommitmentActivity(
   params.push(boundedLimit);
   const rows = d
     .prepare(
-      `SELECT id, title, status, owner_id, created_at, updated_at, completed_at
+      `SELECT id, title, status, owner_id, deadline, created_at, updated_at, completed_at
        FROM org_commitments
        WHERE org_id = ? AND deleted_at IS NULL${ownerWhere}
        ORDER BY updated_at DESC
@@ -122,6 +124,7 @@ export async function fetchRecentCommitmentActivity(
     title: String(row.title),
     status: String(row.status),
     owner_id: String(row.owner_id),
+    deadline: row.deadline == null ? "" : String(row.deadline),
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
     completed_at: row.completed_at == null ? null : String(row.completed_at),

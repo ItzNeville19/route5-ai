@@ -34,15 +34,15 @@ function keyFor(action: AgentAction) {
 
 function whyFlagged(action: AgentAction): string {
   if (action.kind === "escalate") {
-    return `No matching escalation record — recommend escalation (${action.severity}).`;
+    return "This should be flagged to leadership so nothing slips.";
   }
-  if (action.severity === "overdue") return "Past deadline with incomplete status.";
-  if (action.severity === "critical") return "Due window critical — stalled progress.";
-  if (action.severity === "urgent") return "Deadline approaching — missing recent update.";
-  return "Momentum vs. deadline skew — preventive nudge.";
+  if (action.severity === "overdue") return "Past due and still open.";
+  if (action.severity === "critical") return "Due very soon — needs an update now.";
+  if (action.severity === "urgent") return "Deadline coming up — check in with the owner.";
+  return "Looks quiet compared to the deadline — a light nudge may help.";
 }
 
-function confidencePct(action: AgentAction): number {
+function priorityScore(action: AgentAction): number {
   const rank: Record<AgentAction["severity"], number> = {
     overdue: 96,
     critical: 88,
@@ -52,12 +52,37 @@ function confidencePct(action: AgentAction): number {
   return rank[action.severity];
 }
 
+function matchesMissionTab(action: AgentAction, tab: string): boolean {
+  switch (tab) {
+    case "all":
+      return true;
+    case "stale":
+      return action.severity === "warning";
+    case "followups":
+      return action.severity === "urgent";
+    case "blockers":
+      return action.severity === "overdue" || action.severity === "critical";
+    case "escalations":
+      return action.kind === "escalate";
+    case "pending":
+      return action.kind === "owner_nudge";
+    default:
+      return true;
+  }
+}
+
 function initialsFromOwner(title: string, ownerId: string) {
   const t = title.slice(0, 1).toUpperCase();
   return t || ownerId.slice(-2).toUpperCase();
 }
 
-export default function ExecutionActionQueue() {
+export default function ExecutionActionQueue({
+  variant = "page",
+  missionTab = "all",
+}: {
+  variant?: "page" | "sheet";
+  missionTab?: string;
+}) {
   const [mode, setMode] = useState<AgentMode>("suggest_then_approve");
   const [canRun, setCanRun] = useState(false);
   const [preview, setPreview] = useState<AgentAction[]>([]);
@@ -71,6 +96,11 @@ export default function ExecutionActionQueue() {
   const [history, setHistory] = useState<
     Array<{ id: string; severity: string; ownerDisplayName: string; commitmentTitle: string; ageHours: number }>
   >([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  useEffect(() => {
+    if (variant === "sheet") setSeverityFilter("all");
+  }, [variant, missionTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,7 +159,7 @@ export default function ExecutionActionQueue() {
       };
       if (res.ok && data.summary) {
         setToast(
-          `Scan complete · +${data.summary.created} escalations · ${data.summary.actionsSuggested ?? 0} suggestions · ${data.summary.actionsExecuted ?? 0} auto-executed`
+          `Scan done — ${data.summary.actionsSuggested ?? 0} suggestions ready (${data.summary.created ?? 0} new flags).`
         );
       }
       await refreshQueue();
@@ -166,7 +196,7 @@ export default function ExecutionActionQueue() {
       };
       if (res.ok && data.summary) {
         setToast(
-          `Sent ${data.summary.executed} · ${data.summary.nudgesSent} nudges · ${data.summary.escalationsCreated} new · ${data.summary.escalationsUpgraded} upgraded`
+          `Sent ${data.summary.executed} — ${data.summary.nudgesSent} reminders and ${data.summary.escalationsCreated + data.summary.escalationsUpgraded} leadership flags.`
         );
         await refreshQueue();
         await loadHistory();
@@ -187,7 +217,7 @@ export default function ExecutionActionQueue() {
         body: JSON.stringify({ actions: payload }),
       });
       if (res.ok) {
-        setToast("Action delivered.");
+        setToast("Sent.");
         setPreview((prev) => prev.filter((item) => keyFor(item) !== keyFor(action)));
         setSelected((prev) => prev.filter((item) => item !== keyFor(action)));
         await loadHistory();
@@ -207,34 +237,49 @@ export default function ExecutionActionQueue() {
     [preview, selected]
   );
 
-  const visibleRows = useMemo(
-    () => preview.filter((row) => severityFilter === "all" || row.severity === severityFilter),
-    [preview, severityFilter]
-  );
+  const visibleRows = useMemo(() => {
+    let rows = preview;
+    if (variant === "sheet" && missionTab && missionTab !== "all") {
+      rows = rows.filter((row) => matchesMissionTab(row, missionTab));
+    }
+    return rows.filter((row) => severityFilter === "all" || row.severity === severityFilter);
+  }, [preview, severityFilter, variant, missionTab]);
 
   const inboxStats = useMemo(() => {
     const critical = preview.filter((p) => p.severity === "overdue" || p.severity === "critical").length;
     return { total: preview.length, critical };
   }, [preview]);
 
+  const sheetShell = variant === "sheet";
+
   return (
-    <div className="mx-auto w-full max-w-[1480px] space-y-5 pb-8 animate-[route5-page-enter_0.35s_ease-out_both]">
-      {/* Hero */}
-      <header className="relative overflow-hidden rounded-[28px] border border-emerald-500/15 bg-[linear-gradient(125deg,rgba(12,42,28,0.55),rgba(8,10,9,0.98))] p-6 md:p-8 shadow-[0_40px_120px_-64px_rgba(16,185,129,0.4)]">
-        <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
+    <div
+      className={`route5-agent-queue mx-auto w-full max-w-[1480px] space-y-4 animate-[route5-page-enter_0.35s_ease-out_both] ${sheetShell ? "pb-4" : "pb-10"}`}
+    >
+      {/* Summary — inbox-first */}
+      <header
+        className={`relative overflow-hidden rounded-[26px] border border-white/[0.06] bg-[linear-gradient(128deg,rgba(8,40,52,0.42),rgba(5,12,18,0.98))] shadow-[0_36px_100px_-60px_rgba(14,116,144,0.35)] ${sheetShell ? "p-4 md:p-5" : "p-6 md:p-8"}`}
+      >
+        <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-cyan-500/8 blur-3xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-950/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300/95">
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/22 bg-cyan-950/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-cyan-100/92">
               <Sparkles className="h-3.5 w-3.5" />
-              Operations copilot
+              Inbox
             </div>
-            <h1 className="mt-4 text-[clamp(1.65rem,3vw,2.15rem)] font-semibold tracking-tight text-white">
-              Execution recovery inbox
+            <h1 className={`mt-4 font-semibold tracking-tight text-white ${sheetShell ? "text-xl md:text-[1.35rem]" : "text-[clamp(1.55rem,2.8vw,2.05rem)]"}`}>
+              Conversational follow-ups
             </h1>
-            <p className="mt-3 text-sm leading-relaxed text-white/55">
-              Spot stalled commitments, preview outbound nudges, approve edits, and send — everything ties back to live org
-              data and escalation policy.
-            </p>
+            {!sheetShell ? (
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/[0.55]">
+                Work through suggestions like an inbox — expand a row to edit the outgoing note, approve with the checkbox,
+                then send approved items in one batch or one at a time.
+              </p>
+            ) : (
+              <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/[0.5]">
+                Preview messages, approve, then send — same pipeline as the full Assistant page.
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <PolicySelect value={mode} onChange={(v) => void saveMode(v)} disabled={!canRun} />
@@ -242,10 +287,10 @@ export default function ExecutionActionQueue() {
               type="button"
               onClick={() => void runNow()}
               disabled={!canRun || running}
-              className="route5-pressable inline-flex items-center gap-2 rounded-full border border-emerald-500/35 bg-emerald-950/50 px-4 py-2 text-sm font-semibold text-emerald-50 disabled:opacity-40"
+              className="route5-pressable inline-flex items-center gap-2 rounded-full border border-cyan-500/32 bg-cyan-950/50 px-4 py-2 text-sm font-semibold text-cyan-50 disabled:opacity-40"
             >
               <Zap className="h-4 w-4" />
-              {running ? "Scanning…" : "Run recovery scan"}
+              {running ? "Scanning…" : "Scan team"}
             </button>
             <button
               type="button"
@@ -259,58 +304,72 @@ export default function ExecutionActionQueue() {
           </div>
         </div>
 
-        <div className="relative mt-8 grid gap-3 sm:grid-cols-3">
-          <MetricCard icon={Bot} label="Inbox" value={inboxStats.total} subtitle="Suggested actions" />
-          <MetricCard icon={AlertOctagon} label="Hot" value={inboxStats.critical} subtitle="Overdue + critical" accent />
-          <MetricCard icon={Shield} label="Approved batch" value={approvedCount} subtitle="Ready to send" />
+        <div className={`relative grid gap-3 sm:grid-cols-3 ${sheetShell ? "mt-5" : "mt-8"}`}>
+          <MetricCard icon={Bot} label="Inbox" value={inboxStats.total} subtitle="Current suggestions" />
+          <MetricCard icon={AlertOctagon} label="Urgent" value={inboxStats.critical} subtitle="Late or critical" accent />
+          <MetricCard icon={Shield} label="Ready to send" value={approvedCount} subtitle="Selected to send" />
         </div>
 
         {toast ? (
-          <p className="relative mt-6 rounded-xl border border-emerald-500/25 bg-emerald-950/35 px-4 py-3 text-sm text-emerald-100/95">
+          <p className="relative mt-6 rounded-xl border border-cyan-500/22 bg-cyan-950/30 px-4 py-3 text-sm text-cyan-50/96">
             {toast}
           </p>
         ) : null}
       </header>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3 backdrop-blur-md">
+      {/* Filters + bulk actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[22px] border border-white/[0.065] bg-black/24 px-4 py-3 backdrop-blur-md">
         <div className="flex flex-wrap items-center gap-2">
-          <FilterChip active={severityFilter === "all"} onClick={() => setSeverityFilter("all")}>
-            All
-          </FilterChip>
-          {(["overdue", "critical", "urgent", "warning"] as const).map((sev) => (
-            <FilterChip key={sev} active={severityFilter === sev} onClick={() => setSeverityFilter(sev)}>
-              {sev}
-            </FilterChip>
-          ))}
+          {!sheetShell ? (
+            <>
+              <FilterChip active={severityFilter === "all"} onClick={() => setSeverityFilter("all")}>
+                All
+              </FilterChip>
+              {(["overdue", "critical", "urgent", "warning"] as const).map((sev) => (
+                <FilterChip key={sev} active={severityFilter === sev} onClick={() => setSeverityFilter(sev)}>
+                  {sev}
+                </FilterChip>
+              ))}
+            </>
+          ) : (
+            <span className="text-[12px] font-medium text-white/42">
+              Refine using tabs above · severity filters stay available on the full Assistant page.
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => void executeApproved()}
             disabled={!canRun || approvedCount === 0 || executing}
-            className="route5-pressable inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-900/45 px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_40px_-18px_rgba(16,185,129,0.55)] disabled:opacity-40"
+            className="route5-pressable inline-flex items-center gap-2 rounded-full border border-cyan-500/38 bg-cyan-900/45 px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_40px_-18px_rgba(8,145,178,0.45)] disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
             {executing ? "Sending…" : `Send approved (${approvedCount})`}
           </button>
           <Link
-            href="/workspace/dashboard"
-            className="route5-pressable inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/75 hover:border-white/25 hover:text-white"
+            href="/workspace/assign-task"
+            className="route5-pressable inline-flex items-center rounded-full border border-white/12 px-4 py-2 text-sm font-medium text-cyan-100/92 hover:border-cyan-500/35 hover:bg-cyan-950/38"
           >
-            Back to command center
+            Assign new work
           </Link>
+          {!sheetShell ? (
+            <Link
+              href="/workspace/dashboard"
+              className="route5-pressable inline-flex items-center rounded-full border border-white/15 px-4 py-2 text-sm font-medium text-white/75 hover:border-white/25 hover:text-white"
+            >
+              Home
+            </Link>
+          ) : null}
         </div>
       </div>
 
-      {/* Inbox */}
+      {/* Message rows */}
       <div className="space-y-3">
         {visibleRows.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/15 bg-black/25 px-6 py-16 text-center">
-            <p className="text-sm font-medium text-white">Inbox clear</p>
-            <p className="mt-2 text-sm text-white/45">
-              Run a recovery scan or loosen filters — nothing matched this severity bucket.
-            </p>
+          <div className="rounded-[22px] border border-dashed border-white/[0.1] bg-black/[0.18] px-6 py-14 text-center">
+            <p className="text-sm font-medium text-white">You&apos;re caught up</p>
+            <p className="mt-2 text-sm text-white/45">{!canRun ? "Assistant tools unlock for admins and managers." : "Try another filter or run a scan — nothing matches."}</p>
           </div>
         ) : (
           visibleRows.map((action) => {
@@ -320,7 +379,7 @@ export default function ExecutionActionQueue() {
             return (
               <article
                 key={key}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(165deg,rgba(18,26,20,0.96),rgba(9,11,10,0.98))] shadow-[0_28px_90px_-52px_rgba(0,0,0,0.85)] transition-[border-color,box-shadow] duration-300 hover:border-emerald-500/25 hover:shadow-[0_28px_90px_-48px_rgba(16,185,129,0.18)]"
+                className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-[linear-gradient(165deg,rgba(12,28,34,0.92),rgba(6,11,14,0.98))] shadow-[0_26px_88px_-56px_rgba(0,0,0,0.75)] transition-[border-color,box-shadow] duration-300 hover:border-cyan-500/22 hover:shadow-[0_28px_90px_-50px_rgba(14,116,144,0.15)]"
               >
                 <div className="flex flex-wrap items-start gap-4 p-4 md:p-5">
                   <label className="flex shrink-0 cursor-pointer pt-1">
@@ -336,7 +395,7 @@ export default function ExecutionActionQueue() {
                     />
                     <span
                       className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-semibold transition-colors ${
-                        checked ? "border-emerald-400/70 bg-emerald-950/80 text-emerald-100" : "border-white/15 bg-black/40 text-white/35"
+                        checked ? "border-cyan-400/65 bg-cyan-950/75 text-cyan-50" : "border-white/12 bg-black/38 text-white/35"
                       }`}
                     >
                       {checked ? <CheckCircle2 className="h-4 w-4" /> : initialsFromOwner(action.title, action.ownerId)}
@@ -347,9 +406,9 @@ export default function ExecutionActionQueue() {
                     <div className="flex flex-wrap items-center gap-2">
                       <SeverityBadge severity={action.severity} />
                       <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/45">
-                        {action.kind === "owner_nudge" ? "Nudge owner" : "Escalate"}
+                        {action.kind === "owner_nudge" ? "Reminder" : "Escalate"}
                       </span>
-                      <span className="text-[11px] tabular-nums text-emerald-400/85">{confidencePct(action)}% signal</span>
+                      <span className="text-[11px] tabular-nums text-cyan-400/82">Priority · {priorityScore(action)}%</span>
                     </div>
                     <h3 className="text-base font-semibold leading-snug text-white">{action.title}</h3>
                     <p className="text-[13px] leading-relaxed text-white/55">{whyFlagged(action)}</p>
@@ -373,7 +432,7 @@ export default function ExecutionActionQueue() {
                         type="button"
                         onClick={() => void executeSingle(action)}
                         disabled={executing}
-                        className="route5-pressable inline-flex items-center gap-1 rounded-full border border-emerald-500/35 bg-emerald-950/45 px-3 py-1 text-[11px] font-semibold text-emerald-50 disabled:opacity-40"
+                        className="route5-pressable inline-flex items-center gap-1 rounded-full border border-cyan-500/34 bg-cyan-950/45 px-3 py-1 text-[11px] font-semibold text-cyan-50 disabled:opacity-40"
                       >
                         <Send className="h-3.5 w-3.5" />
                         Send now
@@ -393,20 +452,20 @@ export default function ExecutionActionQueue() {
                   </div>
 
                   <div className="hidden w-36 shrink-0 flex-col items-end gap-2 md:flex">
-                    <ConfidenceMeter value={confidencePct(action)} />
+                    <ConfidenceMeter value={priorityScore(action)} />
                     <span className="flex items-center gap-1 text-[11px] text-white/35">
-                      <Clock className="h-3 w-3" /> Live org scope
+                      <Clock className="h-3 w-3" /> Listed
                     </span>
                   </div>
                 </div>
 
                 {open ? (
                   <div className="border-t border-white/10 bg-black/35 px-4 py-4 md:px-6">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">Outbound copy</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">Message</p>
                     <textarea
                       value={editing[key] ?? action.message}
                       onChange={(e) => setEditing((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="mt-2 min-h-[100px] w-full resize-y rounded-xl border border-emerald-500/20 bg-[#070a09] px-3 py-2.5 text-sm leading-relaxed text-emerald-50/95 outline-none ring-0 placeholder:text-white/25 focus:border-emerald-400/45"
+                      className="mt-2 min-h-[100px] w-full resize-y rounded-xl border border-cyan-500/22 bg-[#070b0f] px-3 py-2.5 text-sm leading-relaxed text-cyan-50/95 outline-none ring-0 placeholder:text-white/25 focus:border-cyan-400/42"
                     />
                   </div>
                 ) : null}
@@ -416,31 +475,54 @@ export default function ExecutionActionQueue() {
         )}
       </div>
 
-      {/* History */}
-      <section className="rounded-[22px] border border-white/10 bg-black/25 p-5 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-white">Escalation & recovery history</h2>
-          <Link href="/workspace/activity" className="text-xs font-semibold text-emerald-400 hover:text-emerald-300">
-            Full timeline →
-          </Link>
-        </div>
-        <ul className="mt-4 divide-y divide-white/10">
-          {history.length === 0 ? (
-            <li className="py-6 text-center text-sm text-white/45">No escalation records yet.</li>
-          ) : (
-            history.map((item) => (
-              <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
-                <div>
-                  <p className="font-medium text-white">{item.commitmentTitle}</p>
-                  <p className="mt-1 text-[12px] text-white/45">
-                    {item.ownerDisplayName} · open {item.ageHours}h · {item.severity}
-                  </p>
-                </div>
-              </li>
-            ))
-          )}
-        </ul>
+      {/* History — expandable so the inbox stays the focus */}
+      {!sheetShell ? (
+      <section className="rounded-[22px] border border-white/[0.06] bg-black/22 backdrop-blur-sm">
+        <button
+          type="button"
+          onClick={() => setHistoryOpen((v) => !v)}
+          className="route5-pressable flex w-full items-center justify-between gap-3 rounded-[20px] px-4 py-3.5 text-left transition-colors hover:bg-white/[0.03]"
+          aria-expanded={historyOpen}
+        >
+          <span className="text-sm font-semibold text-white">Recent flags</span>
+          <span className="flex items-center gap-3">
+            {history.length > 0 ? (
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white/60">
+                {history.length}
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-white/35">Empty</span>
+            )}
+            {historyOpen ? <ChevronUp className="h-4 w-4 text-white/40" /> : <ChevronDown className="h-4 w-4 text-white/40" />}
+          </span>
+        </button>
+        {historyOpen ? (
+          <div className="border-t border-white/[0.05] px-4 pb-4 pt-1">
+            <div className="mb-3 flex justify-end">
+              <Link href="/workspace/activity" className="text-xs font-semibold text-cyan-400 hover:text-cyan-200">
+                Full history →
+              </Link>
+            </div>
+            <ul className="divide-y divide-white/[0.07]">
+              {history.length === 0 ? (
+                <li className="py-8 text-center text-sm text-white/45">Nothing flagged yet.</li>
+              ) : (
+                history.map((item) => (
+                  <li key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-1">
+                    <div>
+                      <p className="font-medium text-white">{item.commitmentTitle}</p>
+                      <p className="mt-1 text-[12px] text-white/45">
+                        {item.ownerDisplayName} · open {item.ageHours}h · {item.severity}
+                      </p>
+                    </div>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        ) : null}
       </section>
+      ) : null}
     </div>
   );
 }
@@ -459,11 +541,11 @@ function PolicySelect({
       value={value}
       disabled={disabled}
       onChange={(e) => onChange(e.target.value as AgentMode)}
-      className="rounded-full border border-white/15 bg-black/40 px-4 py-2 text-sm font-medium text-white outline-none focus:border-emerald-500/45 disabled:opacity-40"
+      className="rounded-full border border-white/12 bg-black/38 px-4 py-2 text-sm font-medium text-white outline-none focus:border-cyan-500/42 disabled:opacity-40"
     >
-      <option value="suggest_then_approve">Approve before send</option>
-      <option value="auto_send_limited">Limited auto-send</option>
-      <option value="fully_automatic">Full automation</option>
+      <option value="suggest_then_approve">Ask me before sending</option>
+      <option value="auto_send_limited">Send simple reminders automatically</option>
+      <option value="fully_automatic">Send automatically when safe</option>
     </select>
   );
 }
@@ -484,10 +566,10 @@ function MetricCard({
   return (
     <div
       className={`rounded-2xl border px-4 py-4 ${
-        accent ? "border-red-500/25 bg-red-950/35" : "border-white/10 bg-black/35"
+        accent ? "border-red-500/25 bg-red-950/35" : "border-white/[0.08] bg-black/32"
       }`}
     >
-      <Icon className={`h-5 w-5 ${accent ? "text-red-400/85" : "text-emerald-400/85"}`} />
+      <Icon className={`h-5 w-5 ${accent ? "text-red-400/85" : "text-cyan-400/82"}`} />
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-white/45">{label}</p>
       <p className="mt-1 text-3xl font-semibold tabular-nums text-white">{value}</p>
       <p className="mt-1 text-[11px] text-white/45">{subtitle}</p>
@@ -509,7 +591,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={`rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors ${
-        active ? "border-emerald-500/45 bg-emerald-950/50 text-emerald-100" : "border-white/10 bg-black/25 text-white/55 hover:border-white/20"
+        active ? "border-cyan-500/40 bg-cyan-950/45 text-cyan-50" : "border-white/[0.08] bg-black/22 text-white/54 hover:border-white/16"
       }`}
     >
       {children}
@@ -536,11 +618,11 @@ function ConfidenceMeter({ value }: { value: number }) {
     <div className="w-full max-w-[140px] space-y-1">
       <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-[width] duration-500 ease-out"
+          className="h-full rounded-full bg-gradient-to-r from-cyan-700 to-cyan-400 transition-[width] duration-500 ease-out"
           style={{ width: `${value}%` }}
         />
       </div>
-      <p className="text-[10px] text-right text-white/40">Confidence {value}%</p>
+      <p className="text-[10px] text-right text-white/40">Priority {value}%</p>
     </div>
   );
 }

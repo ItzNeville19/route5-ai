@@ -31,7 +31,10 @@ export async function GET(req: Request) {
     const scope: "org" | "self" =
       requestedScope === "self" ? "self" : canViewOrg ? "org" : "self";
     const orgId = await ensureOrganizationForClerkUser(userId);
-    const rows = await fetchRecentCommitmentActivity(orgId, 12, scope === "self" ? userId : undefined);
+    const rawLimit = url.searchParams.get("limit");
+    const parsed = rawLimit ? Number.parseInt(rawLimit, 10) : 12;
+    const limit = Number.isFinite(parsed) ? Math.min(50, Math.max(1, parsed)) : 12;
+    const rows = await fetchRecentCommitmentActivity(orgId, limit, scope === "self" ? userId : undefined);
     const ownerIds = [...new Set(rows.map((row) => row.owner_id))];
     const names = await resolveOwnerDisplayNames(ownerIds);
     const activity = rows.map((row) => ({

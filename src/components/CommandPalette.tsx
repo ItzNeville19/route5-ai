@@ -456,6 +456,18 @@ export function CommandPaletteProvider({
         tag === "INPUT" ||
         tag === "TEXTAREA" ||
         (document.activeElement as HTMLElement | null)?.isContentEditable;
+      if (
+        e.key === "/" &&
+        !open &&
+        !editable &&
+        !e.metaKey &&
+        !e.ctrlKey &&
+        !e.altKey
+      ) {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
       if (e.metaKey && e.code === "Space" && !editable) {
         e.preventDefault();
         setOpen(true);

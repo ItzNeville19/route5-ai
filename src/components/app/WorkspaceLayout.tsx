@@ -23,6 +23,11 @@ import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesProvider";
 import { CommitmentsProvider } from "@/components/commitments/CommitmentsProvider";
 import WorkspaceTopToolbar from "@/components/workspace/WorkspaceTopToolbar";
+import WorkspaceRoleRedirects from "@/components/workspace/WorkspaceRoleRedirects";
+import { WorkspaceChromeActionsProvider } from "@/components/workspace/WorkspaceChromeActions";
+import WorkspaceNewTaskDrawer from "@/components/workspace/WorkspaceNewTaskDrawer";
+import WorkspaceRunAgentSheet from "@/components/workspace/WorkspaceRunAgentSheet";
+import WorkspaceSendUpdateModal from "@/components/workspace/WorkspaceSendUpdateModal";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -51,15 +56,20 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
       <Suspense fallback={null}>
         <WorkspaceQueryHandler />
       </Suspense>
+      <WorkspaceRoleRedirects />
 
-      <div className="route5-premium-shell-bg relative min-h-dvh w-full px-2 py-2 sm:px-3 sm:py-3">
+      <div className="route5-premium-shell-bg relative min-h-dvh w-full px-3 py-1.5 sm:px-4 sm:py-2">
         <div
-          className="route5-brand-agent-shell agent-canvas relative z-10 mx-auto flex min-h-[calc(100dvh-16px)] w-full max-w-[1600px] min-w-0 flex-col rounded-[28px] border border-[#2a3b2e] bg-[linear-gradient(180deg,#0a0f0b_0%,#0f1510_100%)] p-2 shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)] sm:p-3"
+          className="route5-brand-agent-shell route5-ocean-shell agent-canvas relative z-10 mx-auto flex min-h-[calc(100dvh-12px)] w-full max-w-[1600px] min-w-0 flex-col rounded-[28px] border border-[#2a3b2e] bg-[linear-gradient(180deg,#0a1214_0%,#0c1512_48%,#0a0f0e_100%)] p-1.5 shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)] sm:p-2"
+          data-route5-canvas-photo={useCanvasPhotography ? "true" : "false"}
           style={agentCanvasPhotoStyle ?? undefined}
         >
           <WorkspaceTopToolbar />
+          <WorkspaceNewTaskDrawer />
+          <WorkspaceRunAgentSheet />
+          <WorkspaceSendUpdateModal />
           <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto">
-            <div className="workspace-page-inner relative mx-auto w-full max-w-[1540px] px-1 pb-2 sm:px-2 sm:pb-3">
+            <div className="workspace-page-inner relative mx-auto w-full max-w-[1540px] px-2 pb-3 sm:px-3 sm:pb-4">
               <div key={pathname} className="route5-page-transition">
                 {children}
               </div>
@@ -82,16 +92,18 @@ export default function WorkspaceLayout({
     <WorkspaceExperienceProvider>
       <I18nProvider>
         <WorkspaceDataProvider>
-          <BillingUpgradeProvider>
-            <BillingLimitQueryListener />
-            <CaptureProvider>
-              <MemberProfilesProvider>
-                <CommitmentsProvider>
-                  <WorkspaceShell>{children}</WorkspaceShell>
-                </CommitmentsProvider>
-              </MemberProfilesProvider>
-            </CaptureProvider>
-          </BillingUpgradeProvider>
+          <WorkspaceChromeActionsProvider>
+            <BillingUpgradeProvider>
+              <BillingLimitQueryListener />
+              <CaptureProvider>
+                <MemberProfilesProvider>
+                  <CommitmentsProvider>
+                    <WorkspaceShell>{children}</WorkspaceShell>
+                  </CommitmentsProvider>
+                </MemberProfilesProvider>
+              </CaptureProvider>
+            </BillingUpgradeProvider>
+          </WorkspaceChromeActionsProvider>
         </WorkspaceDataProvider>
       </I18nProvider>
     </WorkspaceExperienceProvider>

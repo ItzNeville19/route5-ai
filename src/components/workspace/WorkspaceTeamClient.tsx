@@ -10,7 +10,7 @@ import { ROUTE5_SIGNATURE } from "@/lib/brand-signature";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { formatRelativeLong } from "@/lib/relative-time";
 
-/** Dark surface + light text so Clerk popover never inherits global light theme with washed-out labels. */
+/** Dark surface + light text so the org switcher popover never inherits a light theme with washed-out labels. */
 const ORG_SWITCHER_APPEARANCE = {
   variables: {
     colorPrimary: "#a78bfa",
@@ -273,16 +273,17 @@ export default function WorkspaceTeamClient() {
           Team
         </h1>
         <p className="mt-[var(--r5-space-2)] max-w-xl text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
-          {ROUTE5_SIGNATURE.story} People listed here own at least one commitment in this workspace — profiles come from
-          Clerk.
+          {ROUTE5_SIGNATURE.story} People listed here own at least one commitment in this workspace — names and avatars
+          come from your organization directory.
         </p>
       </div>
 
       <section className="r5-float-card rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-secondary/35 p-[var(--r5-space-4)] shadow-[var(--r5-shadow-elevated)]">
-        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Organization (Clerk)</h2>
+        <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-r5-text-primary">Organization</h2>
         <p className="mt-1 text-[length:var(--r5-font-body)] text-r5-text-secondary">
-          Roles, membership, and the <strong className="font-medium text-r5-text-primary">Manage</strong> control open in a
-          Clerk panel — no extra page to configure. Switch orgs here; billing stays under Workspace → Billing.
+          Roles, membership, and the <strong className="font-medium text-r5-text-primary">Manage</strong> control open in
+          your account panel — no extra page to configure. Switch organizations here; billing stays under Workspace →
+          Billing.
         </p>
         <div className="clerk-org-switcher-host mt-[var(--r5-space-3)] flex flex-wrap items-center gap-3">
           <OrganizationSwitcher
@@ -312,7 +313,7 @@ export default function WorkspaceTeamClient() {
         </div>
         <p className="mt-1 text-[length:var(--r5-font-body)] text-r5-text-secondary">
           {enterprise
-            ? "Your workspace is on an enterprise contract. Invite teammates from Route5 and manage org roles in Clerk."
+            ? "Your workspace is on an enterprise contract. Invite teammates from Route5 and manage organization roles in your account settings."
             : "Send operational invites from Route5, or share a join link. Seat checks run before email goes out."}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">

@@ -25,7 +25,7 @@ type Props = {
   showControls?: boolean;
   /** `details` tucks controls behind a disclosure (cleaner Overview). */
   controlsStyle?: "toolbar" | "details";
-  /** Controlled range (e.g. hero timeframe). Omit for internal state. */
+  /** Controlled range (e.g. hero timeframe). Omit to use local state. */
   range?: ChartTimeRange;
   defaultRange?: ChartTimeRange;
   onRangeChange?: (r: ChartTimeRange) => void;

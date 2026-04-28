@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import ExecutionActionQueue from "@/components/workspace/ExecutionActionQueue";
 
 export const metadata: Metadata = {
-  title: "Action Queue — Route5",
-  description: "Execution recovery inbox — preview, approve, and send follow-ups.",
+  title: "Assistant — Route 5",
+  description: "Review reminders and flags for your team — edit messages and send when ready.",
 };
 
 export default function WorkspaceAgentPage() {

@@ -38,7 +38,7 @@ const cards = [
   },
   {
     title: "Organization",
-    body: "Clerk organization switcher plus everyone who currently owns a commitment — real people from your workspace data.",
+    body: "Organization switcher plus everyone who currently owns a commitment — pulled from your workspace.",
     href: "/workspace/organization",
     icon: Users,
     cta: "Open Organization",

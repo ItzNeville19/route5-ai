@@ -636,11 +636,11 @@ export default function WorkspaceNotificationsPopover() {
       </Link>
       <span className="mx-2 text-r5-text-tertiary">·</span>
       <Link
-        href="/overview"
+        href="/workspace/dashboard"
         onClick={() => handleOpenChange(false)}
         className="text-[length:var(--r5-font-body)] font-medium text-r5-text-secondary hover:text-zinc-200 hover:underline"
       >
-        Overview
+        Home
       </Link>
     </div>
   );
