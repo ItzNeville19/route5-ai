@@ -556,6 +556,22 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
+/* About CEO — editorial small-caps cues (wording unchanged in markup) */
+.about-ceo-chapter-label {
+  display: inline-block;
+  margin-bottom: 0.35em;
+  font-family: var(--font-outfit-landing), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.82em;
+  font-weight: 600;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  color: rgb(71 85 105);
+}
+
+.about-ceo-letter p {
+  text-wrap: pretty;
+}
+
 /* Marketing homepage — bay / SF palette behind public glass nav + footer */
 .marketing-sf-chrome .glass-liquid-nav {
   background: linear-gradient(

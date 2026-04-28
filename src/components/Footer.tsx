@@ -89,7 +89,7 @@ export default function Footer({ tone = "light" }: FooterProps) {
             <p className={`mt-3 text-[14px] leading-relaxed ${muted}`}>
               {command
                 ? "Tasks, companies, and owners in one layer—above chat and docs, not a replacement for them."
-                : "Route5 keeps tasks, companies, and owners in one place so follow-through is visible—without becoming another team chat app."}
+                : "Route5 is the execution layer above chat and docs: decisions become owned commitments—with deadlines and visibility—without replacing the tools your team already uses."}
             </p>
             <PublicEmailSubscribe tone={command ? "command" : "light"} source="footer" />
           </div>

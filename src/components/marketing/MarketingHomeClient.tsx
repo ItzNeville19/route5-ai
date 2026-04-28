@@ -43,6 +43,7 @@ import {
 import { WORKSPACE_THEME_PHOTO, workspacePhotoUrl } from "@/lib/workspace-theme-photos";
 
 const MARKETING_SF_HERO_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.sanfrancisco.path, 2400);
+const MARKETING_SF_COAST_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.lagunabeach.path, 1600);
 
 export default function MarketingHomeClient({
   signedIn = false,
@@ -94,17 +95,21 @@ export default function MarketingHomeClient({
             quality={88}
           />
         </motion.div>
-        {/* Readability: dark left for copy, lift right for product mock */}
+        {/* Readability: strong left scrim for copy; lighter right for mock */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/94 via-slate-950/72 to-slate-900/28"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/[0.96] via-slate-950/80 to-slate-900/32"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/82 via-transparent to-cyan-950/20"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/88 via-slate-950/10 to-indigo-950/28"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_100%_80%_at_100%_45%,rgba(34,211,238,0.14),transparent_52%)]"
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_100%_80%_at_100%_42%,rgba(34,211,238,0.12),transparent_54%)]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] ring-1 ring-inset ring-white/10"
           aria-hidden
         />
 
@@ -122,7 +127,7 @@ export default function MarketingHomeClient({
             </motion.div>
             <motion.h1
               variants={staggerChild}
-              className="mt-6 font-landing-display text-[clamp(2.25rem,6vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.035em] text-white [text-shadow:0_2px_24px_rgba(0,0,0,0.35)]"
+              className="mt-6 font-landing-display text-[clamp(2.35rem,6vw,3.65rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.4)]"
             >
               {t("landing.hero.title1")}{" "}
               <span className="bg-gradient-to-r from-sky-200 via-cyan-200 to-sky-100 bg-clip-text text-transparent">
@@ -131,13 +136,13 @@ export default function MarketingHomeClient({
             </motion.h1>
             <motion.p
               variants={staggerChild}
-              className="mt-6 max-w-xl text-pretty text-[17px] leading-relaxed text-slate-200"
+              className="mt-6 max-w-xl text-pretty text-[17px] font-medium leading-relaxed text-slate-100"
             >
               {t("landing.hero.lead")}
             </motion.p>
             <motion.p
               variants={staggerChild}
-              className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-300/90"
+              className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-200/95"
             >
               {TRIAL_BODY}
             </motion.p>
@@ -180,7 +185,7 @@ export default function MarketingHomeClient({
             </motion.div>
             <motion.p
               variants={staggerChild}
-              className="mt-5 text-[12px] font-medium tracking-wide text-slate-400"
+              className="mt-5 text-[12px] font-medium tracking-wide text-slate-300/95"
             >
               {t("landing.trial")}
             </motion.p>
@@ -194,7 +199,7 @@ export default function MarketingHomeClient({
             style={{ perspective: 1200 }}
           >
             <TiltSurface float className="w-full">
-              <div className="rounded-2xl border border-white/40 bg-white/98 p-6 shadow-[0_28px_90px_-36px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.65)_inset] backdrop-blur-md">
+              <div className="rounded-2xl border border-white/45 bg-white p-6 shadow-[0_28px_90px_-36px_rgba(37,99,235,0.55),0_0_0_1px_rgba(255,255,255,0.65)_inset] backdrop-blur-md">
               <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-4">
                 <p className="text-[13px] font-semibold text-slate-800">{t("landing.hero.mockTitle")}</p>
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
@@ -218,7 +223,7 @@ export default function MarketingHomeClient({
               {reduceMotion ? (
                 <div className="mt-5 flex items-center gap-2 rounded-xl border border-dashed border-slate-200/90 bg-gradient-to-r from-slate-50/90 to-blue-50/40 px-3 py-2 text-[11px] text-slate-600">
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden />
-                  Desk → tasks with owners & dates
+                  Desk → commitments with owners & dates
                 </div>
               ) : (
                 <motion.div
@@ -228,17 +233,22 @@ export default function MarketingHomeClient({
                   transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
                 >
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-blue-500" aria-hidden />
-                  Desk → tasks with owners & dates
+                  Desk → commitments with owners & dates
                 </motion.div>
               )}
               </div>
             </TiltSurface>
           </motion.div>
         </div>
+        {/* Bay-fog accent — matches workspace “sanfrancisco” gradient family */}
+        <div
+          className="pointer-events-none absolute bottom-0 left-0 right-0 z-[2] h-1 bg-gradient-to-r from-slate-300/90 via-sky-300/85 to-violet-300/85 opacity-90"
+          aria-hidden
+        />
       </section>
 
       {/* Ticker */}
-      <div className="border-b border-slate-200 bg-slate-50/90">
+      <div className="border-b border-slate-200 bg-[linear-gradient(180deg,rgba(248,250,252,0.97),rgba(238,242,255,0.88))]">
         <div className="relative overflow-hidden py-3.5">
           <div className="landing-fortune-marquee-track flex w-max gap-16 px-6">
             {[0, 1].map((dup) => (
@@ -264,9 +274,27 @@ export default function MarketingHomeClient({
       {/* Trust + Why */}
       <section
         id="why-route5"
-        className="border-b border-slate-200 bg-white py-20 sm:py-28"
+        className="relative overflow-hidden border-b border-slate-200 bg-white py-20 sm:py-28"
       >
-        <div className="mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+        <div className="pointer-events-none absolute -right-16 bottom-0 top-0 z-0 hidden w-[min(52vw,28rem)] sm:block">
+          <Image
+            src={MARKETING_SF_COAST_SRC}
+            alt=""
+            fill
+            sizes="(min-width: 640px) 28rem, 0px"
+            className="object-cover object-[72%_42%] opacity-[0.09]"
+            quality={75}
+          />
+        </div>
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-white via-white/95 to-white/88"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_70%_60%_at_80%_50%,rgba(186,230,253,0.16),transparent_58%)]"
+          aria-hidden
+        />
+        <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
           <motion.p
             className="text-center text-[15px] font-medium text-slate-500"
             {...fadeUpViewport}
@@ -307,16 +335,20 @@ export default function MarketingHomeClient({
       </section>
 
       {/* Solution band */}
-      <section className="relative overflow-hidden border-b border-blue-700/20 bg-gradient-to-br from-blue-600 via-blue-600 to-sky-500 py-16 sm:py-20">
+      <section className="relative overflow-hidden border-b border-blue-800/25 bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 py-16 sm:py-20">
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.22]"
+          className="pointer-events-none absolute inset-0 z-[0] bg-slate-950/25"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 z-[0] opacity-[0.22]"
           aria-hidden
           style={{
             background:
-              "radial-gradient(ellipse 90% 70% at 10% 20%, rgba(255,255,255,0.35), transparent 55%), radial-gradient(ellipse 70% 50% at 90% 80%, rgba(56,189,248,0.28), transparent 50%)",
+              "radial-gradient(ellipse 90% 70% at 10% 20%, rgba(255,255,255,0.38), transparent 55%), radial-gradient(ellipse 70% 50% at 90% 80%, rgba(56,189,248,0.28), transparent 50%)",
           }}
         />
-        <div className="relative mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
+        <div className="relative z-[1] mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
           <motion.div className="mx-auto max-w-3xl text-center text-white" {...fadeUpViewport}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100/90">
               {t("landing.solution.kicker")}
@@ -349,11 +381,11 @@ export default function MarketingHomeClient({
                         transition: LANDING_SPRING,
                       }
                 }
-                className="relative flex gap-4 rounded-2xl border border-white/20 bg-white/[0.14] p-5 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.35)] backdrop-blur-md [transform-style:preserve-3d]"
+                className="relative flex gap-4 rounded-2xl border border-white/28 bg-white/[0.18] p-5 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.4)] backdrop-blur-md [transform-style:preserve-3d]"
                 style={{ perspective: 900 }}
               >
                 <Icon className="mt-0.5 h-5 w-5 shrink-0 text-white drop-shadow-sm" strokeWidth={2} aria-hidden />
-                <p className="text-[14px] leading-relaxed text-white/95">{t(`landing.solution.${key}`)}</p>
+                <p className="text-[14px] font-medium leading-relaxed text-white [text-shadow:0_1px_18px_rgba(0,0,0,0.22)]">{t(`landing.solution.${key}`)}</p>
               </motion.li>
             ))}
           </ul>

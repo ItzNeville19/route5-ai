@@ -1,4 +1,4 @@
-import { Barlow_Condensed, Outfit } from "next/font/google";
+import { Barlow_Condensed, Outfit, Source_Serif_4 } from "next/font/google";
 
 /** Marketing homepage — readable body */
 export const outfitLanding = Outfit({
@@ -13,5 +13,13 @@ export const barlowCondensedLanding = Barlow_Condensed({
   subsets: ["latin"],
   weight: ["500", "600", "700", "800"],
   variable: "--font-barlow-condensed-landing",
+  display: "swap",
+});
+
+/** Long-form marketing (e.g. founder letter) — editorial serif */
+export const sourceSerifEditorial = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-source-serif-editorial",
   display: "swap",
 });

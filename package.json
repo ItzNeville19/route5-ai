@@ -18,7 +18,7 @@
     "launch-check": "npm run lint && npm run test:themes && npm run test:palette-routes && npm run build",
     "electron": "electron .",
     "electron:dev": "concurrently -k \"cross-env BROWSER=none next dev --webpack -p 3000\" \"wait-on http://127.0.0.1:3000 && cross-env ELECTRON_START_URL=http://127.0.0.1:3000 electron .\"",
-    "electron:build": "next build && node scripts/prepare-electron.mjs",
+    "electron:build": "next build --webpack && node scripts/prepare-electron.mjs",
     "electron:dist": "npm run electron:build && electron-builder"
   },
   "dependencies": {
