@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
 
-/** Dark ambient marketing `<main>` (opaque base + mesh). Use with Navbar dark chrome + `Footer tone="command"`. */
+/** Dark ambient marketing `<main>` (opaque base + mesh). No `theme-agent-shell` — avoids token bleed from workspace. */
 export const MARKETING_PUBLIC_SHELL_MAIN_CLASSES =
-  "route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100";
+  "route5-brand-dark-marketing-shell relative min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased";
 
 type MarketingPublicShellProps = {
   children: ReactNode;

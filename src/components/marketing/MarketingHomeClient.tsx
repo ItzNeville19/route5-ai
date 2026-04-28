@@ -18,9 +18,7 @@ import {
   InteractiveChip,
   LANDING_EASE,
   LANDING_SPRING,
-  staggerParent,
   staggerReduceMotionParent,
-  staggerChild,
   staggerInstantChild,
   marketingFadeViewport,
 } from "@/components/marketing/LandingMotion";
@@ -66,8 +64,33 @@ export default function MarketingHomeClient({
   const reduceMotion = useReducedMotion();
   const hover3d = useHover3dEnabled();
   const fadeUpViewport = marketingFadeViewport(reduceMotion);
-  const heroStaggerParent = reduceMotion ? staggerReduceMotionParent : staggerParent;
-  const heroStaggerChild = reduceMotion ? staggerInstantChild : staggerChild;
+  /** Slightly stronger “first paint” choreography on the hero (calming stagger, not flashy). */
+  const heroIntroParent = useMemo(
+    () =>
+      reduceMotion
+        ? staggerReduceMotionParent
+        : {
+            hidden: {},
+            show: {
+              transition: { staggerChildren: 0.09, delayChildren: 0.16 },
+            },
+          },
+    [reduceMotion]
+  );
+  const heroIntroChild = useMemo(
+    () =>
+      reduceMotion
+        ? staggerInstantChild
+        : {
+            hidden: { opacity: 0, y: 36 },
+            show: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.75, ease: LANDING_EASE },
+            },
+          },
+    [reduceMotion]
+  );
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -87,7 +110,7 @@ export default function MarketingHomeClient({
         ref={heroRef}
         id="hero"
         aria-label="Product introduction"
-        className={`relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24 ${signedIn ? "pt-[calc(8.25rem+env(safe-area-inset-top,0px))]" : "pt-[calc(4.5rem+env(safe-area-inset-top,0px))]"}`}
+        className={`relative min-h-[min(92dvh,44rem)] overflow-hidden border-b border-slate-900/20 pb-16 sm:min-h-[min(90dvh,48rem)] sm:pb-24 ${signedIn ? "pt-[calc(10.5rem+env(safe-area-inset-top,0px))]" : "pt-[calc(4.5rem+env(safe-area-inset-top,0px))]"}`}
       >
         <motion.div
           className="absolute inset-0 z-0 min-h-full overflow-hidden bg-slate-900"
@@ -116,7 +139,7 @@ export default function MarketingHomeClient({
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/[0.96] via-slate-950/35 to-indigo-950/4"
+          className={`pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/[0.96] via-slate-950/35 to-indigo-950/4 ${reduceMotion ? "" : "route5-marketing-hero-wave-layer"}`}
           aria-hidden
         />
         <div
@@ -131,17 +154,17 @@ export default function MarketingHomeClient({
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
           <motion.div
             className="rounded-[28px] border border-white/14 bg-slate-950/65 p-5 shadow-[0_28px_100px_-36px_rgba(0,0,0,0.92)] ring-1 ring-white/18 backdrop-blur-xl sm:p-8 lg:col-span-7"
-            variants={heroStaggerParent}
+            variants={heroIntroParent}
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={heroStaggerChild}>
+            <motion.div variants={heroIntroChild}>
               <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
                 {t("landing.hero.badge")}
               </span>
             </motion.div>
             <motion.h1
-              variants={heroStaggerChild}
+              variants={heroIntroChild}
               className={`mt-6 text-[clamp(2.65rem,6.8vw,4.05rem)] font-extrabold leading-[1.02] tracking-[-0.038em] text-white [text-shadow:0_3px_36px_rgba(0,0,0,0.72)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
             >
               {t("landing.hero.title1")}{" "}
@@ -152,19 +175,19 @@ export default function MarketingHomeClient({
               </span>
             </motion.h1>
             <motion.p
-              variants={heroStaggerChild}
+              variants={heroIntroChild}
               className="mt-6 max-w-xl text-pretty font-[family-name:var(--font-outfit-landing)] text-[17px] font-medium leading-relaxed text-white/96"
             >
               {t("landing.hero.lead")}
             </motion.p>
             <motion.p
-              variants={heroStaggerChild}
+              variants={heroIntroChild}
               className="mt-4 max-w-xl font-[family-name:var(--font-outfit-landing)] text-[15px] leading-relaxed text-zinc-200"
             >
               {TRIAL_BODY}
             </motion.p>
             <motion.div
-              variants={heroStaggerChild}
+              variants={heroIntroChild}
               className="mt-9 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
               <MotionLink
@@ -207,7 +230,7 @@ export default function MarketingHomeClient({
               </MotionLink>
             </motion.div>
             <motion.p
-              variants={heroStaggerChild}
+              variants={heroIntroChild}
               className="mt-5 text-[12px] font-medium tracking-wide text-zinc-300"
             >
               {t("landing.trial")}
@@ -222,7 +245,7 @@ export default function MarketingHomeClient({
                 : { opacity: 0, y: 28, ...(hover3d ? { rotateX: 6 } : {}) }
             }
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
-            transition={{ duration: 0.75, delay: 0.14, ease: LANDING_EASE }}
+            transition={{ duration: 0.8, delay: signedIn ? 0.22 : 0.16, ease: LANDING_EASE }}
             style={{ perspective: 1200 }}
           >
             <TiltSurface float className="w-full">

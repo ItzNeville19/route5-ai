@@ -112,7 +112,7 @@ neville@rayze.xyz`,
 
 export default function PrivacyPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell min-h-screen text-zinc-100">
+    <main className="route5-brand-dark-marketing-shell min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
       <PrivacyHashScroll />
       <Navbar />
       <nav className="border-b border-white/10 bg-black/25 backdrop-blur-xl">

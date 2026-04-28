@@ -130,7 +130,7 @@ neville@rayze.xyz`,
 
 export default function TermsPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell min-h-screen text-zinc-100">
+    <main className="route5-brand-dark-marketing-shell min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
       <Navbar />
       <nav className="border-b border-white/10 bg-black/25 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">

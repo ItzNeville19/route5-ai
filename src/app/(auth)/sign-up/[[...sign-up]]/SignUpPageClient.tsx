@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { WORKSPACE_HOME_HREF } from "@/lib/app-routes";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
-import { isOnboardingComplete } from "@/lib/onboarding-storage";
 import { getSafeAuthRedirectFromSearch } from "@/lib/auth/redirect-url";
 
 function SignUpClerkMissing() {
@@ -31,18 +30,17 @@ function SignUpClerkMissing() {
 function SignUpWithClerk() {
   const { isLoaded, userId } = useAuth();
   const router = useRouter();
-  const [redirectUrl, setRedirectUrl] = useState<string>("/onboarding");
+  const [redirectUrl, setRedirectUrl] = useState<string>(WORKSPACE_HOME_HREF);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const q = new URLSearchParams(window.location.search);
-    setRedirectUrl(getSafeAuthRedirectFromSearch(q, "/onboarding"));
+    setRedirectUrl(getSafeAuthRedirectFromSearch(q, WORKSPACE_HOME_HREF));
   }, []);
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? WORKSPACE_HOME_HREF : "/onboarding";
-    router.replace(next);
+    router.replace(WORKSPACE_HOME_HREF);
   }, [isLoaded, userId, router]);
 
   if (userId && isLoaded) {

@@ -382,7 +382,7 @@ export default function DashboardWorkspaceHero({
             >
               {!onboardingComplete ? (
                 <Link
-                  href="/onboarding?replay=1"
+                  href="/workspace/dashboard?tour=1"
                   className={
                     paletteLight
                       ? "text-[10px] font-semibold uppercase tracking-[0.16em] text-lime-700 transition hover:text-lime-800"

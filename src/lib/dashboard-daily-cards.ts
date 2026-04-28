@@ -38,7 +38,10 @@ const DAILY_TIPS: readonly { body: string; learnMoreHref: string }[] = [
   { body: "Themes under Customize adjust layout and palette without touching your runs.", learnMoreHref: "/workspace/customize" },
   { body: "Analytics and JSON export live under Reports — same totals as Overview, more depth.", learnMoreHref: "/reports" },
   { body: "Optional connectors are in Settings — nothing blocks your first capture on Desk.", learnMoreHref: "/settings#connections" },
-  { body: "Replay guided onboarding anytime from the link in Today tips or Desk.", learnMoreHref: "/onboarding?replay=1" },
+  {
+    body: "Replay the guided tour anytime from Help or use the link in Today tips.",
+    learnMoreHref: "/workspace/dashboard?tour=1",
+  },
   { body: "Plans and run limits live under Account → Plans.", learnMoreHref: "/account/plans" },
 ] as const;
 

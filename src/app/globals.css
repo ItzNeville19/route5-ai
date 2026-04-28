@@ -3352,6 +3352,9 @@ body {
   isolation: isolate;
   color-scheme: dark;
   background-color: #09090f;
+  /* Cover body.theme-glass-site mesh so nav + article never show white-on-lavender */
+  min-height: 100dvh;
+  width: 100%;
 }
 
 .route5-brand-dark-marketing-shell::before {
@@ -3384,6 +3387,29 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .route5-landing-hero-mesh {
+    animation: none;
+  }
+}
+
+/** Marketing hero — slow ocean swell on scrims (homepage wow; respects reduced motion in TSX) */
+@keyframes route5-marketing-ocean-swell {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    opacity: 0.94;
+    transform: scale(1.008) translateY(-0.35%);
+  }
+}
+
+.route5-marketing-hero-wave-layer {
+  animation: route5-marketing-ocean-swell 11s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route5-marketing-hero-wave-layer {
     animation: none;
   }
 }

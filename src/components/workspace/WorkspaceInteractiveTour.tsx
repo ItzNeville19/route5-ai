@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { X } from "lucide-react";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
@@ -44,14 +45,17 @@ function tourSuppressedByPrefs(prefs: {
 }
 
 /**
- * First-run guided tour (prefs `guidedTourCompleted`). Waits for prefs sync so returning users
- * on a new device never see a flash; optional Clerk `publicMetadata` can skip the tour.
+ * First-run guided tour (prefs `guidedTourCompleted`), or replay via `?tour=1` / `route5:replay-guided-tour`.
  */
 export default function WorkspaceInteractiveTour() {
   const { prefs, setPrefs, workspacePrefsRemoteReady } = useWorkspaceExperience();
   const { user, isLoaded: userLoaded } = useUser();
+  const router = useRouter();
+  const pathname = usePathname() ?? "";
   const [step, setStep] = useState(0);
   const [open, setOpen] = useState(false);
+  /** User opened tour from Help or URL — do not auto-close when prefs say “already completed.” */
+  const [manualReplay, setManualReplay] = useState(false);
 
   const shouldOfferTour = useMemo(() => {
     if (!userLoaded || !workspacePrefsRemoteReady) return false;
@@ -61,17 +65,41 @@ export default function WorkspaceInteractiveTour() {
   }, [userLoaded, workspacePrefsRemoteReady, prefs, user]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("tour") !== "1") return;
+    setManualReplay(true);
+    setOpen(true);
+    setStep(0);
+    q.delete("tour");
+    const next = pathname + (q.toString() ? `?${q}` : "");
+    router.replace(next, { scroll: false });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    const ev = () => {
+      setManualReplay(true);
+      setOpen(true);
+      setStep(0);
+    };
+    window.addEventListener("route5:replay-guided-tour", ev);
+    return () => window.removeEventListener("route5:replay-guided-tour", ev);
+  }, []);
+
+  useEffect(() => {
+    if (manualReplay) return;
     if (shouldOfferTour) {
       setOpen(true);
       return;
     }
     setOpen(false);
     setStep(0);
-  }, [shouldOfferTour]);
+  }, [shouldOfferTour, manualReplay]);
 
   const done = useCallback(() => {
     setPrefs({ guidedTourCompleted: true });
     setOpen(false);
+    setManualReplay(false);
   }, [setPrefs]);
 
   const current = useMemo(() => STEPS[step], [step]);

@@ -9,11 +9,11 @@ export const metadata: Metadata = {
 
 const cards = [
   {
-    title: "Interactive onboarding",
-    body: "Organization name, interactive tour, live theme previews, and a guided path to Desk. Replay anytime.",
-    href: "/onboarding?replay=1",
+    title: "Guided workspace tour",
+    body: "Walk through Home, Agent, History, and Customize — the same overlay new users see. Replay anytime.",
+    href: "/workspace/dashboard?tour=1",
     icon: PlayCircle,
-    cta: "Replay tutorial",
+    cta: "Start tour",
   },
   {
     title: "Command palette",

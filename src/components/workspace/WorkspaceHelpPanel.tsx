@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ExternalLink, Keyboard, LifeBuoy, Mail, MessageSquareWarning, Shield, UserRound, X } from "lucide-react";
 
 export default function WorkspaceHelpPanel({
@@ -12,6 +13,8 @@ export default function WorkspaceHelpPanel({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     if (!open) return;
     const id = window.setTimeout(() => document.body.classList.add("overflow-hidden"), 0);
@@ -107,6 +110,16 @@ export default function WorkspaceHelpPanel({
               >
                 Product overview →
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  router.push("/workspace/dashboard?tour=1");
+                }}
+                className="mt-3 w-full rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-3 py-2.5 text-left text-[13px] font-semibold text-emerald-50 transition hover:bg-emerald-500/18"
+              >
+                Replay workspace tour
+              </button>
             </section>
             <section className="flex flex-wrap gap-3 border-t border-white/10 pt-4">
               <a

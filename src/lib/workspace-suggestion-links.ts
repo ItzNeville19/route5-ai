@@ -30,7 +30,7 @@ export function learnMoreForHref(href: string): string {
   }
   if (href === "/account/plans") return "/account/plans";
   if (href === "/support") return "/support";
-  if (href === "/onboarding") return DOCS_PRODUCT;
+  if (href === "/onboarding" || href.includes("tour=1")) return DOCS_PRODUCT;
   if (href === "/docs" || href.startsWith("/docs/")) return href;
   return DOCS_PRODUCT;
 }

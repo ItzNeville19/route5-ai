@@ -270,7 +270,7 @@ export default function Navbar() {
           navUsesDarkChrome
             ? scrolled
               ? "agent-header-liquid border-white/12 shadow-[0_12px_48px_-20px_rgba(0,0,0,0.55)]"
-              : "border-transparent bg-zinc-950/40 backdrop-blur-2xl"
+              : "border-transparent bg-[#0a0a0f]/96 backdrop-blur-2xl"
             : scrolled
               ? "border-white/50 glass-liquid-nav shadow-[0_12px_40px_-16px_rgba(99,102,241,0.18)]"
               : "border-transparent bg-white/40 backdrop-blur-2xl"

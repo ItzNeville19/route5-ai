@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import { WORKSPACE_HOME_HREF } from "@/lib/app-routes";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
-import { isOnboardingComplete } from "@/lib/onboarding-storage";
 import { getSafeAuthRedirectFromSearch } from "@/lib/auth/redirect-url";
 
 function closeMobileNavFromLogin() {
@@ -71,8 +70,7 @@ function LoginWithClerk() {
 
   useEffect(() => {
     if (!isLoaded || !userId) return;
-    const next = isOnboardingComplete(userId) ? WORKSPACE_HOME_HREF : "/onboarding";
-    router.replace(next);
+    router.replace(WORKSPACE_HOME_HREF);
   }, [isLoaded, userId, router]);
 
   if (userId && isLoaded) {

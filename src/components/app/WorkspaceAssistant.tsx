@@ -184,7 +184,7 @@ const ALL_SUGGESTION_CHIPS: SuggestionChip[] = [
   {
     label: "Onboarding replay",
     prompt: "How do I replay guided onboarding?",
-    learnMoreHref: "/onboarding?replay=1",
+    learnMoreHref: "/workspace/dashboard?tour=1",
     keywords: ["onboarding", "tour", "setup", "guided", "replay", "intro"],
   },
   {

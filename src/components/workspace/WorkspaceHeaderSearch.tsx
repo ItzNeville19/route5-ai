@@ -15,12 +15,16 @@ export default function WorkspaceHeaderSearch() {
       onClick={() => open()}
       className={
         workspacePaletteLight
-          ? "route5-header-search inline-flex min-w-0 max-w-[min(100%,200px)] flex-1 items-center gap-1.5 rounded-full border border-slate-300/55 bg-white/75 px-2.5 py-1.5 text-left text-[12px] text-slate-600 shadow-inner shadow-slate-900/6 transition hover:border-sky-400/35 hover:bg-white hover:text-slate-900 sm:max-w-[min(100%,260px)] md:max-w-[min(100%,280px)] lg:max-w-[300px]"
-          : "route5-header-search inline-flex min-w-0 max-w-[min(100%,200px)] flex-1 items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-emerald-100/52 shadow-inner shadow-black/25 transition hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-emerald-100/80 sm:max-w-[min(100%,260px)] md:max-w-[min(100%,280px)] lg:max-w-[300px]"
+          ? "route5-header-search inline-flex min-w-0 max-w-[min(100%,200px)] flex-1 items-center gap-1.5 rounded-full border border-slate-300/55 bg-white/75 px-2.5 py-1.5 text-left text-[12px] text-[var(--workspace-muted-fg)] shadow-inner shadow-slate-900/6 transition hover:border-sky-400/35 hover:bg-white hover:text-[var(--workspace-fg)] sm:max-w-[min(100%,260px)] md:max-w-[min(100%,280px)] lg:max-w-[300px]"
+          : "route5-header-search inline-flex min-w-0 max-w-[min(100%,200px)] flex-1 items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-[var(--workspace-muted-fg)] shadow-inner shadow-black/25 transition hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-[var(--workspace-fg)] sm:max-w-[min(100%,260px)] md:max-w-[min(100%,280px)] lg:max-w-[300px]"
       }
       aria-label="Search workspace — Command K"
     >
-      <Search className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={2} />
+      <Search
+        className="h-3.5 w-3.5 shrink-0 opacity-[0.82]"
+        strokeWidth={2}
+        style={{ color: "var(--workspace-muted-fg)" }}
+      />
       <span className="min-w-0 flex-1 truncate">Search…</span>
       <kbd
         className={

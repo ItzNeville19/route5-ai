@@ -1,18 +1,15 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SignIn, useAuth } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
-import OnboardingShell from "@/components/app/OnboardingShell";
 import PublicWorkspaceGuideShell from "@/components/app/PublicWorkspaceGuideShell";
 import WorkspaceLayout from "@/components/app/WorkspaceLayout";
 import { isPublicWorkspaceGuidePath } from "@/lib/public-site-paths";
 import { useClerkRuntimeEnabled } from "@/components/providers/ClerkRuntimeProvider";
 import { route5ClerkAppearance } from "@/lib/clerk-appearance";
-import { isOnboardingComplete } from "@/lib/onboarding-storage";
-
 function AppShellClerkMissing() {
   return (
     <div className="theme-glass-site flex min-h-dvh flex-col items-center justify-center px-6 text-center">
@@ -105,7 +102,7 @@ function AppShellWithClerk({ children }: { children: React.ReactNode }) {
                 path="/login"
                 signUpUrl="/sign-up"
                 fallbackRedirectUrl="/workspace/dashboard"
-                signUpFallbackRedirectUrl="/onboarding"
+                signUpFallbackRedirectUrl="/workspace/dashboard"
                 appearance={{
                   ...route5ClerkAppearance,
                   elements: {
@@ -148,19 +145,6 @@ function SignedInAppShell({
   const pathname = usePathname();
   const router = useRouter();
 
-  /** Client onboarding route: bounce to Desk when already done (unless replaying tutorial). */
-  useLayoutEffect(() => {
-    if (pathname !== "/onboarding") return;
-    const replay =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("replay") === "1";
-    if (isOnboardingComplete(userId) && !replay) {
-      router.replace("/workspace/dashboard");
-    }
-  }, [userId, pathname, router]);
-
-  // Keep workspace stable: onboarding is rendered inline in empty states, not as an auto-redirect overlay.
-
   useEffect(() => {
     if (typeof window === "undefined") return;
     const token = new URLSearchParams(window.location.search).get("invite");
@@ -190,10 +174,6 @@ function SignedInAppShell({
       /* non-fatal */
     });
   }, [userId]);
-
-  if (pathname === "/onboarding") {
-    return <OnboardingShell>{children}</OnboardingShell>;
-  }
 
   return <WorkspaceLayout>{children}</WorkspaceLayout>;
 }

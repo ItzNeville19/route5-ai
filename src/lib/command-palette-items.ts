@@ -268,11 +268,11 @@ export function buildPaletteItems(params: {
       section: "agent",
     },
     {
-      id: "onboarding",
-      label: "Getting started",
-      href: "/onboarding",
-      description: "Short setup wizard",
-      keywords: ["onboarding", "setup", "welcome", "guide", "tutorial"],
+      id: "guided-tour",
+      label: "Guided tour",
+      href: "/workspace/dashboard?tour=1",
+      description: "Replay the workspace walkthrough",
+      keywords: ["onboarding", "setup", "welcome", "guide", "tutorial", "tour"],
       section: "agent",
     },
     {

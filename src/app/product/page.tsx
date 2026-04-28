@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function ProductPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
+    <main className="route5-brand-dark-marketing-shell relative min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
       <Navbar />
       <article className="relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">

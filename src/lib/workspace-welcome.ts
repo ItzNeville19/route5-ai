@@ -633,7 +633,7 @@ export function getTodayCardsForWorkspace(
       title: "Guided setup",
       body: "Replay onboarding anytime to walk connectors and your first Desk capture.",
       ctaLabel: "Onboarding",
-      ctaHref: "/onboarding?replay=1",
+      ctaHref: "/workspace/dashboard?tour=1",
       learnMoreHref: "/docs/product",
     },
   ];
