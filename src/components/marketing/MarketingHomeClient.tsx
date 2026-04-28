@@ -302,7 +302,7 @@ export default function MarketingHomeClient({
                 {ticker.map((item) => (
                   <span
                     key={`${dup}-${item}`}
-                    className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500"
+                    className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-600"
                   >
                     {item}
                   </span>
@@ -338,7 +338,7 @@ export default function MarketingHomeClient({
         />
         <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-8 lg:px-10">
           <motion.p
-            className="text-center text-[15px] font-medium text-slate-500"
+            className="text-center text-[15px] font-medium text-slate-600"
             {...fadeUpViewport}
           >
             {t("landing.trust.line")}

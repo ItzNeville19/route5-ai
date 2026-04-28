@@ -164,9 +164,9 @@ export default function WorkspaceTopToolbar() {
 
   return (
     <>
-      <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
+      <header className="route5-ocean-header sticky top-0 z-[45] mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
         <div
-          className={`route5-ocean-toolbar-surface ${workspacePaletteLight ? "route5-ocean-toolbar-surface--light" : ""} route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 ${
+          className={`route5-ocean-toolbar-surface ${workspacePaletteLight ? "route5-ocean-toolbar-surface--light text-slate-900 [&_svg]:text-slate-800" : ""} route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 ${
             employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
           }`}
         >

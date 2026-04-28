@@ -472,6 +472,7 @@ export const en: Record<string, string> = {
     "In-app help that knows your workspace, plus ⌘K to jump anywhere — product docs for the full story.",
 
   "marketing.nav.product": "Product",
+  "marketing.nav.benefits": "Benefits",
   "marketing.nav.pricing": "Pricing",
   "marketing.nav.download": "Download",
   "marketing.nav.contact": "Contact",

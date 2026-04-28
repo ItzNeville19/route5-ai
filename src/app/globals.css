@@ -3879,6 +3879,26 @@ body.theme-glass-site:has(main.landing-premium) {
     inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
 }
 
+/* Extra paint layer: some WebViews still composite the dark agent shell through — underlay wins. */
+.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: linear-gradient(168deg, #ffffff 0%, #f8fafc 46%, #f1f5f9 100%);
+  pointer-events: none;
+}
+
+.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light > .pointer-events-none {
+  z-index: 1;
+}
+
+.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light .route5-workspace-toolbar-inner {
+  position: relative;
+  z-index: 2;
+}
+
 .route5-brand-agent-shell[data-route5-canvas-photo="true"]
   .route5-ocean-header
   .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light::after {

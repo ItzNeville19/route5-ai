@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { usePathname } from "next/navigation";
 import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
 import {
   resolveUiLocale,
@@ -37,6 +38,7 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 /** Marketing / signed-out routes: reads `uiLocale` from workspace prefs in localStorage (same key as the app). */
 export function PublicI18nProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [uiLocale, setUiLocaleState] = useState<UiLocaleCode>(() =>
     typeof window === "undefined" ? "en" : resolveUiLocaleFromBrowser()
   );
@@ -45,6 +47,12 @@ export function PublicI18nProvider({ children }: { children: React.ReactNode }) 
     const prefs = loadWorkspacePrefs();
     setUiLocaleState(resolveUiLocale(prefs.uiLocale));
   }, []);
+
+  /** SPA navigations do not fire `storage` (same tab); re-read prefs on every route change. */
+  useEffect(() => {
+    const prefs = loadWorkspacePrefs();
+    setUiLocaleState(resolveUiLocale(prefs.uiLocale));
+  }, [pathname]);
 
   useEffect(() => {
     const syncFromPrefs = () => {

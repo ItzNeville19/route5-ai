@@ -254,6 +254,7 @@ export const es: Record<string, string> = {
   "marketing.hero.previewLinear": "Linear",
 
   "marketing.nav.product": "Producto",
+  "marketing.nav.benefits": "Beneficios",
   "marketing.nav.pricing": "Precios",
   "marketing.nav.download": "Descargar",
   "marketing.nav.contact": "Contacto",
@@ -402,4 +403,113 @@ export const es: Record<string, string> = {
     "Cuéntenos cómo compran — apoyamos cuestionarios y la cadencia que esperan legal e IT.",
   "marketing.home.cta.primary": "Contactar",
   "marketing.home.cta.secondary": "Abrir espacio de trabajo",
+
+  "landing.hero.badge": "Capa de ejecución",
+  "landing.hero.title1": "La capa de responsabilidad para",
+  "landing.hero.title2": "cada compromiso.",
+  "landing.hero.lead":
+    "Route5 está hecho para la responsabilidad persistente: captura decisiones de reuniones e hilos, estructura responsables y plazos, y hace seguimiento en un solo espacio de trabajo—junto a Slack, el correo y las herramientas que ya usas—no es otra app de chat.",
+  "landing.hero.ctaPrimary": "Empezar gratis",
+  "landing.hero.ctaOpenDesk": "Abrir Escritorio",
+  "landing.hero.ctaSecondary": "Reservar una demo",
+  "landing.hero.ctaProduct": "Detalle del producto",
+  "landing.hero.mockTitle": "Compromisos abiertos · Acme Corp",
+  "landing.hero.mock1": "Registrar decisión de revisión legal + responsable del último stand-up",
+  "landing.hero.mock2": "Confirmar fecha de lanzamiento Q2 — PM a cargo para el viernes",
+  "landing.hero.mock3": "Revisión de seguridad del proveedor: escalar si no hay respuesta el miércoles",
+  "landing.trial": "Prueba 14 días · Sin tarjeta · Te ayudamos a desplegar cuando estés listo",
+
+  "landing.ticker.1": "Capa de ejecución sobre tu stack",
+  "landing.ticker.2": "Decisión → responsable → plazo",
+  "landing.ticker.3": "Proyectos, Feed, Captura, Resumen",
+  "landing.ticker.4": "Slack, Linear, GitHub si están configurados",
+  "landing.ticker.5": "Hoja de ruta honesta: ingesta más profunda después",
+  "landing.ticker.6": "Inicio con Clerk · camino enterprise",
+
+  "landing.trust.line":
+    "Para equipos donde los compromisos importan demasiado para quedarse en «quedó claro en la reunión.»",
+
+  "landing.why.kicker": "¿Por qué?",
+  "landing.why.title": "Decidir es fácil. El seguimiento duradero es lo difícil.",
+  "landing.why.lead":
+    "Las reuniones y los hilos no sostienen solos la propiedad ni los plazos. Route5 cierra la brecha: una capa fina de ejecución que convierte lo acordado en quién debe qué y cuándo—con visibilidad hasta que se cumpla.",
+  "landing.why.p1.title": "Los resúmenes no son responsabilidad",
+  "landing.why.p1.body":
+    "Los cuadernos y recaps capturan lo dicho. Route5 apunta a lo que debe pasar después—y mantiene responsables, fechas y estado donde ya trabajan los operadores.",
+  "landing.why.p2.title": "Las hojas de cálculo duplican la verdad",
+  "landing.why.p2.body":
+    "Los trackers en paralelo se desvían al copiar una pestaña. Route5 mantiene un registro de compromisos y contexto en el que el equipo puede confiar.",
+  "landing.why.p3.title": "El chat nunca fue el sistema de registro",
+  "landing.why.p3.body":
+    "Route5 complementa Slack y el correo: pega o ingiere texto, estructura acciones y vigila carga y riesgo—sin fingir que el canal es la base de datos.",
+
+  "landing.solution.kicker": "Solución",
+  "landing.solution.title": "Una capa de ejecución: empresas, responsables, compromisos.",
+  "landing.solution.body":
+    "Organiza el trabajo en proyectos y empresas. Captura convierte texto pegado en decisiones y acciones comprobables. Resumen lee la salud desde las mismas filas—vencidos, estancados, sin responsable—para que dirección vea el riesgo antes de que sorprenda.",
+  "landing.solution.b1":
+    "El contexto vivo está con la empresa o programa que ejecutas—no enterrado en el scroll.",
+  "landing.solution.b2":
+    "Los compromisos llevan responsables y plazos que puedes filtrar, exportar y defender en revisiones.",
+  "landing.solution.b3":
+    "Escritorio y Captura son donde la entrada desordenada se vuelve siguiente paso asignado antes de que desaparezca.",
+
+  "landing.how.kicker": "Cómo funciona",
+  "landing.how.title": "Tres pasos hacia una responsabilidad visible",
+  "landing.how.s1.title": "Crea el proyecto o la empresa",
+  "landing.how.s1.body":
+    "Define la línea de negocio contra la que ejecutas para que captura y tareas no queden sin dueño.",
+  "landing.how.s2.title": "Captura la conversación",
+  "landing.how.s2.body":
+    "Pega notas, correos o tickets. Con IA habilitada, obtén campos estructurados; sin IA, la misma forma con un pase rápido etiquetado. Confirmas responsables y fechas antes de que alimenten el tracker.",
+  "landing.how.s3.title": "Usa Escritorio, Feed y Resumen",
+  "landing.how.s3.body":
+    "Escritorio es la superficie principal; Feed muestra compromisos en la org; Resumen muestra lo atascado y sin responsable desde datos guardados. Linear y GitHub cuando tu despliegue está configurado.",
+
+  "landing.bento.kicker": "Dentro del espacio de trabajo",
+  "landing.bento.title": "Todo para ejecutar la semana",
+  "landing.bento.subtitle":
+    "Superficies claras y calmadas—fáciles de escanear en Mac o Windows—con conectores y webhooks que respetan cómo tu org ingiere datos hoy.",
+  "landing.bento.1.title": "Inicio que respeta el rol",
+  "landing.bento.1.body":
+    "Los contribuyentes ven sus compromisos. Los managers ven carga y riesgo. Los admins leen la org cuando el trabajo lo requiere.",
+  "landing.bento.2.title": "Empresas alineadas con cómo entregas",
+  "landing.bento.2.body":
+    "Route5 mantiene «empresas» como columna vertebral para que el lenguaje coincida con cómo vendes y entregas.",
+  "landing.bento.3.title": "Tracker en el que puedes confiar",
+  "landing.bento.3.body": "Filtros y búsqueda sobre filas vivas—no una hoja paralela en la que nadie cree.",
+  "landing.bento.4.title": "Escritorio y Captura para el messy middle",
+  "landing.bento.4.body": "Donde las notas brutas se convierten en acciones antes de que el hilo las borre.",
+  "landing.bento.5.title": "Integraciones e ingesta",
+  "landing.bento.5.body":
+    "Slack, Google, Linear, GitHub, Notion y más: conecta donde esté documentado; webhook opcional hoy; hoja de ruta para captura automática más profunda.",
+  "landing.bento.6.title": "Despliegue con seguridad en mente",
+  "landing.bento.6.body":
+    "Auth con Clerk hoy; SSO, cuestionarios y despliegues por fases cuando legal e IT estén listos.",
+
+  "landing.integrations.kicker": "Conectores",
+  "landing.integrations.title": "Trae las herramientas que ya pagas",
+  "landing.integrations.line":
+    "Linear, GitHub y otros usan la configuración de cada pantalla de conexión—datos en vivo cuando hay credenciales en tu despliegue. El correo no se sincroniza solo hoy; Captura, pegado y webhooks llevan contexto al mismo registro de compromiso.",
+
+  "landing.teams.kicker": "Para quién es",
+  "landing.teams.title": "Operadores, managers y quienes firman los cheques",
+  "landing.teams.lead":
+    "Los mismos datos de ejecución, moldeados para ICs, líderes y compradores—con lo que está vivo hoy y lo que viene en la hoja de ruta.",
+  "landing.teams.c1.title": "Quienes hacen el trabajo",
+  "landing.teams.c1.body":
+    "Vista de inicio con tus vencidos y próximos compromisos, por empresa y prioridad.",
+  "landing.teams.c2.title": "Quienes lideran el trabajo",
+  "landing.teams.c2.body":
+    "Ve quién está saturado, qué vence pronto y abre la vista de equipo completa cuando la necesites.",
+  "landing.teams.c3.title": "Quienes compran el trabajo",
+  "landing.teams.c3.body":
+    "Hemos pasado paquetes de seguridad, despliegues por fases y compras que no caben en un checkout self-serve.",
+
+  "landing.cta.kicker": "Siguiente paso",
+  "landing.cta.title": "Empieza en minutos. Planifica enterprise cuando estés listo.",
+  "landing.cta.body":
+    "Abre un espacio de trabajo o escríbenos para demos, paquetes de seguridad y un plan de despliegue que encaje con cómo tu empresa compra software—incluido lo vivo hoy frente a lo que construimos después.",
+  "landing.cta.email": "Escribir al equipo",
+  "landing.cta.signup": "Crear espacio de trabajo",
 };
