@@ -12,6 +12,8 @@ export const durationSm = 0.35;
 export const durationMd = 0.52;
 export const durationLg = 0.65;
 
+/** Cross-route shell fade: see `globals.css` `.route5-page-transition` (~165ms, same curve as easeApple). */
+
 /** Spring tuned for chrome (nav drawers, lifted CTAs, cards) — matches LandingMotion polish */
 export const transitionMarketingSpring: Transition = {
   type: "spring",
