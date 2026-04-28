@@ -5,6 +5,7 @@ import HomeSessionBar from "@/components/marketing/HomeSessionBar";
 import MarketingHomeClient from "@/components/marketing/MarketingHomeClient";
 import { barlowCondensedLanding, outfitLanding } from "@/lib/fonts-landing";
 import { getAuthUserIdSafe } from "@/lib/auth/require-user";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Route5 | Companies, tasks, and owners in one calm workspace",
@@ -16,6 +17,9 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const userId = await getAuthUserIdSafe();
+  if (userId) {
+    redirect("/workspace/dashboard");
+  }
 
   return (
     <main

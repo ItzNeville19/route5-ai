@@ -221,33 +221,55 @@ export const WORKSPACE_THEME_PHOTO: Record<
 };
 
 /** Rotating pools — same mood per theme, different shots by calendar day. */
+const ALL_THEME_PHOTOS_UNIQUE = Object.values(WORKSPACE_THEME_PHOTO).reduce<WorkspacePhotoSpec[]>(
+  (acc, item) => {
+    if (!acc.some((existing) => existing.path === item.path)) acc.push(item);
+    return acc;
+  },
+  []
+);
+
+function buildVariantPool(
+  key: Exclude<WorkspaceThemeId, "auto">,
+  anchors: Exclude<WorkspaceThemeId, "auto">[]
+): WorkspacePhotoSpec[] {
+  const preferred = [WORKSPACE_THEME_PHOTO[key], ...anchors.map((k) => WORKSPACE_THEME_PHOTO[k])];
+  const uniquePreferred = preferred.filter(
+    (item, idx) => preferred.findIndex((x) => x.path === item.path) === idx
+  );
+  const rest = ALL_THEME_PHOTOS_UNIQUE.filter(
+    (item) => !uniquePreferred.some((preferredItem) => preferredItem.path === item.path)
+  );
+  return [...uniquePreferred, ...rest].slice(0, 12);
+}
+
 export const WORKSPACE_THEME_PHOTO_VARIANTS: Record<
   Exclude<WorkspaceThemeId, "auto">,
   WorkspacePhotoSpec[]
 > = {
-  sunrise: [WORKSPACE_THEME_PHOTO.sunrise, WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.daytime],
-  morning: [WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.sunrise, WORKSPACE_THEME_PHOTO.forest],
-  daytime: [WORKSPACE_THEME_PHOTO.daytime, WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.studio],
-  sunset: [WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.ember, WORKSPACE_THEME_PHOTO.sunrise],
-  ember: [WORKSPACE_THEME_PHOTO.ember, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.evening],
-  ocean: [WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.lagunabeach, WORKSPACE_THEME_PHOTO.daytime],
-  lagunabeach: [WORKSPACE_THEME_PHOTO.lagunabeach, WORKSPACE_THEME_PHOTO.ocean, WORKSPACE_THEME_PHOTO.daytime],
-  sanfrancisco: [WORKSPACE_THEME_PHOTO.sanfrancisco, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
-  nevada: [WORKSPACE_THEME_PHOTO.nevada, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.sunrise],
-  mumbai: [WORKSPACE_THEME_PHOTO.mumbai, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
-  columbia: [WORKSPACE_THEME_PHOTO.columbia, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.morning],
-  studio: [WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.light, WORKSPACE_THEME_PHOTO.daytime],
-  forest: [WORKSPACE_THEME_PHOTO.forest, WORKSPACE_THEME_PHOTO.morning, WORKSPACE_THEME_PHOTO.ocean],
-  pink: [WORKSPACE_THEME_PHOTO.pink, WORKSPACE_THEME_PHOTO.sunset, WORKSPACE_THEME_PHOTO.lagunabeach],
-  cosmic: [WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.nyc, WORKSPACE_THEME_PHOTO.vegas],
-  vegas: [WORKSPACE_THEME_PHOTO.vegas, WORKSPACE_THEME_PHOTO.evening, WORKSPACE_THEME_PHOTO.cosmic],
-  nyc: [WORKSPACE_THEME_PHOTO.nyc, WORKSPACE_THEME_PHOTO.evening, WORKSPACE_THEME_PHOTO.cosmic],
-  oled: [WORKSPACE_THEME_PHOTO.oled, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.night],
-  evening: [WORKSPACE_THEME_PHOTO.evening, WORKSPACE_THEME_PHOTO.vegas, WORKSPACE_THEME_PHOTO.nyc],
-  night: [WORKSPACE_THEME_PHOTO.night, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.evening],
-  light: [WORKSPACE_THEME_PHOTO.light, WORKSPACE_THEME_PHOTO.studio, WORKSPACE_THEME_PHOTO.daytime],
-  dark: [WORKSPACE_THEME_PHOTO.dark, WORKSPACE_THEME_PHOTO.oled, WORKSPACE_THEME_PHOTO.evening],
-  classic: [WORKSPACE_THEME_PHOTO.classic, WORKSPACE_THEME_PHOTO.cosmic, WORKSPACE_THEME_PHOTO.night],
+  sunrise: buildVariantPool("sunrise", ["morning", "sunset", "daytime"]),
+  morning: buildVariantPool("morning", ["sunrise", "forest", "studio"]),
+  daytime: buildVariantPool("daytime", ["ocean", "light", "studio"]),
+  sunset: buildVariantPool("sunset", ["ember", "evening", "night"]),
+  ember: buildVariantPool("ember", ["sunset", "evening", "classic"]),
+  ocean: buildVariantPool("ocean", ["lagunabeach", "daytime", "forest"]),
+  lagunabeach: buildVariantPool("lagunabeach", ["ocean", "sunset", "daytime"]),
+  sanfrancisco: buildVariantPool("sanfrancisco", ["daytime", "studio", "morning"]),
+  nevada: buildVariantPool("nevada", ["sunset", "ember", "daytime"]),
+  mumbai: buildVariantPool("mumbai", ["daytime", "studio", "night"]),
+  columbia: buildVariantPool("columbia", ["studio", "morning", "light"]),
+  studio: buildVariantPool("studio", ["light", "daytime", "morning"]),
+  forest: buildVariantPool("forest", ["morning", "ocean", "daytime"]),
+  pink: buildVariantPool("pink", ["sunset", "lagunabeach", "light"]),
+  cosmic: buildVariantPool("cosmic", ["nyc", "vegas", "night"]),
+  vegas: buildVariantPool("vegas", ["evening", "cosmic", "nyc"]),
+  nyc: buildVariantPool("nyc", ["evening", "cosmic", "vegas"]),
+  oled: buildVariantPool("oled", ["night", "cosmic", "dark"]),
+  evening: buildVariantPool("evening", ["nyc", "vegas", "cosmic"]),
+  night: buildVariantPool("night", ["cosmic", "oled", "evening"]),
+  light: buildVariantPool("light", ["studio", "daytime", "morning"]),
+  dark: buildVariantPool("dark", ["oled", "night", "cosmic"]),
+  classic: buildVariantPool("classic", ["cosmic", "night", "sunset"]),
 };
 
 /** Stable index per local calendar day so photography rotates daily but stays consistent intraday. */
