@@ -29,9 +29,9 @@ import EmployeePreviewPanel from "@/components/workspace/EmployeePreviewPanel";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import WelcomeHeroCard from "@/components/command-center/WelcomeHeroCard";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
-import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type Scope = "org" | "self";
 
@@ -78,7 +78,7 @@ function initials(name: string) {
 }
 
 const PINNED_ACTIONS: Record<string, { href: string; label: string; icon: LucideIcon }> = {
-  queue: { href: "/workspace/agent", label: "Assistant", icon: Bot },
+  queue: { href: "/workspace/agent", label: "Agent", icon: Bot },
   escalations: { href: "/workspace/escalations", label: "Issues", icon: Flame },
   activity: { href: "/workspace/activity", label: "History", icon: ClipboardCheck },
   commitments: { href: "/workspace/commitments", label: "Commitments", icon: ClipboardCheck },
@@ -110,9 +110,8 @@ function normalizeDashboardSectionOrder(raw?: string[]): string[] {
 
 export default function Route5AdminDashboard() {
   const { user } = useUser();
-  const { orgRole } = useWorkspaceData();
+  const { orgRole, organizationId } = useWorkspaceData();
   const { prefs, setPrefs } = useWorkspaceExperience();
-  const memberDir = useMemberDirectory();
   const search = useSearchParams();
   const { openRunAgent } = useWorkspaceChromeActions();
   const canOrg = orgRole === "admin" || orgRole === "manager";
@@ -150,8 +149,8 @@ export default function Route5AdminDashboard() {
           ? "Team member"
           : "Workspace";
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (quiet?: boolean) => {
+    if (!quiet) setLoading(true);
     try {
       const qs = `?scope=${scope}`;
       const [mRes, aRes, tRes] = await Promise.all([
@@ -187,13 +186,33 @@ export default function Route5AdminDashboard() {
         setQueueFull([]);
       }
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, [scope, canOrg]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    const onRefresh = () => void load(true);
+    window.addEventListener("route5:commitments-changed", onRefresh);
+    return () => window.removeEventListener("route5:commitments-changed", onRefresh);
+  }, [load]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    const client = getSupabaseBrowserClient();
+    if (!client) return;
+    const channel = client.channel(`org-dashboard:${organizationId}`);
+    channel.on("broadcast", { event: "refresh" }, () => {
+      void load(true);
+    });
+    channel.subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [organizationId, load]);
 
   const healthScore = metrics?.healthScore ?? 0;
   const overdue = metrics?.overdueCount ?? 0;
@@ -240,21 +259,10 @@ export default function Route5AdminDashboard() {
 
   const summaryLine = useMemo(() => {
     if (attentionTotal === 0) {
-      return `Team health score is ${healthScore}. Nothing urgent right now — check the Assistant if you want to get ahead of deadlines.`;
+      return `Team health score is ${healthScore}. Nothing urgent right now — check the Agent if you want to get ahead of deadlines.`;
     }
-    return `${attentionTotal} items need attention (${overdue} late, ${atRisk} due soon, ${queuePreview.length} in the Assistant inbox). Team health ${healthScore}.`;
+    return `${attentionTotal} items need attention (${overdue} late, ${atRisk} due soon, ${queuePreview.length} in the Agent inbox). Team health ${healthScore}.`;
   }, [attentionTotal, healthScore, overdue, atRisk, queuePreview.length]);
-
-  const avatarUrls = useMemo(() => {
-    const uid = user?.id;
-    const ids = metrics?.teamBreakdown?.map((t) => t.ownerId) ?? [];
-    const ordered = [...new Set([uid, ...ids].filter(Boolean))] as string[];
-    return ordered.slice(0, 8).map((id) => {
-      const fromDir = memberDir.get(id)?.imageUrl;
-      if (fromDir) return fromDir;
-      return id === uid ? user?.imageUrl : null;
-    });
-  }, [metrics?.teamBreakdown, memberDir, user?.id, user?.imageUrl]);
 
   const sectionOrder = useMemo(
     () => normalizeDashboardSectionOrder(prefs.dashboardSectionOrder),
@@ -274,12 +282,35 @@ export default function Route5AdminDashboard() {
   }
 
   if (isEmployeePreview && scope === "self") {
-    return <EmployeePreviewPanel />;
+    return (
+      <div
+        className={`mx-auto w-full max-w-[min(100%,1720px)] animate-[route5-page-enter_0.35s_ease-out_both] ${shellGap}`}
+      >
+        <WelcomeHeroCard
+          prefs={prefs}
+          now={now}
+          firstName={firstName}
+          roleLabel="My work"
+          summaryLine=""
+          omitOperationalChrome
+          showAvatarStrip={false}
+          compact={prefs.commandCenterDensity === "compact"}
+          counts={{
+            overdue: 0,
+            atRisk: 0,
+            blockers: 0,
+            approvals: 0,
+            pendingSends: 0,
+          }}
+        />
+        <EmployeePreviewPanel />
+      </div>
+    );
   }
 
   return (
     <div
-      className={`mx-auto w-full max-w-[1540px] animate-[route5-page-enter_0.35s_ease-out_both] ${shellGap}`}
+      className={`mx-auto w-full max-w-[min(100%,1720px)] animate-[route5-page-enter_0.35s_ease-out_both] ${shellGap}`}
     >
       <WelcomeHeroCard
         prefs={prefs}
@@ -287,8 +318,8 @@ export default function Route5AdminDashboard() {
         firstName={firstName}
         roleLabel={roleLabel}
         summaryLine={summaryLine}
-        avatarUrls={avatarUrls}
-        compact={canOrg && !isEmployeePreview}
+        showAvatarStrip={false}
+        compact={prefs.commandCenterDensity === "compact"}
         counts={{
           overdue,
           atRisk,
@@ -343,8 +374,8 @@ function DashboardActionQueuePreview({
     <section className="rounded-[22px] border border-cyan-500/18 bg-[linear-gradient(165deg,rgba(8,36,42,0.55),rgba(5,12,16,0.96))] px-4 py-4 backdrop-blur-md sm:px-5 sm:py-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200/55">Action queue</p>
-          <h2 className="mt-1 text-base font-semibold text-white">Assistant inbox</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200/55">Do this next</p>
+          <h2 className="mt-1 text-base font-semibold text-white">Triage the Agent inbox</h2>
           <p className="mt-1 max-w-xl text-[13px] leading-snug text-white/48">
             Pending sends:{" "}
             <span className="font-semibold tabular-nums text-emerald-200/95">{pendingSendsCount}</span> · Review nudges and
@@ -371,7 +402,7 @@ function DashboardActionQueuePreview({
       <ul className="mt-4 grid gap-2 md:grid-cols-2">
         {queuePreview.length === 0 ? (
           <li className="rounded-xl border border-dashed border-white/[0.12] bg-black/25 px-4 py-8 text-center text-[13px] text-white/45 md:col-span-2">
-            Nothing queued — open the Assistant and run a scan.
+            Nothing queued — open the Agent and run a scan.
           </li>
         ) : (
           queuePreview.map((q) => (
@@ -427,10 +458,10 @@ function SectionFragment({
         <section className="rounded-[24px] border border-white/[0.06] bg-black/22 px-5 py-4 backdrop-blur-md">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/42">Focus today</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/42">Do this next</p>
               <p className="mt-1 text-sm font-medium leading-snug text-white">
                 {attentionTotal === 0
-                  ? "Nothing urgent on the radar — use Assistant to stay ahead of deadlines."
+                  ? "Nothing urgent on the radar — use Agent to stay ahead of deadlines."
                   : `${attentionTotal} items need your attention.`}
               </p>
               {pinnedKeys.length > 0 ? (
@@ -457,12 +488,12 @@ function SectionFragment({
               href="/workspace/agent"
               className="route5-pressable inline-flex shrink-0 items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-900/38"
             >
-              Open Assistant <ArrowRight className="h-4 w-4" />
+              Open Agent <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <AttentionChip href="/workspace/agent" icon={AlertTriangle} label={`${overdue + atRisk} need attention`} tone="warn" />
-            <AttentionChip href="/workspace/agent" icon={Bot} label={`${queuePreviewLen} in Assistant`} tone="accent" />
+            <AttentionChip href="/workspace/agent" icon={Bot} label={`${queuePreviewLen} in Agent`} tone="accent" />
             <AttentionChip href="/workspace/activity" icon={ClipboardCheck} label="History" tone="neutral" />
           </div>
         </section>
@@ -473,7 +504,7 @@ function SectionFragment({
           <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,14,18,0.94))] p-5 shadow-inner shadow-black/25">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">How the team is doing</h2>
+                <h2 className="text-sm font-semibold text-white">Track how the team is doing</h2>
                 <p className="mt-1 text-xs text-white/45">
                   Health score over the last {chartPoints.length || "…"} days
                 </p>
@@ -506,7 +537,7 @@ function SectionFragment({
           <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,14,18,0.94))] p-5">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-cyan-400/65" />
-              <h2 className="text-sm font-semibold text-white">Who needs backup</h2>
+              <h2 className="text-sm font-semibold text-white">See who needs backup</h2>
             </div>
             <p className="mt-1 text-xs text-white/45">People with the most late work or slipping deadlines</p>
             <ul className="mt-4 space-y-2">
@@ -547,7 +578,7 @@ function SectionFragment({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <Flame className="h-4 w-4 text-amber-400/90" />
-              <h2 className="text-sm font-semibold text-white">Raised issues</h2>
+              <h2 className="text-sm font-semibold text-white">Review raised issues</h2>
             </div>
             <Link href="/workspace/escalations" className="text-[11px] font-semibold text-amber-300/90 hover:text-amber-200">
               View all →
@@ -575,7 +606,7 @@ function SectionFragment({
       return (
         <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,12,18,0.94))] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-white">Recently updated</h2>
+            <h2 className="text-sm font-semibold text-white">Catch up on recent updates</h2>
             <Link href="/workspace/commitments" className="text-xs font-semibold text-white/55 hover:text-white">
               All commitments →
             </Link>

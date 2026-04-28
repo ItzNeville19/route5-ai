@@ -1,22 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { UserButton } from "@clerk/nextjs";
 import {
   Bot,
+  Building2,
   ChevronDown,
   CircleHelp,
+  Download,
   Eye,
   History,
   Home,
-  ListChecks,
   Mail,
   Palette,
   PlusCircle,
+  Settings,
   Sparkles,
 } from "lucide-react";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -44,7 +47,7 @@ export default function WorkspaceTopToolbar() {
   const pathname = pathnameRaw?.split("?")[0] ?? "";
   const search = useSearchParams();
   const router = useRouter();
-  const { orgRole } = useWorkspaceData();
+  const { orgRole, organizationName } = useWorkspaceData();
   const { prefs } = useWorkspaceExperience();
   const canLead = orgRole === "admin" || orgRole === "manager";
 
@@ -55,19 +58,64 @@ export default function WorkspaceTopToolbar() {
     [canLead, search, prefs.defaultWorkspaceView]
   );
 
+  /** Members cannot keep `view=admin` in the URL; surface stays employee via `resolveWorkspaceSurfaceMode`. */
+  useEffect(() => {
+    if (canLead) return;
+    if (search.get("view") !== "admin") return;
+    const p = new URLSearchParams(search.toString());
+    p.delete("view");
+    const qs = p.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [canLead, pathname, router, search]);
+
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [leadOpen, setLeadOpen] = useState(false);
-  const leadWrapRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  const [leadMenuPos, setLeadMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const leadBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    const openCustomize = () => setCustomizeOpen(true);
+    window.addEventListener("route5:open-customize", openCustomize);
+    return () => window.removeEventListener("route5:open-customize", openCustomize);
+  }, []);
 
   useEffect(() => {
     if (!leadOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (leadWrapRef.current && !leadWrapRef.current.contains(e.target as Node)) setLeadOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLeadOpen(false);
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [leadOpen]);
+
+  const syncLeadMenuPosition = useCallback(() => {
+    const el = leadBtnRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const gutter = 8;
+    setLeadMenuPos({
+      top: r.bottom + 6,
+      right: Math.max(gutter, typeof window !== "undefined" ? window.innerWidth - r.right : gutter),
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!leadOpen) {
+      setLeadMenuPos(null);
+      return;
+    }
+    syncLeadMenuPosition();
+    window.addEventListener("resize", syncLeadMenuPosition);
+    window.addEventListener("scroll", syncLeadMenuPosition, true);
+    return () => {
+      window.removeEventListener("resize", syncLeadMenuPosition);
+      window.removeEventListener("scroll", syncLeadMenuPosition, true);
+    };
+  }, [leadOpen, syncLeadMenuPosition]);
 
   const suffix = useMemo(() => {
     const params = new URLSearchParams(search.toString());
@@ -76,19 +124,11 @@ export default function WorkspaceTopToolbar() {
     return text ? `?${text}` : "";
   }, [search, surfaceMode]);
 
-  const agentHref = useMemo(() => {
-    const params = new URLSearchParams(search.toString());
-    params.set("view", surfaceMode);
-    const text = params.toString();
-    return text ? `/workspace/agent?${text}` : "/workspace/agent";
-  }, [search, surfaceMode]);
-
   const navItems: ToolbarItem[] = useMemo(
     () => [
       { id: "dashboard", href: `/workspace/dashboard${suffix}`, label: "Home", icon: Home },
-      { id: "queue", href: `/workspace/agent${suffix}`, label: "Assistant", icon: Bot, leadOnly: true },
+      { id: "queue", href: `/workspace/agent${suffix}`, label: "Agent", icon: Bot, leadOnly: true },
       { id: "activity", href: `/workspace/activity${suffix}`, label: "History", icon: History },
-      { id: "preview", href: `/workspace/preview`, label: "Preview", icon: Eye },
     ],
     [suffix]
   );
@@ -104,19 +144,26 @@ export default function WorkspaceTopToolbar() {
     setLeadOpen(false);
   };
 
+  const goLeadView = () => {
+    const params = new URLSearchParams(search.toString());
+    params.set("view", "admin");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : `${pathname}?view=admin`, { scroll: false });
+  };
+
   const menuItem =
     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
 
   return (
     <>
-      <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-px">
-        <div className="route5-ocean-toolbar-surface relative overflow-hidden rounded-xl px-1 py-0 sm:px-2 sm:py-0.5">
+      <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
+        <div className="route5-ocean-toolbar-surface route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5">
           <div className="pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl" aria-hidden />
 
-          <div className="relative flex min-h-[28px] flex-nowrap items-center gap-1 sm:gap-1.5 md:gap-2">
+          <div className="route5-workspace-toolbar-inner relative flex min-h-[38px] items-center gap-2 sm:gap-3 md:min-h-[40px] lg:gap-3.5">
             {/* Left: brand + search */}
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+            <div className="flex min-w-0 min-h-0 flex-1 items-center gap-2 sm:gap-3">
               <Link
                 href={`/workspace/dashboard${suffix}`}
                 className="group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none ring-cyan-400/25 transition hover:bg-white/[0.04] focus-visible:ring-2"
@@ -133,12 +180,34 @@ export default function WorkspaceTopToolbar() {
                 </span>
               </Link>
               <WorkspaceHeaderSearch />
+              {(canLead || organizationName) ? (
+                <div className="hidden min-w-0 shrink-0 flex-col gap-0.5 border-l border-white/[0.08] pl-1.5 sm:flex sm:max-w-[min(42vw,280px)] sm:flex-row sm:items-center sm:gap-2 lg:max-w-none">
+                  {canLead ? (
+                    <Link
+                      href="/companies"
+                      className="inline-flex max-w-[120px] items-center gap-0.5 truncate rounded-md px-1 py-0.5 text-[10px] font-semibold text-cyan-200/70 outline-none ring-cyan-400/25 transition hover:bg-white/[0.06] hover:text-cyan-100 focus-visible:ring-2 lg:max-w-none lg:text-[11px]"
+                      title="Companies — browse or add a workspace"
+                    >
+                      <Building2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
+                      <span className="truncate">Companies</span>
+                    </Link>
+                  ) : null}
+                  {organizationName ? (
+                    <span
+                      className="truncate text-[10px] font-semibold leading-tight text-cyan-50/88 lg:text-[11px]"
+                      title={organizationName}
+                    >
+                      {organizationName}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
-            {/* Center: primary nav */}
+            {/* Center: primary nav (icons + labels from md to reduce dead space) */}
             <nav
               aria-label="Workspace"
-              className="hidden min-w-0 max-w-[min(52vw,520px)] shrink items-center gap-0.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex md:justify-center [&::-webkit-scrollbar]:hidden"
+              className="route5-workspace-toolbar-nav hidden min-w-0 shrink items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex md:max-w-[min(44vw,540px)] md:justify-center md:gap-1.5 xl:max-w-none [&::-webkit-scrollbar]:hidden"
             >
               {visibleNav.map((item) => {
                 const itemBase = item.href.split("?")[0];
@@ -151,24 +220,24 @@ export default function WorkspaceTopToolbar() {
                     href={item.href}
                     title={item.label}
                     className={classNames(
-                      "route5-nav-row inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-1.5 text-[10px] font-semibold md:h-7 md:gap-1 md:px-2 md:text-[11px]",
+                      "route5-nav-row inline-flex min-h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none md:h-9 md:text-[11px]",
                       active
                         ? "border border-cyan-400/25 bg-white/[0.07] text-white"
                         : "border border-transparent bg-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
                     )}
                   >
-                    <Icon className="h-3 w-3 opacity-90" />
-                    <span className="hidden lg:inline">{item.label}</span>
+                    <Icon className="h-3.5 w-3.5 shrink-0 opacity-90" />
+                    <span className="hidden md:inline">{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
 
             {/* Right: lead overflow, notifications, customize, help, account */}
-            <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+            <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
               <nav
                 aria-label="Workspace mobile"
-                className="flex max-w-[42vw] items-center gap-0.5 overflow-x-auto md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="flex max-w-[min(46vw,220px)] items-center gap-1 overflow-x-auto pr-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               >
                 {visibleNav.map((item) => {
                   const itemBase = item.href.split("?")[0];
@@ -181,90 +250,135 @@ export default function WorkspaceTopToolbar() {
                       href={item.href}
                       title={item.label}
                       className={classNames(
-                        "route5-nav-row inline-flex h-6 shrink-0 items-center justify-center rounded-full border px-1.5 text-[10px] font-semibold",
+                        "route5-nav-row inline-flex h-8 min-w-[2rem] shrink-0 items-center justify-center rounded-full border px-2 text-[10px] font-semibold",
                         active
                           ? "border-cyan-400/25 bg-white/[0.07] text-white"
                           : "border-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
                       )}
                     >
-                      <Icon className="h-3 w-3 opacity-90" />
+                      <Icon className="h-3.5 w-3.5 opacity-90" />
                     </Link>
                   );
                 })}
               </nav>
 
+              {canLead && surfaceMode === "employee" ? (
+                <button
+                  type="button"
+                  onClick={goLeadView}
+                  className="route5-pressable inline-flex max-w-[140px] shrink-0 items-center justify-center truncate rounded-full border border-cyan-400/35 bg-cyan-500/[0.12] px-2 py-0.5 text-[10px] font-semibold leading-tight text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] transition hover:border-cyan-300/40 hover:bg-cyan-500/[0.18] sm:max-w-none sm:px-2.5 sm:text-[11px]"
+                  title="Return to organization metrics and Lead tools"
+                >
+                  Back to team overview
+                </button>
+              ) : null}
+
               {canLead ? (
-                <div className="relative" ref={leadWrapRef}>
+                <div className="relative shrink-0">
                   <button
+                    ref={leadBtnRef}
                     type="button"
-                    onClick={() => setLeadOpen((o) => !o)}
+                    id="workspace-lead-actions-trigger"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLeadOpen((o) => !o);
+                    }}
                     className="route5-pressable inline-flex h-7 items-center gap-0.5 rounded-full border border-white/[0.08] bg-black/28 px-2 text-[10px] font-semibold text-cyan-50/95 transition hover:border-cyan-400/28 hover:bg-white/[0.05] sm:px-2.5 sm:text-[11px]"
                     aria-expanded={leadOpen}
                     aria-haspopup="menu"
+                    aria-controls={leadOpen ? "workspace-lead-actions-menu" : undefined}
                   >
                     Actions
                     <ChevronDown className={classNames("h-3 w-3 opacity-80 transition", leadOpen && "rotate-180")} />
                   </button>
-                  {leadOpen ? (
-                    <div
-                      className="absolute right-0 top-[calc(100%+6px)] z-50 min-w-[220px] rounded-xl border border-white/[0.1] bg-[#0a1214]/96 py-1.5 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.75)] backdrop-blur-md"
-                      role="menu"
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={menuItem}
-                        onClick={() => {
-                          openNewTask();
-                          setLeadOpen(false);
-                        }}
-                      >
-                        <PlusCircle className="h-4 w-4 text-cyan-300/85" strokeWidth={2} />
-                        New Task
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={menuItem}
-                        onClick={() => {
-                          openRunAgent();
-                          setLeadOpen(false);
-                        }}
-                      >
-                        <Sparkles className="h-4 w-4 text-emerald-300/85" strokeWidth={2} />
-                        Run Agent
-                      </button>
-                      <Link
-                        href={agentHref}
-                        role="menuitem"
-                        className={menuItem}
-                        onClick={() => setLeadOpen(false)}
-                      >
-                        <ListChecks className="h-4 w-4 text-cyan-200/80" strokeWidth={2} />
-                        Action Queue
-                      </Link>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className={menuItem}
-                        onClick={() => {
-                          openSendUpdate();
-                          setLeadOpen(false);
-                        }}
-                      >
-                        <Mail className="h-4 w-4 text-teal-200/80" strokeWidth={2} />
-                        Send Update Request
-                      </button>
-                      <button type="button" role="menuitem" className={menuItem} onClick={() => goEmployeePreview()}>
-                        <Eye className="h-4 w-4 text-white/70" strokeWidth={2} />
-                        Employee Preview
-                      </button>
-                    </div>
-                  ) : null}
+                  {mounted &&
+                    leadOpen &&
+                    leadMenuPos &&
+                    typeof document !== "undefined" &&
+                    createPortal(
+                      <>
+                        <div
+                          className="fixed inset-0 z-[998] bg-black/20 backdrop-blur-[1px]"
+                          aria-hidden
+                          onClick={() => setLeadOpen(false)}
+                        />
+                        <div
+                          id="workspace-lead-actions-menu"
+                          role="menu"
+                          aria-labelledby="workspace-lead-actions-trigger"
+                          className="fixed z-[999] min-w-[220px] max-w-[min(288px,calc(100vw-16px))] rounded-xl border border-white/[0.12] bg-[#0a1214]/98 py-1.5 shadow-[0_24px_48px_-12px_rgba(0,0,0,0.85)] backdrop-blur-md"
+                          style={{
+                            top: leadMenuPos.top,
+                            right: leadMenuPos.right,
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => {
+                              openNewTask();
+                              setLeadOpen(false);
+                            }}
+                          >
+                            <PlusCircle className="h-4 w-4 text-cyan-300/85" strokeWidth={2} />
+                            New Task
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => {
+                              openRunAgent();
+                              setLeadOpen(false);
+                            }}
+                          >
+                            <Sparkles className="h-4 w-4 text-emerald-300/85" strokeWidth={2} />
+                            Run Agent
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => {
+                              openSendUpdate();
+                              setLeadOpen(false);
+                            }}
+                          >
+                            <Mail className="h-4 w-4 text-teal-200/80" strokeWidth={2} />
+                            Send Update
+                          </button>
+                          <button type="button" role="menuitem" className={menuItem} onClick={() => goEmployeePreview()}>
+                            <Eye className="h-4 w-4 text-white/70" strokeWidth={2} />
+                            Employee Preview
+                          </button>
+                          <Link
+                            href="/download"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => setLeadOpen(false)}
+                          >
+                            <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                            Desktop client
+                          </Link>
+                          <Link
+                            href="/settings"
+                            role="menuitem"
+                            className={menuItem}
+                            onClick={() => setLeadOpen(false)}
+                          >
+                            <Settings className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                            Settings
+                          </Link>
+                        </div>
+                      </>,
+                      document.body
+                    )}
                 </div>
               ) : null}
 
-              <WorkspaceNotificationsPopover />
+              <WorkspaceNotificationsPopover variant="ocean" />
 
               <button
                 type="button"
@@ -285,6 +399,17 @@ export default function WorkspaceTopToolbar() {
               >
                 <CircleHelp className="h-3.5 w-3.5" strokeWidth={2} />
               </button>
+
+              {!canLead ? (
+                <Link
+                  href="/settings"
+                  className="route5-pressable inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/22 text-cyan-100/58 transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-white"
+                  aria-label="Settings"
+                  title="Route5 settings"
+                >
+                  <Settings className="h-3.5 w-3.5" strokeWidth={2} />
+                </Link>
+              ) : null}
 
               <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/30">
                 <UserButton />

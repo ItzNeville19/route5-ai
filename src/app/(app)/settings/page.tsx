@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+const desktopDownloadUrl = process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL?.trim() || "";
 import SettingsIngestWebhookCard from "@/components/settings/SettingsIngestWebhookCard";
 import SettingsClerkUserProfile from "@/components/settings/SettingsClerkUserProfile";
 import AccountDangerZone from "@/components/settings/AccountDangerZone";
@@ -56,6 +58,40 @@ export default function WorkspaceSettingsPage() {
         description="Location, timezone, language, and workspace surface settings."
       >
         <WorkspacePreferencesCard />
+      </SettingsSection>
+
+      <SettingsSection
+        id="settings-desktop"
+        title="Desktop app"
+        description="Electron desktop build — same workspace as web, packaged for macOS (.dmg) or your CI output."
+      >
+        <p className="text-[length:var(--r5-font-body)] text-r5-text-secondary">
+          On macOS, open the disk image and drag Route5 into Applications. The app runs a local Next.js standalone
+          server inside Electron — not a separate native UI toolkit.
+        </p>
+        <div className="mt-[var(--r5-space-3)] flex flex-col gap-[var(--r5-space-2)] sm:flex-row sm:flex-wrap">
+          <Link
+            href="/download"
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+          >
+            Install options &amp; build instructions
+            <span className="text-r5-text-secondary" aria-hidden>
+              ↗
+            </span>
+          </Link>
+          {desktopDownloadUrl ? (
+            <a
+              href={desktopDownloadUrl}
+              rel="noopener noreferrer"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-primary/60 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+            >
+              Download hosted build
+              <span className="text-r5-text-secondary" aria-hidden>
+                ↗
+              </span>
+            </a>
+          ) : null}
+        </div>
       </SettingsSection>
 
       <SettingsSection

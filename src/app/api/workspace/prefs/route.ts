@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import type { WorkspacePrefsV1 } from "@/lib/workspace-prefs";
+import { mergeWorkspacePrefsPatch } from "@/lib/workspace-prefs";
+import {
+  fetchWorkspacePrefsFromSupabase,
+  upsertWorkspacePrefsSupabase,
+} from "@/lib/workspace/prefs-supabase-server";
 import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
 import { isUiLocaleCode } from "@/lib/i18n/ui-locales";
 import { WORKSPACE_THEME_IDS } from "@/lib/workspace-themes";
@@ -23,6 +28,18 @@ function isPlainPrefs(x: unknown): x is WorkspacePrefsV1 {
   return x !== null && typeof x === "object" && !Array.isArray(x);
 }
 
+const workspaceHeroPhotoSourceSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("daily") }),
+  z.object({
+    kind: z.literal("preset"),
+    path: z.string().transform(cleanText).pipe(z.string().max(200)),
+  }),
+  z.object({
+    kind: z.literal("upload"),
+    dataUrl: z.string().max(480000),
+  }),
+]);
+
 const prefsPatchSchema = z
   .object({
     compact: z.boolean().optional(),
@@ -35,6 +52,7 @@ const prefsPatchSchema = z
     workspaceTimezone: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
     workspaceRegionKey: z.string().transform(cleanText).pipe(z.string().max(64)).optional(),
     appearanceGradients: z.boolean().optional(),
+    workspaceCanvasBackground: z.enum(["gradient", "photo"]).optional(),
     appearanceTheme: z
       .string()
       .refine(
@@ -45,6 +63,8 @@ const prefsPatchSchema = z
     appearanceSchedule: z.enum(["auto", "day", "night"]).optional(),
     commandCenterMode: z.enum(["auto", "on", "off"]).optional(),
     sidebarHidden: z.boolean().optional(),
+    onboardingChecklistDismissed: z.boolean().optional(),
+    companyPresetId: z.enum(["startup", "enterprise", "agency", "consulting", "custom"]).optional(),
     extractionProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
     llmProviderId: z.string().transform(cleanText).pipe(z.string().max(80)).optional(),
     uiLocale: z
@@ -60,6 +80,9 @@ const prefsPatchSchema = z
     pinnedCommandActions: z.array(z.string().transform(cleanText).pipe(z.string().max(64))).max(12).optional(),
     dashboardSectionOrder: z.array(z.string().transform(cleanText).pipe(z.string().max(32))).max(12).optional(),
     heroLocationOverride: z.string().transform(cleanText).pipe(z.string().max(120)).optional(),
+    guidedTourCompleted: z.boolean().optional(),
+    agentDueReminderEmailsEnabled: z.boolean().optional(),
+    workspaceHeroPhotoSource: workspaceHeroPhotoSourceSchema.optional(),
   })
   .strict();
 
@@ -81,7 +104,12 @@ export async function GET(req: Request) {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const raw = (user.privateMetadata as Record<string, unknown> | undefined)?.[META_KEY];
-    const prefs = isPlainPrefs(raw) ? raw : {};
+    const clerkPrefs = isPlainPrefs(raw) ? raw : {};
+    const sbPartial = await fetchWorkspacePrefsFromSupabase(userId);
+    const prefs =
+      sbPartial && Object.keys(sbPartial).length > 0
+        ? mergeWorkspacePrefsPatch(clerkPrefs, sbPartial)
+        : clerkPrefs;
     return NextResponse.json({ prefs });
   } catch (e) {
     return NextResponse.json(
@@ -121,6 +149,7 @@ export async function POST(req: Request) {
         [META_KEY]: merged,
       },
     });
+    await upsertWorkspacePrefsSupabase(userId, merged);
     return NextResponse.json({ ok: true, prefs: merged });
   } catch (e) {
     return NextResponse.json(

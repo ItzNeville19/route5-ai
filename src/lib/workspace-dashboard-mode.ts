@@ -2,6 +2,7 @@
 
 export type WorkspaceSurfaceMode = "admin" | "employee";
 
+/** `canOrg` is true only for org admins/managers (“lead”). Pass the same predicate as toolbar `canLead`. */
 export function resolveWorkspaceSurfaceMode(
   canOrg: boolean,
   viewParam: string | null,

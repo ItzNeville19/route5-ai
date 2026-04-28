@@ -76,8 +76,8 @@ export default function WorkspaceNewTaskDrawer() {
   }, [newTaskOpen, orgRole]);
 
   const canSubmit = useMemo(
-    () => Boolean(ownerId && title.trim() && deadline && description.trim()),
-    [ownerId, title, deadline, description]
+    () => Boolean(ownerId && title.trim() && deadline),
+    [ownerId, title, deadline]
   );
 
   const reset = useCallback(() => {
@@ -104,7 +104,7 @@ export default function WorkspaceNewTaskDrawer() {
           items: [
             {
               title: title.trim(),
-              description: description.trim(),
+              description: description.trim() || null,
               ownerId,
               deadline: deadlineIso,
               priority,
@@ -121,6 +121,9 @@ export default function WorkspaceNewTaskDrawer() {
       pushToast("Task created — assignee receives notification when applicable.", "success");
       reset();
       closeNewTask();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("route5:commitments-changed"));
+      }
     } finally {
       setSaving(false);
     }

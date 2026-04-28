@@ -14,10 +14,22 @@ export function getOpenAIModel(): string {
   return process.env.OPENAI_MODEL?.trim() || DEFAULT_MODEL;
 }
 
-/** Returns trimmed key or null if unset / whitespace-only. */
+/**
+ * Returns trimmed API key. Checks primary + common hosting aliases so Vercel / CI
+ * doesn’t silently miss AI when the key lives under an alternate name.
+ */
 export function getOpenAIApiKey(): string | null {
-  const k = process.env.OPENAI_API_KEY?.trim();
-  return k || null;
+  const candidates = [
+    process.env.OPENAI_API_KEY,
+    process.env.OPENAI_KEY,
+    process.env.AI_OPENAI_API_KEY,
+    process.env.OPENAI_SECRET_KEY,
+  ];
+  for (const raw of candidates) {
+    const k = raw?.trim();
+    if (k && !looksLikeTutorialOrEmptySecret(k)) return k;
+  }
+  return null;
 }
 
 export function isOpenAIConfigured(): boolean {

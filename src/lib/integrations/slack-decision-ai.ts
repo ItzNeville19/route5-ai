@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getOpenAIApiKey } from "@/lib/ai/openai-client";
 import { z } from "zod";
 
 const decisionSchema = z.object({
@@ -16,7 +17,7 @@ async function detectDecisionCore(
   text: string,
   sourceLabel: "Slack" | "email" | "Notion"
 ): Promise<SlackDecisionResult> {
-  const key = process.env.OPENAI_API_KEY?.trim();
+  const key = getOpenAIApiKey();
   if (!key) {
     return { is_decision: false, confidence_score: 0 };
   }

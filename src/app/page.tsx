@@ -23,7 +23,7 @@ export default async function Home() {
 
   return (
     <main
-      className={`relative min-h-dvh bg-white text-slate-900 antialiased ${outfitLanding.className} ${barlowCondensedLanding.variable}`}
+      className={`marketing-sf-chrome relative min-h-dvh bg-gradient-to-b from-slate-50 via-white to-indigo-50/30 text-slate-900 antialiased ${outfitLanding.className} ${barlowCondensedLanding.variable}`}
       style={{ fontFeatureSettings: '"ss01" 1, "cv11" 1' }}
     >
       <div className="min-h-dvh">

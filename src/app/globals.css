@@ -556,6 +556,19 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
+/* Marketing homepage — bay / SF palette behind public glass nav + footer */
+.marketing-sf-chrome .glass-liquid-nav {
+  background: linear-gradient(
+    185deg,
+    rgba(248, 250, 252, 0.94) 0%,
+    rgba(238, 242, 255, 0.78) 45%,
+    rgba(236, 254, 255, 0.65) 100%
+  );
+  box-shadow:
+    0 10px 36px -14px rgba(14, 116, 144, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.88);
+}
+
 /* Soft floating orbs (workspace / hero depth) */
 .liquid-blob {
   border-radius: 50%;
@@ -3202,6 +3215,17 @@ body {
   background-color: color-mix(in srgb, var(--r5-surface-primary) 82%, #050b16 18%);
 }
 
+/* Shell photography paints on `.agent-canvas`; the scroll `<main>` had an opaque coastal mesh — it hid Unsplash entirely. */
+.route5-brand-agent-shell[data-route5-canvas-photo="true"] > main.route5-brand-canvas {
+  background-image: none;
+  background-color: transparent;
+}
+
+.route5-brand-agent-shell[data-route5-canvas-photo="true"][data-route5-shell-palette="light"] > main.route5-brand-canvas {
+  /* Hairline veil so dashboards on workspace-palette-light don't float on bare photo */
+  background-color: rgba(248, 250, 252, 0.035);
+}
+
 /** Column beside sidebar: faint horizon (below stacked chrome). */
 .theme-route5-command.theme-agent-shell .route5-brand-agent-shell {
   isolation: isolate;
@@ -3216,6 +3240,10 @@ body {
   background:
     radial-gradient(ellipse 100% 55% at 72% -8%, rgba(56, 189, 248, 0.06), transparent 58%),
     radial-gradient(ellipse 80% 50% at -5% 40%, rgba(251, 191, 36, 0.035), transparent 50%);
+}
+
+.theme-route5-command.theme-agent-shell .route5-brand-agent-shell[data-route5-canvas-photo="true"]::before {
+  opacity: 0.42;
 }
 
 .theme-route5-command.theme-agent-shell .agent-header {
@@ -3265,6 +3293,21 @@ body {
     radial-gradient(ellipse 100% 60% at 50% -10%, rgba(56, 189, 248, 0.12), transparent 58%),
     radial-gradient(ellipse 70% 45% at 12% 30%, rgba(253, 186, 116, 0.08), transparent 52%),
     radial-gradient(ellipse 80% 50% at 88% 20%, rgba(147, 197, 253, 0.08), transparent 50%);
+}
+
+/** Marketing / download panels — shared radius + calm hover (Linear / Notion-adjacent rhythm) */
+.route5-marketing-panel {
+  border-radius: var(--r5-radius-lg);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route5-marketing-panel {
+    transition: none;
+  }
 }
 
 /** Light marketing pages (product, contact, …): top coastal halo over theme-glass-site */
@@ -3687,6 +3730,24 @@ body.theme-glass-site:has(main.landing-premium) {
 }
 
 /* Main workspace chrome — ocean dusk glass; pairs with prefs photo overlay when set inline */
+/* Full-viewport workspace shell — no inset “skirts” / letterboxing */
+.theme-route5-command.theme-agent-shell .route5-brand-agent-shell.route5-workspace-shell-fullbleed {
+  border-radius: 0;
+  max-width: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  box-shadow:
+    0 24px 80px -56px rgba(14, 116, 144, 0.35),
+    inset 0 1px 0 rgba(207, 250, 254, 0.05);
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light .route5-brand-agent-shell.route5-workspace-shell-fullbleed {
+  box-shadow:
+    0 20px 72px -52px rgba(15, 23, 42, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
 .route5-brand-agent-shell {
   position: relative;
   isolation: isolate;
@@ -3706,6 +3767,22 @@ body.theme-glass-site:has(main.landing-premium) {
   z-index: 1;
 }
 
+.theme-route5-command.theme-agent-shell:not(.workspace-palette-light) > main.route5-brand-canvas {
+  background-image: radial-gradient(
+    ellipse 130% 88% at 50% -18%,
+    rgba(45, 212, 191, 0.065),
+    transparent 56%
+  );
+}
+
+.theme-route5-command.theme-agent-shell.workspace-palette-light > main.route5-brand-canvas {
+  background-image: radial-gradient(
+    ellipse 130% 88% at 50% -18%,
+    rgba(14, 165, 233, 0.06),
+    transparent 58%
+  );
+}
+
 /* Sticky workspace header — fewer competing borders; single glass surface */
 .route5-ocean-toolbar-surface {
   border: 1px solid var(--ocean-border-soft);
@@ -3720,6 +3797,11 @@ body.theme-glass-site:has(main.landing-premium) {
 .route5-ocean-header .route5-ocean-toolbar-surface {
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+
+/* Keep Home · Agent · History on one row — overflow scrolls instead of wrapping (mobile uses compact icon rail). */
+.route5-workspace-toolbar-inner {
+  flex-wrap: nowrap;
 }
 
 .route5-premium-shell-bg > * {

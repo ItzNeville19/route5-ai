@@ -77,7 +77,7 @@ export default function WorkspaceHelpPanel({
                 Team overview
               </p>
               <p className="text-[13px] text-white/65">
-                For admins and managers: full team picture, Assistant follow-ups, and open issues. Use{" "}
+                For admins and managers: full team picture, Agent follow-ups, and open issues. Use{" "}
                 <strong className="font-semibold text-white/90">Actions</strong> in the header for shortcuts (new task,
                 run assistant, updates) when your role allows it.
               </p>

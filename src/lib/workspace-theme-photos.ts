@@ -6,6 +6,7 @@
 
 import type { CSSProperties } from "react";
 import type { WorkspaceThemeId } from "@/lib/workspace-themes";
+import type { WorkspaceHeroPhotoSource } from "@/lib/workspace-prefs";
 
 export type OverviewHeroPeriod = "morning" | "afternoon" | "evening" | "night";
 
@@ -374,7 +375,7 @@ const HERO_BY_PERIOD: Record<OverviewHeroPeriod, WorkspacePhotoSpec[]> = {
   ],
 };
 
-/** Strong left band so headline stays readable on any photograph. */
+/** Strong left band so headline stays readable on any photograph (dark typography target). */
 function heroReadabilityLayer(period: OverviewHeroPeriod): string {
   if (period === "night") {
     return "linear-gradient(92deg,rgba(15,23,42,0.94) 0%,rgba(15,23,42,0.72) 38%,rgba(15,23,42,0.18) 68%,transparent 92%)";
@@ -384,6 +385,18 @@ function heroReadabilityLayer(period: OverviewHeroPeriod): string {
   }
   return "linear-gradient(92deg,rgba(255,255,255,0.98) 0%,rgba(255,255,255,0.78) 36%,rgba(255,255,255,0.32) 66%,transparent 94%)";
 }
+
+/** Workspace light palette — bright wash + footing so slate text reads on dusk/ocean shots. */
+function heroReadabilityLayerLight(period: OverviewHeroPeriod): string {
+  const base =
+    "linear-gradient(180deg,rgba(255,255,255,0.78) 0%,rgba(255,255,255,0.42) 46%,rgba(248,250,252,0.15) 78%,rgba(15,23,42,0.12) 100%)";
+  if (period === "night") {
+    return `linear-gradient(92deg,rgba(248,250,252,0.94) 0%,rgba(241,245,249,0.72) 45%,transparent 82%), ${base}`;
+  }
+  return `linear-gradient(92deg,rgba(255,255,255,0.95) 0%,rgba(255,255,255,0.5) 48%,transparent 85%), ${base}`;
+}
+
+export type OverviewHeroReadableTone = "default" | "light";
 
 export function resolveOverviewHeroPhotoSpec(
   period: OverviewHeroPeriod,
@@ -403,9 +416,12 @@ export function resolveOverviewHeroPhotoSpec(
 /** Full CSS `backgroundImage` stack: readability + theme scrims (no URL — img is separate). */
 export function overviewHeroReadableImageStack(
   period: OverviewHeroPeriod,
-  photoSpec: WorkspacePhotoSpec
+  photoSpec: WorkspacePhotoSpec,
+  tone: OverviewHeroReadableTone = "default"
 ): string {
-  return `${heroReadabilityLayer(period)}, ${photoSpec.scrim}`;
+  const readability =
+    tone === "light" ? heroReadabilityLayerLight(period) : heroReadabilityLayer(period);
+  return `${readability}, ${photoSpec.scrim}`;
 }
 
 /**
@@ -460,4 +476,55 @@ export function workspaceThemePhotoStyle(
     backgroundPosition: p.position,
     backgroundRepeat: "no-repeat",
   };
+}
+
+/** Resolve a curated photo by Unsplash path fragment (preset picker). */
+export function lookupWorkspacePhotoSpecByPath(pathFragment: string): WorkspacePhotoSpec | undefined {
+  const needle = pathFragment.replace(/^\/+/, "").trim();
+  if (!needle) return undefined;
+  for (const spec of ALL_THEME_PHOTOS_UNIQUE) {
+    if (spec.path === needle || spec.path.endsWith(needle)) return spec;
+  }
+  for (const pool of Object.values(WORKSPACE_THEME_PHOTO_VARIANTS)) {
+    for (const spec of pool) {
+      if (spec.path === needle) return spec;
+    }
+  }
+  return undefined;
+}
+
+/** Shell background when photography is on — respects customize preset/upload vs daily rotation. */
+export function workspaceThemePhotoStyleFromPrefs(
+  prefs: {
+    workspaceHeroPhotoSource?: WorkspaceHeroPhotoSource;
+  },
+  resolved: Exclude<WorkspaceThemeId, "auto">
+): CSSProperties {
+  const src = prefs.workspaceHeroPhotoSource;
+  if (!src || src.kind === "daily") {
+    return workspaceThemePhotoStyle(resolved);
+  }
+  if (src.kind === "upload" && src.dataUrl?.startsWith("data:image/")) {
+    return {
+      backgroundColor: "#0a1214",
+      backgroundImage: `linear-gradient(180deg,rgba(2,8,23,0.45),rgba(2,6,23,0.88)), url("${src.dataUrl}")`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundRepeat: "no-repeat",
+    };
+  }
+  if (src.kind === "preset") {
+    const spec = lookupWorkspacePhotoSpecByPath(src.path);
+    if (spec) {
+      const url = workspacePhotoUrl(spec.path, 1920);
+      return {
+        backgroundColor: spec.fallback,
+        backgroundImage: `${spec.scrim}, url("${url}")`,
+        backgroundSize: "cover",
+        backgroundPosition: spec.position,
+        backgroundRepeat: "no-repeat",
+      };
+    }
+  }
+  return workspaceThemePhotoStyle(resolved);
 }

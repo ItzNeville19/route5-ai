@@ -113,10 +113,24 @@ export async function previewCommitmentOpsActions(
   return actions.slice(0, 100);
 }
 
-async function executeOwnerNudges(orgId: string, actions: CommitmentOpsAction[]) {
-  let sent = 0;
+/** One nudge per owner+commitment per execute — keep strongest severity if duplicates slip in. */
+function dedupeOwnerNudges(actions: CommitmentOpsAction[]): CommitmentOpsAction[] {
+  const best = new Map<string, CommitmentOpsAction>();
   for (const action of actions) {
     if (action.kind !== "owner_nudge") continue;
+    const key = `${action.ownerId}:${action.commitmentId}`;
+    const prev = best.get(key);
+    if (!prev || SEVERITY_RANK[action.severity] > SEVERITY_RANK[prev.severity]) {
+      best.set(key, action);
+    }
+  }
+  return [...best.values()];
+}
+
+async function executeOwnerNudges(orgId: string, actions: CommitmentOpsAction[]) {
+  const nudges = dedupeOwnerNudges(actions);
+  let sent = 0;
+  for (const action of nudges) {
     await sendNotification({
       orgId,
       userId: action.ownerId,

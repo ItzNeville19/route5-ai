@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
 const PINNED_OPTIONS = [
-  { id: "queue", label: "Assistant" },
+  { id: "queue", label: "Agent" },
   { id: "escalations", label: "Issues" },
   { id: "activity", label: "History" },
   { id: "commitments", label: "Commitments" },
@@ -166,6 +166,25 @@ export default function CommandCenterCustomizeSection() {
               );
             })}
           </div>
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/45 p-4 sm:p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--workspace-muted-fg)]">
+            Desktop app
+          </p>
+          <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+            Prefer a desktop window? Use the Electron build (macOS: open the .dmg, drag Route5 to Applications). Web
+            and desktop share the same org data.
+          </p>
+          <Link
+            href="/download"
+            className="mt-3 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+          >
+            Download &amp; install
+            <span className="font-normal text-[var(--workspace-muted-fg)]" aria-hidden>
+              ↗
+            </span>
+          </Link>
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2 border-t border-[var(--workspace-border)]/80 pt-5">

@@ -8,15 +8,11 @@ import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { canCreateCompany } from "@/lib/workspace-role";
 import { useMemberDirectory } from "@/components/workspace/MemberProfilesProvider";
 import type { OrgCommitmentRow } from "@/lib/org-commitment-types";
-import { isCompletedRow } from "@/lib/feed/group-commitments";
-
-type ProjectRollup = {
-  commitmentCount: number;
-  overdue: number;
-  atRisk: number;
-  onTrack: number;
-  lastUpdated: string | null;
-};
+import {
+  projectHealthScore,
+  rollupCommitmentsByProject,
+  type ProjectRollup,
+} from "@/lib/projects/project-rollup";
 
 type ProjectCard = {
   id: string;
@@ -33,14 +29,6 @@ function fmtDate(iso: string | null): string {
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return "No activity";
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-}
-
-function projectHealth(rollup: ProjectRollup): number {
-  const open = rollup.overdue + rollup.atRisk + rollup.onTrack;
-  if (open <= 0) return 100;
-  const weighted = rollup.overdue * 16 + rollup.atRisk * 9 + rollup.onTrack * 2;
-  const score = 100 - Math.round(weighted / Math.max(open, 1));
-  return Math.max(0, Math.min(100, score));
 }
 
 function healthToneClass(score: number): string {
@@ -74,31 +62,7 @@ export default function ProjectsHub() {
     };
   }, []);
 
-  const rollupByProject = useMemo(() => {
-    const map = new Map<string, ProjectRollup>();
-    for (const row of commitments) {
-      const pid = row.projectId;
-      if (!pid) continue;
-      const current = map.get(pid) ?? {
-        commitmentCount: 0,
-        overdue: 0,
-        atRisk: 0,
-        onTrack: 0,
-        lastUpdated: null,
-      };
-      current.commitmentCount += 1;
-      if (!isCompletedRow(row)) {
-        if (row.status === "overdue") current.overdue += 1;
-        else if (row.status === "at_risk") current.atRisk += 1;
-        else current.onTrack += 1;
-      }
-      if (!current.lastUpdated || new Date(row.updatedAt).getTime() > new Date(current.lastUpdated).getTime()) {
-        current.lastUpdated = row.updatedAt;
-      }
-      map.set(pid, current);
-    }
-    return map;
-  }, [commitments]);
+  const rollupByProject = useMemo(() => rollupCommitmentsByProject(commitments), [commitments]);
 
   const projectCards = useMemo<ProjectCard[]>(
     () =>
@@ -111,7 +75,7 @@ export default function ProjectsHub() {
             onTrack: 0,
             lastUpdated: null,
           };
-          const health = projectHealth(rollup);
+          const health = projectHealthScore(rollup);
           const pressure = rollup.overdue * 3 + rollup.atRisk * 2 + rollup.onTrack;
           return {
             id: project.id,
@@ -230,18 +194,23 @@ export default function ProjectsHub() {
             <li key={project.id}>
               <Link
                 href={`/projects/${project.id}`}
-                className="grid grid-cols-1 gap-[var(--r5-space-2)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover sm:grid-cols-[minmax(0,1.7fr)_minmax(120px,1fr)_minmax(220px,1.4fr)_minmax(130px,1fr)_minmax(88px,0.7fr)_minmax(120px,1fr)] sm:items-center sm:gap-[var(--r5-space-3)]"
+                className="flex flex-col gap-[var(--r5-space-3)] rounded-[var(--r5-radius-lg)] border border-r5-border-subtle/80 bg-r5-surface-secondary/35 px-[var(--r5-space-4)] py-[var(--r5-space-3)] transition hover:border-r5-border-subtle hover:bg-r5-surface-hover lg:grid lg:grid-cols-[minmax(0,1.75fr)_auto_minmax(220px,1.5fr)_minmax(130px,1fr)_minmax(88px,0.75fr)_minmax(120px,1fr)] lg:items-center lg:gap-[var(--r5-space-3)]"
               >
-                <span className="min-w-0 flex items-center gap-[var(--r5-space-2)]">
+                <span className="min-w-0 flex items-start gap-[var(--r5-space-2)] lg:items-center">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r5-radius-md)] bg-r5-surface-primary/60 text-[18px]" aria-hidden>
                     {project.iconEmoji?.trim() ? project.iconEmoji.trim() : <FolderOpen className="h-5 w-5 text-r5-text-secondary" />}
                   </span>
-                  <span title={project.name} className="break-words text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
-                    {project.name}
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span title={project.name} className="break-words text-[length:var(--r5-font-subheading)] font-medium text-r5-text-primary">
+                      {project.name}
+                    </span>
+                    <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary lg:hidden">
+                      {rollup.commitmentCount} commitments
+                    </span>
                   </span>
                 </span>
 
-                <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary">{rollup.commitmentCount} commitments</span>
+                <span className="hidden text-[length:var(--r5-font-body)] text-r5-text-secondary lg:inline">{rollup.commitmentCount} commitments</span>
 
                 <span className="flex flex-wrap items-center gap-[var(--r5-space-2)] text-[length:var(--r5-font-body)]">
                   <span className="text-r5-status-overdue">{rollup.overdue} overdue</span>
@@ -251,8 +220,8 @@ export default function ProjectsHub() {
                   <span className="text-r5-status-completed">{rollup.onTrack} on track</span>
                 </span>
 
-                <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary sm:text-right">{fmtDate(rollup.lastUpdated)}</span>
-                <span className="flex items-center justify-start gap-1 sm:justify-end">
+                <span className="text-[length:var(--r5-font-body)] text-r5-text-secondary lg:text-right">{fmtDate(rollup.lastUpdated)}</span>
+                <span className="flex items-center justify-start gap-1 lg:justify-end">
                   {project.memberUserIds.slice(0, 3).map((memberId) => {
                     const label = displayName(memberId, undefined, "You");
                     const profile = get(memberId);

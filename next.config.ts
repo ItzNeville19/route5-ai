@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   experimental: {
     /** Smaller client bundles for heavy animation/graph libs (see Next docs). */
     optimizePackageImports: ["framer-motion", "recharts"],
+    /** Avoid trace worker racing standalone output (intermittent ENOENT on *.nft.json in local/CI). */
+    parallelServerBuildTraces: false,
   },
   /** Prefer this repo as Turbopack root when multiple lockfiles exist on the machine. */
   turbopack: {

@@ -150,6 +150,15 @@ async function ready() {
 
   createWindow();
 
+  if (app.isPackaged) {
+    try {
+      const { autoUpdater } = require("electron-updater");
+      autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+    } catch (e) {
+      console.warn("[electron] electron-updater not available:", e?.message ?? e);
+    }
+  }
+
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();

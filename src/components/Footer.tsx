@@ -14,9 +14,12 @@ const platform: { href: string; label: string; title: string }[] = [
 ];
 
 const company: { href: string; label: string; title: string; external?: boolean }[] = [
+  { href: "/about-ceo", label: "About the CEO", title: "Leadership and founder story" },
+  { href: "/press", label: "Press", title: "News and media resources" },
+  { href: "/careers", label: "Careers", title: "Open roles and hiring" },
   { href: "/contact", label: "Contact", title: "Sales, support, and priorities" },
   { href: INSTAGRAM_URL, label: "Instagram", title: "Route5 on Instagram", external: true },
-  { href: "/download", label: "Download", title: "PWA and desktop install" },
+  { href: "/download", label: "Download", title: "Desktop client and web install" },
   { href: "/trust", label: "Trust & compliance", title: "Security questionnaire, DPA, procurement" },
   { href: "/privacy", label: "Privacy Policy", title: "How we handle data — full policy" },
   { href: "/terms", label: "Terms of Service", title: "Terms of use" },

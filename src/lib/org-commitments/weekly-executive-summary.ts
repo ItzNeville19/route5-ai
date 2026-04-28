@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getOpenAIApiKey } from "@/lib/ai/openai-client";
 import { isSupabaseConfigured } from "@/lib/supabase-env";
 import { getServiceClient } from "@/lib/supabase/server";
 import { getSqliteHandle } from "@/lib/workspace/sqlite";
@@ -42,7 +43,7 @@ async function listActiveCommitmentsForOrg(orgId: string): Promise<OrgCommitment
 }
 
 export async function generateWeeklyExecutiveSummaryHtml(orgId: string): Promise<string | null> {
-  const key = process.env.OPENAI_API_KEY?.trim();
+  const key = getOpenAIApiKey();
   if (!key) return null;
 
   const now = Date.now();

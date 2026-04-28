@@ -51,12 +51,12 @@ export default function WorkspaceRunAgentSheet() {
       >
         <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-white/[0.06] px-4 py-3 sm:px-5">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200/45">Assistant</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-200/45">Agent</p>
             <h2 id="run-agent-sheet-title" className="mt-0.5 text-lg font-semibold text-white">
               Run Agent
             </h2>
             <p className="mt-1 max-w-xl text-[12px] leading-snug text-white/45">
-              Scan, preview, and approve — the same work as the full Assistant page, in a compact panel.
+              Scan, preview, and approve — the same work as the full Agent page, in a compact panel.
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">

@@ -12,7 +12,7 @@ import {
 } from "@/components/workspace/WorkspaceExperience";
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { resolveWorkspaceTheme } from "@/lib/workspace-themes";
-import { workspaceThemePhotoStyle } from "@/lib/workspace-theme-photos";
+import { workspaceThemePhotoStyleFromPrefs } from "@/lib/workspace-theme-photos";
 import { WorkspaceDataProvider } from "@/components/workspace/WorkspaceData";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import {
@@ -28,10 +28,11 @@ import { WorkspaceChromeActionsProvider } from "@/components/workspace/Workspace
 import WorkspaceNewTaskDrawer from "@/components/workspace/WorkspaceNewTaskDrawer";
 import WorkspaceRunAgentSheet from "@/components/workspace/WorkspaceRunAgentSheet";
 import WorkspaceSendUpdateModal from "@/components/workspace/WorkspaceSendUpdateModal";
+import WorkspaceInteractiveTour from "@/components/workspace/WorkspaceInteractiveTour";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
-  const { shellModifierClass, prefs } = exp;
+  const { shellModifierClass, prefs, workspacePaletteLight } = exp;
   const appearanceTick = useAlignedMinuteTick();
   const resolvedTheme = useMemo(
     () => resolveWorkspaceTheme(prefs, appearanceTick),
@@ -41,9 +42,13 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
     (prefs.workspaceCanvasBackground ?? "gradient") === "photo";
   const agentCanvasPhotoStyle = useMemo(() => {
     if (!useCanvasPhotography) return undefined;
-    return workspaceThemePhotoStyle(resolvedTheme.resolvedId);
-  }, [useCanvasPhotography, resolvedTheme.resolvedId]);
+    return workspaceThemePhotoStyleFromPrefs(prefs, resolvedTheme.resolvedId);
+  }, [useCanvasPhotography, prefs, resolvedTheme.resolvedId]);
   const pathname = usePathname() ?? "";
+
+  const agentShellToneClass = workspacePaletteLight
+    ? "!border-slate-200/75 bg-[linear-gradient(180deg,#fafbfc_0%,#f1f5f9_50%,#e8eef4_100%)] shadow-[0_36px_100px_-60px_rgba(15,23,42,0.16),inset_0_1px_0_rgba(255,255,255,0.9)]"
+    : "border-[#2a3b2e] bg-[linear-gradient(180deg,#0a1214_0%,#0c1512_48%,#0a0f0e_100%)] shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)]";
 
   return (
     <div
@@ -57,11 +62,13 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <WorkspaceQueryHandler />
       </Suspense>
       <WorkspaceRoleRedirects />
+      <WorkspaceInteractiveTour />
 
-      <div className="route5-premium-shell-bg relative min-h-dvh w-full px-3 py-1.5 sm:px-4 sm:py-2">
+      <div className="route5-premium-shell-bg relative min-h-dvh w-full">
         <div
-          className="route5-brand-agent-shell route5-ocean-shell agent-canvas relative z-10 mx-auto flex min-h-[calc(100dvh-12px)] w-full max-w-[1600px] min-w-0 flex-col rounded-[28px] border border-[#2a3b2e] bg-[linear-gradient(180deg,#0a1214_0%,#0c1512_48%,#0a0f0e_100%)] p-1.5 shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)] sm:p-2"
+          className={`route5-brand-agent-shell route5-ocean-shell route5-workspace-shell-fullbleed agent-canvas relative z-10 mx-auto flex min-h-dvh w-full min-w-0 flex-col border-0 p-0 ${agentShellToneClass}`}
           data-route5-canvas-photo={useCanvasPhotography ? "true" : "false"}
+          data-route5-shell-palette={workspacePaletteLight ? "light" : "dark"}
           style={agentCanvasPhotoStyle ?? undefined}
         >
           <WorkspaceTopToolbar />
@@ -69,7 +76,7 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           <WorkspaceRunAgentSheet />
           <WorkspaceSendUpdateModal />
           <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto">
-            <div className="workspace-page-inner relative mx-auto w-full max-w-[1540px] px-2 pb-3 sm:px-3 sm:pb-4">
+            <div className="workspace-page-inner relative mx-auto w-full max-w-[min(100%,1720px)] px-3 pb-[max(0.75rem,calc(0.75rem+env(safe-area-inset-bottom,0px)))] pt-5 sm:px-4 sm:pb-[max(1rem,calc(1rem+env(safe-area-inset-bottom,0px)))] sm:pt-7 lg:px-5 lg:pt-8">
               <div key={pathname} className="route5-page-transition">
                 {children}
               </div>

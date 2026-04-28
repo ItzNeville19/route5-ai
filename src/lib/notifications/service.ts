@@ -4,6 +4,7 @@ import { getSlackIntegrationForOrg } from "@/lib/integrations/org-integrations-s
 import { decryptSecret } from "@/lib/integrations/token-crypto";
 import { broadcastUserNotification } from "@/lib/notifications/broadcast";
 import {
+  hasRecentOverdueForCommitment,
   insertOrgNotification,
   listPreferencesForUser,
 } from "@/lib/notifications/store";
@@ -66,6 +67,27 @@ async function resolveSlackBotTokenForOrg(orgId: string): Promise<string | null>
  */
 export async function sendNotification(params: SendNotificationParams): Promise<void> {
   const meta = params.metadata ?? {};
+  if (params.type === "commitment_overdue") {
+    const cid = meta.commitmentId;
+    if (typeof cid === "string" && cid.trim()) {
+      const dup = await hasRecentOverdueForCommitment({
+        userId: params.userId,
+        commitmentId: cid.trim(),
+        withinMinutes: 45,
+      });
+      if (dup) {
+        console.log(
+          JSON.stringify({
+            channel: "skip",
+            reason: "duplicate_overdue_commitment",
+            commitmentId: cid.trim(),
+            userId: params.userId,
+          })
+        );
+        return;
+      }
+    }
+  }
   const baseCh = await getEffectiveChannels(params.orgId, params.userId, params.type);
   const inApp = params.forceChannels?.inApp ?? baseCh.inApp;
   const email = params.forceChannels?.email ?? baseCh.email;

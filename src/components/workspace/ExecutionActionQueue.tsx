@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import {
   AlertOctagon,
@@ -97,6 +97,7 @@ export default function ExecutionActionQueue({
     Array<{ id: string; severity: string; ownerDisplayName: string; commitmentTitle: string; ageHours: number }>
   >([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const singleFlightRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (variant === "sheet") setSeverityFilter("all");
@@ -163,7 +164,7 @@ export default function ExecutionActionQueue({
         );
       }
       await refreshQueue();
-      await loadHistory();
+      void loadHistory();
     } finally {
       setRunning(false);
     }
@@ -179,9 +180,16 @@ export default function ExecutionActionQueue({
   }, []);
 
   async function executeApproved() {
-    const approved = preview
+    const merged = preview
       .filter((action) => selected.includes(keyFor(action)))
       .map((action) => ({ ...action, message: editing[keyFor(action)] ?? action.message }));
+    const seen = new Set<string>();
+    const approved = merged.filter((action) => {
+      const k = `${action.kind}:${action.commitmentId}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
     if (approved.length === 0) return;
     setExecuting(true);
     try {
@@ -199,7 +207,7 @@ export default function ExecutionActionQueue({
           `Sent ${data.summary.executed} — ${data.summary.nudgesSent} reminders and ${data.summary.escalationsCreated + data.summary.escalationsUpgraded} leadership flags.`
         );
         await refreshQueue();
-        await loadHistory();
+        void loadHistory();
       }
     } finally {
       setExecuting(false);
@@ -207,6 +215,9 @@ export default function ExecutionActionQueue({
   }
 
   async function executeSingle(action: AgentAction) {
+    const flightKey = `${action.kind}:${action.commitmentId}`;
+    if (singleFlightRef.current.has(flightKey)) return;
+    singleFlightRef.current.add(flightKey);
     setExecuting(true);
     try {
       const payload = [{ ...action, message: editing[keyFor(action)] ?? action.message }];
@@ -220,9 +231,10 @@ export default function ExecutionActionQueue({
         setToast("Sent.");
         setPreview((prev) => prev.filter((item) => keyFor(item) !== keyFor(action)));
         setSelected((prev) => prev.filter((item) => item !== keyFor(action)));
-        await loadHistory();
+        void loadHistory();
       }
     } finally {
+      singleFlightRef.current.delete(flightKey);
       setExecuting(false);
     }
   }
@@ -277,7 +289,7 @@ export default function ExecutionActionQueue({
               </p>
             ) : (
               <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/[0.5]">
-                Preview messages, approve, then send — same pipeline as the full Assistant page.
+                Preview messages, approve, then send — same pipeline as the full Agent page.
               </p>
             )}
           </div>
@@ -333,7 +345,7 @@ export default function ExecutionActionQueue({
             </>
           ) : (
             <span className="text-[12px] font-medium text-white/42">
-              Refine using tabs above · severity filters stay available on the full Assistant page.
+              Refine using tabs above · severity filters stay available on the full Agent page.
             </span>
           )}
         </div>
@@ -369,7 +381,7 @@ export default function ExecutionActionQueue({
         {visibleRows.length === 0 ? (
           <div className="rounded-[22px] border border-dashed border-white/[0.1] bg-black/[0.18] px-6 py-14 text-center">
             <p className="text-sm font-medium text-white">You&apos;re caught up</p>
-            <p className="mt-2 text-sm text-white/45">{!canRun ? "Assistant tools unlock for admins and managers." : "Try another filter or run a scan — nothing matches."}</p>
+            <p className="mt-2 text-sm text-white/45">{!canRun ? "Agent tools unlock for admins and managers." : "Try another filter or run a scan — nothing matches."}</p>
           </div>
         ) : (
           visibleRows.map((action) => {

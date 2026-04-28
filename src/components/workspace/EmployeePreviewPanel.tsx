@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bell,
   ChevronDown,
@@ -15,6 +15,7 @@ import {
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type ActivityRow = {
   id: string;
@@ -81,11 +82,13 @@ function duePlainEnglish(deadlineIso: string): string | null {
 }
 
 export default function EmployeePreviewPanel() {
-  const { orgRole } = useWorkspaceData();
+  const { orgRole, organizationId } = useWorkspaceData();
   const { prefs } = useWorkspaceExperience();
   const search = useSearchParams();
+  const viewQs = search.get("view") === "employee" ? "?view=employee" : "";
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showDone, setShowDone] = useState(false);
 
   const canOrg = orgRole === "admin" || orgRole === "manager";
@@ -93,18 +96,48 @@ export default function EmployeePreviewPanel() {
   /** Members never assign; employee lens hides assign even for admins/leads (IC preview). */
   const canAssign = canOrg && surfaceMode !== "employee";
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
+  const loadActivity = useCallback(async (quiet?: boolean) => {
+    if (!quiet) setLoading(true);
+    setLoadError(null);
+    try {
       const res = await fetch("/api/dashboard/activity?scope=self&limit=48", { credentials: "same-origin" });
-      const data = (await res.json().catch(() => ({}))) as { activity?: ActivityRow[] };
-      if (!cancelled && res.ok) setActivity(data.activity ?? []);
-      if (!cancelled) setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
+      const data = (await res.json().catch(() => ({}))) as { activity?: ActivityRow[]; error?: string };
+      if (res.ok) {
+        setActivity(data.activity ?? []);
+        setLoadError(null);
+      } else if (!quiet) {
+        setLoadError(data.error ?? "Could not load your tasks.");
+      }
+    } catch {
+      if (!quiet) setLoadError("Could not load your tasks.");
+    } finally {
+      if (!quiet) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void loadActivity(false);
+  }, [loadActivity]);
+
+  useEffect(() => {
+    const onRefresh = () => void loadActivity(true);
+    window.addEventListener("route5:commitments-changed", onRefresh);
+    return () => window.removeEventListener("route5:commitments-changed", onRefresh);
+  }, [loadActivity]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    const client = getSupabaseBrowserClient();
+    if (!client) return;
+    const channel = client.channel(`org-dashboard:${organizationId}`);
+    channel.on("broadcast", { event: "refresh" }, () => {
+      void loadActivity(true);
+    });
+    channel.subscribe();
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, [organizationId, loadActivity]);
 
   const { activeRows, doneRows, overdueCount, dueTodayCount } = useMemo(() => {
     const active: ActivityRow[] = [];
@@ -137,12 +170,27 @@ export default function EmployeePreviewPanel() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-4 text-[13px] text-amber-100/95">
+        <p>{loadError}</p>
+        <button
+          type="button"
+          onClick={() => void loadActivity(false)}
+          className="mt-3 rounded-lg border border-amber-400/35 px-3 py-1.5 text-[12px] font-semibold text-amber-50 transition hover:bg-amber-500/15"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-[920px] space-y-4 animate-[route5-page-enter_0.35s_ease-out_both] pb-6">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1 text-[12px] text-[var(--workspace-muted-fg)]">
         <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Work shortcuts">
           <Link
-            href="/workspace/commitments"
+            href={`/workspace/commitments${viewQs}`}
             className="font-semibold text-[var(--workspace-accent)] transition hover:opacity-90"
           >
             Commitments
@@ -161,7 +209,7 @@ export default function EmployeePreviewPanel() {
         </nav>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/workspace/commitments"
+            href={`/workspace/commitments${viewQs}`}
             className="route5-pressable inline-flex items-center gap-1.5 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_40%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_12%,transparent)] px-3.5 py-1.5 text-[12px] font-semibold text-[var(--workspace-fg)]"
           >
             <ClipboardList className="h-3.5 w-3.5" aria-hidden />
@@ -209,7 +257,7 @@ export default function EmployeePreviewPanel() {
                 <li key={row.id} className="flex flex-wrap items-start justify-between gap-3 py-3.5 first:pt-1">
                   <div className="min-w-0 flex-1">
                     <Link
-                      href="/workspace/commitments"
+                      href={`/workspace/commitments${viewQs}`}
                       className="text-[15px] font-semibold text-[var(--workspace-fg)] transition hover:text-[var(--workspace-accent)]"
                     >
                       {row.title}
@@ -232,7 +280,7 @@ export default function EmployeePreviewPanel() {
                     )}
                   </div>
                   <Link
-                    href="/workspace/commitments"
+                    href={`/workspace/commitments${viewQs}`}
                     className="route5-pressable shrink-0 rounded-full border border-[color-mix(in_srgb,var(--workspace-accent)_38%,var(--workspace-border))] bg-[color-mix(in_srgb,var(--workspace-accent)_10%,transparent)] px-3.5 py-1.5 text-[11px] font-semibold text-[var(--workspace-fg)]"
                   >
                     Update

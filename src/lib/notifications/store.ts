@@ -236,6 +236,50 @@ export async function hasRecentNotificationByType(params: {
   return Boolean(row?.id);
 }
 
+/** Avoid duplicate overdue emails when status recomputation and agent nudges fire in the same window. */
+export async function hasRecentOverdueForCommitment(params: {
+  userId: string;
+  commitmentId: string;
+  withinMinutes: number;
+}): Promise<boolean> {
+  const cutoff = new Date(Date.now() - Math.max(1, params.withinMinutes) * 60_000).toISOString();
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = getServiceClient();
+      const { data, error } = await supabase
+        .from("org_notifications")
+        .select("metadata")
+        .eq("user_id", params.userId)
+        .eq("type", "commitment_overdue")
+        .gte("created_at", cutoff)
+        .is("deleted_at", null)
+        .limit(80);
+      if (error) throw error;
+      return (data ?? []).some((row) => {
+        const m = row.metadata as { commitmentId?: string } | null;
+        return m?.commitmentId === params.commitmentId;
+      });
+    } catch (e) {
+      console.error("[notifications] Supabase overdue dedupe check failed, using SQLite", e);
+    }
+  }
+  const d = getSqliteHandle();
+  const rows = d
+    .prepare(
+      `SELECT metadata FROM org_notifications
+       WHERE user_id = ? AND type = 'commitment_overdue' AND deleted_at IS NULL AND created_at >= ?`
+    )
+    .all(params.userId, cutoff) as { metadata: string }[];
+  return rows.some((r) => {
+    try {
+      const m = JSON.parse(r.metadata || "{}") as { commitmentId?: string };
+      return m.commitmentId === params.commitmentId;
+    } catch {
+      return false;
+    }
+  });
+}
+
 export async function markNotificationRead(id: string, userId: string): Promise<boolean> {
   const now = new Date().toISOString();
   if (isSupabaseConfigured()) {

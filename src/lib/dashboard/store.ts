@@ -82,6 +82,7 @@ export async function fetchRecentCommitmentActivity(
       .eq("org_id", orgId)
       .is("deleted_at", null)
       .order("updated_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(boundedLimit);
     if (ownerId) {
       query = query.eq("owner_id", ownerId);
@@ -115,7 +116,7 @@ export async function fetchRecentCommitmentActivity(
       `SELECT id, title, status, owner_id, deadline, created_at, updated_at, completed_at
        FROM org_commitments
        WHERE org_id = ? AND deleted_at IS NULL${ownerWhere}
-       ORDER BY updated_at DESC
+       ORDER BY updated_at DESC, created_at DESC
        LIMIT ?`
     )
     .all(...params) as Record<string, unknown>[];

@@ -171,7 +171,8 @@ export default function OrgCommitmentTracker() {
         setEditTitle(c.title);
         setEditDesc(c.description ?? "");
         setEditOwner(c.ownerId);
-        setEditDeadline(c.deadline.slice(0, 16));
+        const dl = c.deadline?.trim();
+        setEditDeadline(dl && dl.length >= 10 ? dl.slice(0, 16) : "");
         setEditPriority(c.priority);
       }
     } finally {
@@ -403,6 +404,7 @@ export default function OrgCommitmentTracker() {
       overdue: rows.filter((r) => r.status === "overdue").length,
       atRisk: rows.filter((r) => r.status === "at_risk").length,
       dueSoon: open.filter((r) => {
+        if (!r.deadline?.trim()) return false;
         const due = new Date(r.deadline).getTime();
         return Number.isFinite(due) && due >= now && due - now <= soonMs;
       }).length,
@@ -679,7 +681,9 @@ export default function OrgCommitmentTracker() {
                           </span>
                           <span className="inline-flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5 opacity-80" aria-hidden />
-                            {new Date(c.deadline).toLocaleString()}
+                            {c.deadline?.trim() && Number.isFinite(new Date(c.deadline).getTime())
+                              ? new Date(c.deadline).toLocaleString()
+                              : "—"}
                           </span>
                           {overdue ? (
                             <span className="inline-flex items-center gap-1 font-medium text-red-700">

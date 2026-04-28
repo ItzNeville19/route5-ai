@@ -38,6 +38,8 @@ type ToastItem = {
 
 type WorkspaceExperienceValue = {
   prefs: WorkspacePrefsV1;
+  /** True after first GET /api/workspace/prefs settles (merge applied or fetch failed). */
+  workspacePrefsRemoteReady: boolean;
   setPrefs: (patch: Partial<WorkspacePrefsV1>) => void;
   togglePinProject: (projectId: string) => void;
   isProjectPinned: (projectId: string) => boolean;
@@ -155,21 +157,30 @@ export function WorkspaceExperienceProvider({
     flushWorkspaceTzToServer(prefs);
   }, [remoteReady, prefs, flushWorkspaceTzToServer]);
 
-  const setPrefs = useCallback((patch: Partial<WorkspacePrefsV1>) => {
-    setPrefsState((prev) => {
-      const next = mergeWorkspacePrefsPatch(prev, patch);
-      const tzTouch =
-        patch.workspaceTimezone !== undefined || patch.workspaceRegionKey !== undefined;
-      if (tzTouch && typeof window !== "undefined") {
-        try {
-          localStorage.setItem(WORKSPACE_TZ_PENDING_SYNC_KEY, "1");
-        } catch {
-          /* ignore */
+  const setPrefs = useCallback(
+    (patch: Partial<WorkspacePrefsV1>) => {
+      setPrefsState((prev) => {
+        const next = mergeWorkspacePrefsPatch(prev, patch);
+        const tzTouch =
+          patch.workspaceTimezone !== undefined || patch.workspaceRegionKey !== undefined;
+        if (tzTouch && typeof window !== "undefined") {
+          try {
+            localStorage.setItem(WORKSPACE_TZ_PENDING_SYNC_KEY, "1");
+          } catch {
+            /* ignore */
+          }
         }
+        return next;
+      });
+      if (remoteReady && patch.workspaceCanvasBackground !== undefined) {
+        persistPrefsPatchNow({ workspaceCanvasBackground: patch.workspaceCanvasBackground });
       }
-      return next;
-    });
-  }, []);
+      if (remoteReady && patch.guidedTourCompleted !== undefined) {
+        persistPrefsPatchNow({ guidedTourCompleted: patch.guidedTourCompleted });
+      }
+    },
+    [remoteReady, persistPrefsPatchNow]
+  );
 
   const togglePinProject = useCallback((projectId: string) => {
     setPrefsState((prev) => {
@@ -307,6 +318,7 @@ export function WorkspaceExperienceProvider({
   const value = useMemo(
     () => ({
       prefs,
+      workspacePrefsRemoteReady: remoteReady,
       setPrefs,
       togglePinProject,
       isProjectPinned,
@@ -321,6 +333,7 @@ export function WorkspaceExperienceProvider({
     }),
     [
       prefs,
+      remoteReady,
       setPrefs,
       togglePinProject,
       isProjectPinned,
@@ -341,7 +354,10 @@ export function WorkspaceExperienceProvider({
       {typeof document !== "undefined"
         ? createPortal(
             <div
-              className="pointer-events-none fixed bottom-4 right-4 z-[100000] flex max-w-sm flex-col gap-2"
+              className="pointer-events-none fixed right-4 z-[100000] flex max-w-sm flex-col gap-2"
+              style={{
+                bottom: "max(1rem, calc(0.25rem + env(safe-area-inset-bottom, 0px)))",
+              }}
               aria-live="polite"
             >
               {toasts.map((t) => (

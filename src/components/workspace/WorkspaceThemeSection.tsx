@@ -18,7 +18,9 @@ import {
   WORKSPACE_THEME_PHOTO_VARIANTS,
   pickWorkspaceThemePhoto,
   workspacePhotoUrl,
+  type WorkspacePhotoSpec,
 } from "@/lib/workspace-theme-photos";
+import type { WorkspacePrefsV1 } from "@/lib/workspace-prefs";
 
 function hashSeed(input: string): number {
   let h = 2166136261;
@@ -27,6 +29,118 @@ function hashSeed(input: string): number {
     h = Math.imul(h, 16777619);
   }
   return Math.abs(h);
+}
+
+function HeroBackdropPicker({
+  prefs,
+  resolvedThemeId,
+  setPrefs,
+}: {
+  prefs: WorkspacePrefsV1;
+  resolvedThemeId: Exclude<WorkspaceThemeId, "auto">;
+  setPrefs: (patch: Partial<WorkspacePrefsV1>) => void;
+}) {
+  const pool =
+    WORKSPACE_THEME_PHOTO_VARIANTS[resolvedThemeId] ?? WORKSPACE_THEME_PHOTO_VARIANTS.classic;
+  const ctl = prefs.workspaceHeroPhotoSource;
+  const activeMode = !ctl || ctl.kind === "daily" ? "daily" : ctl.kind;
+
+  const chip = (on: boolean) =>
+    `rounded-xl border px-3 py-2 text-[12px] font-semibold transition ${
+      on
+        ? "border-[var(--workspace-accent)]/45 bg-[var(--workspace-accent)]/12 text-[var(--workspace-fg)] ring-2 ring-[var(--workspace-accent)]/18"
+        : "border-[var(--workspace-border)] bg-[var(--workspace-surface)]/60 text-[var(--workspace-fg)] hover:border-[var(--workspace-border)]"
+    }`;
+
+  function onUploadFile(f: File | undefined) {
+    if (!f || !f.type.startsWith("image/")) return;
+    if (f.size > 380_000) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/")) return;
+      setPrefs({
+        workspaceCanvasBackground: "photo",
+        workspaceHeroPhotoSource: { kind: "upload", dataUrl },
+      });
+    };
+    reader.readAsDataURL(f);
+  }
+
+  return (
+    <div className="mt-5 rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)]/45 p-4 sm:p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--workspace-muted-fg)]">
+        Photography source
+      </p>
+      <p className="mt-2 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+        Use the daily curated rotation, pin one of the shots below to match your theme, or upload your own image (about
+        350&nbsp;KB or smaller keeps sync fast).
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            setPrefs({ workspaceCanvasBackground: "photo", workspaceHeroPhotoSource: { kind: "daily" } })
+          }
+          className={chip(activeMode === "daily")}
+        >
+          Daily rotation
+        </button>
+        <label className={`${chip(activeMode === "upload")} inline-flex cursor-pointer items-center gap-2`}>
+          <span>Upload</span>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="sr-only"
+            onChange={(e) => onUploadFile(e.target.files?.[0])}
+          />
+        </label>
+        {ctl?.kind === "upload" ? (
+          <button
+            type="button"
+            onClick={() => setPrefs({ workspaceHeroPhotoSource: { kind: "daily" } })}
+            className="rounded-xl border border-[var(--workspace-border)] px-3 py-2 text-[12px] font-semibold text-[var(--workspace-muted-fg)] transition hover:bg-[var(--workspace-nav-hover)]"
+          >
+            Clear upload
+          </button>
+        ) : null}
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        {pool.slice(0, 12).map((spec: WorkspacePhotoSpec) => {
+          const chosen = ctl?.kind === "preset" && ctl.path === spec.path;
+          return (
+            <button
+              key={spec.path}
+              type="button"
+              onClick={() =>
+                setPrefs({
+                  workspaceCanvasBackground: "photo",
+                  workspaceHeroPhotoSource: { kind: "preset", path: spec.path },
+                })
+              }
+              className={`group relative overflow-hidden rounded-xl border text-left transition ${
+                chosen
+                  ? "border-[var(--workspace-accent)]/55 ring-2 ring-[var(--workspace-accent)]/25"
+                  : "border-[var(--workspace-border)] hover:border-[color-mix(in_srgb,var(--workspace-accent)_35%,var(--workspace-border))]"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={workspacePhotoUrl(spec.path, 360)}
+                alt=""
+                className="h-[4.5rem] w-full object-cover"
+                loading="lazy"
+              />
+              <span className="block bg-[color-mix(in_srgb,var(--workspace-surface)_92%,black)] px-2 py-1.5 text-[10px] font-semibold leading-snug text-[var(--workspace-fg)]">
+                {spec.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function ThemePreviewSwatch({ id, tick }: { id: Exclude<WorkspaceThemeId, "auto">; tick: number }) {
@@ -223,6 +337,14 @@ export default function WorkspaceThemeSection() {
             </span>
           </button>
         </div>
+
+        {canvasBg === "photo" ? (
+          <HeroBackdropPicker
+            prefs={exp.prefs}
+            resolvedThemeId={live.resolvedId}
+            setPrefs={exp.setPrefs}
+          />
+        ) : null}
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

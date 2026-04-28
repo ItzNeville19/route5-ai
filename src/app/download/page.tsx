@@ -6,108 +6,117 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Download — Route5",
   description:
-    "Install Route5 as a PWA or desktop app. Sessions, sign-out, and how we harden the workspace.",
+    "Install the Route5 desktop client (Electron). Optional web and PWA access for the same workspace.",
 };
 
-const desktopArtifactHint =
-  process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL?.trim() || "";
+const desktopArtifactUrl = process.env.NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL?.trim() || "";
 
 export default function DownloadPage() {
   return (
     <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
       <Navbar />
-      <article className="relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
+      <article className="route5-page-transition relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#1d1d1f]/45">
-          Route5 · install
+          Desktop client
         </p>
         <h1 className="mt-4 text-[clamp(1.75rem,4.5vw,2.5rem)] font-semibold tracking-[-0.04em] text-[#1d1d1f]">
-          Download & install
+          Route5 for desktop
         </h1>
-        <p className="mt-4 text-[17px] leading-relaxed text-[#6e6e73]">
-          Use Route5 in the browser, add it to your home screen, or use the desktop app where available. After you
-          sign out, you return to the secure sign-in experience.
+        <p className="mt-4 max-w-[62ch] text-[17px] leading-[1.55] text-[#6e6e73]">
+          The packaged app is a real desktop install: an Electron shell runs the production Next.js server locally
+          and loads your workspace in a hardened window. Same product as web — offline-capable runtime, not a saved
+          shortcut to a generic site.
         </p>
+
+        {desktopArtifactUrl ? (
+          <div className="route5-marketing-panel mt-10 border border-black/[0.08] bg-[#f5f5f7] p-6 md:p-7">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
+              Direct download
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed text-[#1d1d1f]">
+              Your deployment hosts the signed artifact (typically <span className="font-medium">.dmg</span> or{" "}
+              <span className="font-medium">.zip</span> on macOS; Windows builds ship as an installer from the same
+              pipeline). Open the file, move Route5 into Applications (or run the installer), then launch — the app
+              starts the embedded server and opens the workspace automatically.
+            </p>
+            <a
+              href={desktopArtifactUrl}
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-[#0071e3] px-8 text-[15px] font-semibold text-white shadow-md shadow-[#0071e3]/22 transition-colors duration-150 ease-out hover:bg-[#0077ed] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+              rel="noopener noreferrer"
+            >
+              Download desktop build
+            </a>
+          </div>
+        ) : (
+          <div className="route5-marketing-panel mt-10 border border-black/[0.06] bg-[#fafafa] p-6 md:p-7">
+            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#86868b]">
+              Hosted installer
+            </p>
+            <p className="mt-2 text-[16px] leading-relaxed text-[#1d1d1f]">
+              No public download URL is set for this environment. Build with{" "}
+              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[12px]">npm run electron:dist</code>
+              , publish the artifact (for example GitHub Releases or internal object storage), then configure{" "}
+              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[12px]">
+                NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL
+              </code>{" "}
+              in Vercel to the stable HTTPS link for your <span className="font-medium">.dmg</span>,{" "}
+              <span className="font-medium">.zip</span>, or Windows installer. The primary button on this page appears
+              once that variable is set.
+            </p>
+          </div>
+        )}
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            Web & PWA
+            Web &amp; PWA <span className="font-normal text-[#a1a1a6]">(secondary)</span>
           </h2>
-          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
-            Open{" "}
-            <Link href="/login" className="font-medium text-[#0071e3] hover:underline">
+          <p className="mt-4 text-[16px] leading-[1.55] text-[#1d1d1f]">
+            For browser-only or mobile home-screen access, open{" "}
+            <Link href="/login" className="font-medium text-[#0071e3] underline-offset-2 hover:underline">
               Sign in
             </Link>{" "}
-            in Chrome, Edge, or Safari. Use your browser&apos;s{" "}
-            <strong className="font-semibold">Install</strong> or{" "}
-            <strong className="font-semibold">Add to Home Screen</strong> when prompted — the workspace
-            sidebar may show <span className="font-medium">Install app</span> when the browser supports
-            it.
+            in Chrome, Edge, or Safari. Use <strong className="font-semibold">Install</strong> or{" "}
+            <strong className="font-semibold">Add to Home Screen</strong> when the browser offers it — that path is a
+            progressive web app, not the packaged desktop client above.
           </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-[#6e6e73]">
-            On iPhone or Android, use Share → <strong className="font-semibold">Add to Home Screen</strong>.
-            The installed app keeps the same workspace, notifications, and Desk links as web.
+          <p className="mt-3 text-[15px] leading-relaxed text-[#6e6e73]">
+            On iPhone or Android: Share → Add to Home Screen. The installed PWA uses the same workspace data as web.
           </p>
         </section>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            Desktop (Electron)
+            Build &amp; artifacts
           </h2>
-          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
-            The repo ships a packaged desktop app: Node runs the Next.js standalone server locally, and
-            Electron loads it in a hardened window (no Node integration in the page, context isolation,
-            sandbox on).
+          <p className="mt-4 text-[16px] leading-[1.55] text-[#6e6e73]">
+            macOS targets include <span className="font-medium text-[#1d1d1f]">.dmg</span> and{" "}
+            <span className="font-medium text-[#1d1d1f]">.zip</span>; Windows via NSIS; Linux AppImage. Output directory:{" "}
+            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[12px]">dist-electron/</code>.
           </p>
-          <h3 className="mt-8 text-[15px] font-semibold text-[#1d1d1f]">Build from source</h3>
-          <pre className="mt-3 overflow-x-auto rounded-2xl border border-black/[0.08] bg-[#f4f4f5] p-4 text-[13px] leading-relaxed text-[#1d1d1f]">
+          <pre className="route5-marketing-panel mt-4 overflow-x-auto border border-black/[0.08] bg-[#f4f4f5] p-4 text-[13px] leading-relaxed text-[#1d1d1f]">
             {`npm install
 npm run build
 npm run electron:dist`}
           </pre>
-          <p className="mt-4 text-[15px] leading-relaxed text-[#6e6e73]">
-            Artifacts land under{" "}
-            <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[12px]">dist-electron/</code>{" "}
-            (e.g. <code className="font-mono text-[12px]">.dmg</code> on macOS).
-          </p>
-          {desktopArtifactHint ? (
-            <p className="mt-4 text-[15px] leading-relaxed text-[#1d1d1f]">
-              <a
-                href={desktopArtifactHint}
-                className="font-medium text-[#0071e3] hover:underline"
-                rel="noopener noreferrer"
-              >
-                Direct download (configured for this deployment)
-              </a>
-            </p>
-          ) : (
-            <p className="mt-4 text-[14px] leading-relaxed text-[#86868b]">
-              Hosts can set{" "}
-              <code className="rounded bg-black/[0.05] px-1.5 py-0.5 font-mono text-[12px]">
-                NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL
-              </code>{" "}
-              to point at a release artifact.
-            </p>
-          )}
         </section>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
             Marketplace install behavior
           </h2>
-          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
-            Installing from marketplace adds the integration connection into your existing workspace account.
-            It does not create a separate app instance, so your Desk, commitments, and digest remain in sync.
+          <p className="mt-4 text-[16px] leading-relaxed text-[#1d1d1f]">
+            Installing from the marketplace connects integrations to your existing workspace. It does not fork data —
+            Desk, commitments, and digests stay in sync across desktop and web.
           </p>
         </section>
 
         <section className="mt-14 border-t border-black/[0.08] pt-12">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#86868b]">
-            Sessions & sign-out
+            Sessions &amp; sign-out
           </h2>
-          <p className="mt-4 text-[17px] leading-relaxed text-[#1d1d1f]">
-            When you sign out from the workspace (account menu), you are sent to{" "}
-            <strong className="font-semibold">/login</strong> with a clear &quot;Signed out&quot; state —
-            not the marketing homepage — so it&apos;s obvious the session ended.
+          <p className="mt-4 text-[16px] leading-relaxed text-[#1d1d1f]">
+            Signing out from the account menu ends the session and returns you to{" "}
+            <strong className="font-semibold">/login</strong> with a clear signed-out state.
           </p>
         </section>
 
@@ -117,28 +126,27 @@ npm run electron:dist`}
           </h2>
           <ul className="mt-4 list-inside list-disc space-y-2 text-[16px] leading-relaxed text-[#6e6e73]">
             <li>
-              HTTP responses include frame denial, MIME sniffing protection, strict referrer policy, and
-              locked-down browser features (camera/mic/geolocation) via{" "}
+              Responses use frame denial, MIME sniffing protection, strict referrer policy, and a restrictive{" "}
               <code className="font-mono text-[13px]">Permissions-Policy</code>.
             </li>
             <li>
-              Production deployments should be served over HTTPS; we emit{" "}
-              <code className="font-mono text-[13px]">Strict-Transport-Security</code> when{" "}
+              Production should use HTTPS;{" "}
+              <code className="font-mono text-[13px]">Strict-Transport-Security</code> is sent when{" "}
               <code className="font-mono text-[13px]">NODE_ENV=production</code>.
             </li>
             <li>
-              Destructive actions (e.g. deleting a project) require typing <strong>delete</strong> and, for
-              password-based accounts, verifying your Clerk password on the server.
+              Destructive actions require typing <strong>delete</strong> and, for password accounts, Clerk password
+              verification on the server.
             </li>
           </ul>
         </section>
 
         <p className="mt-14 text-[15px] leading-relaxed text-[#6e6e73]">
-          <Link href="/login" className="font-medium text-[#0071e3] hover:underline">
+          <Link href="/login" className="font-medium text-[#0071e3] underline-offset-2 hover:underline">
             Sign in to the workspace
           </Link>{" "}
           ·{" "}
-          <Link href="/trust" className="font-medium text-[#0071e3] hover:underline">
+          <Link href="/trust" className="font-medium text-[#0071e3] underline-offset-2 hover:underline">
             Trust &amp; boundaries
           </Link>
         </p>

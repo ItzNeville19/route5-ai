@@ -49,6 +49,10 @@ type WorkspaceDataValue = {
   summary: WorkspaceSummaryState;
   /** Commitment engine aggregates — same payload as GET /api/workspace/execution. */
   executionOverview: ExecutionOverview | null;
+  /** Clerk-linked org id from `/api/workspace/organization` (for realtime channels). */
+  organizationId: string | null;
+  /** Current workspace organization display name from `/api/workspace/organization`. */
+  organizationName: string | null;
   orgRole: "admin" | "manager" | "member" | null;
   orgUiPolicy: OrgUiPolicy;
   entitlements: EntitlementsPayload | null;
@@ -119,6 +123,8 @@ export function WorkspaceDataProvider({
   const [projects, setProjects] = useState<Project[]>([]);
   const [summary, setSummary] = useState<WorkspaceSummaryState>(EMPTY_SUMMARY);
   const [executionOverview, setExecutionOverview] = useState<ExecutionOverview | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<"admin" | "manager" | "member" | null>(null);
   const [orgUiPolicy, setOrgUiPolicy] = useState<OrgUiPolicy>(() => defaultOrgUiPolicy());
   const [entitlements, setEntitlements] = useState<EntitlementsPayload | null>(null);
@@ -192,17 +198,23 @@ export function WorkspaceDataProvider({
         cache: "no-store",
       });
       const data = (await res.json().catch(() => ({}))) as {
+        orgId?: string;
+        orgName?: string;
         me?: { role?: string | null };
         uiPolicy?: unknown;
       };
       if (!res.ok) {
         // Keep the last known org state on transient backend failures.
         if (res.status < 500) {
+          setOrganizationId(null);
+          setOrganizationName(null);
           setOrgRole(null);
           setOrgUiPolicy(defaultOrgUiPolicy());
         }
         return;
       }
+      setOrganizationId(typeof data.orgId === "string" && data.orgId.trim() ? data.orgId.trim() : null);
+      setOrganizationName(typeof data.orgName === "string" && data.orgName.trim() ? data.orgName.trim() : null);
       setOrgUiPolicy(parseOrgUiPolicy(data.uiPolicy));
       const role = data.me?.role;
       if (role === "admin" || role === "manager" || role === "member") {
@@ -304,6 +316,12 @@ export function WorkspaceDataProvider({
   }, [refreshAll]);
 
   useEffect(() => {
+    const onCommitments = () => void refreshSummary();
+    window.addEventListener("route5:commitments-changed", onCommitments);
+    return () => window.removeEventListener("route5:commitments-changed", onCommitments);
+  }, [refreshSummary]);
+
+  useEffect(() => {
     const applyScope = () => setActiveProjectId(readScopedProjectId());
     applyScope();
     const onScopeChanged = () => applyScope();
@@ -325,6 +343,8 @@ export function WorkspaceDataProvider({
       projects,
       summary,
       executionOverview,
+      organizationId,
+      organizationName,
       orgRole,
       orgUiPolicy,
       entitlements,
@@ -343,6 +363,8 @@ export function WorkspaceDataProvider({
       projects,
       summary,
       executionOverview,
+      organizationId,
+      organizationName,
       orgRole,
       orgUiPolicy,
       entitlements,

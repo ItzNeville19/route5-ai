@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import { useMemo, useRef } from "react";
 import {
   motion,
@@ -41,6 +40,9 @@ import {
   route5ContactFromWebsiteMailto,
   route5WalkthroughMailto,
 } from "@/lib/marketing-mailto";
+import { WORKSPACE_THEME_PHOTO, workspacePhotoUrl } from "@/lib/workspace-theme-photos";
+
+const MARKETING_SF_HERO_SRC = workspacePhotoUrl(WORKSPACE_THEME_PHOTO.sanfrancisco.path, 2400);
 
 export default function MarketingHomeClient({
   signedIn = false,
@@ -63,8 +65,8 @@ export default function MarketingHomeClient({
   );
 
   return (
-    <div className="bg-white text-slate-900">
-      {/* Hero — full-bleed city photo + scrim (entrepreneurial, high signal) */}
+    <div className="bg-gradient-to-b from-slate-50 via-white to-indigo-50/35 text-slate-900">
+      {/* Hero — SF / Golden Gate photography + scrims (workspace “sanfrancisco” theme family) */}
       <section
         ref={heroRef}
         id="hero"
@@ -83,26 +85,26 @@ export default function MarketingHomeClient({
           }
         >
           <Image
-            src="/images/marketing/hero-city.jpg"
-            alt=""
+            src={MARKETING_SF_HERO_SRC}
+            alt="San Francisco — Golden Gate Bridge and bay"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[center_32%] sm:object-center"
+            className="object-cover object-[center_38%] sm:object-[center_36%]"
             quality={88}
           />
         </motion.div>
         {/* Readability: dark left for copy, lift right for product mock */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/94 via-slate-950/78 to-slate-950/40"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/94 via-slate-950/72 to-slate-900/28"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/25"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/82 via-transparent to-cyan-950/20"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_100%_80%_at_100%_50%,rgba(59,130,246,0.12),transparent_50%)]"
+          className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_100%_80%_at_100%_45%,rgba(34,211,238,0.14),transparent_52%)]"
           aria-hidden
         />
 

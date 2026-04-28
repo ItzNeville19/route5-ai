@@ -96,7 +96,22 @@ export type WorkspacePrefsV1 = {
   dashboardSectionOrder?: string[];
   /** Optional override for the location line under the greeting (e.g. “Las Vegas, NV”). */
   heroLocationOverride?: string;
+  /** Interactive dashboard tour completed (WorkspaceInteractiveTour). */
+  guidedTourCompleted?: boolean;
+  /** Send automated due-soon / overdue reminder emails from the agent pipeline (default on). */
+  agentDueReminderEmailsEnabled?: boolean;
+  /**
+   * When canvas uses photography: daily rotation (default), a curated preset by Unsplash path,
+   * or a user-uploaded image (data URL; client caps size before save).
+   */
+  workspaceHeroPhotoSource?: WorkspaceHeroPhotoSource;
 };
+
+/** How the welcome hero + shell pick photography when `workspaceCanvasBackground` is `photo`. */
+export type WorkspaceHeroPhotoSource =
+  | { kind: "daily" }
+  | { kind: "preset"; path: string }
+  | { kind: "upload"; dataUrl: string };
 
 const defaultPrefs: WorkspacePrefsV1 = {
   extractionProviderId: "auto",
@@ -111,6 +126,7 @@ const defaultPrefs: WorkspacePrefsV1 = {
   welcomeHeroPalette: 0,
   defaultWorkspaceView: "admin",
   pinnedCommandActions: ["queue", "escalations", "activity"],
+  agentDueReminderEmailsEnabled: true,
 };
 
 export function loadWorkspacePrefs(): WorkspacePrefsV1 {
@@ -248,6 +264,12 @@ export function loadWorkspacePrefs(): WorkspacePrefsV1 {
         typeof o.heroLocationOverride === "string" && o.heroLocationOverride.length < 120
           ? o.heroLocationOverride.trim()
           : undefined,
+      guidedTourCompleted:
+        typeof o.guidedTourCompleted === "boolean" ? o.guidedTourCompleted : undefined,
+      agentDueReminderEmailsEnabled:
+        typeof o.agentDueReminderEmailsEnabled === "boolean"
+          ? o.agentDueReminderEmailsEnabled
+          : undefined,
     };
   } catch {
     return { ...defaultPrefs };
@@ -351,6 +373,20 @@ export function mergeRemoteWorkspacePrefs(
 
   if (local.uiLocale && !merged.uiLocale) {
     merged = mergeWorkspacePrefsPatch(merged, { uiLocale: local.uiLocale });
+    repaired = true;
+  }
+
+  // Photography is opt-in; Clerk may still store default gradient — don't let GET clobber device photo before POST catches up.
+  if (
+    local.workspaceCanvasBackground === "photo" &&
+    merged.workspaceCanvasBackground === "gradient"
+  ) {
+    merged = mergeWorkspacePrefsPatch(merged, { workspaceCanvasBackground: "photo" });
+    repaired = true;
+  }
+
+  if (local.guidedTourCompleted === true && merged.guidedTourCompleted !== true) {
+    merged = mergeWorkspacePrefsPatch(merged, { guidedTourCompleted: true });
     repaired = true;
   }
 
