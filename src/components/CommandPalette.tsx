@@ -26,6 +26,7 @@ import {
   type PaletteSection,
 } from "@/lib/command-palette-items";
 import { useWorkspaceDataOptional } from "@/components/workspace/WorkspaceData";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import { canCreateCompany } from "@/lib/workspace-role";
 
 type PaletteContextValue = {
@@ -81,13 +82,6 @@ export function useCommandPalette(): PaletteContextValue {
 }
 
 type UiGroupKey = "jump" | "commitments" | "projects" | "people" | "actions";
-const UI_GROUP_LABEL: Record<UiGroupKey, string> = {
-  jump: "Jump to",
-  commitments: "Commitments",
-  projects: "Projects",
-  people: "People",
-  actions: "Actions",
-};
 
 function groupKeyForSection(section: PaletteSection): UiGroupKey {
   if (section === "activity") return "commitments";
@@ -97,7 +91,7 @@ function groupKeyForSection(section: PaletteSection): UiGroupKey {
   return "jump";
 }
 
-function groupFiltered(items: PaletteItem[]) {
+function groupFiltered(items: PaletteItem[], labels: Record<UiGroupKey, string>) {
   const order: UiGroupKey[] = ["jump", "commitments", "projects", "people", "actions"];
   const map = new Map<UiGroupKey, PaletteItem[]>();
   for (const item of items) {
@@ -109,7 +103,7 @@ function groupFiltered(items: PaletteItem[]) {
   return order
     .map((key) => ({
       section: key,
-      label: UI_GROUP_LABEL[key],
+      label: labels[key],
       items: map.get(key) ?? [],
     }))
     .filter((g) => g.items.length > 0);
@@ -263,6 +257,17 @@ export function CommandPaletteProvider({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const deferredQuery = useDeferredValue(query);
+  const { t } = useI18n();
+  const paletteGroupLabels = useMemo(
+    () => ({
+      jump: t("palette.jumpTo"),
+      commitments: t("palette.commitments"),
+      projects: t("palette.projects"),
+      people: t("palette.people"),
+      actions: t("palette.actions"),
+    }),
+    [t]
+  );
 
   const loadPalette = useCallback(async (forceNetwork = false) => {
     if (!forceNetwork && paletteCache && Date.now() - paletteCache.at < PALETTE_CACHE_TTL_MS) {
@@ -399,7 +404,10 @@ export function CommandPaletteProvider({
     return ranked;
   }, [deferredQuery, directory]);
 
-  const grouped = useMemo(() => groupFiltered(filtered), [filtered]);
+  const grouped = useMemo(
+    () => groupFiltered(filtered, paletteGroupLabels),
+    [filtered, paletteGroupLabels]
+  );
 
   const flatForNav = useMemo(
     () => grouped.flatMap((g) => g.items),

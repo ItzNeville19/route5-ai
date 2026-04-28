@@ -86,6 +86,18 @@ export const en: Record<string, string> = {
   "prefs.appearanceSection": "Appearance",
   "prefs.appearanceIntro": "Themes, previews, and mesh options live in",
   "prefs.signedInSync": "Signed in — workspace preferences sync across devices via your account.",
+  "prefs.locationUnavailable": "Precise location is not available on this browser or device.",
+  "prefs.locationCaptured": "Location captured. Tap Apply location to save.",
+  "prefs.locationOutsideRegions":
+    "We read your position, but it does not line up with a named place in our region list yet. Your timezone stays set—pick the closest area from the menu if the label matters, or leave the default.",
+  "prefs.locationDenied":
+    "Location was blocked or unavailable. Safari and other browsers only share location after you allow it (Safari: Settings → Websites → Location for this site, or use the address-bar permission chip).",
+
+  "palette.jumpTo": "Jump to",
+  "palette.commitments": "Commitments",
+  "palette.projects": "Projects",
+  "palette.people": "People",
+  "palette.actions": "Actions",
 
   "overview.openActionsStrip.badge": "Tasks",
   "overview.openActionsStrip.title": "{count} unfinished action(s) in queue",

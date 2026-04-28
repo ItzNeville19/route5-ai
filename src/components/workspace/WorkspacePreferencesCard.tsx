@@ -70,7 +70,7 @@ export default function WorkspacePreferencesCard() {
 
   const detectPreciseLocation = useCallback(async () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      setLocationHint("Precise location is unavailable on this device.");
+      setLocationHint(t("prefs.locationUnavailable"));
       return;
     }
     setDetectingLocation(true);
@@ -78,9 +78,9 @@ export default function WorkspacePreferencesCard() {
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 30000,
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 120_000,
         });
       });
       const preciseKey = inferPreciseRegionKeyFromCoords(
@@ -90,20 +90,20 @@ export default function WorkspacePreferencesCard() {
       );
       if (preciseKey) {
         setRegionKey(preciseKey);
-        setLocationHint("Precise location captured. Apply to save.");
+        setLocationHint(t("prefs.locationCaptured"));
       } else {
         const fallback = inferRegionKeyForTimezone(tz);
         if (fallback) {
           setRegionKey(fallback);
         }
-        setLocationHint("Location found, but exact place is outside saved regions. Using closest timezone match.");
+        setLocationHint(t("prefs.locationOutsideRegions"));
       }
     } catch {
-      setLocationHint("Unable to read precise location. Check browser location permission and try again.");
+      setLocationHint(t("prefs.locationDenied"));
     } finally {
       setDetectingLocation(false);
     }
-  }, [tz]);
+  }, [tz, t]);
 
   return (
     <section
@@ -210,7 +210,7 @@ export default function WorkspacePreferencesCard() {
             disabled={detectingLocation}
             className="rounded-lg border border-[var(--workspace-border)] bg-[var(--workspace-surface)] px-3 py-2 text-[12px] font-semibold text-[var(--workspace-fg)] transition hover:bg-[var(--workspace-canvas)] disabled:opacity-60"
           >
-            {detectingLocation ? "Detecting..." : "Use precise location"}
+            {detectingLocation ? "Detecting…" : "Use device location"}
           </button>
           <button
             type="button"

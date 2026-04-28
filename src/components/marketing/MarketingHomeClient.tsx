@@ -19,9 +19,12 @@ import {
   LANDING_EASE,
   LANDING_SPRING,
   staggerParent,
+  staggerReduceMotionParent,
   staggerChild,
-  fadeUpViewport,
+  staggerInstantChild,
+  marketingFadeViewport,
 } from "@/components/marketing/LandingMotion";
+import { useHover3dEnabled } from "@/hooks/use-hover-3d-enabled";
 import {
   ArrowRight,
   Building2,
@@ -61,6 +64,10 @@ export default function MarketingHomeClient({
   const { t } = useI18n();
   const heroRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
+  const hover3d = useHover3dEnabled();
+  const fadeUpViewport = marketingFadeViewport(reduceMotion);
+  const heroStaggerParent = reduceMotion ? staggerReduceMotionParent : staggerParent;
+  const heroStaggerChild = reduceMotion ? staggerInstantChild : staggerChild;
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -124,17 +131,17 @@ export default function MarketingHomeClient({
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
           <motion.div
             className="lg:col-span-7"
-            variants={staggerParent}
+            variants={heroStaggerParent}
             initial="hidden"
             animate="show"
           >
-            <motion.div variants={staggerChild}>
+            <motion.div variants={heroStaggerChild}>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md transition-colors duration-300 hover:border-white/35 hover:bg-white/[0.14]">
                 {t("landing.hero.badge")}
               </span>
             </motion.div>
             <motion.h1
-              variants={staggerChild}
+              variants={heroStaggerChild}
               className={`mt-6 text-[clamp(2.35rem,6vw,3.65rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white [text-shadow:0_2px_28px_rgba(0,0,0,0.45)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
             >
               {t("landing.hero.title1")}{" "}
@@ -145,19 +152,19 @@ export default function MarketingHomeClient({
               </span>
             </motion.h1>
             <motion.p
-              variants={staggerChild}
+              variants={heroStaggerChild}
               className="mt-6 max-w-xl text-pretty text-[17px] font-medium leading-relaxed text-slate-100"
             >
               {t("landing.hero.lead")}
             </motion.p>
             <motion.p
-              variants={staggerChild}
+              variants={heroStaggerChild}
               className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-200/95"
             >
               {TRIAL_BODY}
             </motion.p>
             <motion.div
-              variants={staggerChild}
+              variants={heroStaggerChild}
               className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
               <MotionLink
@@ -188,13 +195,19 @@ export default function MarketingHomeClient({
                 }
               >
                 {t("landing.hero.ctaProduct")}
-                <motion.span aria-hidden className="inline-flex" whileHover={{ x: 4 }}>
+                <motion.span
+                  aria-hidden
+                  className="inline-flex"
+                  whileHover={
+                    reduceMotion ? undefined : { x: 4, transition: LANDING_SPRING }
+                  }
+                >
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </motion.span>
               </MotionLink>
             </motion.div>
             <motion.p
-              variants={staggerChild}
+              variants={heroStaggerChild}
               className="mt-5 text-[12px] font-medium tracking-wide text-slate-300/95"
             >
               {t("landing.trial")}
@@ -203,7 +216,11 @@ export default function MarketingHomeClient({
 
           <motion.div
             className="relative lg:col-span-5"
-            initial={{ opacity: 0, y: 28, rotateX: 6 }}
+            initial={
+              reduceMotion
+                ? { opacity: 1, y: 0 }
+                : { opacity: 0, y: 28, ...(hover3d ? { rotateX: 6 } : {}) }
+            }
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ duration: 0.75, delay: 0.14, ease: LANDING_EASE }}
             style={{ perspective: 1200 }}
@@ -381,15 +398,15 @@ export default function MarketingHomeClient({
                 viewport={{ once: true, amount: 0.25 }}
                 transition={{ duration: 0.5, delay: i * 0.08, ease: LANDING_EASE }}
                 whileHover={
-                  reduceMotion
-                    ? { y: -2 }
-                    : {
+                  hover3d
+                    ? {
                         y: -5,
                         rotateX: 3,
                         rotateY: -2,
                         z: 10,
                         transition: LANDING_SPRING,
                       }
+                    : { y: -2 }
                 }
                 className="relative flex gap-4 rounded-2xl border border-white/28 bg-white/[0.18] p-5 shadow-[0_20px_50px_-28px_rgba(0,0,0,0.4)] backdrop-blur-md [transform-style:preserve-3d]"
                 style={{ perspective: 900 }}

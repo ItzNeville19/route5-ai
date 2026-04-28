@@ -71,7 +71,7 @@ export default function LandingHero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18, duration: 0.55, ease }}
-            className="mx-auto mt-6 max-w-[34rem] text-[17px] font-light leading-[1.55] tracking-[-0.02em] text-zinc-400 sm:text-[18px]"
+            className="mx-auto mt-6 max-w-[34rem] text-[17px] font-light leading-[1.55] tracking-[-0.02em] text-zinc-200 sm:text-[18px]"
           >
             {t("marketing.landing.hero.subtitle")}
           </motion.p>

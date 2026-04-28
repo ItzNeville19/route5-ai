@@ -346,6 +346,9 @@ export function mergeRemoteWorkspacePrefs(
 ): { merged: WorkspacePrefsV1; repaired: boolean } {
   const remoteClean = { ...remote };
   delete remoteClean.sidebarHidden;
+  if ("uiLocale" in remoteClean && remoteClean.uiLocale === null) {
+    delete remoteClean.uiLocale;
+  }
 
   let merged = mergeWorkspacePrefsPatch(local, remoteClean);
   let repaired = false;

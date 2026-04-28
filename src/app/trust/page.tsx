@@ -66,7 +66,7 @@ export default function TrustPage() {
               <Link href="/contact?subject=Security%20questionnaire" className={linkC}>
                 the contact form
               </Link>{" "}
-              <span className="text-zinc-400">(subject line is prefilled)</span>. We respond with written answers and
+              <span className="text-zinc-200">(subject line is prefilled)</span>. We respond with written answers and
               point-in-time detail suitable for your InfoSec review.
             </p>
             <div className="mt-6 space-y-6">
@@ -124,7 +124,7 @@ export default function TrustPage() {
             </p>
           </section>
 
-          <p className="text-[13px] leading-relaxed text-zinc-400">
+          <p className="text-[13px] leading-relaxed text-zinc-200">
             See also{" "}
             <Link href="/pricing" className={linkC}>
               Pricing

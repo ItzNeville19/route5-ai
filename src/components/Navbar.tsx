@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -21,7 +21,7 @@ const NavbarHomeTryCtaLazy = dynamic(() => import("./NavbarHomeTryCta"), {
   loading: () => (
     <Link
       href="/sign-up"
-      className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
+      className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition hover:bg-[#0077ed] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white/40"
     >
       Try Route5
     </Link>
@@ -48,12 +48,36 @@ export default function Navbar() {
   const [activeHomeSection, setActiveHomeSection] = useState<string | null>(
     null
   );
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileNavPanelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onClose = () => setMobileOpen(false);
     window.addEventListener("close-site-mobile-nav", onClose);
     return () => window.removeEventListener("close-site-mobile-nav", onClose);
   }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        queueMicrotask(() => menuButtonRef.current?.focus());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    if (!mobileOpen || typeof document === "undefined") return;
+    const panel = mobileNavPanelRef.current;
+    if (!panel) return;
+    const first = panel.querySelector<HTMLElement>(
+      'a[href], button:not([disabled])'
+    );
+    queueMicrotask(() => first?.focus());
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -115,7 +139,9 @@ export default function Navbar() {
     pathname === "/trust" ||
     pathname === "/privacy" ||
     pathname === "/terms" ||
-    pathname === "/benefits";
+    pathname === "/benefits" ||
+    pathname === "/careers" ||
+    pathname === "/press";
   const navUsesDarkChrome = isAuthPage || isPublicGuideChrome || isMarketingSiteChrome;
 
   const navLinkClass = navUsesDarkChrome
@@ -179,6 +205,7 @@ export default function Navbar() {
           <motion.div
             role="navigation"
             aria-label={t("marketing.nav.mobileNav")}
+            ref={mobileNavPanelRef}
             initial={{ opacity: 0, y: -14, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
@@ -336,7 +363,7 @@ export default function Navbar() {
             <Link
               href="/contact"
               title="Contact sales or support"
-              className="ml-1 rounded-full bg-[#0071e3] px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed]"
+              className="ml-1 rounded-full bg-[#0071e3] px-4 py-2 text-[13px] font-semibold text-white shadow-md shadow-[#0071e3]/20 transition hover:bg-[#0077ed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950/80"
             >
               {t("marketing.nav.getInTouch")}
             </Link>
@@ -349,7 +376,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/sign-up"
-                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]"
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition hover:bg-[#0077ed] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white/40"
                 >
                   {t("marketing.nav.tryRoute5")}
                 </Link>
@@ -373,6 +400,7 @@ export default function Navbar() {
             </button>
             <button
               type="button"
+              ref={menuButtonRef}
               onClick={() => setMobileOpen((o) => !o)}
               className={
                 navUsesDarkChrome

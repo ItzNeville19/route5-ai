@@ -76,7 +76,7 @@ function SparkArea() {
         </div>
         <div className="text-right">
           <p className="text-[10px] text-zinc-500">Marketing preview</p>
-          <p className="text-[13px] font-medium text-zinc-400">Illustrative trend</p>
+          <p className="text-[13px] font-medium text-zinc-200">Illustrative trend</p>
         </div>
       </div>
       <svg
@@ -159,7 +159,7 @@ function StatusMix() {
       <ul className="mt-4 space-y-2">
         {rows.map((r) => (
           <li key={r.label} className="flex items-center justify-between text-[12px]">
-            <span className="flex items-center gap-2 text-zinc-400">
+            <span className="flex items-center gap-2 text-zinc-200">
               <span className={`h-2 w-2 rounded-full ${r.color}`} />
               {r.label}
             </span>
@@ -255,7 +255,7 @@ function MiniTable() {
             {rows.map((r) => (
               <tr key={r.item} className="border-t border-white/[0.05]">
                 <td className="px-4 py-2.5 font-medium text-zinc-200 sm:px-5">{r.owner}</td>
-                <td className="px-2 py-2.5 text-zinc-400">{r.item}</td>
+                <td className="px-2 py-2.5 text-zinc-200">{r.item}</td>
                 <td className="px-2 py-2.5 tabular-nums text-zinc-500">{r.due}</td>
                 <td className="px-4 py-2.5 sm:px-5">
                   <span

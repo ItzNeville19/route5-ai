@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 
 export const metadata: Metadata = {
   title: "Careers — Route5",
@@ -10,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function CareersPage() {
   return (
-    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
+    <MarketingPublicShell>
       <Navbar />
       <div className="relative z-10 mx-auto max-w-3xl px-6 pb-20 pt-28 md:px-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Team</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">Team</p>
         <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-tight text-white">Careers</h1>
         <p className="mt-6 text-[17px] leading-relaxed text-zinc-300">
           We hire for craft, judgment, and curiosity. Open roles will be listed here; until then, introduce yourself via{" "}
@@ -24,6 +25,6 @@ export default function CareersPage() {
         </p>
       </div>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

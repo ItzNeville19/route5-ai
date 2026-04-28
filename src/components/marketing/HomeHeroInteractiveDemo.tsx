@@ -45,7 +45,7 @@ export default function HomeHeroInteractiveDemo() {
   return (
     <div className="workspace-preview-panel mx-auto mt-10 w-full max-w-[980px] p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-400">Interactive product preview</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-200">Interactive product preview</p>
         <span className="rounded-full border border-violet-400/30 bg-violet-500/12 px-2.5 py-1 text-[11px] font-medium text-violet-200">
           Live app surfaces
         </span>

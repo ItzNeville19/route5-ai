@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 import { getDesktopDownloadUrl, isDesktopDownloadConfigured } from "@/lib/desktop-install-url";
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export default function DownloadPage() {
   const hasHostedInstaller = isDesktopDownloadConfigured();
 
   return (
-    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
+    <MarketingPublicShell>
       <Navbar />
       <article className="route5-page-transition relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/85">
@@ -108,6 +109,6 @@ export default function DownloadPage() {
         </p>
       </article>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

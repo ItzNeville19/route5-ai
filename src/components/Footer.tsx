@@ -38,7 +38,7 @@ export default function Footer({ tone = "light" }: FooterProps) {
     ? "text-[14px] text-zinc-300 transition-colors hover:text-white hover:underline hover:underline-offset-2"
     : "text-[14px] text-[#6e6e73] transition-colors hover:text-[#1d1d1f] hover:underline hover:underline-offset-2";
   const footBorder = command ? "border-white/10" : "border-black/[0.06]";
-  const footMuted = command ? "text-zinc-400" : "text-[#86868b]";
+  const footMuted = command ? "text-zinc-300" : "text-[#86868b]";
   const footLink = command
     ? "font-medium text-sky-400 underline-offset-2 hover:underline"
     : "font-medium text-[#0071e3] underline-offset-2 hover:underline";

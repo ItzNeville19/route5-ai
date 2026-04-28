@@ -8,7 +8,7 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 export default function NavbarHomeTryCta() {
   const { t } = useI18n();
   const tryClass =
-    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition active:scale-[0.98] hover:bg-[#0077ed]";
+    "inline-flex min-h-11 items-center justify-center rounded-full bg-[#0071e3] px-3.5 text-[12px] font-semibold text-white shadow-md shadow-[#0071e3]/30 transition hover:bg-[#0077ed] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white/40";
 
   return (
     <>

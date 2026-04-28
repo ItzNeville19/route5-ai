@@ -9,16 +9,14 @@ import {
   type HTMLMotionProps,
   type Transition,
 } from "framer-motion";
+import { easeMarketing, durationMd, transitionMarketingSpring } from "@/lib/motion";
+import { useHover3dEnabled } from "@/hooks/use-hover-3d-enabled";
 
-/** Smooth “Apple-like” easing — fast out, gentle settle */
-export const LANDING_EASE = [0.22, 1, 0.36, 1] as const;
+/** @deprecated Prefer `easeMarketing` from `@/lib/motion` */
+export const LANDING_EASE = easeMarketing;
 
-export const LANDING_SPRING: Transition = {
-  type: "spring",
-  stiffness: 380,
-  damping: 32,
-  mass: 0.85,
-};
+/** @deprecated Prefer `transitionMarketingSpring` from `@/lib/motion` */
+export const LANDING_SPRING: Transition = transitionMarketingSpring;
 
 export const MotionLink = motion.create(Link);
 
@@ -34,15 +32,35 @@ export const staggerParent = {
   },
 };
 
+export const staggerReduceMotionParent = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0,
+      delayChildren: 0,
+    },
+  },
+};
+
 export const staggerChild = {
   hidden: { opacity: 0, y: 18 },
   show: {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.52,
+      duration: durationMd,
       ease: LANDING_EASE,
     },
+  },
+};
+
+/** Instant settle when prefers-reduced-motion (pairs with staggerReduceMotionParent). */
+export const staggerInstantChild = {
+  hidden: { opacity: 1, y: 0 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0 },
   },
 };
 
@@ -53,6 +71,19 @@ export const fadeUpViewport = {
   transition: { duration: 0.55, ease: LANDING_EASE },
 };
 
+/** No travel / fade choreography when prefers-reduced-motion. */
+export function marketingFadeViewport(reducedMotion: boolean | undefined | null) {
+  if (reducedMotion) {
+    return {
+      initial: { opacity: 1, y: 0 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true, amount: 0.15 },
+      transition: { duration: 0 },
+    };
+  }
+  return fadeUpViewport;
+}
+
 type TiltSurfaceProps = {
   children: ReactNode;
   className?: string;
@@ -61,25 +92,25 @@ type TiltSurfaceProps = {
 };
 
 /**
- * Perspective + spring tilt on hover. Disabled when reduced motion is on.
+ * Perspective + spring tilt on hover. Disabled without fine pointer hover (touch / reduced motion).
  */
 export function TiltSurface({ children, className, float = false }: TiltSurfaceProps) {
-  const reduced = useReducedMotion();
+  const hover3d = useHover3dEnabled();
 
   const inner = (
     <motion.div
       className="will-change-transform [transform-style:preserve-3d] [backface-visibility:hidden]"
       whileHover={
-        reduced
-          ? undefined
-          : {
+        hover3d
+          ? {
               rotateX: -4,
               rotateY: 4,
               z: 14,
               transition: LANDING_SPRING,
             }
+          : undefined
       }
-      whileTap={reduced ? undefined : { scale: 0.992 }}
+      whileTap={hover3d ? { scale: 0.992 } : undefined}
     >
       {children}
     </motion.div>
@@ -90,7 +121,7 @@ export function TiltSurface({ children, className, float = false }: TiltSurfaceP
       className={`relative [perspective:1100px] ${className ?? ""}`}
       style={{ transformStyle: "preserve-3d" }}
     >
-      {float && !reduced ? (
+      {float && hover3d ? (
         <motion.div
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
@@ -107,12 +138,13 @@ export function TiltSurface({ children, className, float = false }: TiltSurfaceP
 
 type LiftCardProps = HTMLMotionProps<"div"> & { children: ReactNode };
 
-/** Card lift + micro tilt without full mouse tracking — great for grids */
+/** Card lift + micro tilt — fine-pointer hover only; lift flattens on touch. */
 export const LiftCard = forwardRef<HTMLDivElement, LiftCardProps>(function LiftCard(
   { children, className, ...rest },
   ref
 ) {
-  const reduced = useReducedMotion();
+  const hover3d = useHover3dEnabled();
+  const reducedMotion = useReducedMotion();
   return (
     <div className="relative [perspective:900px]" style={{ transformStyle: "preserve-3d" }}>
       <motion.div
@@ -121,11 +153,10 @@ export const LiftCard = forwardRef<HTMLDivElement, LiftCardProps>(function LiftC
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.12 }}
-        transition={{ duration: 0.48, ease: LANDING_EASE }}
+        transition={{ duration: reducedMotion ? 0 : 0.48, ease: LANDING_EASE }}
         whileHover={
-          reduced
-            ? { y: -3, boxShadow: "0 24px 48px -24px rgba(15,23,42,0.18)" }
-            : {
+          hover3d
+            ? {
                 y: -6,
                 rotateX: 2,
                 rotateY: -2,
@@ -133,6 +164,7 @@ export const LiftCard = forwardRef<HTMLDivElement, LiftCardProps>(function LiftC
                 boxShadow: "0 28px 56px -28px rgba(37,99,235,0.22)",
                 transition: LANDING_SPRING,
               }
+            : { y: -3, transition: LANDING_SPRING }
         }
         {...rest}
       >
@@ -145,12 +177,12 @@ export const LiftCard = forwardRef<HTMLDivElement, LiftCardProps>(function LiftC
 type InteractiveChipProps = ComponentPropsWithoutRef<typeof motion.span> & { children: ReactNode };
 
 export function InteractiveChip({ children, className, ...rest }: InteractiveChipProps) {
-  const reduced = useReducedMotion();
+  const hover3d = useHover3dEnabled();
   return (
     <motion.span
       className={className}
-      whileHover={reduced ? { y: -1 } : { y: -3, scale: 1.03, transition: LANDING_SPRING }}
-      whileTap={reduced ? undefined : { scale: 0.98 }}
+      whileHover={hover3d ? { y: -3, scale: 1.03, transition: LANDING_SPRING } : { y: -1 }}
+      whileTap={hover3d ? { scale: 0.98 } : undefined}
       {...rest}
     >
       {children}

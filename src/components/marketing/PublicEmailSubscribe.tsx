@@ -55,7 +55,7 @@ export default function PublicEmailSubscribe({
   return (
     <div className="mt-6 max-w-md">
       <p className={`text-[13px] font-semibold ${label}`}>Email updates</p>
-      <p className={`mt-1 text-[12px] leading-relaxed ${command ? "text-zinc-400" : "text-[#6e6e73]"}`}>
+      <p className={`mt-1 text-[12px] leading-relaxed ${command ? "text-zinc-200" : "text-[#6e6e73]"}`}>
         Product updates and workspace tips — even if you don&apos;t have an account yet.
       </p>
       <form onSubmit={onSubmit} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">

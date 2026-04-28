@@ -37,7 +37,7 @@ export default function HomeExecutionSnapshot() {
           transition={{ duration: 0.55, ease: easeApple }}
           className="mx-auto max-w-[860px] text-center"
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Why teams keep Route5</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-200">Why teams keep Route5</p>
           <h2 className="mt-3 text-[clamp(1.65rem,4vw,2.4rem)] font-semibold tracking-[-0.04em] text-white">
             Decisions become execution without manual chasing
           </h2>
@@ -63,7 +63,7 @@ export default function HomeExecutionSnapshot() {
                   </span>
                 </div>
                 <h3 className="mt-4 text-[17px] font-semibold tracking-[-0.02em] text-white">{snapshot.title}</h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-zinc-400">{snapshot.body}</p>
+                <p className="mt-2 text-[14px] leading-relaxed text-zinc-200">{snapshot.body}</p>
               </article>
             );
           })}

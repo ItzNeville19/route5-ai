@@ -1,7 +1,24 @@
 import type { Transition, Variants } from "framer-motion";
 
-/** Apple-like ease — smooth deceleration */
+/** Apple-like ease — smooth deceleration (marketing + workspace micro-interactions) */
 export const easeApple = [0.22, 1, 0.36, 1] as const;
+
+/** Alias for landing / hero copy — single shared curve everywhere */
+export const easeMarketing = easeApple;
+
+/** Durations (seconds) — keep marketing + globals.css mentally aligned */
+export const durationXs = 0.14;
+export const durationSm = 0.35;
+export const durationMd = 0.52;
+export const durationLg = 0.65;
+
+/** Spring tuned for chrome (nav drawers, lifted CTAs, cards) — matches LandingMotion polish */
+export const transitionMarketingSpring: Transition = {
+  type: "spring",
+  stiffness: 380,
+  damping: 32,
+  mass: 0.85,
+};
 
 export const defaultTransition: Transition = {
   duration: 0.55,

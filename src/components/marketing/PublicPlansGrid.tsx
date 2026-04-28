@@ -98,7 +98,7 @@ export default function PublicPlansGrid({ signedIn }: Props) {
             </Link>
           )}
         </div>
-        <p className="mt-6 text-[13px] text-zinc-400">
+        <p className="mt-6 text-[13px] text-zinc-200">
           Direct:{" "}
           <a
             className="font-medium text-emerald-300 underline-offset-4 hover:text-emerald-200 hover:underline"

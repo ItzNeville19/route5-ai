@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, ArrowUpRight, CircleDot, Target, UserX } from "lucide-react";
 import type { CommitmentRiskItem, ExecutionOverview } from "@/lib/commitment-types";
 import { deskUrl } from "@/lib/desk-routes";
@@ -269,6 +269,8 @@ function Metric({
   warn: boolean;
   href?: string;
 }) {
+  const reducedMotion = useReducedMotion();
+  const liftHover = reducedMotion ? undefined : { y: -2 };
   const cls = `rounded-2xl border px-3 py-3 text-left transition ${
     warn
       ? "border-amber-500/35 bg-amber-500/[0.08] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
@@ -288,7 +290,7 @@ function Metric({
   );
   if (href) {
     return (
-      <motion.div whileHover={{ y: -2 }}>
+      <motion.div whileHover={liftHover}>
         <Link href={href} className={`block ${cls}`} aria-label={`${label}: ${value}. Open filtered list.`}>
           {inner}
         </Link>
@@ -296,7 +298,7 @@ function Metric({
     );
   }
   return (
-    <motion.div whileHover={{ y: -2 }} className={cls}>
+    <motion.div whileHover={liftHover} className={cls}>
       {inner}
     </motion.div>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 
 export const metadata: Metadata = {
   title: "Press — Route5",
@@ -10,10 +11,10 @@ export const metadata: Metadata = {
 
 export default function PressPage() {
   return (
-    <main className="route5-brand-marketing-page theme-glass-site relative min-h-screen">
+    <MarketingPublicShell>
       <Navbar />
       <div className="relative z-10 mx-auto max-w-3xl px-6 pb-20 pt-28 md:px-12">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Newsroom</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">Newsroom</p>
         <h1 className="mt-3 text-[clamp(1.75rem,4vw,2.25rem)] font-semibold tracking-tight text-white">Press</h1>
         <p className="mt-6 text-[17px] leading-relaxed text-zinc-300">
           Wire releases, launch notes, and media kits will live here. Until then, journalists and analysts can reach us
@@ -25,6 +26,6 @@ export default function PressPage() {
         </p>
       </div>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }
