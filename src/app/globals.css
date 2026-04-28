@@ -3859,6 +3859,29 @@ body.theme-glass-site:has(main.landing-premium) {
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 
+/*
+ * Co-element modifier (set from React when `workspacePaletteLight`) — wins any cascade/order issues
+ * so the sticky bar never stays ocean-dark while copy uses light-palette ink.
+ */
+.route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  background: linear-gradient(
+    168deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(248, 250, 252, 0.92) 46%,
+    rgba(241, 245, 249, 0.98) 100%
+  ) !important;
+  box-shadow:
+    0 16px 48px -40px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+}
+
+.route5-brand-agent-shell[data-route5-canvas-photo="true"]
+  .route5-ocean-header
+  .route5-ocean-toolbar-surface.route5-ocean-toolbar-surface--light::after {
+  opacity: 0;
+}
+
 .route5-workspace-toolbar-inner {
   flex-wrap: wrap;
 }
