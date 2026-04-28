@@ -25,6 +25,9 @@ export default function AgentControlCenter() {
   const [running, setRunning] = useState(false);
   const [executing, setExecuting] = useState(false);
   const [summary, setSummary] = useState<string>("");
+  const [history, setHistory] = useState<
+    Array<{ id: string; severity: string; ownerDisplayName: string; commitmentTitle: string; ageHours: number }>
+  >([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +45,30 @@ export default function AgentControlCenter() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/escalations?resolved=all&limit=10", {
+        credentials: "same-origin",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        escalations?: Array<{
+          id: string;
+          severity: string;
+          ownerDisplayName: string;
+          commitmentTitle: string;
+          ageHours: number;
+        }>;
+      };
+      if (!cancelled && res.ok) {
+        setHistory(data.escalations ?? []);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [summary]);
 
   async function saveMode(next: AgentMode) {
     setMode(next);
@@ -184,6 +211,26 @@ export default function AgentControlCenter() {
           );
         })}
       </ul>
+
+      <section className="mt-5 rounded-lg border border-[#2f4630] bg-[#0f1610] p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#9ab09a]">Agent run history</p>
+        <ul className="mt-2 space-y-1.5">
+          {history.length === 0 ? (
+            <li className="text-xs text-[#8ea28d]">No recent escalations yet.</li>
+          ) : (
+            history.map((item) => (
+              <li key={item.id} className="flex items-center justify-between rounded border border-[#243624] px-2 py-1 text-xs">
+                <span className="text-[#dbead8]">
+                  {item.commitmentTitle} · {item.ownerDisplayName}
+                </span>
+                <span className="text-[#9ab09a]">
+                  {item.severity} · {item.ageHours}h
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
+      </section>
     </div>
   );
 }

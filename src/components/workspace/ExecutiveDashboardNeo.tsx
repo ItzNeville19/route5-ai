@@ -13,14 +13,7 @@ import {
   UserCircle2,
   Users,
 } from "lucide-react";
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import type { LiveDashboardMetrics } from "@/lib/dashboard/compute";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
@@ -37,19 +30,6 @@ type ActivityRow = {
   updated_at: string;
   completed_at: string | null;
 };
-
-const payrollData = [
-  { x: "1", y: 7600 },
-  { x: "2", y: 3900 },
-  { x: "3", y: 9100 },
-  { x: "4", y: 5400 },
-  { x: "5", y: 6200 },
-  { x: "6", y: 12600 },
-  { x: "7", y: 5200 },
-  { x: "8", y: 13400 },
-  { x: "9", y: 8600 },
-  { x: "10", y: 15200 },
-];
 
 function performanceLabel(status: string) {
   if (status === "completed") return "Excellent";
@@ -94,31 +74,55 @@ export default function ExecutiveDashboardNeo() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const totalCommitments = (metrics?.teamBreakdown ?? []).reduce((a, b) => a + b.total, 0) || 230;
+  const totalCommitments = (metrics?.teamBreakdown ?? []).reduce((a, b) => a + b.total, 0);
   const completionRate = metrics
     ? Math.round(
         ((metrics.teamBreakdown.reduce((a, b) => a + b.completedOnTime, 0) || 0) /
           Math.max(1, totalCommitments)) *
           100
       )
-    : 90;
-  const activeCount = metrics?.activeCount ?? 234;
+    : 0;
+  const activeCount = metrics?.activeCount ?? 0;
+  const topContributor = useMemo(() => {
+    const rows = metrics?.teamBreakdown ?? [];
+    if (rows.length === 0) return null;
+    return [...rows].sort((a, b) => b.completedOnTime - a.completedOnTime || b.total - a.total)[0];
+  }, [metrics?.teamBreakdown]);
+  const attendanceBars = useMemo(() => {
+    const rows = metrics?.teamBreakdown ?? [];
+    if (rows.length === 0) return [0, 0, 0, 0, 0, 0, 0];
+    const slice = rows.slice(0, 7);
+    const max = Math.max(1, ...slice.map((r) => r.total));
+    return slice.map((r) => Math.round((r.total / max) * 100));
+  }, [metrics?.teamBreakdown]);
+  const payrollData = useMemo(() => {
+    const dayBuckets = new Map<string, number>();
+    for (const row of activity) {
+      const date = new Date(row.updated_at);
+      const key = `${date.getMonth() + 1}/${date.getDate()}`;
+      dayBuckets.set(key, (dayBuckets.get(key) ?? 0) + 1);
+    }
+    const series = [...dayBuckets.entries()].slice(-10);
+    if (series.length === 0) {
+      return Array.from({ length: 10 }).map((_, idx) => ({ x: String(idx + 1), y: 0 }));
+    }
+    return series.map(([x, count], idx) => ({ x: x || String(idx + 1), y: count * 3000 }));
+  }, [activity]);
+  const onTrack = metrics?.onTrackCount ?? 0;
+  const atRisk = metrics?.atRiskCount ?? 0;
+  const overdue = metrics?.overdueCount ?? 0;
+  const employeePermanentPct = Math.round((onTrack / Math.max(1, onTrack + atRisk + overdue)) * 100);
+  const employeeContractPct = Math.round((atRisk / Math.max(1, onTrack + atRisk + overdue)) * 100);
+  const homePay = totalCommitments * 910;
+  const paymentDone = Math.min(100, Math.max(0, completionRate));
+  const leftValue = Math.max(0, Math.round(homePay * ((100 - paymentDone) / 100)));
 
   const feedRows = useMemo(() => {
-    const fallback = [
-      { id: "1", owner_name: "Product Development", status: "completed" },
-      { id: "2", owner_name: "Product Development", status: "in_progress" },
-      { id: "3", owner_name: "Product Development", status: "blocked" },
-      { id: "4", owner_name: "Product Development", status: "not_started" },
-      { id: "5", owner_name: "Product Development", status: "completed" },
-      { id: "6", owner_name: "Product Development", status: "in_progress" },
-    ];
-    if (activity.length === 0) return fallback;
     return activity.slice(0, 6);
   }, [activity]);
 
   if (loading && !metrics) {
-    return <div className="p-6 text-sm text-white/70">Loading your execution dashboard...</div>;
+    return <div className="p-4 text-xs text-white/55">Loading...</div>;
   }
 
   return (
@@ -175,10 +179,10 @@ export default function ExecutiveDashboardNeo() {
           <Card title="Employee Attendance" className="h-[358px]">
             <div className="relative h-[285px] pt-3">
               <div className="absolute right-2 top-0 rounded-xl bg-black px-3 py-1 text-sm font-semibold text-white">
-                {completionRate}.24%
+                {Math.min(99.99, Math.max(0, completionRate + 0.24)).toFixed(2)}%
               </div>
               <div className="flex h-full items-end gap-3">
-                {[67, 43, 31, 90, 38, 72, 46].map((height, idx) => (
+                {attendanceBars.map((height, idx) => (
                   <div
                     key={idx}
                     className={`w-full rounded-[10px] ${
@@ -198,15 +202,17 @@ export default function ExecutiveDashboardNeo() {
                 <div className="mx-auto mt-2 h-28 w-28 overflow-hidden rounded-full border border-white/10 bg-[#1d2f1f]" />
                 <p className="mt-1 text-xl">🏅</p>
                 <p className="mt-2 text-[11px] text-[#9db09a]">Name</p>
-                <p className="text-[20px] font-semibold text-white">Leslie Alexander</p>
+                <p className="text-[20px] font-semibold text-white">
+                  {topContributor?.displayName || "No owner yet"}
+                </p>
               </div>
               <div className="space-y-3 rounded-[20px] border border-white/10 bg-[#101a11] p-3 text-[13px] text-[#c8d8c5]">
                 <p className="text-[#9db09a]">Home pay</p>
-                <p className="text-lg font-semibold text-white">$209,350</p>
+                <p className="text-lg font-semibold text-white">${homePay.toLocaleString()}</p>
                 <p className="text-[#9db09a]">Payment Done</p>
-                <p className="text-lg font-semibold text-white">70%</p>
+                <p className="text-lg font-semibold text-white">{paymentDone}%</p>
                 <p className="text-[#9db09a]">Left</p>
-                <p className="text-lg font-semibold text-white">$16,909</p>
+                <p className="text-lg font-semibold text-white">${leftValue.toLocaleString()}</p>
               </div>
             </div>
           </Card>
@@ -215,7 +221,7 @@ export default function ExecutiveDashboardNeo() {
         <div className="grid gap-3">
           <div className="grid grid-cols-4 gap-3">
             <KpiCard title="Total Employee" value={totalCommitments} />
-            <KpiCard title="Turnover Rate" value={`${Math.max(10.2, completionRate / 10).toFixed(1)}%`} />
+            <KpiCard title="Turnover Rate" value={`${Math.max(0, (100 - completionRate) / 10).toFixed(1)}%`} />
             <KpiCard title="Job Applicant" value={activeCount} />
             <KpiCard title="Monthly Salary" value="$4,45,500" />
           </div>
@@ -223,9 +229,9 @@ export default function ExecutiveDashboardNeo() {
             <Card title="Employee States" className="h-[132px]">
               <div className="mt-3 h-10 rounded-[8px] bg-[#111a12] p-1">
                 <div className="grid h-full grid-cols-[2.7fr_1.6fr_1fr] gap-1">
-                  <div className="rounded bg-[#1f7f3f]/80" />
-                  <div className="rounded bg-[#2e84d6]/75" />
-                  <div className="rounded bg-[#d6842e]/80" />
+                  <div className="rounded bg-[#1f7f3f]/80" style={{ opacity: Math.max(0.3, employeePermanentPct / 100) }} />
+                  <div className="rounded bg-[#2e84d6]/75" style={{ opacity: Math.max(0.3, employeeContractPct / 100) }} />
+                  <div className="rounded bg-[#d6842e]/80" style={{ opacity: Math.max(0.3, 1 - (employeePermanentPct + employeeContractPct) / 100) }} />
                 </div>
               </div>
               <div className="mt-2 flex justify-between text-[11px] text-[#a8b7a4]">
@@ -235,8 +241,12 @@ export default function ExecutiveDashboardNeo() {
               </div>
             </Card>
             <Card title="Average Employee performance this months" className="h-[132px]">
-              <p className="mt-3 text-4xl font-semibold text-white">8.98</p>
-              <p className="mt-1 text-sm text-[#9cb89c]">2.8%</p>
+              <p className="mt-3 text-4xl font-semibold text-white">
+                {(Math.max(0, Math.min(10, (completionRate / 10) * 0.9 + 1))).toFixed(2)}
+              </p>
+              <p className="mt-1 text-sm text-[#9cb89c]">
+                {Math.max(0, ((completionRate - 50) / 10)).toFixed(1)}%
+              </p>
             </Card>
           </div>
           <Card title="Payroll" className="h-[246px]">
@@ -281,7 +291,10 @@ export default function ExecutiveDashboardNeo() {
 
         <Card title="Employee Performance" className="h-[660px]">
           <ul className="mt-3 space-y-2">
-            {feedRows.map((row, idx) => (
+            {(feedRows.length === 0
+              ? [{ id: "empty", owner_name: "No activity yet", status: "not_started", updated_at: new Date().toISOString() }]
+              : feedRows
+            ).map((row, idx) => (
               <li
                 key={row.id ?? idx}
                 className="flex items-center justify-between rounded-xl border border-white/10 bg-[#101610] px-2.5 py-2"
@@ -289,7 +302,13 @@ export default function ExecutiveDashboardNeo() {
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-[#2c6233]" />
                   <div>
-                    <p className="text-[13px] font-semibold text-white">Sep 10, 2025</p>
+                    <p className="text-[13px] font-semibold text-white">
+                      {new Date(row.updated_at).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
                     <p className="text-[11px] text-[#98ad95]">
                       {row.owner_name || "Product Development"}
                     </p>
