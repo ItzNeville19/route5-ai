@@ -15,37 +15,61 @@ import {
 import {
   PHOTO_FALLBACK_PUBLIC,
   WORKSPACE_THEME_AUTO_PREVIEW_PATH,
+  WORKSPACE_THEME_PHOTO_VARIANTS,
   pickWorkspaceThemePhoto,
   workspacePhotoUrl,
 } from "@/lib/workspace-theme-photos";
 
-function ThemePreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
-  const spec = pickWorkspaceThemePhoto(id, new Date());
-  const remote = workspacePhotoUrl(spec.path, 520);
-  const [src, setSrc] = useState(remote);
+function hashSeed(input: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
+}
+
+function ThemePreviewSwatch({ id, tick }: { id: Exclude<WorkspaceThemeId, "auto">; tick: number }) {
+  const pool = WORKSPACE_THEME_PHOTO_VARIANTS[id];
+  const specs = useMemo(() => {
+    const fallback = [pickWorkspaceThemePhoto(id, new Date())];
+    const source = pool.length > 0 ? pool : fallback;
+    const seed = hashSeed(`${id}:${Math.floor(tick / 300000)}`);
+    return [0, 1, 2].map((offset) => source[(seed + offset) % source.length]);
+  }, [id, pool, tick]);
+  const remote = specs.map((spec) => workspacePhotoUrl(spec.path, 420));
+  const [srcList, setSrcList] = useState(remote);
 
   useEffect(() => {
-    setSrc(remote);
+    setSrcList(remote);
   }, [remote]);
 
   const base =
     "relative h-14 w-full overflow-hidden rounded-lg border border-black/10 shadow-inner dark:border-white/15";
   return (
     <div className={base}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover"
-        loading="lazy"
-        decoding="async"
-        onError={() => setSrc(PHOTO_FALLBACK_PUBLIC)}
-      />
+      <div className="absolute inset-0 grid grid-cols-3">
+        {srcList.map((src, idx) => (
+          <div key={idx} className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+              loading="lazy"
+              decoding="async"
+              onError={() =>
+                setSrcList((prev) => prev.map((item, pIdx) => (pIdx === idx ? PHOTO_FALLBACK_PUBLIC : item)))
+              }
+            />
+          </div>
+        ))}
+      </div>
       <div
         className="absolute inset-0"
         aria-hidden
         style={{
-          backgroundImage: spec.scrim,
+          backgroundImage: specs[0]?.scrim,
           backgroundSize: "cover",
           backgroundPosition: "center",
           opacity: 0.92,
@@ -222,7 +246,7 @@ export default function WorkspaceThemeSection() {
                 {isAuto ? (
                   <AutoThemePreviewThumb />
                 ) : (
-                  canvasBg === "photo" ? <ThemePreviewSwatch id={id} /> : <GradientPreviewSwatch id={id} />
+                  canvasBg === "photo" ? <ThemePreviewSwatch id={id} tick={tick} /> : <GradientPreviewSwatch id={id} />
                 )}
               </div>
               <div className="p-3 pt-2">

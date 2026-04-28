@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { Loader2 } from "lucide-react";
+import { Caveat } from "next/font/google";
 import type { LiveDashboardMetrics, VelocityWeek } from "@/lib/dashboard/compute";
 import type { SnapshotRow } from "@/lib/dashboard/store";
 import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
@@ -47,6 +48,12 @@ type AgentAction = {
   kind: "owner_nudge" | "escalate";
   message: string;
 };
+
+const greetingScript = Caveat({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+});
 
 function actionKey(action: AgentAction) {
   return `${action.kind}:${action.commitmentId}:${action.severity}`;
@@ -354,7 +361,13 @@ export default function ExecutiveDashboardNeo() {
   }
 
   return (
-    <div className="route5-neo-dashboard mx-auto w-full max-w-[1520px] pb-12">
+    <div
+      className="route5-neo-dashboard mx-auto w-full max-w-[1520px] rounded-[30px] border border-[var(--workspace-border)] p-3 pb-12"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse 70% 45% at 12% -8%, color-mix(in srgb, var(--workspace-accent) 22%, transparent), transparent 60%), radial-gradient(ellipse 60% 40% at 96% 6%, color-mix(in srgb, #34d399 22%, transparent), transparent 58%), linear-gradient(180deg,color-mix(in srgb,var(--workspace-canvas) 84%, transparent), color-mix(in srgb,var(--workspace-surface) 76%, transparent))",
+      }}
+    >
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-200/75">
           Route5 Command Center
@@ -386,7 +399,7 @@ export default function ExecutiveDashboardNeo() {
           </div>
         ) : null}
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-300/20 bg-[#0b0f0c]/85 px-3 py-2 text-[12px] text-emerald-100">
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] px-3 py-2 text-[12px] text-emerald-100">
         <span className="font-semibold">Agent</span>
         <span className="text-emerald-200/75">
           Automatically escalates stale execution and nudges ownership.
@@ -443,7 +456,7 @@ export default function ExecutiveDashboardNeo() {
 
       <div className="grid gap-3 lg:grid-cols-[1.1fr_2.2fr]">
         <section className="grid gap-3">
-          <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-3 shadow-[0_20px_50px_-32px_rgba(16,185,129,0.45)] backdrop-blur-xl">
+          <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-3 shadow-[0_20px_50px_-32px_rgba(16,185,129,0.45)] backdrop-blur-xl">
             <div className="relative overflow-hidden rounded-[18px] border border-emerald-200/20">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photoUrl} alt="" className="h-[360px] w-full object-cover" />
@@ -452,7 +465,11 @@ export default function ExecutiveDashboardNeo() {
                 <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200/80">
                   Execution Health
                 </p>
-                <h1 className="mt-2 text-2xl font-semibold text-white">{greeting}</h1>
+                <h1
+                  className={`${greetingScript.className} mt-2 text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-[1.1] text-white`}
+                >
+                  {greeting}
+                </h1>
                 <p className="mt-2 max-w-[28ch] text-[12px] text-emerald-100/80">
                   {effectiveMode === "admin"
                     ? "Org-wide execution signal across commitments, owners, and escalations."
@@ -469,7 +486,7 @@ export default function ExecutiveDashboardNeo() {
               </div>
             </div>
           </div>
-          <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+          <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
             <p className="text-[12px] font-semibold text-emerald-100">Top contributor</p>
             {topContributor ? (
               <div className="mt-3 space-y-2 text-[13px]">
@@ -496,7 +513,7 @@ export default function ExecutiveDashboardNeo() {
             />
           </div>
 
-          <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+          <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
             <p className="text-[12px] font-semibold text-emerald-100">Execution states</p>
             <div className="mt-3 grid grid-cols-3 gap-2 text-[12px]">
               <StateChip label="On track" value={metrics?.onTrackCount ?? 0} tone="emerald" />
@@ -526,7 +543,7 @@ export default function ExecutiveDashboardNeo() {
           </div>
 
           <div className="grid gap-3 xl:grid-cols-[1.8fr_1.2fr]">
-            <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+            <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
               <p className="text-[12px] font-semibold text-emerald-100">Execution trend</p>
               <div className="mt-3 h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -553,7 +570,7 @@ export default function ExecutiveDashboardNeo() {
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+            <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
               <p className="text-[12px] font-semibold text-emerald-100">Status distribution</p>
               <div className="mt-3 h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -579,7 +596,7 @@ export default function ExecutiveDashboardNeo() {
           </div>
 
           <div className="grid gap-3 xl:grid-cols-[1.2fr_1fr]">
-            <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+            <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
               <p className="text-[12px] font-semibold text-emerald-100">Activity volume</p>
               <div className="mt-3 h-[210px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -598,7 +615,7 @@ export default function ExecutiveDashboardNeo() {
                 </ResponsiveContainer>
               </div>
             </div>
-            <div className="rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+            <div className="rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
               <p className="text-[12px] font-semibold text-emerald-100">Commitment activity feed</p>
               <ul className="mt-3 space-y-2 max-h-[250px] overflow-y-auto">
                 {activity.length === 0 ? (
@@ -650,7 +667,7 @@ export default function ExecutiveDashboardNeo() {
         </section>
       </div>
       {agentPreview.length > 0 ? (
-        <div className="mt-3 rounded-[22px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+        <div className="mt-3 rounded-[22px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-[12px] font-semibold text-emerald-100">
               Agent action preview ({agentPreview.length})
@@ -709,7 +726,7 @@ export default function ExecutiveDashboardNeo() {
 
 function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-[18px] border border-emerald-300/20 bg-[#0b0f0c]/85 p-4 backdrop-blur-xl">
+    <div className="rounded-[18px] border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-surface)_78%,transparent)] p-4 backdrop-blur-xl">
       <p className="text-[11px] uppercase tracking-[0.12em] text-emerald-200/70">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>

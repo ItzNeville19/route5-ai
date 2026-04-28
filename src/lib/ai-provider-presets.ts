@@ -79,13 +79,14 @@ export const LLM_PROVIDER_OPTIONS: {
 export const MARKETPLACE_INSTALL_TO_EXTRACTION: Partial<
   Record<string, ExtractionProviderId>
 > = {
-  "apple-intelligence": "apple-intelligence",
-  "nvidia-parakeet": "nvidia-parakeet",
-  whisperkit: "whisperkit",
-  "groq-asr": "groq-asr",
+  /** Currently routed through the same AI extraction engine for consistent behavior. */
+  "apple-intelligence": "openai",
+  "nvidia-parakeet": "openai",
+  whisperkit: "openai",
+  "groq-asr": "openai",
   "openai-whisper": "openai",
   "openai-compatible": "openai",
-  "apple-speech": "apple-speech",
+  "apple-speech": "openai",
   "qwen3-asr-3b-4bit": "offline",
   "qwen3-asr-3b-8bit": "offline",
   "qwen3-asr-1.7b-4bit": "offline",
@@ -104,7 +105,15 @@ export function resolveExtractionRoute(
 ): "openai" | "offline" {
   const id = (extractionProviderId ?? "auto") as ExtractionProviderId;
   if (id === "offline") return "offline";
-  if (id === "openai" || id === "auto") {
+  if (
+    id === "openai" ||
+    id === "auto" ||
+    id === "apple-intelligence" ||
+    id === "groq-asr" ||
+    id === "nvidia-parakeet" ||
+    id === "whisperkit" ||
+    id === "apple-speech"
+  ) {
     return openaiConfigured ? "openai" : "offline";
   }
   return "offline";

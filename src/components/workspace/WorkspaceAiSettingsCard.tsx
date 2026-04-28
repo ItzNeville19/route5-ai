@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo } from "react";
 import { Sparkles } from "lucide-react";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import {
@@ -11,7 +12,19 @@ import { getMarketplaceAppById } from "@/lib/marketplace-catalog";
 /** Uses workspace CSS vars only — avoids OS `prefers-color-scheme` overriding signed-in chrome. */
 export default function WorkspaceAiSettingsCard() {
   const exp = useWorkspaceExperience();
-  const extractionId = exp.prefs.extractionProviderId ?? "auto";
+  const rawExtractionId = exp.prefs.extractionProviderId ?? "auto";
+  const supportedIds = useMemo(
+    () => new Set(EXTRACTION_PROVIDER_OPTIONS.map((opt) => opt.id)),
+    []
+  );
+  const extractionId = supportedIds.has(rawExtractionId as (typeof EXTRACTION_PROVIDER_OPTIONS)[number]["id"])
+    ? rawExtractionId
+    : "auto";
+  useEffect(() => {
+    if (rawExtractionId !== extractionId) {
+      exp.setPrefs({ extractionProviderId: extractionId });
+    }
+  }, [exp, extractionId, rawExtractionId]);
   const enabledFromMarketplace = (exp.prefs.installedMarketplaceAppIds ?? [])
     .map((id) => getMarketplaceAppById(id))
     .filter((a) => a && a.kind === "installable");
@@ -56,7 +69,7 @@ export default function WorkspaceAiSettingsCard() {
             id="extraction-provider"
             value={extractionId}
             onChange={(e) => exp.setPrefs({ extractionProviderId: e.target.value })}
-            className="mt-2 w-full max-w-md rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2.5 text-[14px] text-[var(--workspace-fg)] shadow-sm focus:border-[color-mix(in_srgb,var(--workspace-accent)_45%,var(--workspace-border))] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--workspace-accent)_25%,transparent)]"
+            className="mt-2 w-full max-w-md rounded-xl border border-[#1590ff]/60 bg-[#071326] px-3 py-2.5 text-[16px] text-[#eaf4ff] shadow-[0_0_0_1px_rgba(21,144,255,0.25),0_14px_36px_-20px_rgba(21,144,255,0.45)] focus:border-[#45a8ff] focus:outline-none focus:ring-2 focus:ring-[#45a8ff]/40"
           >
             {EXTRACTION_PROVIDER_OPTIONS.map((o) => (
               <option key={o.id} value={o.id}>
@@ -91,6 +104,9 @@ export default function WorkspaceAiSettingsCard() {
                 ) : null
               )}
             </ul>
+            <p className="mt-2 text-[11px] text-[var(--workspace-muted-fg)]">
+              Installed add-ons now route into the active AI extraction engine when available.
+            </p>
           </div>
         ) : null}
 
