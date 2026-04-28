@@ -9,8 +9,9 @@ import {
   Bell,
   Bot,
   CircleHelp,
+  Eye,
+  History,
   Home,
-  PanelTop,
   Settings2,
   Shield,
   UserRound,
@@ -49,7 +50,8 @@ type ToolbarItem = {
 };
 
 export default function WorkspaceTopToolbar() {
-  const pathname = usePathname();
+  const pathnameRaw = usePathname();
+  const pathname = pathnameRaw?.split("?")[0] ?? "";
   const search = useSearchParams();
   const { orgRole } = useWorkspaceData();
   const [mode, setMode] = useViewMode();
@@ -63,9 +65,11 @@ export default function WorkspaceTopToolbar() {
   }, [search, mode]);
 
   const items: ToolbarItem[] = [
-    { id: "dashboard", href: `/workspace/dashboard${suffix}`, label: "Dashboard", icon: Home },
-    { id: "queue", href: `/workspace/agent${suffix}`, label: "Action Queue", icon: Bot },
-    { id: "notifications", href: "/workspace/notifications", label: "Notifications", icon: Bell },
+    { id: "dashboard", href: `/workspace/dashboard${suffix}`, label: "Home", icon: Home },
+    { id: "queue", href: `/workspace/agent${suffix}`, label: "Queue", icon: Bot },
+    { id: "activity", href: `/workspace/activity${suffix}`, label: "Activity", icon: History },
+    { id: "preview", href: `/workspace/preview`, label: "Preview", icon: Eye },
+    { id: "notifications", href: "/workspace/notifications", label: "Alerts", icon: Bell },
     { id: "settings", href: "/settings", label: "System", icon: Settings2 },
     { id: "help", href: "/workspace/help", label: "Help", icon: CircleHelp },
   ];
@@ -84,9 +88,11 @@ export default function WorkspaceTopToolbar() {
             <div className="hidden text-[13px] font-medium text-[#c8d6c7] sm:block">Route5 Operating System</div>
           </div>
 
-          <nav className="flex items-center gap-1.5">
+          <nav className="flex max-w-[min(100%,560px)] items-center gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:max-w-none">
             {items.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href.split("?")[0]);
+              const itemBase = item.href.split("?")[0];
+              const active =
+                pathname === itemBase || (itemBase !== "/" && pathname.startsWith(`${itemBase}/`));
               const Icon = item.icon;
               return (
                 <Link
@@ -141,13 +147,6 @@ export default function WorkspaceTopToolbar() {
               </button>
             </div>
 
-            <Link
-              href="/workspace/agent"
-              title="Action Queue"
-              className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#2d4f35] bg-[#122015] text-[#c9d8c7] hover:bg-[#192b1d]"
-            >
-              <PanelTop className="h-3.5 w-3.5" />
-            </Link>
             <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#2d4f35] bg-[#122015]">
               <UserButton />
             </div>

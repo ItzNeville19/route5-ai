@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import ExecutiveDashboard from "@/components/workspace/ExecutiveDashboardNeo";
+import AdminCommandCenter from "@/components/workspace/AdminCommandCenter";
 
 export const metadata: Metadata = {
   title: "Dashboard — Route5",
-  description: "Executive execution health, trends, and team performance.",
+  description: "Execution command center: attention, recovery queue, and team health.",
 };
 
 export default function WorkspaceDashboardPage() {
-  return <ExecutiveDashboard />;
+  return <AdminCommandCenter />;
 }
