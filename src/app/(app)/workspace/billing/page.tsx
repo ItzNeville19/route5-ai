@@ -14,11 +14,11 @@ export default function WorkspaceBillingPage() {
     <div className="mx-auto w-full max-w-[min(100%,840px)] pb-24">
       <div className="mb-8">
         <Link
-          href="/desk"
+          href="/workspace/dashboard"
           className="group inline-flex items-center gap-1 text-[13px] font-medium text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
           <span className="transition-transform group-hover:-translate-x-0.5">←</span>
-          Desk
+          Dashboard
         </Link>
         <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--workspace-muted-fg)]">
           Workspace

@@ -34,8 +34,8 @@ export default function WorkspaceSettingsPage() {
   return (
     <div className="mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
       <div>
-        <Link href="/desk" className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary">
-          ← Desk
+        <Link href="/workspace/dashboard" className="text-[length:var(--r5-font-body)] text-r5-text-secondary transition hover:text-r5-text-primary">
+          ← Dashboard
         </Link>
       </div>
 

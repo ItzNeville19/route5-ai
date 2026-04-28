@@ -1,14 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import WorkspaceHeader from "@/components/WorkspaceHeader";
+import { Suspense, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import WorkspaceQueryHandler from "@/components/app/WorkspaceQueryHandler";
 import WorkspaceShortcuts from "@/components/app/WorkspaceShortcuts";
 import NewProjectModal from "@/components/workspace/NewProjectModal";
-import WorkspaceSidebar from "@/components/app/WorkspaceSidebar";
-import WorkspaceMobileNav from "@/components/app/WorkspaceMobileNav";
-import WorkspaceMobileSidebar from "@/components/app/WorkspaceMobileSidebar";
 import OrgRouteGuard from "@/components/app/OrgRouteGuard";
 import {
   WorkspaceExperienceProvider,
@@ -23,11 +19,10 @@ import {
   BillingUpgradeProvider,
   BillingLimitQueryListener,
 } from "@/components/billing/BillingUpgradeProvider";
-import WorkspaceBillingBanner from "@/components/billing/WorkspaceBillingBanner";
-import WorkspacePersistenceBanner from "@/components/workspace/WorkspacePersistenceBanner";
 import { CaptureProvider } from "@/components/capture/CaptureProvider";
 import { MemberProfilesProvider } from "@/components/workspace/MemberProfilesProvider";
 import { CommitmentsProvider } from "@/components/commitments/CommitmentsProvider";
+import WorkspaceTopToolbar from "@/components/workspace/WorkspaceTopToolbar";
 
 function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
@@ -43,68 +38,11 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
     if (!useCanvasPhotography) return undefined;
     return workspaceThemePhotoStyle(resolvedTheme.resolvedId);
   }, [useCanvasPhotography, resolvedTheme.resolvedId]);
-  const sidebarHidden = prefs.sidebarHidden === true;
-  const router = useRouter();
   const pathname = usePathname() ?? "";
-  const isDashboardSurface = pathname === "/workspace/dashboard";
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  useEffect(() => {
-    const closeMobile = () => setMobileSidebarOpen(false);
-    window.addEventListener("route5:mobile-sidebar-close", closeMobile);
-    return () => window.removeEventListener("route5:mobile-sidebar-close", closeMobile);
-  }, []);
-
-  useEffect(() => {
-    if (!mobileSidebarOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileSidebarOpen]);
-
-  useEffect(() => {
-    const syncDesktopState = () => {
-      const sidebar = document.querySelector<HTMLElement>('[data-route5-sidebar="desktop"]');
-      if (!sidebar) return;
-      if (window.getComputedStyle(sidebar).display !== "none") {
-        setMobileSidebarOpen(false);
-      }
-    };
-    syncDesktopState();
-    window.addEventListener("resize", syncDesktopState);
-    return () => window.removeEventListener("resize", syncDesktopState);
-  }, []);
-
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
-      if (e.key !== "\\" && e.code !== "Backslash") return;
-      const t = e.target as HTMLElement | null;
-      if (
-        t?.tagName === "INPUT" ||
-        t?.tagName === "TEXTAREA" ||
-        t?.tagName === "SELECT" ||
-        t?.isContentEditable
-      ) {
-        return;
-      }
-      e.preventDefault();
-      exp.setPrefs({ sidebarHidden: !sidebarHidden });
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [exp, sidebarHidden]);
-
-  useEffect(() => {
-    const core = ["/overview", "/desk", "/settings", "/workspace/help"];
-    core.forEach((path) => router.prefetch(path));
-  }, [router]);
 
   return (
     <div
-      className={`theme-agent-shell theme-route5-command relative flex min-h-dvh w-full text-[var(--workspace-fg)] ${shellModifierClass}`.trim()}
+      className={`theme-agent-shell theme-route5-command relative min-h-dvh w-full text-[var(--workspace-fg)] ${shellModifierClass}`.trim()}
     >
       <WorkspaceShortcuts />
       <Suspense fallback={null}>
@@ -114,49 +52,14 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
         <WorkspaceQueryHandler />
       </Suspense>
 
-      <div className="flex min-h-dvh w-full">
-        {isDashboardSurface ? null : (
-          <Suspense fallback={null}>
-            <WorkspaceSidebar />
-          </Suspense>
-        )}
+      <div className="route5-premium-shell-bg relative min-h-dvh w-full px-2 py-2 sm:px-3 sm:py-3">
         <div
-          className="route5-brand-agent-shell agent-canvas relative z-10 flex min-h-dvh min-w-0 flex-1 flex-col"
+          className="route5-brand-agent-shell agent-canvas relative z-10 mx-auto flex min-h-[calc(100dvh-16px)] w-full max-w-[1600px] min-w-0 flex-col rounded-[28px] border border-[#2a3b2e] bg-[linear-gradient(180deg,#0a0f0b_0%,#0f1510_100%)] p-2 shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)] sm:p-3"
           style={agentCanvasPhotoStyle ?? undefined}
         >
-          {isDashboardSurface ? null : (
-            <WorkspaceHeader
-              onSidebarToggle={() => {
-                if (typeof window === "undefined") return;
-                const sidebar = document.querySelector<HTMLElement>('[data-route5-sidebar="desktop"]');
-                const desktopSidebarVisible =
-                  !!sidebar && window.getComputedStyle(sidebar).display !== "none";
-                const desktopLayout = desktopSidebarVisible || window.innerWidth >= 768;
-                if (!desktopLayout) {
-                  setMobileSidebarOpen((v) => !v);
-                  return;
-                }
-                setMobileSidebarOpen(false);
-                exp.setPrefs({ sidebarHidden: !sidebarHidden });
-              }}
-            />
-          )}
-          {isDashboardSurface ? null : <WorkspaceBillingBanner />}
-          {isDashboardSurface ? null : <WorkspacePersistenceBanner />}
-          <main
-            className={`route5-brand-canvas min-h-0 flex-1 overflow-y-auto ${
-              isDashboardSurface
-                ? "pb-0"
-                : "pb-[calc(var(--r5-mobile-nav-height)+env(safe-area-inset-bottom))] md:pb-0 [@media(pointer:fine)]:pb-0"
-            }`}
-          >
-            <div
-              className={`workspace-page-inner relative mx-auto w-full ${
-                isDashboardSurface
-                  ? "max-w-[min(100%,1600px)] px-3 py-3 sm:px-4 sm:py-4"
-                  : "max-w-[min(100%,1440px)] px-[var(--r5-content-padding-x-mobile)] py-[var(--r5-space-4)] sm:px-[var(--r5-content-padding-x)] sm:py-[var(--r5-space-5)]"
-              }`}
-            >
+          <WorkspaceTopToolbar />
+          <main className="route5-brand-canvas min-h-0 flex-1 overflow-y-auto">
+            <div className="workspace-page-inner relative mx-auto w-full max-w-[1540px] px-1 pb-2 sm:px-2 sm:pb-3">
               <div key={pathname} className="route5-page-transition">
                 {children}
               </div>
@@ -164,10 +67,6 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
           </main>
         </div>
       </div>
-      {isDashboardSurface ? null : (
-        <WorkspaceMobileSidebar open={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-      )}
-      {isDashboardSurface ? null : <WorkspaceMobileNav />}
       <NewProjectModal />
     </div>
   );

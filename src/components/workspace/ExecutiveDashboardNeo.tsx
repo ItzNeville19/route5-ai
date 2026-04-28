@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import {
-  Bell,
-  Bot,
-  Building2,
-  Home,
-  Palette,
-  Settings,
-  UserCircle2,
-  Users,
+  CheckCircle2,
+  MapPin,
+  Send,
+  ShieldAlert,
+  Sparkles,
 } from "lucide-react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import type { LiveDashboardMetrics } from "@/lib/dashboard/compute";
@@ -31,7 +29,24 @@ type ActivityRow = {
   completed_at: string | null;
 };
 
-function performanceLabel(status: string) {
+type TrendPoint = {
+  snapshot_date: string;
+  active_count: number;
+  on_track_count: number;
+  at_risk_count: number;
+  overdue_count: number;
+};
+
+type EscalationRow = {
+  id: string;
+  severity: "overdue" | "at_risk" | "critical" | "warning";
+  commitmentTitle: string;
+  ownerDisplayName: string;
+  ageHours: number;
+  isOpen: boolean;
+};
+
+function performanceLabel(status: string): "Excellent" | "Good" | "Average" | "Bad" {
   if (status === "completed") return "Excellent";
   if (status === "in_progress") return "Good";
   if (status === "not_started") return "Average";
@@ -41,30 +56,63 @@ function performanceLabel(status: string) {
 export default function ExecutiveDashboardNeo() {
   const { orgRole } = useWorkspaceData();
   const { user } = useUser();
+  const search = useSearchParams();
   const [metrics, setMetrics] = useState<LiveDashboardMetrics | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
-  const [mode, setMode] = useState<ViewMode>(orgRole === "admin" ? "admin" : "employee");
+  const [trend, setTrend] = useState<TrendPoint[]>([]);
+  const [escalations, setEscalations] = useState<EscalationRow[]>([]);
+  const [queueActions, setQueueActions] = useState<
+    Array<{ commitmentId: string; ownerId: string; title: string; message: string; severity: string; kind: string }>
+  >([]);
+  const [mode, setMode] = useState<ViewMode>(orgRole === "admin" || orgRole === "manager" ? "admin" : "employee");
   const [loading, setLoading] = useState(true);
-  const canPreview = orgRole === "admin";
+  const [updatingIds, setUpdatingIds] = useState<string[]>([]);
+  const canPreview = orgRole === "admin" || orgRole === "manager";
   const scope: Scope = mode === "employee" ? "self" : "org";
 
   useEffect(() => {
-    if (orgRole === "admin") setMode("admin");
+    if (orgRole === "admin" || orgRole === "manager") setMode("admin");
     else setMode("employee");
   }, [orgRole]);
+
+  useEffect(() => {
+    const requested = search.get("view");
+    if (requested === "employee") setMode("employee");
+    if ((requested === "admin" && canPreview) || requested === null) {
+      setMode(canPreview ? "admin" : "employee");
+    }
+  }, [search, canPreview]);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
       const qs = `?scope=${scope}`;
-      const [mRes, aRes] = await Promise.all([
+      const [mRes, aRes, tRes, eRes, qRes] = await Promise.all([
         fetch(`/api/dashboard/metrics${qs}`, { credentials: "same-origin" }),
         fetch(`/api/dashboard/activity${qs}`, { credentials: "same-origin" }),
+        fetch(`/api/dashboard/trend${qs}&range=30d`, { credentials: "same-origin" }),
+        fetch(`/api/escalations?resolved=open&limit=6`, { credentials: "same-origin" }),
+        fetch("/api/agent/commitment-ops/preview", { credentials: "same-origin" }),
       ]);
       const mJson = (await mRes.json().catch(() => ({}))) as { metrics?: LiveDashboardMetrics };
       const aJson = (await aRes.json().catch(() => ({}))) as { activity?: ActivityRow[] };
+      const tJson = (await tRes.json().catch(() => ({}))) as { snapshots?: TrendPoint[] };
+      const eJson = (await eRes.json().catch(() => ({}))) as { escalations?: EscalationRow[] };
+      const qJson = (await qRes.json().catch(() => ({}))) as {
+        actions?: Array<{
+          commitmentId: string;
+          ownerId: string;
+          title: string;
+          message: string;
+          severity: string;
+          kind: string;
+        }>;
+      };
       if (mRes.ok && mJson.metrics) setMetrics(mJson.metrics);
-      if (aRes.ok && aJson.activity) setActivity(aJson.activity);
+      setActivity(aRes.ok ? (aJson.activity ?? []) : []);
+      setTrend(tRes.ok ? (tJson.snapshots ?? []) : []);
+      setEscalations(eRes.ok ? (eJson.escalations ?? []) : []);
+      setQueueActions(qRes.ok ? (qJson.actions ?? []) : []);
     } finally {
       setLoading(false);
     }
@@ -74,7 +122,7 @@ export default function ExecutiveDashboardNeo() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const totalCommitments = (metrics?.teamBreakdown ?? []).reduce((a, b) => a + b.total, 0);
+  const totalCommitments = (metrics?.teamBreakdown ?? []).reduce((a, b) => a + b.total, 0) ?? 0;
   const completionRate = metrics
     ? Math.round(
         ((metrics.teamBreakdown.reduce((a, b) => a + b.completedOnTime, 0) || 0) /
@@ -96,18 +144,11 @@ export default function ExecutiveDashboardNeo() {
     return slice.map((r) => Math.round((r.total / max) * 100));
   }, [metrics?.teamBreakdown]);
   const payrollData = useMemo(() => {
-    const dayBuckets = new Map<string, number>();
-    for (const row of activity) {
-      const date = new Date(row.updated_at);
-      const key = `${date.getMonth() + 1}/${date.getDate()}`;
-      dayBuckets.set(key, (dayBuckets.get(key) ?? 0) + 1);
-    }
-    const series = [...dayBuckets.entries()].slice(-10);
-    if (series.length === 0) {
-      return Array.from({ length: 10 }).map((_, idx) => ({ x: String(idx + 1), y: 0 }));
-    }
-    return series.map(([x, count], idx) => ({ x: x || String(idx + 1), y: count * 3000 }));
-  }, [activity]);
+    return trend.slice(-10).map((point) => ({
+      x: new Date(point.snapshot_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      y: (point.active_count + point.on_track_count + point.at_risk_count + point.overdue_count) * 1600,
+    }));
+  }, [trend]);
   const onTrack = metrics?.onTrackCount ?? 0;
   const atRisk = metrics?.atRiskCount ?? 0;
   const overdue = metrics?.overdueCount ?? 0;
@@ -117,60 +158,70 @@ export default function ExecutiveDashboardNeo() {
   const paymentDone = Math.min(100, Math.max(0, completionRate));
   const leftValue = Math.max(0, Math.round(homePay * ((100 - paymentDone) / 100)));
 
-  const feedRows = useMemo(() => {
-    return activity.slice(0, 6);
-  }, [activity]);
+  const feedRows = useMemo(() => activity.slice(0, 8), [activity]);
+  const blockers = escalations.filter((row) => row.severity === "critical" || row.severity === "overdue").length;
+  const approvals = queueActions.filter((row) => row.kind === "owner_nudge").length;
+  const pendingSends = queueActions.length;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const requestUpdate = useCallback(async (commitmentId: string, status: "pending" | "in_progress" | "done") => {
+    setUpdatingIds((prev) => [...new Set([...prev, commitmentId])]);
+    try {
+      await fetch(`/api/dashboard/commitments/${encodeURIComponent(commitmentId)}/status`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      await loadDashboard();
+    } finally {
+      setUpdatingIds((prev) => prev.filter((id) => id !== commitmentId));
+    }
+  }, [loadDashboard]);
 
   if (loading && !metrics) {
     return <div className="p-4 text-xs text-white/55">Loading...</div>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1560px] rounded-[34px] border border-[#233123] bg-[linear-gradient(180deg,#0b0f0b_0%,#11170f_100%)] p-4 shadow-[0_40px_120px_-64px_rgba(22,163,74,0.5)]">
-      <div className="mb-3 flex items-center justify-between rounded-[18px] border border-[#223423] bg-[#0a0f0b]/75 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#345734] bg-[#0f1c12] text-xl text-white">
-            ∞
+    <div className="mx-auto w-full max-w-[1560px] rounded-[32px] border border-[#27392b] bg-[radial-gradient(circle_at_24%_12%,rgba(34,197,94,0.22),transparent_38%),linear-gradient(180deg,#0a0e0b_0%,#0f1610_100%)] p-3 shadow-[0_36px_96px_-64px_rgba(16,185,129,0.6)]">
+      <div className="mb-3 grid gap-3 rounded-[22px] border border-[#2b4230] bg-[linear-gradient(180deg,rgba(12,22,14,0.84),rgba(8,13,10,0.7))] p-3 md:grid-cols-[1.4fr_1fr]">
+        <div>
+          <p className="text-[12px] uppercase tracking-[0.12em] text-[#91a994]">Welcome back</p>
+          <h1 className="mt-1 text-[30px] font-semibold leading-none text-white">
+            {`Neville ${mode === "admin" ? "· Admin Console" : "· Employee Preview"}`}
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-[12px] text-[#a5b8a6]">
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              {timezone}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <ShieldAlert className="h-3.5 w-3.5" />
+              {blockers} blockers
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {approvals} approvals
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Send className="h-3.5 w-3.5" />
+              {pendingSends} pending sends
+            </span>
           </div>
-          <TopIcon href="/workspace/dashboard" icon={Home} />
-          <TopIcon href="/workspace/agent" icon={Bot} />
-          <TopIcon href="/workspace/customize" icon={Palette} />
-          <TopIcon href="/workspace/organization" icon={Building2} />
-          <TopIcon href="/workspace/team" icon={Users} />
-          <TopIcon href="/settings" icon={Settings} />
-          <TopIcon href="/workspace/notifications" icon={Bell} />
         </div>
-        <div className="flex items-center gap-3">
-          {canPreview ? (
-            <div className="inline-flex rounded-full border border-[#2d4b2d] bg-[#0b140d] p-1 text-[11px]">
-              <button
-                type="button"
-                onClick={() => setMode("admin")}
-                className={`rounded-full px-3 py-1 ${mode === "admin" ? "bg-[#1f6f2c] text-white" : "text-[#b7c6b2]"}`}
-              >
-                Admin view
-              </button>
-              <button
-                type="button"
-                onClick={() => setMode("employee")}
-                className={`rounded-full px-3 py-1 ${mode === "employee" ? "bg-[#1f6f2c] text-white" : "text-[#b7c6b2]"}`}
-              >
-                Employee preview
-              </button>
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "Overdue", value: overdue },
+            { label: "At Risk", value: atRisk },
+            { label: "On Track", value: onTrack },
+            { label: "Queue", value: queueActions.length },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-[#2d4432] bg-[#121b13] p-2.5 text-center">
+              <p className="text-[10px] uppercase tracking-[0.08em] text-[#8aa08b]">{item.label}</p>
+              <p className="mt-1 text-[20px] font-semibold text-white">{item.value}</p>
             </div>
-          ) : null}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#324532] bg-[#121b13] text-[#d7e3d3]">
-            <Bell className="h-4 w-4" />
-          </div>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#324532] bg-[#121b13] text-[#d7e3d3]">
-            <UserCircle2 className="h-4 w-4" />
-          </div>
-          <div className="h-8 w-8 overflow-hidden rounded-full border border-[#4b5e4b] bg-[#132015]">
-            {user?.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
-            ) : null}
-          </div>
+          ))}
         </div>
       </div>
 
@@ -181,7 +232,7 @@ export default function ExecutiveDashboardNeo() {
               <div className="absolute right-2 top-0 rounded-xl bg-black px-3 py-1 text-sm font-semibold text-white">
                 {Math.min(99.99, Math.max(0, completionRate + 0.24)).toFixed(2)}%
               </div>
-              <div className="flex h-full items-end gap-3">
+              <div className="flex h-full items-end gap-2.5">
                 {attendanceBars.map((height, idx) => (
                   <div
                     key={idx}
@@ -199,7 +250,12 @@ export default function ExecutiveDashboardNeo() {
           <Card title="Employee of the months" className="h-[288px]">
             <div className="grid h-full grid-cols-[1.18fr_0.9fr] gap-3">
               <div className="rounded-[20px] border border-white/10 bg-[#0e1c12] p-3 text-center">
-                <div className="mx-auto mt-2 h-28 w-28 overflow-hidden rounded-full border border-white/10 bg-[#1d2f1f]" />
+                <div className="mx-auto mt-2 h-28 w-28 overflow-hidden rounded-full border border-white/10 bg-[#1d2f1f]">
+                  {user?.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={user.imageUrl} alt="" className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
                 <p className="mt-1 text-xl">🏅</p>
                 <p className="mt-2 text-[11px] text-[#9db09a]">Name</p>
                 <p className="text-[20px] font-semibold text-white">
@@ -223,7 +279,7 @@ export default function ExecutiveDashboardNeo() {
             <KpiCard title="Total Employee" value={totalCommitments} />
             <KpiCard title="Turnover Rate" value={`${Math.max(0, (100 - completionRate) / 10).toFixed(1)}%`} />
             <KpiCard title="Job Applicant" value={activeCount} />
-            <KpiCard title="Monthly Salary" value="$4,45,500" />
+            <KpiCard title="Monthly Salary" value={`$${(totalCommitments * 1900).toLocaleString()}`} />
           </div>
           <div className="grid grid-cols-[1.65fr_0.68fr] gap-3">
             <Card title="Employee States" className="h-[132px]">
@@ -266,6 +322,7 @@ export default function ExecutiveDashboardNeo() {
                     stroke="#25d45e"
                     strokeWidth={3}
                     dot={false}
+                    activeDot={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -274,10 +331,10 @@ export default function ExecutiveDashboardNeo() {
           <Card title="Employee Performance Chart" className="h-[132px]">
             <div className="mt-3 h-7 rounded-[8px] bg-[#111a12] p-1">
               <div className="grid h-full grid-cols-[2.1fr_1.4fr_1.4fr_0.9fr] gap-1">
-                <div className="rounded bg-[#25be61]/80" />
-                <div className="rounded bg-[#2b9dd6]/80" />
-                <div className="rounded bg-[#8adf4e]/80" />
-                <div className="rounded bg-[#d69439]/85" />
+                <div className="rounded bg-[#25be61]/80" style={{ opacity: Math.max(0.3, completionRate / 100) }} />
+                <div className="rounded bg-[#2b9dd6]/80" style={{ opacity: Math.max(0.3, onTrack / Math.max(1, activeCount)) }} />
+                <div className="rounded bg-[#8adf4e]/80" style={{ opacity: Math.max(0.3, atRisk / Math.max(1, activeCount)) }} />
+                <div className="rounded bg-[#d69439]/85" style={{ opacity: Math.max(0.3, overdue / Math.max(1, activeCount)) }} />
               </div>
             </div>
             <div className="mt-2 flex justify-between text-[11px] text-[#a8b7a4]">
@@ -289,7 +346,7 @@ export default function ExecutiveDashboardNeo() {
           </Card>
         </div>
 
-        <Card title="Employee Performance" className="h-[660px]">
+        <Card title={mode === "admin" ? "Employee Performance" : "My Task Updates"} className="h-[660px]">
           <ul className="mt-3 space-y-2">
             {(feedRows.length === 0
               ? [{ id: "empty", owner_name: "No activity yet", status: "not_started", updated_at: new Date().toISOString() }]
@@ -300,7 +357,9 @@ export default function ExecutiveDashboardNeo() {
                 className="flex items-center justify-between rounded-xl border border-white/10 bg-[#101610] px-2.5 py-2"
               >
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-[#2c6233]" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2c6233] text-[#d8ecd6]">
+                    <Sparkles className="h-3.5 w-3.5" />
+                  </div>
                   <div>
                     <p className="text-[13px] font-semibold text-white">
                       {new Date(row.updated_at).toLocaleDateString(undefined, {
@@ -314,38 +373,38 @@ export default function ExecutiveDashboardNeo() {
                     </p>
                   </div>
                 </div>
-                <p className="text-[12px] font-semibold text-white">{performanceLabel(row.status)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[12px] font-semibold text-white">{performanceLabel(row.status)}</p>
+                  {row.id !== "empty" ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void requestUpdate(
+                          row.id,
+                          row.status === "completed" ? "in_progress" : "done"
+                        )
+                      }
+                      disabled={updatingIds.includes(row.id)}
+                      className="route5-pressable rounded-full border border-[#335338] bg-[#142515] px-2 py-1 text-[10px] text-[#c9dec9] hover:bg-[#1a2f1c]"
+                    >
+                      {updatingIds.includes(row.id) ? "Saving..." : row.status === "completed" ? "Re-open" : "Complete"}
+                    </button>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
           <div className="mt-3">
             <Link
               href="/workspace/agent"
-              className="inline-flex rounded-full border border-[#2b6434] bg-[#12311a] px-3 py-1.5 text-xs font-semibold text-[#d9f7da]"
+              className="route5-pressable inline-flex rounded-full border border-[#2b6434] bg-[#12311a] px-3 py-1.5 text-xs font-semibold text-[#d9f7da]"
             >
-              Open Agent
+              {mode === "admin" ? "Open Action Queue" : "Open My Queue"}
             </Link>
           </div>
         </Card>
       </div>
     </div>
-  );
-}
-
-function TopIcon({
-  href,
-  icon: Icon,
-}: {
-  href: string;
-  icon: ComponentType<{ className?: string }>;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#2f4531] bg-[#121b13] text-[#d6e3d2] hover:bg-[#1b2a1d]"
-    >
-      <Icon className="h-4 w-4" />
-    </Link>
   );
 }
 

@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 export default function AccountPlansPage() {
   return (
     <WorkspaceArticle
-      backHref="/desk"
-      backLabel="Desk"
+      backHref="/workspace/dashboard"
+      backLabel="Dashboard"
       kicker="Account"
       title="Plans & billing"
       intro="Plans set your workspace limits — projects and monthly captures match your tier. Upgrade when you need more headroom."

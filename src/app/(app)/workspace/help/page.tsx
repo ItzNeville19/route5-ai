@@ -17,10 +17,10 @@ const cards = [
   },
   {
     title: "Command palette",
-    body: "Desk, Leadership (Overview), Marketplace, themes, and dev tools — press ⌘K from anywhere in the app.",
-    href: "/desk",
+    body: "Dashboard, Action Queue, notifications, themes, and tools — press ⌘K from anywhere in the app.",
+    href: "/workspace/dashboard",
     icon: Search,
-    cta: "Open app (then ⌘K)",
+    cta: "Open dashboard (then ⌘K)",
   },
   {
     title: "Keyboard shortcuts",
@@ -57,8 +57,8 @@ export default function WorkspaceHelpPage() {
           Learn Route5 in order
         </h1>
         <p className="max-w-2xl text-[length:var(--r5-font-subheading)] leading-relaxed text-r5-text-secondary">
-          The sidebar stays minimal on purpose: Desk, Projects, and account. Everything else — Overview,
-          Marketplace, customization — is one search away with ⌘K, so your team isn’t buried in links.
+          Route5 now runs through a compact top toolbar with focused surfaces for Dashboard, Action Queue,
+          notifications, and settings. Use ⌘K to jump quickly across every command surface.
         </p>
       </header>
 
