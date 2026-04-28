@@ -20,11 +20,11 @@ export default function OrganizationDangerZone() {
           <AlertTriangle className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]">
+          <h2 id={titleId} className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-50">
             Delete organization
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Removing <span className="font-medium text-[var(--workspace-fg)]">{organizationName ?? "your workspace"}</span>{" "}
+          <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
+            Removing <span className="font-medium text-zinc-100">{organizationName ?? "your workspace"}</span>{" "}
             would delete shared projects and commitments for every member. Route5 does not run this action in-app yet —
             use the Organization page to remove teammates first, export anything you need, then contact support if you
             must fully retire the company workspace.
@@ -39,7 +39,7 @@ export default function OrganizationDangerZone() {
         >
           Delete organization (unavailable)
         </button>
-        <span className="text-[12px] leading-snug text-[var(--workspace-muted-fg)]">
+        <span className="text-[12px] leading-snug text-zinc-500">
           Clerk-linked teams may also manage organizations from the Clerk dashboard when applicable.
         </span>
       </div>

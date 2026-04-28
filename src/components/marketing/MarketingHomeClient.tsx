@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Caveat } from "next/font/google";
-import { barlowCondensedLanding } from "@/lib/fonts-landing";
+import { barlowCondensedLanding, outfitLanding } from "@/lib/fonts-landing";
 import { useMemo, useRef } from "react";
 import {
   motion,
@@ -81,7 +81,7 @@ export default function MarketingHomeClient({
   );
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 via-white to-indigo-50/35 text-slate-900">
+    <div className={`bg-gradient-to-b from-slate-50 via-white to-indigo-50/35 text-slate-900 ${outfitLanding.variable}`}>
       {/* Hero — SF / Golden Gate photography + scrims (workspace “sanfrancisco” theme family) */}
       <section
         ref={heroRef}
@@ -112,11 +112,11 @@ export default function MarketingHomeClient({
         </motion.div>
         {/* Readability: left column for copy */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/[0.99] via-slate-950/[0.88] to-slate-900/35"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-r from-slate-950/[0.98] via-slate-950/[0.92] to-slate-900/28"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/[0.94] via-slate-950/25 to-indigo-950/35"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-slate-950/[0.96] via-slate-950/35 to-indigo-950/4"
           aria-hidden
         />
         <div
@@ -130,46 +130,46 @@ export default function MarketingHomeClient({
 
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 px-5 sm:px-8 lg:min-h-[min(70dvh,36rem)] lg:grid-cols-12 lg:gap-16 lg:px-10">
           <motion.div
-            className="rounded-[28px] bg-slate-950/55 p-5 shadow-[0_24px_80px_-40px_rgba(0,0,0,0.85)] ring-1 ring-white/12 backdrop-blur-md sm:p-8 lg:col-span-7"
+            className="rounded-[28px] border border-white/14 bg-slate-950/65 p-5 shadow-[0_28px_100px_-36px_rgba(0,0,0,0.92)] ring-1 ring-white/18 backdrop-blur-xl sm:p-8 lg:col-span-7"
             variants={heroStaggerParent}
             initial="hidden"
             animate="show"
           >
             <motion.div variants={heroStaggerChild}>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-black/35 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-inner shadow-black/20 backdrop-blur-sm">
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/15 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-50 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-sm">
                 {t("landing.hero.badge")}
               </span>
             </motion.div>
             <motion.h1
               variants={heroStaggerChild}
-              className={`mt-6 text-[clamp(2.35rem,6vw,3.65rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-white [text-shadow:0_2px_32px_rgba(0,0,0,0.65)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
+              className={`mt-6 text-[clamp(2.65rem,6.8vw,4.05rem)] font-extrabold leading-[1.02] tracking-[-0.038em] text-white [text-shadow:0_3px_36px_rgba(0,0,0,0.72)] ${barlowCondensedLanding.variable} font-[family-name:var(--font-barlow-condensed-landing)]`}
             >
               {t("landing.hero.title1")}{" "}
               <span
-                className={`${marketingAccentScript.className} text-[clamp(2.05rem,5.4vw,3.05rem)] font-semibold italic text-sky-200 [text-shadow:0_6px_40px_rgba(0,0,0,0.65)]`}
+                className={`${marketingAccentScript.className} text-[clamp(2.15rem,5.6vw,3.25rem)] font-semibold italic text-sky-200 [text-shadow:0_8px_44px_rgba(0,0,0,0.72)]`}
               >
                 {t("landing.hero.title2")}
               </span>
             </motion.h1>
             <motion.p
               variants={heroStaggerChild}
-              className="mt-6 max-w-xl text-pretty text-[17px] font-medium leading-relaxed text-white/95"
+              className="mt-6 max-w-xl text-pretty font-[family-name:var(--font-outfit-landing)] text-[17px] font-medium leading-relaxed text-white/96"
             >
               {t("landing.hero.lead")}
             </motion.p>
             <motion.p
               variants={heroStaggerChild}
-              className="mt-4 max-w-xl text-[15px] leading-relaxed text-zinc-200"
+              className="mt-4 max-w-xl font-[family-name:var(--font-outfit-landing)] text-[15px] leading-relaxed text-zinc-200"
             >
               {TRIAL_BODY}
             </motion.p>
             <motion.div
               variants={heroStaggerChild}
-              className="mt-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
+              className="mt-9 flex max-w-xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
             >
               <MotionLink
                 href={signedIn ? "/desk" : "/sign-up"}
-                className="inline-flex min-h-12 items-center justify-center rounded-xl bg-blue-500 px-8 text-[15px] font-semibold text-white shadow-[0_18px_44px_-14px_rgba(37,99,235,0.65)] ring-1 ring-white/20 transition-colors hover:bg-blue-400"
+                className="inline-flex min-h-[3.25rem] min-w-[11rem] items-center justify-center rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-10 text-[16px] font-semibold text-white shadow-[0_22px_50px_-18px_rgba(37,99,235,0.75)] ring-1 ring-white/25 transition-colors hover:from-blue-400 hover:to-blue-500"
                 whileHover={
                   reduceMotion ? undefined : { scale: 1.03, y: -2, transition: LANDING_SPRING }
                 }

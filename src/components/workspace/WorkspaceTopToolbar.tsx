@@ -51,7 +51,7 @@ export default function WorkspaceTopToolbar() {
   const search = useSearchParams();
   const router = useRouter();
   const { orgRole, organizationName } = useWorkspaceData();
-  const { prefs } = useWorkspaceExperience();
+  const { prefs, workspacePaletteLight } = useWorkspaceExperience();
   const canLead = orgRole === "admin" || orgRole === "manager";
 
   const { openNewTask, openRunAgent, openSendUpdate } = useWorkspaceChromeActions();
@@ -158,7 +158,8 @@ export default function WorkspaceTopToolbar() {
 
   const employeeToolbarCrowded = canLead && surfaceMode === "employee";
 
-  const menuItem =
+  /** Lead actions menu is always a dark floating panel — keep light menu copy regardless of canvas theme. */
+  const leadMenuItem =
     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
 
   return (
@@ -169,34 +170,65 @@ export default function WorkspaceTopToolbar() {
             employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
           }`}
         >
-          <div className="pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl" aria-hidden />
-          <div className="pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl" aria-hidden />
+          <div
+            className={`pointer-events-none absolute -left-20 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-cyan-500/[0.035] blur-3xl ${workspacePaletteLight ? "opacity-40" : ""}`}
+            aria-hidden
+          />
+          <div
+            className={`pointer-events-none absolute -right-12 -top-8 h-28 w-40 rounded-full bg-teal-500/[0.035] blur-3xl ${workspacePaletteLight ? "opacity-40" : ""}`}
+            aria-hidden
+          />
 
           <div className="route5-workspace-toolbar-inner relative flex min-h-[38px] items-center gap-2 sm:gap-3 md:min-h-[40px] lg:gap-3.5">
             {/* Left: brand + search */}
             <div className="flex min-w-0 min-h-0 flex-1 items-center gap-2 sm:gap-3">
               <Link
                 href={`/workspace/dashboard${suffix}`}
-                className="group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none ring-cyan-400/25 transition hover:bg-white/[0.04] focus-visible:ring-2"
+                className={classNames(
+                  "group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none transition focus-visible:ring-2",
+                  workspacePaletteLight
+                    ? "ring-cyan-600/20 hover:bg-slate-900/5"
+                    : "ring-cyan-400/25 hover:bg-white/[0.04]"
+                )}
                 aria-label="Route 5 Workspace — Home"
               >
-                <span className="text-[12px] font-semibold tracking-[-0.04em] text-white sm:text-[13px]">
+                <span
+                  className={classNames(
+                    "text-[12px] font-semibold tracking-[-0.04em] sm:text-[13px]",
+                    workspacePaletteLight ? "text-slate-900" : "text-white"
+                  )}
+                >
                   Route{" "}
                   <span className="bg-[linear-gradient(135deg,#a5f3fc_0%,#22d3ee_40%,#059669_95%)] bg-clip-text font-semibold text-transparent">
                     5
                   </span>
                 </span>
-                <span className="hidden text-[9px] font-medium uppercase tracking-[0.16em] text-cyan-200/32 sm:inline">
+                <span
+                  className={classNames(
+                    "hidden text-[9px] font-medium uppercase tracking-[0.16em] sm:inline",
+                    workspacePaletteLight ? "text-slate-500" : "text-cyan-200/32"
+                  )}
+                >
                   Workspace
                 </span>
               </Link>
               <WorkspaceHeaderSearch />
               {(canLead || organizationName) ? (
-                <div className="hidden min-w-0 shrink-0 flex-col gap-0.5 border-l border-white/[0.08] pl-1.5 sm:flex sm:max-w-[min(42vw,280px)] sm:flex-row sm:items-center sm:gap-2 lg:max-w-none">
+                <div
+                  className={classNames(
+                    "hidden min-w-0 shrink-0 flex-col gap-0.5 border-l pl-1.5 sm:flex sm:max-w-[min(42vw,280px)] sm:flex-row sm:items-center sm:gap-2 lg:max-w-none",
+                    workspacePaletteLight ? "border-slate-300/45" : "border-white/[0.08]"
+                  )}
+                >
                   {canLead ? (
                     <Link
                       href="/companies"
-                      className="inline-flex max-w-[120px] items-center gap-0.5 truncate rounded-md px-1 py-0.5 text-[10px] font-semibold text-cyan-200/70 outline-none ring-cyan-400/25 transition hover:bg-white/[0.06] hover:text-cyan-100 focus-visible:ring-2 lg:max-w-none lg:text-[11px]"
+                      className={classNames(
+                        "inline-flex max-w-[120px] items-center gap-0.5 truncate rounded-md px-1 py-0.5 text-[10px] font-semibold outline-none transition focus-visible:ring-2 lg:max-w-none lg:text-[11px]",
+                        workspacePaletteLight
+                          ? "text-sky-700 ring-cyan-600/25 hover:bg-slate-900/6 hover:text-sky-900"
+                          : "text-cyan-200/70 ring-cyan-400/25 hover:bg-white/[0.06] hover:text-cyan-100"
+                      )}
                       title="Companies — browse or add a workspace"
                     >
                       <Building2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
@@ -205,7 +237,10 @@ export default function WorkspaceTopToolbar() {
                   ) : null}
                   {organizationName ? (
                     <span
-                      className="truncate text-[10px] font-semibold leading-tight text-cyan-50/88 lg:text-[11px]"
+                      className={classNames(
+                        "truncate text-[10px] font-semibold leading-tight lg:text-[11px]",
+                        workspacePaletteLight ? "text-slate-700" : "text-cyan-50/88"
+                      )}
                       title={organizationName}
                     >
                       {organizationName}
@@ -232,9 +267,13 @@ export default function WorkspaceTopToolbar() {
                     title={item.label}
                     className={classNames(
                       "route5-nav-row inline-flex min-h-[32px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none md:h-9 md:text-[11px]",
-                      active
-                        ? "border border-cyan-400/25 bg-white/[0.07] text-white"
-                        : "border border-transparent bg-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
+                      workspacePaletteLight
+                        ? active
+                          ? "border border-sky-400/35 bg-slate-900/8 text-slate-900"
+                          : "border border-transparent bg-transparent text-slate-600 hover:bg-slate-900/6 hover:text-slate-900"
+                        : active
+                          ? "border border-cyan-400/25 bg-white/[0.07] text-white"
+                          : "border border-transparent bg-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
                     )}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0 opacity-90" />
@@ -262,9 +301,13 @@ export default function WorkspaceTopToolbar() {
                       title={item.label}
                       className={classNames(
                         "route5-nav-row inline-flex h-8 min-w-[2rem] shrink-0 items-center justify-center rounded-full border px-2 text-[10px] font-semibold",
-                        active
-                          ? "border-cyan-400/25 bg-white/[0.07] text-white"
-                          : "border-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
+                        workspacePaletteLight
+                          ? active
+                            ? "border-sky-400/35 bg-slate-900/8 text-slate-900"
+                            : "border-transparent text-slate-600 hover:bg-slate-900/6 hover:text-slate-900"
+                          : active
+                            ? "border-cyan-400/25 bg-white/[0.07] text-white"
+                            : "border-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
                       )}
                     >
                       <Icon className="h-3.5 w-3.5 opacity-90" />
@@ -277,7 +320,12 @@ export default function WorkspaceTopToolbar() {
                 <button
                   type="button"
                   onClick={goLeadView}
-                  className="route5-pressable inline-flex max-w-[min(100vw,11rem)] shrink-0 items-center justify-center truncate rounded-full border border-cyan-400/35 bg-cyan-500/[0.12] px-2 py-0.5 text-[10px] font-semibold leading-tight text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] transition hover:border-cyan-300/40 hover:bg-cyan-500/[0.18] sm:max-w-none sm:px-2.5 sm:text-[11px]"
+                  className={classNames(
+                    "route5-pressable inline-flex max-w-[min(100vw,11rem)] shrink-0 items-center justify-center truncate rounded-full border px-2 py-0.5 text-[10px] font-semibold leading-tight transition sm:max-w-none sm:px-2.5 sm:text-[11px]",
+                    workspacePaletteLight
+                      ? "border-sky-400/45 bg-sky-500/15 text-sky-900 shadow-none hover:border-sky-400/55 hover:bg-sky-500/22"
+                      : "border-cyan-400/35 bg-cyan-500/[0.12] text-cyan-50 shadow-[inset_0_1px_0_rgba(167,243,238,0.12)] hover:border-cyan-300/40 hover:bg-cyan-500/[0.18]"
+                  )}
                   title="Return to organization metrics and Lead tools"
                 >
                   <span className="sm:hidden">Team view</span>
@@ -295,7 +343,12 @@ export default function WorkspaceTopToolbar() {
                       e.stopPropagation();
                       setLeadOpen((o) => !o);
                     }}
-                    className="route5-pressable inline-flex h-7 items-center gap-0.5 rounded-full border border-white/[0.08] bg-black/28 px-2 text-[10px] font-semibold text-cyan-50/95 transition hover:border-cyan-400/28 hover:bg-white/[0.05] sm:px-2.5 sm:text-[11px]"
+                    className={classNames(
+                      "route5-pressable inline-flex h-7 items-center gap-0.5 rounded-full border px-2 text-[10px] font-semibold transition sm:px-2.5 sm:text-[11px]",
+                      workspacePaletteLight
+                        ? "border-slate-300/65 bg-white/75 text-slate-800 hover:border-slate-400/8 hover:bg-white"
+                        : "border-white/[0.08] bg-black/28 text-cyan-50/95 hover:border-cyan-400/28 hover:bg-white/[0.05]"
+                    )}
                     aria-expanded={leadOpen}
                     aria-haspopup="menu"
                     aria-controls={leadOpen ? "workspace-lead-actions-menu" : undefined}
@@ -328,7 +381,7 @@ export default function WorkspaceTopToolbar() {
                           <button
                             type="button"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => {
                               openNewTask();
                               setLeadOpen(false);
@@ -340,7 +393,7 @@ export default function WorkspaceTopToolbar() {
                           <button
                             type="button"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => {
                               openRunAgent();
                               setLeadOpen(false);
@@ -352,7 +405,7 @@ export default function WorkspaceTopToolbar() {
                           <button
                             type="button"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => {
                               openSendUpdate();
                               setLeadOpen(false);
@@ -361,14 +414,14 @@ export default function WorkspaceTopToolbar() {
                             <Mail className="h-4 w-4 text-teal-200/80" strokeWidth={2} />
                             Send Update
                           </button>
-                          <button type="button" role="menuitem" className={menuItem} onClick={() => goEmployeePreview()}>
+                          <button type="button" role="menuitem" className={leadMenuItem} onClick={() => goEmployeePreview()}>
                             <Eye className="h-4 w-4 text-white/70" strokeWidth={2} />
                             Employee Preview
                           </button>
                           <Link
                             href="/workspace/organization"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
                             <Users className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
@@ -377,7 +430,7 @@ export default function WorkspaceTopToolbar() {
                           <Link
                             href="/?site=1"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
                             <LayoutGrid className="h-4 w-4 text-emerald-200/90" strokeWidth={2} />
@@ -387,7 +440,7 @@ export default function WorkspaceTopToolbar() {
                             <a
                               href={desktopDownloadHref}
                               role="menuitem"
-                              className={menuItem}
+                              className={leadMenuItem}
                               onClick={() => setLeadOpen(false)}
                               rel="noopener noreferrer"
                             >
@@ -398,7 +451,7 @@ export default function WorkspaceTopToolbar() {
                             <Link
                               href={desktopDownloadHref}
                               role="menuitem"
-                              className={menuItem}
+                              className={leadMenuItem}
                               onClick={() => setLeadOpen(false)}
                             >
                               <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
@@ -408,7 +461,7 @@ export default function WorkspaceTopToolbar() {
                           <Link
                             href="/settings"
                             role="menuitem"
-                            className={menuItem}
+                            className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
                             <Settings className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
@@ -421,12 +474,17 @@ export default function WorkspaceTopToolbar() {
                 </div>
               ) : null}
 
-              <WorkspaceNotificationsPopover variant="ocean" />
+              <WorkspaceNotificationsPopover variant={workspacePaletteLight ? "oceanLight" : "ocean"} />
 
               <button
                 type="button"
                 onClick={() => setCustomizeOpen(true)}
-                className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
+                className={classNames(
+                  "route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition",
+                  workspacePaletteLight
+                    ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
+                    : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
+                )}
                 aria-label="Customize workspace"
                 title="Customize"
               >
@@ -436,7 +494,12 @@ export default function WorkspaceTopToolbar() {
               <button
                 type="button"
                 onClick={() => setHelpOpen(true)}
-                className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
+                className={classNames(
+                  "route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition",
+                  workspacePaletteLight
+                    ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
+                    : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
+                )}
                 aria-label="Help"
                 title="Help"
               >
@@ -446,7 +509,12 @@ export default function WorkspaceTopToolbar() {
               {!canLead ? (
                 <Link
                   href="/settings"
-                  className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
+                  className={classNames(
+                    "route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition",
+                    workspacePaletteLight
+                      ? "border-slate-300/55 bg-white/85 text-slate-800 hover:border-slate-400/8 hover:bg-white"
+                      : "border-white/20 bg-black/50 text-white hover:border-white/35 hover:bg-black/65 hover:text-white"
+                  )}
                   aria-label="Settings"
                   title="Route5 settings"
                 >
@@ -454,7 +522,14 @@ export default function WorkspaceTopToolbar() {
                 </Link>
               ) : null}
 
-              <div className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/30">
+              <div
+                className={classNames(
+                  "flex h-7 w-7 items-center justify-center rounded-full border",
+                  workspacePaletteLight
+                    ? "border-slate-300/45 bg-white/90 shadow-sm"
+                    : "border-white/[0.06] bg-black/30"
+                )}
+              >
                 <UserButton />
               </div>
             </div>

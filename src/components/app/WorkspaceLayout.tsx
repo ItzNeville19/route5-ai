@@ -56,9 +56,11 @@ function WorkspaceShell({ children }: { children: React.ReactNode }) {
   }, [useCanvasPhotography, prefs, resolvedTheme.resolvedId]);
   const pathname = usePathname() ?? "";
 
+  /** Border + elevation only — canvas `background-image` comes from `.workspace-theme-* .agent-canvas` in globals.css.
+   *  Do not set Tailwind `bg-*` here; it overrides themed gradients and made “Sunrise” etc. look unchanged. */
   const agentShellToneClass = workspacePaletteLight
-    ? "!border-slate-200/65 bg-[linear-gradient(180deg,#fcfdfd_0%,#eef3f9_54%,#e4edf6_100%)] shadow-[0_28px_88px_-56px_rgba(15,23,42,0.11),inset_0_1px_0_rgba(255,255,255,0.78)]"
-    : "border-[#2a3b2e] bg-[linear-gradient(180deg,#0a1214_0%,#0c1512_48%,#0a0f0e_100%)] shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)]";
+    ? "!border-slate-200/65 bg-transparent shadow-[0_28px_88px_-56px_rgba(15,23,42,0.11),inset_0_1px_0_rgba(255,255,255,0.78)]"
+    : "border-[#2a3b2e] bg-transparent shadow-[0_40px_120px_-72px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(132,255,168,0.1)]";
 
   return (
     <div

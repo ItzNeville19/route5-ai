@@ -28,10 +28,10 @@ function SettingsSection({
       id={id}
       className={`rounded-[var(--r5-radius-lg)] border border-white/12 bg-[#0e141c]/95 p-[var(--r5-space-4)] shadow-sm backdrop-blur-sm ${id ? "scroll-mt-28" : ""}`}
     >
-      <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-[var(--r5-text-primary)]">
+      <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-zinc-50">
         {title}
       </h2>
-      <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)]">
+      <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-zinc-400">
         {description}
       </p>
       <div className="mt-[var(--r5-space-4)]">{children}</div>
@@ -48,7 +48,7 @@ export default function WorkspaceSettingsPage() {
       <div>
         <Link
           href="/workspace/dashboard"
-          className="text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)] transition hover:text-[var(--r5-text-primary)]"
+          className="text-[length:var(--r5-font-body)] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
           ← Dashboard
         </Link>
@@ -79,17 +79,17 @@ export default function WorkspaceSettingsPage() {
         title="Desktop app"
         description="When Route5 provides an installer for your organization, it uses the same workspace as the web app in a dedicated window."
       >
-        <p className="text-[length:var(--r5-font-body)] text-[var(--r5-text-secondary)]">
+        <p className="text-[length:var(--r5-font-body)] text-zinc-400">
           On Mac, open the disk image and drag Route5 into Applications. On Windows, run the installer your team ships
           from IT.
         </p>
         <div className="mt-[var(--r5-space-3)] flex flex-col gap-[var(--r5-space-2)] sm:flex-row sm:flex-wrap">
           <Link
             href="/download"
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-white/[0.11]"
+            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-white/[0.11]"
           >
             Desktop &amp; install options
-            <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
+            <span className="text-zinc-500" aria-hidden>
               ↗
             </span>
           </Link>
@@ -97,29 +97,29 @@ export default function WorkspaceSettingsPage() {
             <a
               href={desktopDownloadUrl}
               rel="noopener noreferrer"
-              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-emerald-500/25"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-emerald-500/25"
             >
               Download Mac installer
-              <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
+              <span className="text-zinc-500" aria-hidden>
                 ↗
               </span>
             </a>
           ) : (
             <Link
               href="/download"
-              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)] transition hover:bg-emerald-500/25"
+              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-emerald-500/25"
             >
               Get the Mac build (download page)
-              <span className="text-[var(--r5-text-tertiary)]" aria-hidden>
+              <span className="text-zinc-500" aria-hidden>
                 ↗
               </span>
             </Link>
           )}
         </div>
         {!showDirectMacInstaller ? (
-          <p className="mt-[var(--r5-space-3)] text-[13px] leading-relaxed text-[var(--r5-text-secondary)]">
-            A direct <span className="font-mono text-[var(--r5-text-primary)]">.dmg</span> link appears here when your
-            team sets <span className="font-mono text-[var(--r5-text-primary)]">NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL</span>{" "}
+          <p className="mt-[var(--r5-space-3)] text-[13px] leading-relaxed text-zinc-400">
+            A direct <span className="font-mono text-zinc-200">.dmg</span> link appears here when your
+            team sets <span className="font-mono text-zinc-200">NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL</span>{" "}
             — until then, use the download page (no broken file link).
           </p>
         ) : null}
@@ -132,7 +132,7 @@ export default function WorkspaceSettingsPage() {
       >
         <Link
           href="/workspace/notifications/preferences"
-          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-[var(--r5-text-primary)] transition hover:bg-white/[0.11]"
+          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-zinc-100 transition hover:bg-white/[0.11]"
         >
           Open notification preferences
         </Link>
@@ -164,10 +164,10 @@ export default function WorkspaceSettingsPage() {
                 href={item.href}
                 className="rounded-[var(--r5-radius-md)] border border-white/12 bg-white/[0.05] px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-white/[0.09]"
               >
-                <p className="text-[length:var(--r5-font-body)] font-medium text-[var(--r5-text-primary)]">
+                <p className="text-[length:var(--r5-font-body)] font-medium text-zinc-100">
                   {item.name}
                 </p>
-                <p className="mt-[var(--r5-space-1)] text-[12px] text-[var(--r5-text-secondary)]">Open integration</p>
+                <p className="mt-[var(--r5-space-1)] text-[12px] text-zinc-400">Open integration</p>
               </Link>
             ))}
           </div>

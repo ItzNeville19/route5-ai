@@ -18,7 +18,7 @@ export default function DownloadPage() {
   return (
     <MarketingPublicShell>
       <Navbar />
-      <article className="route5-page-transition relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
+      <article className="route5-page-transition relative z-10 mx-auto max-w-[820px] px-5 pb-24 pt-28 text-zinc-100 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/85">
           Desktop client
         </p>
@@ -63,7 +63,7 @@ export default function DownloadPage() {
                 </Link>
                 <Link
                   href="/contact"
-                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/20 bg-white/5 px-8 text-[15px] font-semibold text-white transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border-2 border-slate-600 bg-slate-950 px-8 text-[15px] font-semibold text-white shadow-lg shadow-black/40 transition hover:border-slate-500 hover:bg-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
                 >
                   Contact for desktop rollout
                 </Link>

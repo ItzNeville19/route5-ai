@@ -72,10 +72,10 @@ export default function AccountDangerZone() {
           <AlertTriangle className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="text-[15px] font-semibold tracking-[-0.02em] text-[var(--workspace-fg)]">
+          <h2 id={titleId} className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-50">
             Danger zone
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-[var(--workspace-muted-fg)]">
+          <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
             Destructive actions for your Route5 workspace and your Clerk sign-in. Nothing here deletes anything
             until you open the steps and confirm.
           </p>

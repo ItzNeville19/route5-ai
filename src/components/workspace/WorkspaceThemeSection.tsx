@@ -196,7 +196,9 @@ function ThemePreviewSwatch({ id, tick }: { id: Exclude<WorkspaceThemeId, "auto"
 function GradientPreviewSwatch({ id }: { id: Exclude<WorkspaceThemeId, "auto"> }) {
   const gradients: Partial<Record<Exclude<WorkspaceThemeId, "auto">, string>> = {
     classic: "linear-gradient(135deg,#e9d5ff,#c4b5fd,#a3e635)",
-    sunrise: "linear-gradient(135deg,#fef3c7,#fde68a,#f5d0fe)",
+    /** Approximates `globals.css` `.workspace-theme-sunrise .agent-canvas` (radials + base wash). */
+    sunrise:
+      "radial-gradient(ellipse 120% 95% at 12% 0%, rgba(251, 113, 133, 0.28), transparent 55%), radial-gradient(ellipse 90% 75% at 88% 8%, rgba(125, 211, 252, 0.22), transparent 52%), linear-gradient(188deg, #fffbeb 0%, #fff1f2 38%, #ffe4e6 100%)",
     morning: "linear-gradient(135deg,#fff7ed,#fde68a,#f8fafc)",
     daytime: "linear-gradient(135deg,#f5f3ff,#e9d5ff,#dbeafe)",
     ocean: "linear-gradient(135deg,#bae6fd,#67e8f9,#c4b5fd)",
