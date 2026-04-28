@@ -668,7 +668,7 @@ export default function WorkspaceNotificationsPopover({ variant = "neutral" }: N
         onClick={() => handleOpenChange(!open)}
         className={
           variant === "ocean"
-            ? "route5-pressable relative inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-black/22 text-cyan-200/70 shadow-none transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-cyan-100/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/25"
+            ? "route5-pressable relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/22 bg-black/55 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/70 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/35"
             : "relative inline-flex rounded-[var(--r5-radius-pill)] border border-r5-border-subtle bg-r5-surface-secondary/90 p-[var(--r5-space-2)] text-r5-text-secondary shadow-[var(--r5-shadow-elevated)] transition-[background-color,color] duration-[var(--r5-duration-fast)] ease-[var(--r5-ease-standard)] hover:bg-r5-surface-hover hover:text-r5-text-primary"
         }
         aria-expanded={open}

@@ -18,7 +18,7 @@ export default async function PricingPage() {
   const userId = await getAuthUserIdSafe();
 
   return (
-    <main className="route5-brand-dark-marketing-shell theme-route5-command theme-agent-shell relative min-h-screen text-zinc-100">
+    <main className="route5-brand-dark-marketing-shell relative min-h-screen bg-[#09090f] text-zinc-100">
       <Navbar />
       <div className="container-apple relative z-10 pb-24 pt-28 md:pb-32 md:pt-32">
         <div className="mx-auto max-w-[800px] text-center">

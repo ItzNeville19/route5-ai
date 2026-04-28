@@ -43,8 +43,8 @@ export default function PublicPlansGrid({ signedIn }: Props) {
             key={plan.id}
             className={
               plan.accent
-                ? "relative flex flex-col rounded-2xl border-2 border-emerald-400/45 bg-[#0f1419] p-6 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.35)] sm:p-7"
-                : "flex flex-col rounded-2xl border border-white/16 bg-[#0a0d12] p-6 sm:p-7"
+                ? "relative flex flex-col rounded-2xl border-2 border-emerald-400/55 bg-zinc-950 p-6 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.35)] ring-1 ring-white/10 sm:p-7"
+                : "flex flex-col rounded-2xl border border-white/20 bg-zinc-950 p-6 ring-1 ring-black/40 sm:p-7"
             }
           >
             {plan.accent ? (
@@ -57,8 +57,8 @@ export default function PublicPlansGrid({ signedIn }: Props) {
             </p>
             <h3 className="mt-2 text-[1.35rem] font-semibold tracking-[-0.03em] text-white">{plan.name}</h3>
             <p className="mt-1 text-[15px] font-medium text-zinc-100">{plan.focus}</p>
-            <p className="mt-4 flex-1 text-[15px] leading-relaxed text-zinc-200/95">{plan.description}</p>
-            <p className="mt-6 border-t border-white/10 pt-4 text-[13px] leading-snug text-zinc-300">
+            <p className="mt-4 flex-1 text-[15px] leading-relaxed text-zinc-100">{plan.description}</p>
+            <p className="mt-6 border-t border-white/15 pt-4 text-[13px] leading-snug text-zinc-200">
               Investment is scoped in a single conversation — we&apos;ll align to team size, primary use case, and
               compliance needs.
             </p>

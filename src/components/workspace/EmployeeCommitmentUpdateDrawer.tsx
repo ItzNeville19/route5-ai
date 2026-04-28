@@ -1,8 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, X } from "lucide-react";
+import { ExternalLink, Loader2, X } from "lucide-react";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
+import type { OrgCommitmentStatus } from "@/lib/org-commitment-types";
 
 type ActivityRow = {
   id: string;
@@ -23,9 +26,9 @@ function statusLabel(raw: string): string {
   const s = raw.replace(/_/g, " ").toLowerCase();
   const map: Record<string, string> = {
     "not started": "Not started",
-    "not_started": "Not started",
+    not_started: "Not started",
     "in progress": "In progress",
-    "in_progress": "In progress",
+    in_progress: "In progress",
     "on track": "On track",
     on_track: "On track",
     "at risk": "Needs attention",
@@ -37,8 +40,11 @@ function statusLabel(raw: string): string {
 }
 
 export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied }: Props) {
+  const { orgRole } = useWorkspaceData();
+  const canLead = orgRole === "admin" || orgRole === "manager";
   const [mounted, setMounted] = useState(false);
   const [note, setNote] = useState("");
+  const [deadlineInput, setDeadlineInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,50 +54,93 @@ export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied
     if (row) {
       setNote("");
       setError(null);
+      try {
+        if (row.deadline?.trim()) {
+          const d = new Date(row.deadline);
+          if (!Number.isNaN(d.getTime())) {
+            setDeadlineInput(d.toISOString().slice(0, 10));
+          } else {
+            setDeadlineInput("");
+          }
+        } else {
+          setDeadlineInput("");
+        }
+      } catch {
+        setDeadlineInput("");
+      }
     }
   }, [row]);
 
+  const patchCommitment = useCallback(
+    async (patch: Record<string, unknown>) => {
+      if (!row) return false;
+      const res = await fetch(`/api/commitments/${encodeURIComponent(row.id)}`, {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(d.error ?? "Could not save.");
+        return false;
+      }
+      return true;
+    },
+    [row]
+  );
+
+  const saveDeadlineAndNoteOnly = useCallback(async () => {
+    if (!row) return;
+    setSaving(true);
+    setError(null);
+    try {
+      if (deadlineInput.trim()) {
+        const t = new Date(`${deadlineInput}T12:00:00`).getTime();
+        if (Number.isFinite(t)) {
+          const ok = await patchCommitment({ deadline: new Date(t).toISOString() });
+          if (!ok) return;
+        }
+      }
+      if (note.trim()) {
+        const res = await fetch(`/api/commitments/${encodeURIComponent(row.id)}/comments`, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: note.trim() }),
+        });
+        if (!res.ok) {
+          const d = (await res.json().catch(() => ({}))) as { error?: string };
+          setError(d.error ?? "Could not post note.");
+          return;
+        }
+      }
+      onApplied();
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  }, [row, deadlineInput, note, patchCommitment, onApplied, onClose]);
+
   const apply = useCallback(
-    async (kind: "in_progress" | "at_risk" | "done") => {
+    async (kind: "complete" | OrgCommitmentStatus) => {
       if (!row) return;
       setSaving(true);
       setError(null);
       try {
-        if (kind === "done") {
-          const res = await fetch(`/api/commitments/${encodeURIComponent(row.id)}`, {
-            method: "PATCH",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ completed: true }),
-          });
-          if (!res.ok) {
-            const d = (await res.json().catch(() => ({}))) as { error?: string };
-            setError(d.error ?? "Could not save.");
-            return;
-          }
-        } else if (kind === "in_progress") {
-          const res = await fetch(`/api/commitments/${encodeURIComponent(row.id)}`, {
-            method: "PATCH",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ completed: false, status: "in_progress" }),
-          });
-          if (!res.ok) {
-            const d = (await res.json().catch(() => ({}))) as { error?: string };
-            setError(d.error ?? "Could not save.");
-            return;
-          }
+        if (kind === "complete") {
+          const ok = await patchCommitment({ completed: true });
+          if (!ok) return;
         } else {
-          const res = await fetch(`/api/commitments/${encodeURIComponent(row.id)}`, {
-            method: "PATCH",
-            credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ completed: false, status: "at_risk" }),
-          });
-          if (!res.ok) {
-            const d = (await res.json().catch(() => ({}))) as { error?: string };
-            setError(d.error ?? "Could not save.");
-            return;
+          const ok = await patchCommitment({ completed: false, status: kind });
+          if (!ok) return;
+        }
+
+        if (deadlineInput.trim()) {
+          const t = new Date(`${deadlineInput}T12:00:00`).getTime();
+          if (Number.isFinite(t)) {
+            const ok = await patchCommitment({ deadline: new Date(t).toISOString() });
+            if (!ok) return;
           }
         }
 
@@ -104,7 +153,7 @@ export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied
           });
           if (!res.ok) {
             const d = (await res.json().catch(() => ({}))) as { error?: string };
-            setError(d.error ?? "Status saved; comment did not.");
+            setError(d.error ?? "Saved status; comment failed.");
           }
         }
         onApplied();
@@ -113,10 +162,38 @@ export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied
         setSaving(false);
       }
     },
-    [row, note, onApplied, onClose]
+    [row, note, deadlineInput, patchCommitment, onApplied, onClose]
   );
 
   if (!mounted || !row) return null;
+
+  const statusButtons: { key: "complete" | OrgCommitmentStatus; label: string; className: string }[] = [
+    {
+      key: "not_started",
+      label: "Not started",
+      className: "border-white/15 bg-white/[0.06] text-[var(--workspace-fg)] hover:bg-white/[0.09]",
+    },
+    {
+      key: "in_progress",
+      label: "In progress",
+      className: "border-cyan-500/35 bg-cyan-950/35 text-cyan-50 hover:bg-cyan-950/45",
+    },
+    {
+      key: "on_track",
+      label: "On track",
+      className: "border-emerald-500/35 bg-emerald-950/30 text-emerald-50 hover:bg-emerald-950/42",
+    },
+    {
+      key: "at_risk",
+      label: "Needs attention",
+      className: "border-amber-400/35 bg-amber-950/30 text-amber-50 hover:bg-amber-950/42",
+    },
+    {
+      key: "complete",
+      label: "Mark done",
+      className: "border-emerald-400/45 bg-emerald-900/40 text-white hover:bg-emerald-800/45 sm:col-span-2",
+    },
+  ];
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center sm:p-6">
@@ -127,17 +204,24 @@ export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied
         onClick={onClose}
       />
       <div
-        className="relative z-[86] mx-3 mb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--workspace-accent)_25%,var(--workspace-border))] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--workspace-surface)_96%,transparent),color-mix(in_srgb,var(--workspace-canvas)_88%,transparent))] shadow-[0_28px_80px_-48px_rgba(0,0,0,0.75)] sm:m-0"
+        className="relative z-[86] mx-3 mb-[max(0.75rem,env(safe-area-inset-bottom,0px))] flex max-h-[min(92dvh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[color-mix(in_srgb,var(--workspace-accent)_25%,var(--workspace-border))] bg-[linear-gradient(165deg,color-mix(in_srgb,var(--workspace-surface)_96%,transparent),color-mix(in_srgb,var(--workspace-canvas)_88%,transparent))] shadow-[0_28px_80px_-48px_rgba(0,0,0,0.75)] sm:m-0"
         role="dialog"
         aria-labelledby="emp-commitment-update-title"
       >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--workspace-border)] px-5 py-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">Update commitment</p>
-            <h2 id="emp-commitment-update-title" className="mt-1 line-clamp-2 text-[16px] font-semibold leading-snug text-[var(--workspace-fg)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--workspace-muted-fg)]">
+              Update commitment
+            </p>
+            <h2
+              id="emp-commitment-update-title"
+              className="mt-1 line-clamp-3 text-[16px] font-semibold leading-snug text-[var(--workspace-fg)]"
+            >
               {row.title}
             </h2>
-            <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">Current: {statusLabel(row.status)}</p>
+            <p className="mt-1 text-[12px] text-[var(--workspace-muted-fg)]">
+              Current: {statusLabel(row.status)}
+            </p>
           </div>
           <button
             type="button"
@@ -148,43 +232,75 @@ export default function EmployeeCommitmentUpdateDrawer({ row, onClose, onApplied
             <X className="h-4 w-4" />
           </button>
         </header>
-        <div className="px-5 py-4">
-          <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--workspace-muted-fg)]">Note (optional)</label>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--workspace-muted-fg)]">
+            Due date
+          </label>
+          <input
+            type="date"
+            value={deadlineInput}
+            onChange={(e) => setDeadlineInput(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-fg)_04%,transparent)] px-3 py-2 text-[13px] text-[var(--workspace-fg)] outline-none"
+          />
+          <p className="mt-1 text-[11px] text-[var(--workspace-muted-fg)]">
+            Updates your deadline for admins on the org tracker.
+          </p>
+
+          <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--workspace-muted-fg)]">
+            Note (optional)
+          </label>
           <textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Brief update for admins — context, blocker, ETA…"
-            rows={4}
-            className="mt-2 w-full resize-y rounded-xl border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-fg)_04%,transparent)] px-3 py-2 text-[13px] leading-relaxed text-slate-900 placeholder:text-slate-400 outline-none dark:text-zinc-100 dark:placeholder:text-zinc-500"
+            placeholder="Context for your lead — blocker, ETA, dependency…"
+            rows={3}
+            className="mt-2 w-full resize-y rounded-xl border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-fg)_04%,transparent)] px-3 py-2 text-[13px] leading-relaxed text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] outline-none"
           />
-          {error ? <p className="mt-2 text-[12px] text-amber-200">{error}</p> : null}
+
+          <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--workspace-muted-fg)]">
+            Status
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {statusButtons.map(({ key, label, className }) => (
+              <button
+                key={key}
+                type="button"
+                disabled={saving}
+                onClick={() => void apply(key)}
+                className={`route5-pressable rounded-xl border px-3 py-2.5 text-[12px] font-semibold disabled:opacity-50 ${className}`}
+              >
+                {saving ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : label}
+              </button>
+            ))}
+          </div>
+
+          {error ? <p className="mt-3 text-[12px] text-amber-200">{error}</p> : null}
+
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void saveDeadlineAndNoteOnly()}
+            className="route5-pressable mt-4 w-full rounded-xl border border-[var(--workspace-border)] bg-[color-mix(in_srgb,var(--workspace-fg)_06%,transparent)] py-2.5 text-[13px] font-semibold text-[var(--workspace-fg)] hover:bg-[color-mix(in_srgb,var(--workspace-fg)_10%,transparent)] disabled:opacity-50"
+          >
+            Save due date &amp; note only
+          </button>
+
+          {canLead ? (
+            <Link
+              href="/workspace/commitments"
+              className="mt-5 inline-flex items-center gap-2 text-[13px] font-semibold text-[var(--workspace-accent)] hover:underline"
+              onClick={onClose}
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden />
+              Open org commitments (full editor)
+            </Link>
+          ) : (
+            <p className="mt-4 text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
+              Your lead sees these updates on the org tracker and in notifications.
+            </p>
+          )}
         </div>
-        <footer className="flex flex-wrap gap-2 border-t border-[var(--workspace-border)] px-5 py-4">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void apply("in_progress")}
-            className="route5-pressable inline-flex flex-1 min-w-[140px] items-center justify-center rounded-xl border border-cyan-500/35 bg-cyan-950/35 px-3 py-2.5 text-[12px] font-semibold text-cyan-50 disabled:opacity-50"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "In progress"}
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void apply("at_risk")}
-            className="route5-pressable inline-flex flex-1 min-w-[140px] items-center justify-center rounded-xl border border-amber-400/35 bg-amber-950/30 px-3 py-2.5 text-[12px] font-semibold text-amber-50 disabled:opacity-50"
-          >
-            Needs attention
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => void apply("done")}
-            className="route5-pressable inline-flex flex-[1_1_100%] items-center justify-center rounded-xl border border-emerald-400/38 bg-emerald-950/35 px-3 py-2.5 text-[12px] font-semibold text-emerald-50 disabled:opacity-50 sm:flex-1 sm:basis-auto"
-          >
-            Mark done
-          </button>
-        </footer>
       </div>
     </div>,
     document.body

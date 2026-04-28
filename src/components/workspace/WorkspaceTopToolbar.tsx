@@ -426,7 +426,7 @@ export default function WorkspaceTopToolbar() {
               <button
                 type="button"
                 onClick={() => setCustomizeOpen(true)}
-                className="route5-pressable inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/22 text-cyan-100/58 transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-white"
+                className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
                 aria-label="Customize workspace"
                 title="Customize"
               >
@@ -436,7 +436,7 @@ export default function WorkspaceTopToolbar() {
               <button
                 type="button"
                 onClick={() => setHelpOpen(true)}
-                className="route5-pressable inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/22 text-cyan-100/58 transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-white"
+                className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
                 aria-label="Help"
                 title="Help"
               >
@@ -446,7 +446,7 @@ export default function WorkspaceTopToolbar() {
               {!canLead ? (
                 <Link
                   href="/settings"
-                  className="route5-pressable inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.06] bg-black/22 text-cyan-100/58 transition hover:border-cyan-400/28 hover:bg-white/[0.05] hover:text-white"
+                  className="route5-pressable inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-md transition hover:border-white/35 hover:bg-black/65 hover:text-white"
                   aria-label="Settings"
                   title="Route5 settings"
                 >
