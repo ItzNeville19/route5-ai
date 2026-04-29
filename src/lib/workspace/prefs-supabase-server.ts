@@ -30,18 +30,29 @@ export async function upsertWorkspacePrefsSupabase(
   prefs: WorkspacePrefsV1
 ): Promise<void> {
   if (!isSupabaseConfigured()) return;
-  try {
-    const supabase = getServiceClient();
-    const { error } = await supabase.from("user_workspace_prefs").upsert(
-      {
-        clerk_user_id: clerkUserId,
-        prefs,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "clerk_user_id" }
-    );
-    if (error) throw error;
-  } catch {
-    /* prefs remain on Clerk */
+
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const supabase = getServiceClient();
+      const { error } = await supabase.from("user_workspace_prefs").upsert(
+        {
+          clerk_user_id: clerkUserId,
+          prefs,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "clerk_user_id" }
+      );
+      if (!error) return;
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[user_workspace_prefs upsert]", error.message);
+      }
+    } catch (e) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[user_workspace_prefs upsert] exception", e);
+      }
+    }
+    if (attempt < 3) await sleep(180 * 2 ** attempt);
   }
 }

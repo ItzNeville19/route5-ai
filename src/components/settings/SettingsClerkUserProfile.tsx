@@ -39,8 +39,9 @@ export default function SettingsClerkUserProfile() {
         profileSectionHeaderTitle: "text-[var(--workspace-fg)]",
         profileSectionHeaderSubtitle: "text-[var(--workspace-muted-fg)]",
         pageHeader: "text-[var(--workspace-fg)]",
-        headerTitle: "text-[var(--workspace-fg)]",
-        headerSubtitle: "text-[var(--workspace-muted-fg)]",
+        // Must win over global ClerkProvider `headerTitle: !text-[#fafafa]` (clerk-appearance.ts) on light shells.
+        headerTitle: "!text-[var(--workspace-fg)] font-semibold tracking-[-0.02em]",
+        headerSubtitle: "!text-[var(--workspace-muted-fg)]",
         formFieldLabel: "text-[var(--workspace-fg)]",
         formFieldInput:
           "border-[var(--workspace-border)] bg-[var(--workspace-surface)]/70 text-[var(--workspace-fg)]",

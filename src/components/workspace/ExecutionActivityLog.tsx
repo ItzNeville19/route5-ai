@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Bell, ShieldAlert } from "lucide-react";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
 type TimelineItem =
   | {
@@ -21,6 +22,7 @@ type TimelineItem =
     };
 
 export default function ExecutionActivityLog() {
+  const { activeProjectId } = useWorkspaceData();
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,9 +30,12 @@ export default function ExecutionActivityLog() {
     let cancelled = false;
     (async () => {
       try {
+        const escSuffix = activeProjectId
+          ? `&projectId=${encodeURIComponent(activeProjectId)}`
+          : "";
         const [nRes, eRes] = await Promise.all([
           fetch("/api/notifications?limit=40", { credentials: "same-origin" }),
-          fetch("/api/escalations?resolved=all&limit=35", { credentials: "same-origin" }),
+          fetch(`/api/escalations?resolved=all&limit=35${escSuffix}`, { credentials: "same-origin" }),
         ]);
         const nJson = (await nRes.json().catch(() => ({}))) as {
           notifications?: Array<{ id: string; title: string; body: string; createdAt: string }>;
@@ -77,7 +82,7 @@ export default function ExecutionActivityLog() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeProjectId]);
 
   const grouped = useMemo(() => items.slice(0, 80), [items]);
 

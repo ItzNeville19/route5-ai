@@ -32,7 +32,12 @@ export async function GET(req: Request) {
     const scope: "org" | "self" =
       requestedScope === "self" ? "self" : canViewOrg ? "org" : "self";
     const orgId = await ensureOrganizationForClerkUser(userId);
-    const rows = await fetchMetricRowsForOrg(orgId, scope === "self" ? userId : undefined);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
+    const rows = await fetchMetricRowsForOrg(
+      orgId,
+      scope === "self" ? userId : undefined,
+      projectId || undefined
+    );
     const ownerIds = [...new Set(rows.map((r) => r.owner_id))];
     const names = await resolveOwnerDisplayNames(ownerIds);
     const metrics = computeLiveDashboardMetrics(rows, names);

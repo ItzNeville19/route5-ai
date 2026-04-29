@@ -265,14 +265,16 @@ export default function WorkspaceTopToolbar() {
             </motion.div>
 
             {projects.length > 1 ? (
-              <div className="h-8 w-[min(100%,9.5rem)] min-w-0 shrink-0 sm:w-auto sm:max-w-[12rem] md:max-w-[14rem] 2xl:max-w-[16rem]">
+              <div className="h-8 min-w-0 max-w-[min(100%,11.5rem)] shrink-0 sm:max-w-[15rem] md:max-w-[17rem]">
                 <WorkspaceProjectSwitcher mode="headerScope" />
               </div>
             ) : null}
 
-            <div className="flex min-h-0 min-w-0 flex-1 basis-0 justify-start px-0.5 sm:px-1">
+            <div className="flex min-h-0 min-w-0 shrink-0 justify-start px-0.5 sm:px-1">
               <WorkspaceHeaderSearch fill />
             </div>
+
+            <div className="min-h-0 min-w-0 flex-1" aria-hidden="true" />
 
             <nav
               aria-label={t("workspace.chrome.nav.aria")}

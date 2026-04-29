@@ -43,8 +43,8 @@ export default function PublicPlansGrid({ signedIn }: Props) {
             key={plan.id}
             className={
               plan.accent
-                ? "relative flex flex-col rounded-2xl border-2 border-emerald-400/55 bg-zinc-950 p-6 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.35)] ring-1 ring-white/10 sm:p-7"
-                : "flex flex-col rounded-2xl border border-white/20 bg-zinc-950 p-6 ring-1 ring-black/40 sm:p-7"
+                ? "route5-marketing-dark-card relative flex flex-col rounded-2xl border-2 border-emerald-400/55 p-6 shadow-[0_20px_60px_-28px_rgba(16,185,129,0.35)] ring-1 ring-white/10 sm:p-7"
+                : "route5-marketing-dark-card flex flex-col rounded-2xl border border-white/20 p-6 ring-1 ring-black/40 sm:p-7"
             }
           >
             {plan.accent ? (
@@ -66,7 +66,7 @@ export default function PublicPlansGrid({ signedIn }: Props) {
         ))}
       </div>
 
-      <div className="mt-12 rounded-2xl border border-white/18 bg-[#0c1016] p-8 text-center sm:p-10">
+      <div className="route5-marketing-dark-cta mt-12 rounded-2xl border border-white/18 p-8 text-center sm:p-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/85">Next step</p>
         <h3 className="mt-3 text-[clamp(1.35rem,3vw,1.75rem)] font-semibold tracking-[-0.03em] text-white">
           See a number that fits your operating model

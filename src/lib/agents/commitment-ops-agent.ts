@@ -78,9 +78,10 @@ function buildNudgeMessage(commitment: EngineCommitmentRow, severity: Commitment
 
 export async function previewCommitmentOpsActions(
   orgId: string,
-  policy: CommitmentOpsPolicy = DEFAULT_COMMITMENT_OPS_POLICY
+  policy: CommitmentOpsPolicy = DEFAULT_COMMITMENT_OPS_POLICY,
+  projectId?: string | null
 ): Promise<CommitmentOpsAction[]> {
-  const commitments = await fetchActiveCommitmentsForOrg(orgId);
+  const commitments = await fetchActiveCommitmentsForOrg(orgId, projectId);
   const now = Date.now();
   const actions: CommitmentOpsAction[] = [];
   for (const commitment of commitments) {

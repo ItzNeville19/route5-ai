@@ -18,8 +18,9 @@ export const runtime = "nodejs";
 
 /**
  * Signed-in workspace context for the command palette (no secrets).
+ * Optional `?projectId=` scopes commitments and summary to one company.
  */
-export async function GET() {
+export async function GET(req: Request) {
   if (!isClerkFullyConfigured()) {
     return NextResponse.json({
       signedIn: false,
@@ -78,10 +79,16 @@ export async function GET() {
     "You";
 
   try {
+    const url = new URL(req.url);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
     const [projects, summary, commitments, ownerIds] = await Promise.all([
       listPaletteProjectsForUser(userId),
-      getWorkspaceSummaryForUser(userId),
-      listOrgCommitments(userId, { sort: "updated_at", order: "desc" }),
+      getWorkspaceSummaryForUser(userId, projectId),
+      listOrgCommitments(userId, {
+        sort: "updated_at",
+        order: "desc",
+        ...(projectId ? { projectId } : {}),
+      }),
       listDistinctOwnerIdsForOrg(userId),
     ]);
     const projectById = new Map(projects.map((p) => [p.id, p.name]));

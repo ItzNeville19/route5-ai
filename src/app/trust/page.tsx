@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 
 export const metadata: Metadata = {
   title: "Trust & compliance — Route5",
@@ -40,7 +41,7 @@ const linkC = "font-medium text-sky-400 hover:underline";
 
 export default function TrustPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell relative min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
+    <MarketingPublicShell>
       <Navbar />
       <div className="container-apple relative z-10 pb-24 pt-28 md:pb-32 md:pt-32">
         <div className="mx-auto max-w-[720px]">
@@ -138,6 +139,6 @@ export default function TrustPage() {
         </div>
       </div>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

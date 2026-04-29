@@ -212,28 +212,36 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
 
   const headerTriggerClass = headerScope
     ? workspacePaletteLight
-      ? "inline-flex w-full min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-full border border-slate-300/80 bg-white/90 px-2.5 py-1 text-left text-[12px] font-medium text-slate-800 shadow-[0_1px_0_rgba(255,255,255,0.9),inset_0_0_0_1px_rgba(255,255,255,0.5)] transition hover:border-sky-400/45 hover:bg-white"
-      : "inline-flex w-full min-h-8 min-w-0 max-w-full items-center gap-1.5 rounded-full border border-white/12 bg-black/35 px-2.5 py-1 text-left text-[12px] font-medium text-cyan-50/95 shadow-inner shadow-black/20 transition hover:border-cyan-400/28 hover:bg-white/[0.06]"
+      ? "inline-flex w-full min-h-8 min-w-0 max-w-full items-center gap-1 rounded-md border-0 bg-transparent px-1 py-1 text-left text-[12px] font-semibold text-slate-900 transition hover:bg-slate-900/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40"
+      : "inline-flex w-full min-h-8 min-w-0 max-w-full items-center gap-1 rounded-md border-0 bg-transparent px-1 py-1 text-left text-[12px] font-semibold text-white/95 transition hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/35"
     : "";
 
   const headerMenuClass =
     headerScope && workspacePaletteLight
-      ? "overflow-hidden rounded-[14px] border border-slate-200/90 bg-white/98 py-1 shadow-[0_16px_40px_-20px_rgba(15,23,42,0.28)] backdrop-blur-md"
-      : "overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md";
+      ? "overflow-hidden rounded-lg border border-slate-200/80 bg-white py-1 shadow-lg shadow-slate-900/12"
+      : headerScope
+        ? "overflow-hidden rounded-lg border border-white/[0.1] bg-[#0c1416] py-1 shadow-xl shadow-black/50"
+        : "overflow-hidden rounded-[var(--r5-radius-lg)] border border-r5-border-subtle bg-r5-surface-primary/98 py-1 shadow-[var(--r5-shadow-elevated)] backdrop-blur-md";
 
   const headerMenuHeading =
     headerScope && workspacePaletteLight
-      ? "px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500"
-      : "px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary";
+      ? "px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500"
+      : headerScope
+        ? "px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-white/45"
+        : "px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-r5-text-tertiary";
 
   const headerMenuItem = (active: boolean) =>
     headerScope && workspacePaletteLight
-      ? `flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-slate-100/90 ${
-          active ? "bg-sky-50/90 text-slate-900" : "text-slate-700"
+      ? `flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-slate-100 ${
+          active ? "bg-slate-100 text-slate-900" : "text-slate-800"
         }`
-      : `flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-r5-surface-hover ${
-          active ? "bg-r5-surface-secondary/80 text-r5-text-primary" : "text-r5-text-secondary"
-        }`;
+      : headerScope
+        ? `flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-white/[0.06] ${
+            active ? "bg-white/[0.07] text-white" : "text-white/85"
+          }`
+        : `flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-r5-surface-hover ${
+            active ? "bg-r5-surface-secondary/80 text-r5-text-primary" : "text-r5-text-secondary"
+          }`;
 
   const dropdown =
     open && portalReady && menuPos && typeof document !== "undefined"
@@ -272,7 +280,13 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
                     </span>
                     {active ? (
                       <Check
-                        className={`h-4 w-4 shrink-0 ${headerScope && workspacePaletteLight ? "text-sky-600" : "text-r5-accent"}`}
+                        className={`h-4 w-4 shrink-0 ${
+                          headerScope && workspacePaletteLight
+                            ? "text-sky-600"
+                            : headerScope
+                              ? "text-cyan-400"
+                              : "text-r5-accent"
+                        }`}
                         strokeWidth={2}
                         aria-hidden
                       />
@@ -285,7 +299,9 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
               className={
                 headerScope && workspacePaletteLight
                   ? "border-t border-slate-200/90 p-1"
-                  : "border-t border-r5-border-subtle p-1"
+                  : headerScope
+                    ? "border-t border-white/[0.08] p-1"
+                    : "border-t border-r5-border-subtle p-1"
               }
             >
               {canAddCompany && !headerScope ? (
@@ -308,10 +324,14 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
                   className={
                     workspacePaletteLight
                       ? "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-slate-800 transition hover:bg-slate-100/90"
-                      : "flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] font-medium text-r5-text-primary transition hover:bg-r5-surface-hover"
+                      : "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]"
                   }
                 >
-                  <Plus className="h-4 w-4 shrink-0 text-sky-600" strokeWidth={2} aria-hidden />
+                  <Plus
+                    className={`h-4 w-4 shrink-0 ${workspacePaletteLight ? "text-sky-600" : "text-cyan-400"}`}
+                    strokeWidth={2}
+                    aria-hidden
+                  />
                   {t("header.companies.addNew")}
                 </button>
               ) : null}
@@ -321,7 +341,9 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
                 className={
                   headerScope && workspacePaletteLight
                     ? "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-slate-600 transition hover:bg-slate-100/80 hover:text-slate-900"
-                    : "flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
+                    : headerScope
+                      ? "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-white/70 transition hover:bg-white/[0.06] hover:text-white"
+                      : "flex w-full items-center gap-2 rounded-[var(--r5-radius-md)] px-3 py-2 text-left text-[13px] text-r5-text-secondary transition hover:bg-r5-surface-hover hover:text-r5-text-primary"
                 }
               >
                 {t("workspace.chrome.allCompanies")}
@@ -336,7 +358,7 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
     <div
       className={
         headerScope
-          ? "relative z-[200] w-full min-w-0 max-w-[18rem] shrink-0 2xl:max-w-[20rem]"
+          ? "relative z-[200] w-full min-w-0 max-w-[15rem] shrink-0 sm:max-w-[17rem]"
           : "relative z-[200] min-w-0 max-w-[min(70vw,340px)] shrink-0 sm:max-w-[360px]"
       }
     >
@@ -362,18 +384,12 @@ export default function WorkspaceProjectSwitcher({ mode = "default" as SwitcherM
         title={label}
       >
         {iconEmoji ? (
-          <span className="shrink-0 text-[14px] leading-none" aria-hidden>
+          <span className="shrink-0 text-[13px] leading-none" aria-hidden>
             {iconEmoji}
           </span>
-        ) : (
+        ) : headerScope ? null : (
           <FolderKanban
-            className={
-              headerScope
-                ? workspacePaletteLight
-                  ? "h-3.5 w-3.5 shrink-0 text-slate-500"
-                  : "h-3.5 w-3.5 shrink-0 text-cyan-200/55"
-                : "h-3.5 w-3.5 shrink-0 text-r5-text-secondary"
-            }
+            className="h-3.5 w-3.5 shrink-0 text-r5-text-secondary"
             strokeWidth={2}
             aria-hidden
           />

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 import { CONTACT_EMAIL, mailtoHref } from "@/lib/site";
 
 const BENEFITS = [
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
 
 export default function BenefitsPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell relative min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
+    <MarketingPublicShell>
       <Navbar />
       <article className="relative z-10 mx-auto max-w-[860px] px-5 pb-24 pt-28 md:px-8 md:pt-32">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">
@@ -49,7 +50,7 @@ export default function BenefitsPage() {
           {BENEFITS.map((item) => (
             <div
               key={item.title}
-              className="rounded-2xl border border-white/12 bg-white/[0.06] px-5 py-5 backdrop-blur"
+              className="route5-marketing-dark-card rounded-2xl border border-white/12 px-5 py-5"
             >
               <h2 className="text-[17px] font-semibold tracking-[-0.02em] text-white">{item.title}</h2>
               <p className="mt-2 text-[15px] leading-relaxed text-zinc-200">{item.body}</p>
@@ -57,7 +58,7 @@ export default function BenefitsPage() {
           ))}
         </section>
 
-        <section className="mt-12 rounded-2xl border border-white/12 bg-white/[0.05] px-5 py-6">
+        <section className="route5-marketing-dark-card mt-12 rounded-2xl border border-white/12 px-5 py-6">
           <h2 className="text-[13px] font-semibold uppercase tracking-[0.14em] text-emerald-200/75">
             Continue after trial
           </h2>
@@ -82,6 +83,6 @@ export default function BenefitsPage() {
         </section>
       </article>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

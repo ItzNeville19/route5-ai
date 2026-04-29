@@ -10,12 +10,12 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell relative min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
+    <main className="route5-brand-marketing-page relative min-h-dvh w-full text-[#1d1d1f] antialiased">
       <Navbar />
       <div className="relative z-10 pb-16 pt-24 md:pb-24 md:pt-28">
         <ContactForm />
       </div>
-      <Footer tone="command" />
+      <Footer tone="light" />
     </main>
   );
 }

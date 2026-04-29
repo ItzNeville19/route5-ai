@@ -32,21 +32,39 @@ export type EngineCommitmentRow = {
   status: string;
   title: string;
   owner_id: string;
+  /** Present when selected from DB columns that include project_id. */
+  project_id?: string | null;
 };
 
-export async function fetchActiveCommitmentsForOrg(orgId: string): Promise<EngineCommitmentRow[]> {
+export async function fetchActiveCommitmentsForOrg(
+  orgId: string,
+  projectId?: string | null
+): Promise<EngineCommitmentRow[]> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
-    const { data, error } = await supabase
+    let q = supabase
       .from("org_commitments")
       .select("id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id")
       .eq("org_id", orgId)
       .is("deleted_at", null)
       .is("completed_at", null);
+    if (projectId) {
+      q = q.eq("project_id", projectId);
+    }
+    const { data, error } = await q;
     if (error) throw error;
     return (data ?? []) as EngineCommitmentRow[];
   }
   const d = getSqliteHandle();
+  if (projectId) {
+    return d
+      .prepare(
+        `SELECT id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id
+         FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL AND completed_at IS NULL
+         AND project_id = ?`
+      )
+      .all(orgId, projectId) as EngineCommitmentRow[];
+  }
   return d
     .prepare(
       `SELECT id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id
@@ -64,7 +82,9 @@ export async function fetchCommitmentsByIds(
     const supabase = getServiceClient();
     const { data, error } = await supabase
       .from("org_commitments")
-      .select("id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id")
+      .select(
+        "id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id, project_id"
+      )
       .eq("org_id", orgId)
       .is("deleted_at", null)
       .in("id", ids);
@@ -75,7 +95,7 @@ export async function fetchCommitmentsByIds(
   const placeholders = ids.map(() => "?").join(",");
   return d
     .prepare(
-      `SELECT id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id
+      `SELECT id, org_id, deadline, completed_at, last_activity_at, status, title, owner_id, project_id
        FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL AND id IN (${placeholders})`
     )
     .all(orgId, ...ids) as EngineCommitmentRow[];

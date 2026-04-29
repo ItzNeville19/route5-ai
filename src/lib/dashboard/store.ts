@@ -6,7 +6,8 @@ import { computeSnapshotPayload } from "@/lib/dashboard/compute";
 
 export async function fetchMetricRowsForOrg(
   orgId: string,
-  ownerId?: string
+  ownerId?: string,
+  projectId?: string | null
 ): Promise<MetricCommitmentRow[]> {
   if (isSupabaseConfigured()) {
     const supabase = getServiceClient();
@@ -17,6 +18,9 @@ export async function fetchMetricRowsForOrg(
       .is("deleted_at", null);
     if (ownerId) {
       query = query.eq("owner_id", ownerId);
+    }
+    if (projectId) {
+      query = query.eq("project_id", projectId);
     }
     const { data, error } = await query;
     if (error) throw error;
@@ -40,10 +44,15 @@ export async function fetchMetricRowsForOrg(
     whereOwner = " AND owner_id = ?";
     params.push(ownerId);
   }
+  let whereProject = "";
+  if (projectId) {
+    whereProject = " AND project_id = ?";
+    params.push(projectId);
+  }
   const rows = d
     .prepare(
       `SELECT id, status, deadline, completed_at, owner_id, title, created_at
-       FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL${whereOwner}`
+       FROM org_commitments WHERE org_id = ? AND deleted_at IS NULL${whereOwner}${whereProject}`
     )
     .all(...params) as Record<string, unknown>[];
   return rows.map((r) => ({
@@ -71,7 +80,8 @@ export type DashboardActivityRow = {
 export async function fetchRecentCommitmentActivity(
   orgId: string,
   limit = 12,
-  ownerId?: string
+  ownerId?: string,
+  projectId?: string | null
 ): Promise<DashboardActivityRow[]> {
   const boundedLimit = Math.max(1, Math.min(50, limit));
   if (isSupabaseConfigured()) {
@@ -86,6 +96,9 @@ export async function fetchRecentCommitmentActivity(
       .limit(boundedLimit);
     if (ownerId) {
       query = query.eq("owner_id", ownerId);
+    }
+    if (projectId) {
+      query = query.eq("project_id", projectId);
     }
     const { data, error } = await query;
     if (error) throw error;
@@ -110,12 +123,17 @@ export async function fetchRecentCommitmentActivity(
     ownerWhere = " AND owner_id = ?";
     params.push(ownerId);
   }
+  let projectWhere = "";
+  if (projectId) {
+    projectWhere = " AND project_id = ?";
+    params.push(projectId);
+  }
   params.push(boundedLimit);
   const rows = d
     .prepare(
       `SELECT id, title, status, owner_id, deadline, created_at, updated_at, completed_at
        FROM org_commitments
-       WHERE org_id = ? AND deleted_at IS NULL${ownerWhere}
+       WHERE org_id = ? AND deleted_at IS NULL${ownerWhere}${projectWhere}
        ORDER BY updated_at DESC, created_at DESC
        LIMIT ?`
     )

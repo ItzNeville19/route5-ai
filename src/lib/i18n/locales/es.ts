@@ -61,6 +61,71 @@ export const es: Record<string, string> = {
   "workspace.chrome.search.aria": "Buscar en el espacio de trabajo — ⌘K",
   "workspace.chrome.search.placeholder": "Buscar…",
 
+  "settings.backDashboard": "← Panel",
+  "settings.section.account.title": "Cuenta",
+  "settings.section.account.desc": "Gestiona tu perfil y el inicio de sesión.",
+  "settings.section.preferences.title": "Preferencias",
+  "settings.section.preferences.desc": "Ubicación, zona horaria, idioma y aspecto del espacio de trabajo.",
+  "settings.section.desktop.title": "Aplicación de escritorio",
+  "settings.section.desktop.desc":
+    "Cuando Route5 ofrece un instalador para tu organización, usa el mismo espacio de trabajo que la web en una ventana dedicada.",
+  "settings.section.desktop.body":
+    "En Mac, abre la imagen de disco y arrastra Route5 a Aplicaciones. En Windows, ejecuta el instalador que envíe tu equipo de IT.",
+  "settings.section.desktop.downloadOptions": "Escritorio e instalación",
+  "settings.section.desktop.downloadMac": "Descargar instalador para Mac",
+  "settings.section.desktop.getMacBuild": "Obtener build de Mac (página de descarga)",
+  "settings.section.desktop.dmgHint":
+    "Un enlace directo a {dmg} aparece aquí cuando tu equipo configura {envVar} — hasta entonces, usa la página de descarga (sin enlaces rotos).",
+  "settings.section.notifications.title": "Notificaciones",
+  "settings.section.notifications.desc": "Elige canales para avisos, seguimientos y resúmenes.",
+  "settings.section.notifications.open": "Abrir preferencias de notificaciones",
+  "settings.section.ai.title": "Ajustes de IA",
+  "settings.section.ai.desc": "Controla el modelo y la sensibilidad de captura.",
+  "settings.section.integrations.title": "Integraciones",
+  "settings.section.integrations.desc":
+    "Webhook y reenvío de correo están activos. Conecta Slack, Gmail y Notion desde Integraciones.",
+  "settings.integrations.open": "Abrir integración",
+  "settings.integrations.slack": "Slack",
+  "settings.integrations.gmail": "Gmail",
+  "settings.integrations.notion": "Notion",
+
+  "settings.danger.account.title": "Zona de peligro",
+  "settings.danger.account.lead":
+    "Acciones destructivas para tu espacio de trabajo Route5 y tu inicio de sesión en Clerk. Nada se borra hasta que abras los pasos y confirmes.",
+  "settings.danger.account.toggleExpand": "Eliminar cuenta (oculto — expande para continuar)",
+  "settings.danger.account.toggleCollapse": "Eliminar cuenta",
+  "settings.danger.account.cannotUndo": "Esto no se puede deshacer",
+  "settings.danger.account.b1": "Tu cuenta de Clerk se elimina — cerrarás sesión en todas partes.",
+  "settings.danger.account.b2": "Se borran tus proyectos Route5 y las decisiones capturadas de esta cuenta en nuestro espacio de trabajo.",
+  "settings.danger.account.b3": "Facturación y planes pasan por Clerk; si tienes un plan de pago, resuélvelo antes de eliminar.",
+  "settings.danger.account.reasonLabel": "¿Por qué quieres eliminar tu cuenta?",
+  "settings.danger.account.reasonHint":
+    "Una respuesta breve y honesta te ayuda a confirmar que es lo que quieres — no es un juicio.",
+  "settings.danger.account.reasonPlaceholder":
+    "p. ej. me paso a otra herramienta; estoy probando el registro; ya no necesito este espacio…",
+  "settings.danger.account.reasonCount": "{n}/4000 · mínimo 20 caracteres",
+  "settings.danger.account.ack":
+    "Entiendo que esto es permanente y perderé el acceso a este espacio de trabajo y los datos de la cuenta.",
+  "settings.danger.account.typeDelete": "Escribe delete para confirmar",
+  "settings.danger.account.password": "Contraseña de la cuenta",
+  "settings.danger.account.noPassword":
+    "Iniciaste sesión sin contraseña (por ejemplo OAuth o enlace mágico). Basta con escribir delete para confirmar — no hace falta contraseña.",
+  "settings.danger.account.stillSure":
+    "¿Sigues seguro? Cuando estés listo, usa el botón de abajo. Si dudas, cierra esta sección y conserva tu cuenta.",
+  "settings.danger.account.cancel": "Cancelar",
+  "settings.danger.account.delete": "Eliminar mi cuenta de forma permanente",
+  "settings.danger.account.deleting": "Eliminando…",
+  "settings.danger.account.errDelete": "No se pudo eliminar la cuenta.",
+  "settings.danger.account.errNetwork": "Algo salió mal. Inténtalo de nuevo.",
+
+  "settings.danger.org.title": "Eliminar organización",
+  "settings.danger.org.fallbackName": "tu espacio de trabajo",
+  "settings.danger.org.lead":
+    "Eliminar {orgName} borraría proyectos compartidos y compromisos para todos los miembros. Route5 aún no ejecuta esta acción en la app — usa la página de Organización para quitar compañeros primero, exporta lo que necesites y contacta soporte si debes cerrar del todo el espacio de la empresa.",
+  "settings.danger.org.button": "Eliminar organización (no disponible)",
+  "settings.danger.org.hint":
+    "Los equipos vinculados a Clerk también pueden gestionar organizaciones desde el panel de Clerk cuando aplique.",
+
   "prefs.timePlace": "Hora y lugar",
   "prefs.timeIntro":
     "La hora y el lugar siguen tu zona IANA desde Intl (la misma fuente que Safari / Chrome en macOS e iOS). Elige una ciudad abajo; puedes cambiarla cuando quieras. Otras herramientas:",

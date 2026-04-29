@@ -36,6 +36,7 @@ import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { useBillingUpgrade } from "@/components/billing/BillingUpgradeProvider";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import type { UpgradePromptPayload } from "@/lib/billing/types";
 
 const STATUSES = [
@@ -58,6 +59,7 @@ function ownerLabel(ownerId: string | undefined, selfId: string | undefined) {
 
 export default function OrgCommitmentTracker() {
   const { t } = useI18n();
+  const { activeProjectId } = useWorkspaceData();
   const { user } = useUser();
   const { showUpgrade } = useBillingUpgrade();
   const router = useRouter();
@@ -131,10 +133,11 @@ export default function OrgCommitmentTracker() {
     if (ownerFilter.trim()) p.set("owner", ownerFilter.trim());
     if (dateFrom) p.set("dateFrom", new Date(dateFrom).toISOString());
     if (dateTo) p.set("dateTo", new Date(dateTo).toISOString());
+    if (activeProjectId) p.set("projectId", activeProjectId);
     p.set("sort", sort);
     p.set("order", order);
     return p.toString();
-  }, [q, statusFilter, priorityFilter, ownerFilter, dateFrom, dateTo, sort, order]);
+  }, [q, statusFilter, priorityFilter, ownerFilter, dateFrom, dateTo, sort, order, activeProjectId]);
 
   const loadList = useCallback(async () => {
     setLoadingList(true);

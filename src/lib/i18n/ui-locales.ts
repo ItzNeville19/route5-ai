@@ -28,16 +28,33 @@ export function toIntlLocale(code: UiLocaleCode): string {
   return row?.intl ?? "en-US";
 }
 
-/** Map browser language to our nearest supported code. */
+/**
+ * Map the OS / browser language list to our nearest supported code.
+ * Uses `navigator.languages` first (Safari, Chrome, Firefox on macOS, iOS, Windows — ordered preference),
+ * then `navigator.language`, so changing system language and reloading picks the right UI when prefs say “system”.
+ */
 export function resolveUiLocaleFromBrowser(): UiLocaleCode {
   if (typeof navigator === "undefined") return "en";
-  const raw = (navigator.language || "en").toLowerCase();
-  if (raw.startsWith("zh")) return "zh-Hans";
-  if (raw.startsWith("hi")) return "hi";
-  for (const row of UI_LOCALES) {
-    if (row.code === "zh-Hans") continue;
-    const c = row.code.toLowerCase();
-    if (raw === c || raw.startsWith(`${c}-`)) return row.code;
+
+  const candidates: string[] = [];
+  if (typeof navigator.languages !== "undefined" && navigator.languages?.length) {
+    for (const l of navigator.languages) {
+      if (l?.trim()) candidates.push(l);
+    }
+  }
+  if (!candidates.length) {
+    candidates.push(navigator.language || "en");
+  }
+
+  for (const rawFull of candidates) {
+    const raw = rawFull.toLowerCase();
+    if (raw.startsWith("zh")) return "zh-Hans";
+    if (raw.startsWith("hi")) return "hi";
+    for (const row of UI_LOCALES) {
+      if (row.code === "zh-Hans") continue;
+      const c = row.code.toLowerCase();
+      if (raw === c || raw.startsWith(`${c}-`)) return row.code;
+    }
   }
   return "en";
 }

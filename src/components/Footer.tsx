@@ -47,7 +47,7 @@ export default function Footer({ tone = "light" }: FooterProps) {
     <footer
       className={
         command
-          ? "route5-brand-footer-command-edge border-t border-white/10 bg-black/20 backdrop-blur-xl"
+          ? "route5-brand-footer-command-edge border-t border-white/10 bg-[#07070a]/95 backdrop-blur-xl"
           : "glass-liquid-nav border-t border-white/50"
       }
     >

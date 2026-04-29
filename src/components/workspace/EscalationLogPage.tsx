@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { NativeDatetimeLocalInput } from "@/components/ui/native-datetime-fields";
 import { Loader2, RefreshCcw } from "lucide-react";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
 type EscalationApiRow = {
   id: string;
@@ -47,6 +48,7 @@ function severityPillClass(sev: EscalationApiRow["severity"]): string {
 }
 
 export default function EscalationLogPage() {
+  const { activeProjectId } = useWorkspaceData();
   const [rows, setRows] = useState<EscalationApiRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatedAt, setGeneratedAt] = useState<string | null>(null);
@@ -88,6 +90,7 @@ export default function EscalationLogPage() {
         p.set("resolved", "all");
       }
       p.set("limit", "300");
+      if (activeProjectId) p.set("projectId", activeProjectId);
       const res = await fetch(`/api/escalations?${p.toString()}`, { credentials: "same-origin" });
       const data = (await res.json().catch(() => ({}))) as {
         escalations?: EscalationApiRow[];
@@ -111,7 +114,7 @@ export default function EscalationLogPage() {
     } finally {
       setLoading(false);
     }
-  }, [severity, status, commitmentId, dateFrom, dateTo]);
+  }, [severity, status, commitmentId, dateFrom, dateTo, activeProjectId]);
 
   useEffect(() => {
     void load();

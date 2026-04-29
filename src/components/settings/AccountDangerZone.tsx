@@ -3,8 +3,14 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 
 export default function AccountDangerZone() {
+  const { t } = useI18n();
+  const { workspacePaletteLight } = useWorkspaceExperience();
+  const light = workspacePaletteLight;
+
   const { user, isLoaded } = useUser();
   const titleId = useId();
   const passwordEnabled = Boolean(user?.passwordEnabled);
@@ -51,34 +57,64 @@ export default function AccountDangerZone() {
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Could not delete account.");
+        setError(data.error ?? t("settings.danger.account.errDelete"));
         return;
       }
       window.location.href = "/";
     } catch {
-      setError("Something went wrong. Try again.");
+      setError(t("settings.danger.account.errNetwork"));
     } finally {
       setBusy(false);
     }
-  }, [ack, passwordEnabled, phrase, password, pwdOk, reason, reasonOk, phraseOk]);
+  }, [
+    ack,
+    passwordEnabled,
+    phrase,
+    password,
+    pwdOk,
+    reason,
+    reasonOk,
+    phraseOk,
+    t,
+  ]);
+
+  const sectionClass = light
+    ? "rounded-2xl border border-red-200 bg-gradient-to-b from-red-50/95 to-white p-5 shadow-sm"
+    : "rounded-2xl border border-red-500/40 bg-gradient-to-b from-red-950/[0.15] to-transparent p-5 shadow-[0_0_0_1px_rgba(239,68,68,0.08)]";
+
+  const iconBox = light
+    ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700"
+    : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-300";
+
+  const heading = light ? "text-[15px] font-semibold tracking-[-0.02em] text-slate-900" : "text-[15px] font-semibold tracking-[-0.02em] text-zinc-50";
+  const lead = light ? "mt-1 text-[13px] leading-relaxed text-slate-600" : "mt-1 text-[13px] leading-relaxed text-zinc-400";
+
+  const toggleBtn = light
+    ? "flex w-full items-center justify-between gap-3 rounded-xl border border-red-300 bg-white px-4 py-3 text-left text-[13px] font-medium text-red-900 transition hover:bg-red-50"
+    : "flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/40 bg-red-950/10 px-4 py-3 text-left text-[13px] font-medium text-red-200/95 transition hover:bg-red-950/25";
+
+  const warnClass = light
+    ? "rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[13px] leading-relaxed text-red-950"
+    : "rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-3 text-[13px] leading-relaxed text-red-100/90";
+
+  const warnTitle = light ? "font-semibold text-red-950" : "font-semibold text-red-100";
+  const warnLi = light
+    ? "mt-2 list-inside list-disc space-y-1 text-[12px] text-red-900"
+    : "mt-2 list-inside list-disc space-y-1 text-[12px] text-red-200/95";
+
+  const errClass = light ? "text-[13px] text-red-700" : "text-[13px] text-red-400";
 
   return (
-    <section
-      className="rounded-2xl border border-red-500/40 bg-gradient-to-b from-red-950/[0.15] to-transparent p-5 shadow-[0_0_0_1px_rgba(239,68,68,0.08)]"
-      aria-labelledby={titleId}
-    >
+    <section className={sectionClass} aria-labelledby={titleId}>
       <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/20 text-red-300">
+        <div className={iconBox}>
           <AlertTriangle className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 id={titleId} className="text-[15px] font-semibold tracking-[-0.02em] text-zinc-50">
-            Danger zone
+          <h2 id={titleId} className={heading}>
+            {t("settings.danger.account.title")}
           </h2>
-          <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
-            Destructive actions for your Route5 workspace and your Clerk sign-in. Nothing here deletes anything
-            until you open the steps and confirm.
-          </p>
+          <p className={lead}>{t("settings.danger.account.lead")}</p>
         </div>
       </div>
 
@@ -86,10 +122,14 @@ export default function AccountDangerZone() {
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-red-500/40 bg-red-950/10 px-4 py-3 text-left text-[13px] font-medium text-red-200/95 transition hover:bg-red-950/25"
+          className={toggleBtn}
           aria-expanded={open}
         >
-          <span>Delete account {open ? "" : "(hidden — expand to continue)"}</span>
+          <span>
+            {open
+              ? t("settings.danger.account.toggleCollapse")
+              : t("settings.danger.account.toggleExpand")}
+          </span>
           {open ? (
             <ChevronUp className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
           ) : (
@@ -100,21 +140,21 @@ export default function AccountDangerZone() {
 
       {open ? (
         <div className="mt-5 space-y-4 border-t border-red-500/25 pt-5">
-          <div className="rounded-xl border border-red-500/30 bg-red-950/20 px-4 py-3 text-[13px] leading-relaxed text-red-100/90">
-            <p className="font-semibold text-red-100">This cannot be undone</p>
-            <ul className="mt-2 list-inside list-disc space-y-1 text-[12px] text-red-200/95">
-              <li>Your Clerk account is removed — you will be signed out everywhere.</li>
-              <li>Your Route5 projects and captured decisions for this account are deleted from our workspace.</li>
-              <li>Billing and plan links go through Clerk; if you use a paid tier, resolve billing before deleting.</li>
+          <div className={warnClass}>
+            <p className={warnTitle}>{t("settings.danger.account.cannotUndo")}</p>
+            <ul className={warnLi}>
+              <li>{t("settings.danger.account.b1")}</li>
+              <li>{t("settings.danger.account.b2")}</li>
+              <li>{t("settings.danger.account.b3")}</li>
             </ul>
           </div>
 
           <div>
             <label htmlFor="danger-reason" className="text-[12px] font-medium text-[var(--workspace-fg)]">
-              Why do you want to delete your account?
+              {t("settings.danger.account.reasonLabel")}
             </label>
             <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              A short honest answer helps you confirm this is what you want — not a judgment.
+              {t("settings.danger.account.reasonHint")}
             </p>
             <textarea
               id="danger-reason"
@@ -123,10 +163,10 @@ export default function AccountDangerZone() {
               rows={3}
               disabled={busy}
               className="mt-2 w-full resize-y rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-3 py-2.5 text-[13px] leading-relaxed text-[var(--workspace-fg)] placeholder:text-[var(--workspace-muted-fg)] focus:border-red-500/40 focus:outline-none focus:ring-2 focus:ring-red-500/15"
-              placeholder="e.g. I’m moving to another tool; I’m testing sign-up; I don’t need this workspace…"
+              placeholder={t("settings.danger.account.reasonPlaceholder")}
             />
             <p className="mt-1 text-[11px] text-[var(--workspace-muted-fg)]">
-              {reason.trim().length}/4000 · minimum 20 characters
+              {t("settings.danger.account.reasonCount", { n: reason.trim().length })}
             </p>
           </div>
 
@@ -139,14 +179,13 @@ export default function AccountDangerZone() {
               disabled={busy}
             />
             <span className="text-[13px] leading-snug text-[var(--workspace-fg)]">
-              I understand this is <strong className="font-semibold">permanent</strong> and I will lose access to
-              this workspace and account data.
+              {t("settings.danger.account.ack")}
             </span>
           </label>
 
           <label className="block">
             <span className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
-              Type <span className="font-mono text-[var(--workspace-fg)]">delete</span> to confirm
+              {t("settings.danger.account.typeDelete")}
             </span>
             <input
               value={phrase}
@@ -163,7 +202,7 @@ export default function AccountDangerZone() {
           {isLoaded && passwordEnabled ? (
             <label className="block">
               <span className="text-[12px] font-medium text-[var(--workspace-muted-fg)]">
-                Account password
+                {t("settings.danger.account.password")}
               </span>
               <input
                 type="password"
@@ -177,19 +216,16 @@ export default function AccountDangerZone() {
             </label>
           ) : isLoaded ? (
             <p className="text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-              You signed in without a password (for example OAuth or magic link). Typing{" "}
-              <span className="font-mono text-[var(--workspace-fg)]">delete</span> is enough to confirm — no
-              password required.
+              {t("settings.danger.account.noPassword")}
             </p>
           ) : null}
 
           <p className="text-[12px] leading-relaxed text-[var(--workspace-muted-fg)]">
-            Still sure? When you’re ready, use the button below. If you’re unsure, close this section and keep
-            your account.
+            {t("settings.danger.account.stillSure")}
           </p>
 
           {error ? (
-            <p className="text-[13px] text-red-400" role="alert">
+            <p className={errClass} role="alert">
               {error}
             </p>
           ) : null}
@@ -201,7 +237,7 @@ export default function AccountDangerZone() {
               onClick={() => setOpen(false)}
               className="rounded-xl border border-[var(--workspace-border)] bg-[var(--workspace-canvas)] px-4 py-2 text-[13px] font-medium text-[var(--workspace-fg)] transition hover:bg-white/[0.04] disabled:opacity-50"
             >
-              Cancel
+              {t("settings.danger.account.cancel")}
             </button>
             <button
               type="button"
@@ -209,7 +245,7 @@ export default function AccountDangerZone() {
               onClick={() => void submit()}
               className="rounded-xl bg-red-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-red-500 disabled:opacity-40"
             >
-              {busy ? "Deleting…" : "Delete my account permanently"}
+              {busy ? t("settings.danger.account.deleting") : t("settings.danger.account.delete")}
             </button>
           </div>
         </div>

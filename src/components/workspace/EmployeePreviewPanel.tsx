@@ -83,7 +83,7 @@ function duePlainEnglish(deadlineIso: string): string | null {
 }
 
 export default function EmployeePreviewPanel() {
-  const { orgRole, organizationId } = useWorkspaceData();
+  const { orgRole, organizationId, activeProjectId } = useWorkspaceData();
   const { prefs } = useWorkspaceExperience();
   const search = useSearchParams();
   const tasksHref = useMemo(() => {
@@ -106,7 +106,9 @@ export default function EmployeePreviewPanel() {
     if (!quiet) setLoading(true);
     setLoadError(null);
     try {
-      const res = await fetch("/api/dashboard/activity?scope=self&limit=48", { credentials: "same-origin" });
+      const qs = new URLSearchParams({ scope: "self", limit: "48" });
+      if (activeProjectId) qs.set("projectId", activeProjectId);
+      const res = await fetch(`/api/dashboard/activity?${qs}`, { credentials: "same-origin" });
       const data = (await res.json().catch(() => ({}))) as { activity?: ActivityRow[]; error?: string };
       if (res.ok) {
         setActivity(data.activity ?? []);
@@ -119,7 +121,7 @@ export default function EmployeePreviewPanel() {
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     void loadActivity(false);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 import PrivacyHashScroll from "@/components/privacy/PrivacyHashScroll";
 
 export const metadata: Metadata = {
@@ -112,7 +113,7 @@ neville@rayze.xyz`,
 
 export default function PrivacyPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
+    <MarketingPublicShell>
       <PrivacyHashScroll />
       <Navbar />
       <nav className="border-b border-white/10 bg-black/25 backdrop-blur-xl">
@@ -154,6 +155,6 @@ export default function PrivacyPage() {
         </div>
       </div>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

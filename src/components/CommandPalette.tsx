@@ -71,7 +71,7 @@ function sortDirectoryForBrowse(items: PaletteItem[]): PaletteItem[] {
     return a.label.localeCompare(b.label);
   });
 }
-let paletteCache: { at: number; payload: PaletteApiPayload } | null = null;
+let paletteCache: { at: number; projectKey: string; payload: PaletteApiPayload } | null = null;
 
 export function useCommandPalette(): PaletteContextValue {
   const ctx = useContext(PaletteContext);
@@ -270,7 +270,13 @@ export function CommandPaletteProvider({
   );
 
   const loadPalette = useCallback(async (forceNetwork = false) => {
-    if (!forceNetwork && paletteCache && Date.now() - paletteCache.at < PALETTE_CACHE_TTL_MS) {
+    const projectKey = ws?.activeProjectId ?? "";
+    if (
+      !forceNetwork &&
+      paletteCache &&
+      paletteCache.projectKey === projectKey &&
+      Date.now() - paletteCache.at < PALETTE_CACHE_TTL_MS
+    ) {
       applyPalettePayload(paletteCache.payload, {
         setSignedIn,
         setDisplayName,
@@ -288,12 +294,16 @@ export function CommandPaletteProvider({
     inFlightRef.current = ctrl;
     setLoadingPalette(true);
     try {
-      const res = await fetch("/api/workspace/palette", {
+      const paletteUrl =
+        projectKey.length > 0
+          ? `/api/workspace/palette?projectId=${encodeURIComponent(projectKey)}`
+          : "/api/workspace/palette";
+      const res = await fetch(paletteUrl, {
         credentials: "same-origin",
         signal: ctrl.signal,
       });
       const data = (await res.json().catch(() => ({}))) as PaletteApiPayload;
-      paletteCache = { at: Date.now(), payload: data };
+      paletteCache = { at: Date.now(), projectKey, payload: data };
       applyPalettePayload(data, {
         setSignedIn,
         setDisplayName,
@@ -315,7 +325,7 @@ export function CommandPaletteProvider({
     } finally {
       if (!ctrl.signal.aborted) setLoadingPalette(false);
     }
-  }, []);
+  }, [ws?.activeProjectId]);
 
   useEffect(() => {
     void loadPalette(false);
@@ -336,6 +346,15 @@ export function CommandPaletteProvider({
     window.addEventListener("route5:project-updated", onRefresh);
     return () => window.removeEventListener("route5:project-updated", onRefresh);
   }, [open, loadPalette]);
+
+  useEffect(() => {
+    const onScope = () => {
+      paletteCache = null;
+      void loadPalette(true);
+    };
+    window.addEventListener("route5:project-scope-changed", onScope);
+    return () => window.removeEventListener("route5:project-scope-changed", onScope);
+  }, [loadPalette]);
 
   /** App shell routes imply a signed-in session; palette API may lag — avoids wrong marketing-only routes on first ⌘K. */
   const likelyWorkspaceSession =

@@ -11,6 +11,7 @@ import {
   ORG_STATUS_LABEL,
   ORG_STATUS_PILL,
 } from "@/lib/org-commitments/tracker-constants";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 
 function deadlineSortMs(iso: string): number {
   const t = Date.parse(iso);
@@ -31,6 +32,7 @@ type ListPayload = {
 
 export default function MyInboxPage() {
   const { user } = useUser();
+  const { activeProjectId } = useWorkspaceData();
   const [orgId, setOrgId] = useState<string | null>(null);
   const [rows, setRows] = useState<OrgCommitmentRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +41,12 @@ export default function MyInboxPage() {
   async function load() {
     setLoading(true);
     try {
-      const owner = user?.id ? encodeURIComponent(user.id) : "";
-      const res = await fetch(`/api/commitments?owner=${owner}&sort=deadline&order=asc`, {
+      const p = new URLSearchParams();
+      if (user?.id) p.set("owner", user.id);
+      p.set("sort", "deadline");
+      p.set("order", "asc");
+      if (activeProjectId) p.set("projectId", activeProjectId);
+      const res = await fetch(`/api/commitments?${p}`, {
         credentials: "same-origin",
       });
       const data = (await res.json().catch(() => ({}))) as ListPayload;
@@ -58,7 +64,7 @@ export default function MyInboxPage() {
   useEffect(() => {
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, activeProjectId]);
 
   useEffect(() => {
     if (!orgId) return;

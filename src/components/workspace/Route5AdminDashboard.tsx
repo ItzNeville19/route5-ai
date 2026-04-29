@@ -155,7 +155,7 @@ function normalizeDashboardSectionOrder(raw?: string[]): string[] {
 export default function Route5AdminDashboard() {
   const { t, intlLocale } = useI18n();
   const { user } = useUser();
-  const { orgRole, organizationId } = useWorkspaceData();
+  const { orgRole, organizationId, activeProjectId } = useWorkspaceData();
   const { prefs, setPrefs } = useWorkspaceExperience();
   const search = useSearchParams();
   const { openRunAgent } = useWorkspaceChromeActions();
@@ -199,7 +199,10 @@ export default function Route5AdminDashboard() {
   const load = useCallback(async (quiet?: boolean) => {
     if (!quiet) setLoading(true);
     try {
-      const qs = `?scope=${scope}`;
+      const projectQs = activeProjectId
+        ? `&projectId=${encodeURIComponent(activeProjectId)}`
+        : "";
+      const qs = `?scope=${scope}${projectQs}`;
       const [mRes, aRes, tRes] = await Promise.all([
         fetch(`/api/dashboard/metrics${qs}`, { credentials: "same-origin" }),
         fetch(`/api/dashboard/activity${qs}`, { credentials: "same-origin" }),
@@ -209,9 +212,13 @@ export default function Route5AdminDashboard() {
       let eRes: Response | undefined;
       let qRes: Response | undefined;
       if (scope === "org" && canOrg) {
+        const escUrl = `/api/escalations?resolved=open&limit=12${projectQs}`;
+        const previewUrl = activeProjectId
+          ? `/api/agent/commitment-ops/preview?projectId=${encodeURIComponent(activeProjectId)}`
+          : "/api/agent/commitment-ops/preview";
         [eRes, qRes] = await Promise.all([
-          fetch(`/api/escalations?resolved=open&limit=12`, { credentials: "same-origin" }),
-          fetch(`/api/agent/commitment-ops/preview`, { credentials: "same-origin" }),
+          fetch(escUrl, { credentials: "same-origin" }),
+          fetch(previewUrl, { credentials: "same-origin" }),
         ]);
       }
 
@@ -235,7 +242,7 @@ export default function Route5AdminDashboard() {
     } finally {
       if (!quiet) setLoading(false);
     }
-  }, [scope, canOrg]);
+  }, [scope, canOrg, activeProjectId]);
 
   useEffect(() => {
     void load();

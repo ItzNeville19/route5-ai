@@ -7,6 +7,8 @@ import AccountDangerZone from "@/components/settings/AccountDangerZone";
 import OrganizationDangerZone from "@/components/settings/OrganizationDangerZone";
 import WorkspaceAiSettingsCard from "@/components/workspace/WorkspaceAiSettingsCard";
 import WorkspacePreferencesCard from "@/components/workspace/WorkspacePreferencesCard";
+import { useI18n } from "@/components/i18n/I18nProvider";
+import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import {
   getDesktopDownloadUrl,
   isDesktopDownloadConfigured,
@@ -23,15 +25,30 @@ function SettingsSection({
   description: string;
   children: React.ReactNode;
 }) {
+  const { workspacePaletteLight } = useWorkspaceExperience();
+  const light = workspacePaletteLight;
+
   return (
     <section
       id={id}
-      className={`rounded-[var(--r5-radius-lg)] border border-white/12 bg-[#0e141c]/95 p-[var(--r5-space-4)] shadow-sm backdrop-blur-sm ${id ? "scroll-mt-28" : ""}`}
+      className={
+        light
+          ? `rounded-[var(--r5-radius-lg)] border border-slate-200/90 bg-white/95 p-[var(--r5-space-4)] shadow-[0_12px_40px_-28px_rgba(15,23,42,0.08)] backdrop-blur-sm ${id ? "scroll-mt-28" : ""}`
+          : `rounded-[var(--r5-radius-lg)] border border-white/12 bg-[#0e141c]/95 p-[var(--r5-space-4)] shadow-sm backdrop-blur-sm ${id ? "scroll-mt-28" : ""}`
+      }
     >
-      <h2 className="text-[length:var(--r5-font-subheading)] font-semibold text-zinc-50">
+      <h2
+        className={`text-[length:var(--r5-font-subheading)] font-semibold ${
+          light ? "text-[var(--workspace-fg)]" : "text-zinc-50"
+        }`}
+      >
         {title}
       </h2>
-      <p className="mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] text-zinc-400">
+      <p
+        className={`mt-[var(--r5-space-1)] text-[length:var(--r5-font-body)] ${
+          light ? "text-[var(--workspace-muted-fg)]" : "text-zinc-400"
+        }`}
+      >
         {description}
       </p>
       <div className="mt-[var(--r5-space-4)]">{children}</div>
@@ -40,8 +57,39 @@ function SettingsSection({
 }
 
 export default function WorkspaceSettingsPage() {
+  const { t } = useI18n();
+  const { workspacePaletteLight } = useWorkspaceExperience();
+  const light = workspacePaletteLight;
+
   const desktopDownloadUrl = getDesktopDownloadUrl();
   const showDirectMacInstaller = isDesktopDownloadConfigured();
+
+  const btnOutline = light
+    ? "inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-slate-200/90 bg-white px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
+    : "inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-white/[0.11]";
+
+  const btnEmerald = light
+    ? "inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-500/40 bg-emerald-50 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-emerald-950 transition hover:bg-emerald-100/90"
+    : "inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-emerald-500/25";
+
+  const btnGhostRow = light
+    ? "inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-slate-200/90 bg-white px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-slate-900 shadow-sm transition hover:bg-slate-50"
+    : "inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-zinc-100 transition hover:bg-white/[0.11]";
+
+  const integrationCard = light
+    ? "rounded-[var(--r5-radius-md)] border border-slate-200/90 bg-white px-[var(--r5-space-3)] py-[var(--r5-space-2)] shadow-sm transition hover:bg-slate-50"
+    : "rounded-[var(--r5-radius-md)] border border-white/12 bg-white/[0.05] px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-white/[0.09]";
+
+  const integrationTitle = light ? "text-slate-900" : "text-zinc-100";
+  const integrationSub = light ? "text-slate-600" : "text-zinc-400";
+  const arrowMuted = light ? "text-slate-400" : "text-zinc-500";
+  const bodyMuted = light ? "text-slate-600" : "text-zinc-400";
+
+  const integrations = [
+    { nameKey: "settings.integrations.slack" as const, href: "/integrations/slack" },
+    { nameKey: "settings.integrations.gmail" as const, href: "/integrations/google" },
+    { nameKey: "settings.integrations.notion" as const, href: "/integrations" },
+  ];
 
   return (
     <div className="route5-settings-surface mx-auto w-full max-w-[960px] space-y-[var(--r5-space-5)] pb-[var(--r5-space-4)]">
@@ -50,14 +98,14 @@ export default function WorkspaceSettingsPage() {
           href="/workspace/dashboard"
           className="text-[length:var(--r5-font-body)] text-[var(--workspace-muted-fg)] transition hover:text-[var(--workspace-fg)]"
         >
-          ← Dashboard
+          {t("settings.backDashboard")}
         </Link>
       </div>
 
       <SettingsSection
         id="settings-account"
-        title="Account"
-        description="Manage your profile and sign-in details."
+        title={t("settings.section.account.title")}
+        description={t("settings.section.account.desc")}
       >
         <div className="space-y-[var(--r5-space-4)]">
           <SettingsClerkUserProfile />
@@ -68,106 +116,87 @@ export default function WorkspaceSettingsPage() {
 
       <SettingsSection
         id="settings-preferences"
-        title="Preferences"
-        description="Location, timezone, language, and workspace surface settings."
+        title={t("settings.section.preferences.title")}
+        description={t("settings.section.preferences.desc")}
       >
         <WorkspacePreferencesCard />
       </SettingsSection>
 
       <SettingsSection
         id="settings-desktop"
-        title="Desktop app"
-        description="When Route5 provides an installer for your organization, it uses the same workspace as the web app in a dedicated window."
+        title={t("settings.section.desktop.title")}
+        description={t("settings.section.desktop.desc")}
       >
-        <p className="text-[length:var(--r5-font-body)] text-zinc-400">
-          On Mac, open the disk image and drag Route5 into Applications. On Windows, run the installer your team ships
-          from IT.
+        <p className={`text-[length:var(--r5-font-body)] ${bodyMuted}`}>
+          {t("settings.section.desktop.body")}
         </p>
         <div className="mt-[var(--r5-space-3)] flex flex-col gap-[var(--r5-space-2)] sm:flex-row sm:flex-wrap">
-          <Link
-            href="/download"
-            className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-white/[0.11]"
-          >
-            Desktop &amp; install options
-            <span className="text-zinc-500" aria-hidden>
+          <Link href="/download" className={btnOutline}>
+            {t("settings.section.desktop.downloadOptions")}
+            <span className={arrowMuted} aria-hidden>
               ↗
             </span>
           </Link>
           {showDirectMacInstaller ? (
-            <a
-              href={desktopDownloadUrl}
-              rel="noopener noreferrer"
-              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-emerald-500/25"
-            >
-              Download Mac installer
-              <span className="text-zinc-500" aria-hidden>
+            <a href={desktopDownloadUrl} rel="noopener noreferrer" className={btnEmerald}>
+              {t("settings.section.desktop.downloadMac")}
+              <span className={arrowMuted} aria-hidden>
                 ↗
               </span>
             </a>
           ) : (
-            <Link
-              href="/download"
-              className="inline-flex min-h-[var(--r5-nav-item-height)] items-center justify-center gap-2 rounded-[var(--r5-radius-pill)] border border-emerald-400/35 bg-emerald-500/15 px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] font-medium text-zinc-100 transition hover:bg-emerald-500/25"
-            >
-              Get the Mac build (download page)
-              <span className="text-zinc-500" aria-hidden>
+            <Link href="/download" className={btnEmerald}>
+              {t("settings.section.desktop.getMacBuild")}
+              <span className={arrowMuted} aria-hidden>
                 ↗
               </span>
             </Link>
           )}
         </div>
         {!showDirectMacInstaller ? (
-          <p className="mt-[var(--r5-space-3)] text-[13px] leading-relaxed text-zinc-400">
-            A direct <span className="font-mono text-zinc-200">.dmg</span> link appears here when your
-            team sets <span className="font-mono text-zinc-200">NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL</span>{" "}
-            — until then, use the download page (no broken file link).
+          <p className={`mt-[var(--r5-space-3)] text-[13px] leading-relaxed ${bodyMuted}`}>
+            {t("settings.section.desktop.dmgHint", {
+              dmg: ".dmg",
+              envVar: "NEXT_PUBLIC_DESKTOP_DOWNLOAD_URL",
+            })}
           </p>
         ) : null}
       </SettingsSection>
 
       <SettingsSection
         id="settings-notifications"
-        title="Notifications"
-        description="Choose delivery channels for updates, follow-ups, and digests."
+        title={t("settings.section.notifications.title")}
+        description={t("settings.section.notifications.desc")}
       >
-        <Link
-          href="/workspace/notifications/preferences"
-          className="inline-flex min-h-[var(--r5-nav-item-height)] items-center rounded-[var(--r5-radius-pill)] border border-white/15 bg-white/[0.07] px-[var(--r5-space-4)] text-[length:var(--r5-font-body)] text-zinc-100 transition hover:bg-white/[0.11]"
-        >
-          Open notification preferences
+        <Link href="/workspace/notifications/preferences" className={btnGhostRow}>
+          {t("settings.section.notifications.open")}
         </Link>
       </SettingsSection>
 
       <SettingsSection
         id="settings-ai"
-        title="AI Settings"
-        description="Control model behavior and capture sensitivity."
+        title={t("settings.section.ai.title")}
+        description={t("settings.section.ai.desc")}
       >
         <WorkspaceAiSettingsCard />
       </SettingsSection>
 
       <SettingsSection
         id="settings-integrations"
-        title="Integrations"
-        description="Webhook and email forwarding are live. Connect Slack, Gmail, and Notion from Integrations."
+        title={t("settings.section.integrations.title")}
+        description={t("settings.section.integrations.desc")}
       >
         <div className="space-y-[var(--r5-space-3)]">
           <SettingsIngestWebhookCard />
           <div className="grid gap-[var(--r5-space-2)] sm:grid-cols-3">
-            {[
-              { name: "Slack", href: "/integrations/slack" },
-              { name: "Gmail", href: "/integrations/google" },
-              { name: "Notion", href: "/integrations" },
-            ].map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                className="rounded-[var(--r5-radius-md)] border border-white/12 bg-white/[0.05] px-[var(--r5-space-3)] py-[var(--r5-space-2)] transition hover:bg-white/[0.09]"
-              >
-                <p className="text-[length:var(--r5-font-body)] font-medium text-zinc-100">
-                  {item.name}
+            {integrations.map((item) => (
+              <Link key={item.nameKey} href={item.href} className={integrationCard}>
+                <p className={`text-[length:var(--r5-font-body)] font-medium ${integrationTitle}`}>
+                  {t(item.nameKey)}
                 </p>
-                <p className="mt-[var(--r5-space-1)] text-[12px] text-zinc-400">Open integration</p>
+                <p className={`mt-[var(--r5-space-1)] text-[12px] ${integrationSub}`}>
+                  {t("settings.integrations.open")}
+                </p>
               </Link>
             ))}
           </div>

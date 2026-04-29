@@ -39,20 +39,27 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 /** Marketing / signed-out routes: reads `uiLocale` from workspace prefs in localStorage (same key as the app). */
 export function PublicI18nProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [langTick, setLangTick] = useState(0);
   const [uiLocale, setUiLocaleState] = useState<UiLocaleCode>(() =>
     typeof window === "undefined" ? "en" : resolveUiLocaleFromBrowser()
   );
 
   useEffect(() => {
+    const onSystemLang = () => setLangTick((n) => n + 1);
+    window.addEventListener("languagechange", onSystemLang);
+    return () => window.removeEventListener("languagechange", onSystemLang);
+  }, []);
+
+  useEffect(() => {
     const prefs = loadWorkspacePrefs();
     setUiLocaleState(resolveUiLocale(prefs.uiLocale));
-  }, []);
+  }, [langTick]);
 
   /** SPA navigations do not fire `storage` (same tab); re-read prefs on every route change. */
   useEffect(() => {
     const prefs = loadWorkspacePrefs();
     setUiLocaleState(resolveUiLocale(prefs.uiLocale));
-  }, [pathname]);
+  }, [pathname, langTick]);
 
   useEffect(() => {
     const syncFromPrefs = () => {
@@ -107,10 +114,17 @@ export function PublicI18nProvider({ children }: { children: React.ReactNode }) 
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const exp = useWorkspaceExperience();
+  const [langTick, setLangTick] = useState(0);
+
+  useEffect(() => {
+    const onSystemLang = () => setLangTick((n) => n + 1);
+    window.addEventListener("languagechange", onSystemLang);
+    return () => window.removeEventListener("languagechange", onSystemLang);
+  }, []);
 
   const uiLocale = useMemo(
     () => resolveUiLocale(exp.prefs.uiLocale),
-    [exp.prefs.uiLocale]
+    [exp.prefs.uiLocale, langTick]
   );
 
   const intlLocale = useMemo(() => toIntlLocale(uiLocale), [uiLocale]);

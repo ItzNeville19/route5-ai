@@ -1,6 +1,7 @@
 import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
 import { en } from "@/lib/i18n/locales/en";
 import { es } from "@/lib/i18n/locales/es";
+import esFill from "@/lib/i18n/locales/es-fill.json";
 import { fr } from "@/lib/i18n/locales/fr";
 import { de } from "@/lib/i18n/locales/de";
 import { pt } from "@/lib/i18n/locales/pt";
@@ -18,7 +19,7 @@ import { hi } from "@/lib/i18n/locales/hi";
  */
 export const MESSAGE_PACKS: Record<UiLocaleCode, Record<string, string>> = {
   en,
-  es: { ...en, ...es },
+  es: { ...en, ...es, ...(esFill as Record<string, string>) },
   fr: { ...en, ...fr },
   de: { ...en, ...de },
   pt: { ...en, ...pt },

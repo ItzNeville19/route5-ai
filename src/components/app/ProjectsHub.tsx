@@ -39,7 +39,7 @@ function healthToneClass(score: number): string {
 
 export default function ProjectsHub() {
   const { t } = useI18n();
-  const { projects, loadingProjects, orgRole, loadingOrganization } = useWorkspaceData();
+  const { projects, loadingProjects, orgRole, loadingOrganization, activeProjectId } = useWorkspaceData();
   const canAddCompany = !loadingOrganization && canCreateCompany(orgRole);
   const { displayName, get } = useMemberDirectory();
   const [commitments, setCommitments] = useState<OrgCommitmentRow[]>([]);
@@ -48,7 +48,9 @@ export default function ProjectsHub() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/commitments?sort=updated_at&order=desc", {
+        const p = new URLSearchParams({ sort: "updated_at", order: "desc" });
+        if (activeProjectId) p.set("projectId", activeProjectId);
+        const res = await fetch(`/api/commitments?${p}`, {
           credentials: "same-origin",
         });
         const data = (await res.json().catch(() => ({}))) as { commitments?: OrgCommitmentRow[] };
@@ -60,7 +62,7 @@ export default function ProjectsHub() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [activeProjectId]);
 
   const rollupByProject = useMemo(() => rollupCommitmentsByProject(commitments), [commitments]);
 

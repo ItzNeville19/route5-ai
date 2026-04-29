@@ -69,6 +69,16 @@ export async function GET(req: Request) {
     const scope: "org" | "self" =
       requestedScope === "self" ? "self" : canViewOrg ? "org" : "self";
     const orgId = await ensureOrganizationForClerkUser(userId);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
+    if (projectId) {
+      const rows = await fetchMetricRowsForOrg(
+        orgId,
+        scope === "self" ? userId : undefined,
+        projectId
+      );
+      const snapshots = buildSelfSnapshots(rows, since);
+      return NextResponse.json({ orgId, range, snapshots, scope, role, canViewOrg });
+    }
     if (scope === "self") {
       const rows = await fetchMetricRowsForOrg(orgId, userId);
       const snapshots = buildSelfSnapshots(rows, since);

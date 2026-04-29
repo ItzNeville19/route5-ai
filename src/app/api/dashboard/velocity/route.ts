@@ -31,7 +31,12 @@ export async function GET(req: Request) {
     const scope: "org" | "self" =
       requestedScope === "self" ? "self" : canViewOrg ? "org" : "self";
     const orgId = await ensureOrganizationForClerkUser(userId);
-    const rows = await fetchMetricRowsForOrg(orgId, scope === "self" ? userId : undefined);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
+    const rows = await fetchMetricRowsForOrg(
+      orgId,
+      scope === "self" ? userId : undefined,
+      projectId || undefined
+    );
     const weeks = computeVelocityWeeks(rows);
     return NextResponse.json({ orgId, weeks, scope, role, canViewOrg });
   } catch (e) {

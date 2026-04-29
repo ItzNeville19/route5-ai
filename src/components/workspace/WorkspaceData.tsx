@@ -66,6 +66,11 @@ type WorkspaceDataValue = {
   refreshEntitlements: () => Promise<void>;
   refreshAll: () => Promise<void>;
   getProjectById: (projectId: string) => Project | undefined;
+  /**
+   * Active company (project) for workspace data — from `route5.headerProjectId` + prefs.
+   * Pass as `projectId` on API query strings to scope tasks and metrics.
+   */
+  activeProjectId: string | null;
 };
 
 const EMPTY_SUMMARY: WorkspaceSummaryState = {
@@ -358,6 +363,7 @@ export function WorkspaceDataProvider({
       refreshEntitlements,
       refreshAll,
       getProjectById,
+      activeProjectId,
     }),
     [
       projects,
@@ -378,6 +384,7 @@ export function WorkspaceDataProvider({
       refreshEntitlements,
       refreshAll,
       getProjectById,
+      activeProjectId,
     ]
   );
 

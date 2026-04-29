@@ -6,7 +6,7 @@ import { publicWorkspaceError } from "@/lib/public-api-message";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: Request) {
   const authz = await requireUserId();
   if (!authz.ok) return authz.response;
   const { userId } = authz;
@@ -15,7 +15,9 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   try {
-    const actions = await previewCommitmentOpsActions(access.orgId);
+    const url = new URL(req.url);
+    const projectId = url.searchParams.get("projectId") ?? undefined;
+    const actions = await previewCommitmentOpsActions(access.orgId, undefined, projectId);
     return NextResponse.json({ ok: true, actions, count: actions.length });
   } catch (error) {
     return NextResponse.json(

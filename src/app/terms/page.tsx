@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import MarketingPublicShell from "@/components/marketing/MarketingPublicShell";
 
 export const metadata: Metadata = {
   title: "Terms of Service — Route5",
@@ -130,7 +131,7 @@ neville@rayze.xyz`,
 
 export default function TermsPage() {
   return (
-    <main className="route5-brand-dark-marketing-shell min-h-dvh w-full bg-[#09090f] text-zinc-100 antialiased">
+    <MarketingPublicShell>
       <Navbar />
       <nav className="border-b border-white/10 bg-black/25 backdrop-blur-xl">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-4 lg:max-w-4xl">
@@ -168,6 +169,6 @@ export default function TermsPage() {
         </div>
       </div>
       <Footer tone="command" />
-    </main>
+    </MarketingPublicShell>
   );
 }

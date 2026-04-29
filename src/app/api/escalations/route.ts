@@ -59,6 +59,7 @@ export async function GET(req: Request) {
   if (rateLimited) return rateLimited;
 
   const url = new URL(req.url);
+  const projectIdFilter = url.searchParams.get("projectId") ?? undefined;
   const resolvedParam = url.searchParams.get("resolved");
   const resolved =
     resolvedParam === "resolved" || resolvedParam === "all" || resolvedParam === "open"
@@ -96,6 +97,10 @@ export async function GET(req: Request) {
     for (const e of rows) {
       const c = cMap.get(e.commitmentId);
       if (!c) continue;
+      if (projectIdFilter) {
+        const pid = (c as { project_id?: string | null }).project_id ?? null;
+        if (pid !== projectIdFilter) continue;
+      }
       const snoozedActive =
         !!e.snoozedUntil && new Date(e.snoozedUntil).getTime() > nowMs;
       enriched.push({

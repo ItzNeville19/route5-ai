@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { useWorkspaceData } from "@/components/workspace/WorkspaceData";
 import {
   AlertOctagon,
   Bot,
@@ -85,6 +86,7 @@ export default function ExecutionActionQueue({
   missionTab?: string;
 }) {
   const { t } = useI18n();
+  const { activeProjectId } = useWorkspaceData();
   const [mode, setMode] = useState<AgentMode>("suggest_then_approve");
   const [canRun, setCanRun] = useState(false);
   const [preview, setPreview] = useState<AgentAction[]>([]);
@@ -134,7 +136,7 @@ export default function ExecutionActionQueue({
       }>;
     };
     if (res.ok) setHistory(data.escalations ?? []);
-  }, []);
+  }, [activeProjectId]);
 
   useEffect(() => {
     void loadHistory();
@@ -173,13 +175,16 @@ export default function ExecutionActionQueue({
   }
 
   const refreshQueue = useCallback(async () => {
-    const res = await fetch("/api/agent/commitment-ops/preview", { credentials: "same-origin" });
+    const previewUrl = activeProjectId
+      ? `/api/agent/commitment-ops/preview?projectId=${encodeURIComponent(activeProjectId)}`
+      : "/api/agent/commitment-ops/preview";
+    const res = await fetch(previewUrl, { credentials: "same-origin" });
     const data = (await res.json().catch(() => ({}))) as { actions?: AgentAction[] };
     const actions = res.ok ? (data.actions ?? []) : [];
     setPreview(actions);
     setSelected(actions.map((action) => keyFor(action)));
     setEditing(Object.fromEntries(actions.map((action) => [keyFor(action), action.message])));
-  }, []);
+  }, [activeProjectId]);
 
   async function executeApproved() {
     const merged = preview
@@ -244,7 +249,7 @@ export default function ExecutionActionQueue({
   useEffect(() => {
     if (!canRun) return;
     void refreshQueue();
-  }, [canRun, refreshQueue]);
+  }, [canRun, refreshQueue, activeProjectId]);
 
   const approvedCount = useMemo(
     () => preview.filter((action) => selected.includes(keyFor(action))).length,
