@@ -177,6 +177,7 @@ export default function Route5AdminDashboard() {
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [escalations, setEscalations] = useState<EscalationRow[]>([]);
   const [queueFull, setQueueFull] = useState<QueueAction[]>([]);
+  const [ownerAvatars, setOwnerAvatars] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   const minuteTick = useAlignedMinuteTick();
@@ -260,6 +261,29 @@ export default function Route5AdminDashboard() {
     };
   }, [organizationId, load]);
 
+  useEffect(() => {
+    if (!organizationId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/workspace/collaborators", { credentials: "same-origin" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { collaborators?: { userId: string; imageUrl: string | null }[] };
+        if (cancelled) return;
+        const m: Record<string, string> = {};
+        for (const c of data.collaborators ?? []) {
+          if (c.imageUrl) m[c.userId] = c.imageUrl;
+        }
+        setOwnerAvatars(m);
+      } catch {
+        /* best-effort avatars */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [organizationId]);
+
   const healthScore = metrics?.healthScore ?? 0;
   const overdue = metrics?.overdueCount ?? 0;
   const atRisk = metrics?.atRiskCount ?? 0;
@@ -287,10 +311,18 @@ export default function Route5AdminDashboard() {
 
   const ownersBehind = useMemo(() => {
     const rows = metrics?.teamBreakdown ?? [];
-    return [...rows]
-      .sort((a, b) => b.overdueCount + (100 - b.completionRate) - (a.overdueCount + (100 - a.completionRate)))
-      .slice(0, 6);
-  }, [metrics?.teamBreakdown]);
+    const needing = rows.filter((r) => r.overdueCount > 0 || r.atRiskCount > 0);
+    return [...needing]
+      .sort(
+        (a, b) =>
+          b.overdueCount +
+          b.atRiskCount +
+          (100 - b.completionRate) -
+          (a.overdueCount + a.atRiskCount + (100 - a.completionRate))
+      )
+      .slice(0, 6)
+      .map((r) => ({ ...r, imageUrl: ownerAvatars[r.ownerId] }));
+  }, [metrics?.teamBreakdown, ownerAvatars]);
 
   const chartPoints = useMemo(
     () => buildHealthChartSeries(trend, healthScore, HEALTH_CHART_DAYS, intlLocale),
@@ -345,7 +377,8 @@ export default function Route5AdminDashboard() {
           roleLabel={t("dashboard.lead.welcome.myWork")}
           summaryLine=""
           omitOperationalChrome
-          showAvatarStrip={false}
+          showAvatarStrip={Boolean(user?.imageUrl)}
+          avatarUrls={user?.imageUrl ? [user.imageUrl] : []}
           compact={prefs.commandCenterDensity === "compact"}
           counts={{
             overdue: 0,
@@ -478,6 +511,8 @@ function DashboardActionQueuePreview({
   );
 }
 
+type OwnerRow = TeamRow & { imageUrl?: string };
+
 type SectionFragmentProps = {
   sectionId: string;
   pinnedKeys: string[];
@@ -487,7 +522,7 @@ type SectionFragmentProps = {
   queuePreviewLen: number;
   completionPct: number;
   chartPoints: { label: string; health: number }[];
-  ownersBehind: TeamRow[];
+  ownersBehind: OwnerRow[];
   escalations: EscalationRow[];
   activity: ActivityRow[];
 };
@@ -651,14 +686,24 @@ function SectionFragment({
                   {t("dashboard.lead.owners.empty")}
                 </li>
               ) : (
-                ownersBehind.map((row: TeamRow) => (
+                ownersBehind.map((row: OwnerRow) => (
                   <li
                     key={row.ownerId}
                     className="flex items-center justify-between rounded-xl border border-white/10 bg-black/25 px-3 py-2.5"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-cyan-950/65 text-xs font-semibold text-cyan-100">
-                        {initials(row.displayName)}
+                      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-cyan-950/65 text-xs font-semibold text-cyan-100 ring-1 ring-white/10">
+                        {row.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={row.imageUrl}
+                            alt=""
+                            className="absolute inset-0 h-full w-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : (
+                          initials(row.displayName)
+                        )}
                       </span>
                       <div>
                         <p className="text-sm font-medium text-white">{row.displayName}</p>

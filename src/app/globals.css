@@ -3078,6 +3078,15 @@ body {
   color: var(--workspace-fg);
 }
 
+/* Defeat global ClerkProvider dark auth tokens — UserProfile on light canvas must not keep !text-[#fafafa] */
+.route5-settings-clerk-profile--light .cl-headerTitle {
+  color: var(--workspace-fg) !important;
+}
+
+.route5-settings-clerk-profile--light .cl-headerSubtitle {
+  color: var(--workspace-muted-fg) !important;
+}
+
 /* Map workspace tokens onto Clerk’s CSS variables so internal styles (navbar, headers) stay legible. */
 .route5-settings-clerk-profile--dark .cl-rootBox {
   --clerk-color-foreground: var(--workspace-fg);
@@ -3351,9 +3360,11 @@ body {
   position: relative;
   isolation: isolate;
   color-scheme: dark;
-  background-color: #09090f;
-  /* Cover body.theme-glass-site mesh so nav + article never show white-on-lavender */
+  /* !important: Tailwind or layer order can drop bg utilities; without this, zinc text sits on the lavender body */
+  background-color: #09090f !important;
+  color: #f4f4f5;
   min-height: 100dvh;
+  min-height: 100vh;
   width: 100%;
 }
 
@@ -3363,9 +3374,24 @@ body {
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse 90% 55% at 50% -15%, rgba(56, 189, 248, 0.11), transparent 55%),
+  /* Solid underlay (gradients are partly transparent) — prevents lavender body from bleeding through */
+  background-color: #09090f;
+  background-image: radial-gradient(
+      ellipse 90% 55% at 50% -15%,
+      rgba(56, 189, 248, 0.11),
+      transparent 55%
+    ),
     radial-gradient(ellipse 70% 45% at 100% 30%, rgba(251, 191, 36, 0.05), transparent 50%);
+}
+
+/** Durable card panels on dark marketing (Pricing, etc.) — not dependent on bg-zinc utilities */
+.route5-marketing-dark-card {
+  background-color: #0a0a0c !important;
+  color: #f4f4f5;
+}
+
+.route5-marketing-dark-cta {
+  background-color: #0c1016 !important;
 }
 
 /** Home hero mesh — slow “breathing” light (disabled when reduced motion) */
@@ -3852,12 +3878,13 @@ body.theme-glass-site:has(main.landing-premium) {
  */
 
 .route5-workspace-toolbar-inner {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-/* Admin in employee preview: allow wrap + sane gaps when chrome is crowded */
-.route5-workspace-toolbar-employee-shrink .route5-workspace-toolbar-inner {
-  row-gap: 0.375rem;
+/* Subtle GPU layer for Framer “lift” on the workspace chrome */
+.route5-workspace-toolbar-shell-3d {
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .route5-premium-shell-bg > * {
@@ -4112,4 +4139,27 @@ body.theme-glass-site:has(main.landing-premium) {
 /* Nested settings layout forces its own fg vars; keep helper copy readable on both palettes */
 .theme-route5-command.theme-agent-shell .settings-route5-high-contrast .workspace-pref-secondary {
   color: color-mix(in srgb, var(--r5-text-secondary, rgba(255, 255, 255, 0.92)) 92%, transparent);
+}
+
+/*
+ * Public dark marketing: win over any Tailwind layer / preview where utilities paint after globals.
+ * Pairs with inline `marketingDarkMainStyle` on MarketingPublicShell.
+ */
+html body.theme-glass-site main.route5-brand-dark-marketing-shell {
+  background-color: #09090f !important;
+  color: #f4f4f5 !important;
+  min-height: 100dvh !important;
+  min-height: 100vh !important;
+  width: 100% !important;
+  background-image: none !important;
+}
+
+html body.theme-glass-site main.route5-brand-dark-marketing-shell::before {
+  background-color: #09090f !important;
+  background-image: radial-gradient(
+      ellipse 90% 55% at 50% -15%,
+      rgba(56, 189, 248, 0.11),
+      transparent 55%
+    ),
+    radial-gradient(ellipse 70% 45% at 100% 30%, rgba(251, 191, 36, 0.05), transparent 50%) !important;
 }

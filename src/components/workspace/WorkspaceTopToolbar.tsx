@@ -7,6 +7,7 @@ import type { ComponentType } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperience";
 import { UserButton } from "@clerk/nextjs";
+import { route5ClerkAppearance } from "@/lib/clerk-appearance";
 import {
   Bot,
   Building2,
@@ -33,6 +34,7 @@ import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 import { useWorkspaceChromeActions } from "@/components/workspace/WorkspaceChromeActions";
 import { resolveDesktopDownloadHref } from "@/lib/desktop-install-url";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import { motion, useReducedMotion } from "framer-motion";
 
 function classNames(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -57,6 +59,7 @@ export default function WorkspaceTopToolbar() {
   const canLead = orgRole === "admin" || orgRole === "manager";
 
   const { openNewTask, openRunAgent, openSendUpdate } = useWorkspaceChromeActions();
+  const reduceMotion = useReducedMotion();
 
   const surfaceMode = useMemo(
     () => resolveWorkspaceSurfaceMode(canLead, search.get("view"), prefs.defaultWorkspaceView),
@@ -174,32 +177,41 @@ export default function WorkspaceTopToolbar() {
     router.replace(qs ? `${pathname}?${qs}` : `${pathname}?view=admin`, { scroll: false });
   };
 
-  const employeeToolbarCrowded = canLead && surfaceMode === "employee";
-
   /** Lead actions menu is always a dark floating panel — keep light menu copy regardless of canvas theme. */
   const leadMenuItem =
     "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
 
   return (
     <>
-      <header className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6">
+      <motion.header
+        className="route5-ocean-header sticky top-0 z-30 mb-0 px-3 pt-[max(0px,env(safe-area-inset-top,0px))] sm:px-4 lg:px-6"
+        initial={reduceMotion ? false : { opacity: 0.92, y: -6 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 420, damping: 32, mass: 0.6 }}
+      >
         {/*
           Light themes: **do not** use `.route5-ocean-toolbar-surface` — its ocean gradient + backdrop
           stacks poorly on Safari/macOS and reads as black-on-black despite overrides.
           Dark themes keep the ocean glass surface.
         */}
-        <div
+        <motion.div
           className={
             workspacePaletteLight
-              ? classNames(
-                  "route5-workspace-toolbar-shell relative overflow-hidden rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-slate-900 shadow-[0_12px_44px_-28px_rgba(15,23,42,0.22)] sm:px-4 sm:py-2.5",
-                  employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
-                )
-              : classNames(
-                  "route5-ocean-toolbar-surface route5-workspace-toolbar-shell relative overflow-hidden rounded-xl px-3 py-2 sm:px-4 sm:py-2.5",
-                  employeeToolbarCrowded ? "route5-workspace-toolbar-employee-shrink" : ""
-                )
+              ? "route5-workspace-toolbar-shell route5-workspace-toolbar-shell-3d relative overflow-hidden rounded-xl border border-slate-200/90 bg-white px-2 py-1.5 text-slate-900 shadow-[0_12px_44px_-28px_rgba(15,23,42,0.22)] sm:px-4 sm:py-2"
+              : "route5-ocean-toolbar-surface route5-workspace-toolbar-shell route5-workspace-toolbar-shell-3d relative overflow-hidden rounded-xl px-2 py-1.5 sm:px-4 sm:py-2"
           }
+          style={{ transformStyle: "preserve-3d" }}
+          whileHover={
+            reduceMotion
+              ? undefined
+              : {
+                  boxShadow:
+                    workspacePaletteLight
+                      ? "0 18px 50px -28px rgba(15,23,42,0.28), inset 0 1px 0 rgba(255,255,255,0.95)"
+                      : "0 22px 60px -28px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
+                }
+          }
+          transition={{ type: "spring", stiffness: 500, damping: 38 }}
         >
           {!workspacePaletteLight ? (
             <>
@@ -214,10 +226,11 @@ export default function WorkspaceTopToolbar() {
             </>
           ) : null}
 
-          <div className="route5-workspace-toolbar-inner relative z-[1] flex min-h-[38px] items-center gap-2 sm:gap-3 md:min-h-[40px] lg:gap-3.5">
-            {/* Left: brand + search */}
-            <div className="flex min-w-0 min-h-0 flex-1 items-center gap-2 sm:gap-3">
-              <Link
+          <div className="route5-workspace-toolbar-inner relative z-[1] flex min-h-[40px] w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:min-h-[42px] sm:gap-2 md:gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {/* Brand + search (single row with center nav) */}
+            <div className="flex min-h-0 min-w-0 max-w-[min(100%,22rem)] flex-1 flex-shrink flex-row items-center gap-2 sm:max-w-none sm:gap-2.5 md:min-w-[10rem] md:max-w-[40%]">
+              <motion.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
+                <Link
                 href={`/workspace/dashboard${suffix}`}
                 className={classNames(
                   "group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none transition focus-visible:ring-2",
@@ -247,48 +260,15 @@ export default function WorkspaceTopToolbar() {
                   {t("workspace.chrome.workspaceLabel")}
                 </span>
               </Link>
-              <WorkspaceHeaderSearch />
-              {(canLead || organizationName) ? (
-                <div
-                  className={classNames(
-                    "hidden min-w-0 shrink-0 flex-col gap-0.5 border-l pl-1.5 sm:flex sm:max-w-[min(42vw,280px)] sm:flex-row sm:items-center sm:gap-2 lg:max-w-none",
-                    workspacePaletteLight ? "border-slate-300/45" : "border-white/[0.08]"
-                  )}
-                >
-                  {canLead ? (
-                    <Link
-                      href="/companies"
-                      className={classNames(
-                        "inline-flex max-w-[120px] items-center gap-0.5 truncate rounded-md px-1 py-0.5 text-[10px] font-semibold outline-none transition focus-visible:ring-2 lg:max-w-none lg:text-[11px]",
-                        workspacePaletteLight
-                          ? "text-sky-700 ring-cyan-600/25 hover:bg-slate-900/6 hover:text-sky-900"
-                          : "text-cyan-200/70 ring-cyan-400/25 hover:bg-white/[0.06] hover:text-cyan-100"
-                      )}
-                      title={t("workspace.chrome.companiesTitle")}
-                    >
-                      <Building2 className="h-3 w-3 shrink-0 opacity-80" aria-hidden />
-                      <span className="truncate">{t("workspace.chrome.companies")}</span>
-                    </Link>
-                  ) : null}
-                  {organizationName ? (
-                    <span
-                      className={classNames(
-                        "truncate text-[10px] font-semibold leading-tight lg:text-[11px]",
-                        workspacePaletteLight ? "text-slate-700" : "text-cyan-50/88"
-                      )}
-                      title={organizationName}
-                    >
-                      {organizationName}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
+              </motion.div>
+              <div className="flex min-w-0 flex-1 justify-end sm:justify-start">
+                <WorkspaceHeaderSearch />
+              </div>
             </div>
 
-            {/* Center: primary nav (icons + labels from md to reduce dead space) */}
             <nav
               aria-label={t("workspace.chrome.nav.aria")}
-              className="route5-workspace-toolbar-nav hidden min-w-0 shrink items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] md:flex md:max-w-[min(44vw,540px)] md:justify-center md:gap-1.5 xl:max-w-none [&::-webkit-scrollbar]:hidden"
+              className="route5-workspace-toolbar-nav mx-0 flex min-w-0 min-h-0 shrink-0 items-center justify-center gap-0.5 sm:gap-1 md:max-w-[min(52vw,420px)] md:gap-1.5 lg:max-w-[min(44vw,520px)]"
             >
               {visibleNav.map((item) => {
                 const itemBase = item.href.split("?")[0];
@@ -318,39 +298,7 @@ export default function WorkspaceTopToolbar() {
               })}
             </nav>
 
-            {/* Right: lead overflow, notifications, customize, help, account */}
-            <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
-              <nav
-                aria-label={t("workspace.chrome.nav.aria")}
-                className="flex max-w-[min(46vw,220px)] items-center gap-1 overflow-x-auto pr-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-              >
-                {visibleNav.map((item) => {
-                  const itemBase = item.href.split("?")[0];
-                  const active =
-                    pathname === itemBase || (itemBase !== "/" && pathname.startsWith(`${itemBase}/`));
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      title={item.label}
-                      className={classNames(
-                        "route5-nav-row inline-flex h-8 min-w-[2rem] shrink-0 items-center justify-center rounded-full border px-2 text-[10px] font-semibold",
-                        workspacePaletteLight
-                          ? active
-                            ? "border-sky-400/35 bg-slate-900/8 text-slate-900"
-                            : "border-transparent text-slate-600 hover:bg-slate-900/6 hover:text-slate-900"
-                          : active
-                            ? "border-cyan-400/25 bg-white/[0.07] text-white"
-                            : "border-transparent text-cyan-100/48 hover:bg-white/[0.04] hover:text-white"
-                      )}
-                    >
-                      <Icon className="h-3.5 w-3.5 opacity-90" />
-                    </Link>
-                  );
-                })}
-              </nav>
-
+            <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-1.5">
               {canLead && surfaceMode === "employee" ? (
                 <button
                   type="button"
@@ -413,6 +361,14 @@ export default function WorkspaceTopToolbar() {
                           }}
                           onClick={(e) => e.stopPropagation()}
                         >
+                          {canLead && organizationName ? (
+                            <div
+                              className="mb-1 border-b border-white/[0.1] px-3 pb-2 text-[11px] font-medium leading-snug text-white/55"
+                              role="presentation"
+                            >
+                              {organizationName}
+                            </div>
+                          ) : null}
                           <button
                             type="button"
                             role="menuitem"
@@ -461,6 +417,15 @@ export default function WorkspaceTopToolbar() {
                           >
                             <Users className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
                             {t("workspace.chrome.lead.organization")}
+                          </Link>
+                          <Link
+                            href="/companies"
+                            role="menuitem"
+                            className={leadMenuItem}
+                            onClick={() => setLeadOpen(false)}
+                          >
+                            <Building2 className="h-4 w-4 text-sky-300/90" strokeWidth={2} />
+                            {t("workspace.chrome.companies")}
                           </Link>
                           <Link
                             href="/?site=1"
@@ -557,20 +522,43 @@ export default function WorkspaceTopToolbar() {
                 </Link>
               ) : null}
 
+              {!canLead && organizationName ? (
+                <span
+                  className={classNames(
+                    "hidden max-w-[5.5rem] shrink truncate text-[10px] font-semibold leading-tight sm:inline md:max-w-[10rem]",
+                    workspacePaletteLight ? "text-slate-600" : "text-cyan-100/80"
+                  )}
+                  title={organizationName}
+                >
+                  {organizationName}
+                </span>
+              ) : null}
+
               <div
                 className={classNames(
-                  "flex h-7 w-7 items-center justify-center rounded-full border",
+                  "flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full",
                   workspacePaletteLight
-                    ? "border-slate-300/45 bg-white/90 shadow-sm"
-                    : "border-white/[0.06] bg-black/30"
+                    ? "ring-1 ring-slate-300/50"
+                    : "ring-1 ring-white/15"
                 )}
               >
-                <UserButton />
+                <UserButton
+                  userProfileMode="navigation"
+                  userProfileUrl="/settings"
+                  appearance={{
+                    ...route5ClerkAppearance,
+                    elements: {
+                      ...route5ClerkAppearance.elements,
+                      avatarBox: "h-8 w-8 overflow-hidden rounded-full",
+                      userButtonAvatarImage: "h-full w-full object-cover",
+                    },
+                  }}
+                />
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </motion.div>
+      </motion.header>
 
       <WorkspaceCustomizationModal open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
       <WorkspaceHelpPanel open={helpOpen} onClose={() => setHelpOpen(false)} />

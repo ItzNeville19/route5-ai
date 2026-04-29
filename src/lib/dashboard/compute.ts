@@ -28,6 +28,8 @@ export type TeamRow = {
   completedOnTime: number;
   completionRate: number;
   overdueCount: number;
+  /** Open commitments marked at_risk (not completed). */
+  atRiskCount: number;
 };
 
 export type LiveDashboardMetrics = {
@@ -152,6 +154,7 @@ export function computeLiveDashboardMetrics(
       return parseMs(r.completed_at) <= parseMs(r.deadline);
     }).length;
     const overdueCount = list.filter((r) => !r.completed_at && r.status === "overdue").length;
+    const atRiskCount = list.filter((r) => !r.completed_at && r.status === "at_risk").length;
     const rate = total === 0 ? 100 : Math.round((completedOnTime / total) * 100);
     teamBreakdown.push({
       ownerId,
@@ -160,6 +163,7 @@ export function computeLiveDashboardMetrics(
       completedOnTime,
       completionRate: rate,
       overdueCount,
+      atRiskCount,
     });
   }
   teamBreakdown.sort((a, b) => a.displayName.localeCompare(b.displayName));
