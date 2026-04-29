@@ -3877,7 +3877,10 @@ body.theme-glass-site:has(main.landing-premium) {
  * the dark ocean gradient “through” the header (black-on-black). Dark themes keep ocean glass.
  */
 
-/* Toolbar inner: flex-wrap + direction come from `WorkspaceTopToolbar` (stack on small, row on xl+). */
+/* Single horizontal row; overflow scrolls on narrow viewports. */
+.route5-workspace-toolbar-inner {
+  flex-wrap: nowrap;
+}
 
 /* Subtle GPU layer for Framer “lift” on the workspace chrome */
 .route5-workspace-toolbar-shell-3d {

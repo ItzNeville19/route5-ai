@@ -230,62 +230,53 @@ export default function WorkspaceTopToolbar() {
             </>
           ) : null}
 
-          <div className="route5-workspace-toolbar-inner relative z-[1] flex w-full min-w-0 max-w-full flex-col gap-2 sm:min-h-[42px] md:gap-2.5 xl:flex-row xl:flex-nowrap xl:items-center xl:gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-h-[40px] w-full min-w-0 flex-1 items-center gap-1.5 sm:min-h-[42px] sm:gap-2">
-              <motion.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="shrink-0">
-                <Link
-                  href={`/workspace/dashboard${suffix}`}
+          <div className="route5-workspace-toolbar-inner relative z-[1] flex min-h-[40px] w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:min-h-[42px] sm:gap-2 md:gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <motion.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="shrink-0">
+              <Link
+                href={`/workspace/dashboard${suffix}`}
+                className={classNames(
+                  "group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none transition focus-visible:ring-2",
+                  workspacePaletteLight
+                    ? "ring-cyan-600/20 hover:bg-slate-900/5"
+                    : "ring-cyan-400/25 hover:bg-white/[0.04]"
+                )}
+                aria-label={t("workspace.chrome.brandAria")}
+              >
+                <span
                   className={classNames(
-                    "group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none transition focus-visible:ring-2",
-                    workspacePaletteLight
-                      ? "ring-cyan-600/20 hover:bg-slate-900/5"
-                      : "ring-cyan-400/25 hover:bg-white/[0.04]"
+                    "text-[12px] font-semibold tracking-[-0.04em] sm:text-[13px]",
+                    workspacePaletteLight ? "text-slate-900" : "text-white"
                   )}
-                  aria-label={t("workspace.chrome.brandAria")}
                 >
-                  <span
-                    className={classNames(
-                      "text-[12px] font-semibold tracking-[-0.04em] sm:text-[13px]",
-                      workspacePaletteLight ? "text-slate-900" : "text-white"
-                    )}
-                  >
-                    Route{" "}
-                    <span className="bg-[linear-gradient(135deg,#a5f3fc_0%,#22d3ee_40%,#059669_95%)] bg-clip-text font-semibold text-transparent">
-                      5
-                    </span>
+                  Route{" "}
+                  <span className="bg-[linear-gradient(135deg,#a5f3fc_0%,#22d3ee_40%,#059669_95%)] bg-clip-text font-semibold text-transparent">
+                    5
                   </span>
-                  <span
-                    className={classNames(
-                      "hidden text-[9px] font-medium uppercase tracking-[0.16em] sm:inline",
-                      workspacePaletteLight ? "text-slate-500" : "text-cyan-200/32"
-                    )}
-                  >
-                    {t("workspace.chrome.workspaceLabel")}
-                  </span>
-                </Link>
-              </motion.div>
+                </span>
+                <span
+                  className={classNames(
+                    "hidden text-[9px] font-medium uppercase tracking-[0.16em] sm:inline",
+                    workspacePaletteLight ? "text-slate-500" : "text-cyan-200/32"
+                  )}
+                >
+                  {t("workspace.chrome.workspaceLabel")}
+                </span>
+              </Link>
+            </motion.div>
 
-              {projects.length > 1 ? (
-                <div className="hidden h-8 min-w-0 max-w-[min(16rem,28vw)] shrink-0 2xl:max-w-[18rem] xl:block">
-                  <WorkspaceProjectSwitcher mode="headerScope" />
-                </div>
-              ) : null}
-
-              <div className="flex min-h-0 min-w-0 min-w-[2.75rem] flex-1 basis-0 justify-start px-0.5 sm:min-w-0 sm:px-1">
-                <WorkspaceHeaderSearch fill />
+            {projects.length > 1 ? (
+              <div className="h-8 w-[min(100%,9.5rem)] min-w-0 shrink-0 sm:w-auto sm:max-w-[12rem] md:max-w-[14rem] 2xl:max-w-[16rem]">
+                <WorkspaceProjectSwitcher mode="headerScope" />
               </div>
+            ) : null}
+
+            <div className="flex min-h-0 min-w-0 flex-1 basis-0 justify-start px-0.5 sm:px-1">
+              <WorkspaceHeaderSearch fill />
             </div>
 
-            <div className="flex w-full min-w-0 flex-col gap-2 max-xl:border-t max-xl:border-slate-200/50 max-xl:pt-2 max-xl:dark:border-white/[0.06] xl:w-auto xl:shrink-0 xl:flex-row xl:items-center xl:gap-1.5 xl:border-0 xl:pt-0 2xl:gap-2">
-              {projects.length > 1 ? (
-                <div className="w-full min-w-0 max-w-sm shrink-0 xl:hidden">
-                  <WorkspaceProjectSwitcher mode="headerScope" />
-                </div>
-              ) : null}
-              <div className="flex w-full min-w-0 flex-1 items-center justify-between gap-1.5 sm:gap-2 min-[1280px]:contents">
             <nav
               aria-label={t("workspace.chrome.nav.aria")}
-              className="route5-workspace-toolbar-nav flex min-h-0 min-w-0 flex-1 items-center justify-start gap-0.5 overflow-x-auto pr-0.5 sm:gap-1 min-[1280px]:mx-0 min-[1280px]:max-w-[min(52vw,420px)] min-[1280px]:shrink-0 min-[1280px]:justify-center min-[1280px]:gap-1.5 lg:max-w-[min(44vw,520px)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="route5-workspace-toolbar-nav flex shrink-0 items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5"
             >
               {visibleNav.map((item) => {
                 const itemBase = item.href.split("?")[0];
@@ -315,7 +306,7 @@ export default function WorkspaceTopToolbar() {
               })}
             </nav>
 
-            <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-1.5 min-[1280px]:ml-0 min-[1280px]:pl-0">
+            <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 sm:gap-1.5">
               {canLead && surfaceMode === "employee" ? (
                 <button
                   type="button"
@@ -642,8 +633,6 @@ export default function WorkspaceTopToolbar() {
                   }}
                 />
               </div>
-            </div>
-            </div>
             </div>
           </div>
         </motion.div>
