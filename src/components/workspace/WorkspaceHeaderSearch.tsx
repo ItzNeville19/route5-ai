@@ -28,10 +28,10 @@ export default function WorkspaceHeaderSearch({ fill = false }: Props) {
     ? "route5-header-search inline-flex h-8 min-h-0 w-auto max-w-[min(100%,min(92vw-10rem,18rem))] shrink-0 flex-none items-center gap-1.5 rounded-full border border-slate-300/70 bg-white px-2.5 py-1.5 text-left text-[12px] text-slate-600 shadow-inner shadow-slate-900/8 transition-all duration-200 hover:border-sky-400/45 hover:bg-white hover:shadow-md hover:shadow-slate-900/10 sm:max-w-[min(20rem,calc(100vw-14rem))] md:max-w-[min(18rem,42vw)] xl:max-w-[17rem] 2xl:max-w-[15.5rem]"
     : "route5-header-search inline-flex h-8 min-h-0 w-auto max-w-[min(100%,min(92vw-10rem,18rem))] shrink-0 flex-none items-center gap-1.5 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-[var(--workspace-muted-fg)] shadow-inner shadow-black/25 transition-all duration-200 hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-[var(--workspace-fg)] hover:shadow-lg hover:shadow-emerald-950/20 sm:max-w-[min(20rem,calc(100vw-14rem))] md:max-w-[min(18rem,42vw)] xl:max-w-[17rem] 2xl:max-w-[15.5rem]";
 
-  /** Toolbar row: grow into space between logo and nav, with a generous but bounded max width. */
+  /** Toolbar row: grow into space between logo and nav, capped on wide screens. Narrow viewports: icon-only tap target. */
   const fillLight = workspacePaletteLight
-    ? "route5-header-search inline-flex h-8 min-h-0 w-full min-w-0 max-w-full items-center gap-2 rounded-full border border-slate-300/70 bg-white px-3 py-1.5 text-left text-[12px] text-slate-600 shadow-inner shadow-slate-900/8 transition-all duration-200 hover:border-sky-400/45 hover:bg-white hover:shadow-md hover:shadow-slate-900/10 sm:max-w-[min(36rem,calc(100vw-19rem))] md:max-w-[min(34rem,calc(100vw-22rem))] lg:max-w-[min(32rem,calc(100vw-26rem))] xl:max-w-[30rem] 2xl:max-w-[32rem]"
-    : "route5-header-search inline-flex h-8 min-h-0 w-full min-w-0 max-w-full items-center gap-2 rounded-full border border-white/[0.08] bg-black/32 px-3 py-1.5 text-left text-[12px] text-[var(--workspace-muted-fg)] shadow-inner shadow-black/25 transition-all duration-200 hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-[var(--workspace-fg)] hover:shadow-lg hover:shadow-emerald-950/20 sm:max-w-[min(36rem,calc(100vw-19rem))] md:max-w-[min(34rem,calc(100vw-22rem))] lg:max-w-[min(32rem,calc(100vw-26rem))] xl:max-w-[30rem] 2xl:max-w-[32rem]";
+    ? "route5-header-search inline-flex h-8 min-h-[2rem] w-full min-w-0 max-w-full shrink items-center justify-start gap-2 rounded-full border border-slate-300/70 bg-white px-2.5 py-1.5 text-left text-[12px] text-slate-600 shadow-inner shadow-slate-900/8 transition-all duration-200 hover:border-sky-400/45 hover:bg-white hover:shadow-md hover:shadow-slate-900/10 min-w-[2.75rem] max-w-[min(20rem,100%)] sm:min-w-0 sm:px-3 sm:max-w-[min(24rem,calc(100vw-20rem))] md:max-w-[min(22rem,calc(100vw-24rem))] lg:max-w-[20rem] xl:max-w-[22rem] 2xl:max-w-[24rem] max-sm:max-w-[2.75rem] max-sm:min-w-[2.75rem] max-sm:justify-center max-sm:px-0"
+    : "route5-header-search inline-flex h-8 min-h-[2rem] w-full min-w-0 max-w-full shrink items-center justify-start gap-2 rounded-full border border-white/[0.08] bg-black/32 px-2.5 py-1.5 text-left text-[12px] text-[var(--workspace-muted-fg)] shadow-inner shadow-black/25 transition-all duration-200 hover:border-emerald-500/25 hover:bg-emerald-950/20 hover:text-[var(--workspace-fg)] hover:shadow-lg hover:shadow-emerald-950/20 min-w-[2.75rem] max-w-[min(20rem,100%)] sm:min-w-0 sm:px-3 sm:max-w-[min(24rem,calc(100vw-20rem))] md:max-w-[min(22rem,calc(100vw-24rem))] lg:max-w-[20rem] xl:max-w-[22rem] 2xl:max-w-[24rem] max-sm:max-w-[2.75rem] max-sm:min-w-[2.75rem] max-sm:justify-center max-sm:px-0";
 
   const light = fill ? fillLight : compactLight;
 
@@ -57,7 +57,7 @@ export default function WorkspaceHeaderSearch({ fill = false }: Props) {
       <span
         className={
           fill
-            ? "min-w-0 flex-1 truncate text-left"
+            ? "min-w-0 flex-1 truncate text-left max-sm:sr-only"
             : "min-w-0 max-w-[9.5rem] truncate sm:max-w-[12rem] md:max-w-[11rem]"
         }
       >
@@ -66,8 +66,8 @@ export default function WorkspaceHeaderSearch({ fill = false }: Props) {
       <kbd
         className={
           workspacePaletteLight
-            ? "hidden shrink-0 rounded border border-slate-300/45 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 sm:inline"
-            : "hidden shrink-0 rounded border border-white/12 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200/55 sm:inline"
+            ? "hidden shrink-0 rounded border border-slate-300/45 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] text-slate-600 sm:inline max-sm:hidden"
+            : "hidden shrink-0 rounded border border-white/12 bg-black/40 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200/55 sm:inline max-sm:hidden"
         }
       >
         {mod}K

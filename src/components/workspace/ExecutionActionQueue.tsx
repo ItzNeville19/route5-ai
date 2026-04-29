@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import Link from "next/link";
+import { useI18n } from "@/components/i18n/I18nProvider";
 import {
   AlertOctagon,
   Bot,
@@ -83,6 +84,7 @@ export default function ExecutionActionQueue({
   variant?: "page" | "sheet";
   missionTab?: string;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<AgentMode>("suggest_then_approve");
   const [canRun, setCanRun] = useState(false);
   const [preview, setPreview] = useState<AgentAction[]>([]);
@@ -496,8 +498,13 @@ export default function ExecutionActionQueue({
           className="route5-pressable flex w-full items-center justify-between gap-3 rounded-[20px] px-4 py-3.5 text-left transition-colors hover:bg-white/[0.03]"
           aria-expanded={historyOpen}
         >
-          <span className="text-sm font-semibold text-white">Recent flags</span>
-          <span className="flex items-center gap-3">
+          <span className="min-w-0 flex-1 text-left">
+            <span className="block text-sm font-semibold text-white">{t("workspace.queue.nudgeHistory.title")}</span>
+            <span className="mt-0.5 block text-[10px] font-medium leading-snug text-white/35 sm:text-[11px]">
+              {t("workspace.queue.nudgeHistory.hint")}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-3">
             {history.length > 0 ? (
               <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-white/60">
                 {history.length}

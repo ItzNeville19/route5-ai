@@ -21,6 +21,7 @@ import {
   WORKSPACE_TZ_PENDING_SYNC_KEY,
   type WorkspacePrefsV1,
 } from "@/lib/workspace-prefs";
+import { postWorkspacePrefsPatch } from "@/lib/workspace/prefs-sync-client";
 import {
   isLightWorkspacePalette,
   resolveWorkspaceTheme,
@@ -76,12 +77,7 @@ export function WorkspaceExperienceProvider({
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [remoteReady, setRemoteReady] = useState(false);
   const persistPrefsPatchNow = useCallback((patch: Partial<WorkspacePrefsV1>) => {
-    void fetch("/api/workspace/prefs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({ prefs: patch }),
-    });
+    void postWorkspacePrefsPatch(patch);
   }, []);
 
   const appearanceTick = useAlignedMinuteTick();
@@ -117,31 +113,36 @@ export function WorkspaceExperienceProvider({
   useEffect(() => {
     if (!remoteReady) return;
     const t = window.setTimeout(() => {
-      void fetch("/api/workspace/prefs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ prefs: workspacePrefsForApiSync(prefs) }),
-      }).then((r) => {
-        if (r.ok) clearWorkspaceTzPendingSync();
+      void postWorkspacePrefsPatch(workspacePrefsForApiSync(prefs)).then((ok) => {
+        if (ok) clearWorkspaceTzPendingSync();
       });
     }, 900);
     return () => window.clearTimeout(t);
   }, [prefs, remoteReady]);
 
+  /** Keep `route5.headerProjectId` in sync with server-merged prefs (multi-device company scope). */
+  useEffect(() => {
+    if (typeof window === "undefined" || !remoteReady) return;
+    const id = prefs.headerScopedProjectId;
+    if (typeof id !== "string" || !id.length) return;
+    try {
+      if (localStorage.getItem("route5.headerProjectId") !== id) {
+        localStorage.setItem("route5.headerProjectId", id);
+        window.dispatchEvent(
+          new CustomEvent("route5:project-scope-changed", { detail: { projectId: id } })
+        );
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [remoteReady, prefs.headerScopedProjectId]);
+
   const flushWorkspaceTzToServer = useCallback((snapshot: WorkspacePrefsV1) => {
-    void fetch("/api/workspace/prefs", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({
-        prefs: {
-          workspaceTimezone: snapshot.workspaceTimezone,
-          workspaceRegionKey: snapshot.workspaceRegionKey,
-        },
-      }),
-    }).then((r) => {
-      if (r.ok) clearWorkspaceTzPendingSync();
+    void postWorkspacePrefsPatch({
+      workspaceTimezone: snapshot.workspaceTimezone,
+      workspaceRegionKey: snapshot.workspaceRegionKey,
+    }).then((ok) => {
+      if (ok) clearWorkspaceTzPendingSync();
     });
   }, []);
 
@@ -181,6 +182,9 @@ export function WorkspaceExperienceProvider({
       }
       if (remoteReady && Object.prototype.hasOwnProperty.call(patch, "uiLocale")) {
         persistPrefsPatchNow({ uiLocale: patch.uiLocale ?? null });
+      }
+      if (remoteReady && Object.prototype.hasOwnProperty.call(patch, "headerScopedProjectId")) {
+        persistPrefsPatchNow({ headerScopedProjectId: patch.headerScopedProjectId ?? null });
       }
     },
     [remoteReady, persistPrefsPatchNow]

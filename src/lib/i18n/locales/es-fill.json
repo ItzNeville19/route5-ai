@@ -349,7 +349,13 @@
   "dashboard.lead.owners.subtitle": "Personas con más retrasos o plazos en riesgo",
   "dashboard.lead.owners.empty": "Aún no hay datos de responsables.",
   "dashboard.lead.owners.assist": "Ayudar",
+  "dashboard.lead.owners.viewHistory": "Historial de actividad",
+  "dashboard.lead.owners.viewHistorySub": "Seguimientos y apoyo completados",
   "dashboard.lead.owners.line": "{overdue} retrasados · {rate}% a tiempo",
+  "workspace.chrome.activeCompany": "Empresa activa",
+  "workspace.chrome.allCompanies": "Todas las empresas",
+  "workspace.queue.nudgeHistory.title": "Recordatorios, alertas y correos",
+  "workspace.queue.nudgeHistory.hint": "Las alertas desaparecen al resolverse. El historial completo en Actividad.",
 
   "dashboard.lead.ops.title": "Revisar incidencias planteadas",
   "dashboard.lead.ops.viewAll": "Ver todas →",

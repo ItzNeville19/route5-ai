@@ -84,6 +84,10 @@ const prefsPatchSchema = z
     heroLocationOverride: z.string().transform(cleanText).pipe(z.string().max(120)).optional(),
     guidedTourCompleted: z.boolean().optional(),
     agentDueReminderEmailsEnabled: z.boolean().optional(),
+    /** Header / workspace data scope (company) — optional null clears. */
+    headerScopedProjectId: z
+      .union([z.string().transform(cleanText).pipe(z.string().max(120)), z.null()])
+      .optional(),
     workspaceHeroPhotoSource: workspaceHeroPhotoSourceSchema.optional(),
   })
   .strict();
@@ -143,14 +147,8 @@ export async function POST(req: Request) {
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     const existing = (user.privateMetadata as Record<string, unknown> | undefined)?.[META_KEY];
-    const base = isPlainPrefs(existing) ? existing : {};
-    const merged: WorkspacePrefsV1 = { ...base, ...patch };
-    if (
-      Object.prototype.hasOwnProperty.call(patch, "uiLocale") &&
-      patch.uiLocale === null
-    ) {
-      delete merged.uiLocale;
-    }
+    const base = (isPlainPrefs(existing) ? existing : {}) as WorkspacePrefsV1;
+    const merged = mergeWorkspacePrefsPatch(base, patch as Partial<WorkspacePrefsV1>);
     await client.users.updateUser(userId, {
       privateMetadata: {
         ...user.privateMetadata,

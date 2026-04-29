@@ -541,6 +541,11 @@ function SectionFragment({
   activity,
 }: SectionFragmentProps) {
   const { t } = useI18n();
+  const searchParams = useSearchParams();
+  const activityHref = useMemo(() => {
+    const q = searchParams.toString();
+    return q ? `/workspace/activity?${q}` : "/workspace/activity";
+  }, [searchParams]);
 
   switch (sectionId) {
     case "attention":
@@ -680,6 +685,17 @@ function SectionFragment({
               <h2 className="text-sm font-semibold text-white">{t("dashboard.lead.owners.title")}</h2>
             </div>
             <p className="mt-1 text-xs text-white/45">{t("dashboard.lead.owners.subtitle")}</p>
+            <div className="mt-2 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+              <p className="text-[10px] leading-snug text-white/35 sm:max-w-[20rem]">
+                {t("dashboard.lead.owners.viewHistorySub")}
+              </p>
+              <Link
+                href={activityHref}
+                className="shrink-0 text-[11px] font-semibold text-cyan-400/90 transition hover:text-cyan-200"
+              >
+                {t("dashboard.lead.owners.viewHistory")} →
+              </Link>
+            </div>
             <ul className="mt-4 space-y-2">
               {ownersBehind.length === 0 ? (
                 <li className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-center text-sm text-white/45">

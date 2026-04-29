@@ -7,7 +7,7 @@ import {
 import type { WorkspaceThemeId } from "@/lib/workspace-themes";
 import { WORKSPACE_THEME_IDS } from "@/lib/workspace-themes";
 import type { UiLocaleCode } from "@/lib/i18n/ui-locales";
-import { isUiLocaleCode } from "@/lib/i18n/ui-locales";
+import { isUiLocaleCode, resolveUiLocaleFromBrowser } from "@/lib/i18n/ui-locales";
 import type { WorkspaceSurfaceMaterialId } from "@/lib/workspace-surface-material";
 import { isWorkspaceSurfaceMaterialId } from "@/lib/workspace-surface-material";
 
@@ -100,6 +100,11 @@ export type WorkspacePrefsV1 = {
   guidedTourCompleted?: boolean;
   /** Send automated due-soon / overdue reminder emails from the agent pipeline (default on). */
   agentDueReminderEmailsEnabled?: boolean;
+  /**
+   * Header company/project scope — synced across devices; mirrors `localStorage` `route5.headerProjectId`.
+   * Keeps “two companies” work isolated per project id (APIs pass `projectId` when set).
+   */
+  headerScopedProjectId?: string | null;
   /**
    * When canvas uses photography: daily rotation (default), a curated preset by Unsplash path,
    * or a user-uploaded image (data URL; client caps size before save).
@@ -292,7 +297,13 @@ export function saveWorkspacePrefs(next: WorkspacePrefsV1): void {
  * so JSON merges clear the server copy (omitted keys would otherwise preserve old values).
  */
 export function workspacePrefsForApiSync(prefs: WorkspacePrefsV1): WorkspacePrefsV1 {
-  return { ...prefs, uiLocale: prefs.uiLocale ?? null };
+  return {
+    ...prefs,
+    uiLocale: prefs.uiLocale ?? null,
+    ...("headerScopedProjectId" in prefs
+      ? { headerScopedProjectId: prefs.headerScopedProjectId ?? null }
+      : {}),
+  };
 }
 
 /** Deep-merge a prefs patch (used by client UI and server sync). */
@@ -327,6 +338,14 @@ export function mergeWorkspacePrefsPatch(
   }
   if (patch.dashboardSectionOrder !== undefined) {
     next.dashboardSectionOrder = [...patch.dashboardSectionOrder];
+  }
+  if (Object.prototype.hasOwnProperty.call(patch, "headerScopedProjectId")) {
+    if (patch.headerScopedProjectId === null || patch.headerScopedProjectId === undefined) {
+      const { headerScopedProjectId: _h, ...rest } = next;
+      next = rest as WorkspacePrefsV1;
+    } else {
+      next.headerScopedProjectId = patch.headerScopedProjectId;
+    }
   }
   return next;
 }
@@ -406,6 +425,20 @@ export function mergeRemoteWorkspacePrefs(
 
   if (local.guidedTourCompleted === true && merged.guidedTourCompleted !== true) {
     merged = mergeWorkspacePrefsPatch(merged, { guidedTourCompleted: true });
+    repaired = true;
+  }
+
+  // Synced prefs sometimes carry `uiLocale: "en"` as a stale default. When this device
+  // never chose a locale and the browser wants a non-English UI, drop it so the shell
+  // follows the browser; an explicit English choice still persists in local prefs first.
+  if (
+    typeof window !== "undefined" &&
+    merged.uiLocale === "en" &&
+    !meaningfulString(local.uiLocale) &&
+    resolveUiLocaleFromBrowser() !== "en"
+  ) {
+    const { uiLocale: _removed, ...rest } = merged;
+    merged = rest as WorkspacePrefsV1;
     repaired = true;
   }
 

@@ -62,6 +62,8 @@ export const en: Record<string, string> = {
   "workspace.chrome.nav.history": "History",
   "workspace.chrome.nav.aria": "Workspace",
   "workspace.chrome.companies": "Companies",
+  "workspace.chrome.activeCompany": "Active company",
+  "workspace.chrome.allCompanies": "All companies",
   "workspace.chrome.companiesTitle": "Companies — browse or add a workspace",
   "workspace.chrome.teamViewShort": "Team view",
   "workspace.chrome.backToTeam": "Back to team overview",
@@ -80,6 +82,8 @@ export const en: Record<string, string> = {
   "workspace.chrome.settings": "Route5 settings",
   "workspace.chrome.search.aria": "Search workspace — Command K",
   "workspace.chrome.search.placeholder": "Search…",
+  "workspace.queue.nudgeHistory.title": "Nudges, flags & email reminders",
+  "workspace.queue.nudgeHistory.hint": "Flags age off when resolved. Full audit trail in History.",
 
   "settings.backDashboard": "← Dashboard",
   "settings.section.account.title": "Account",
@@ -988,6 +992,8 @@ export const en: Record<string, string> = {
   "dashboard.lead.owners.subtitle": "People with the most late work or slipping deadlines",
   "dashboard.lead.owners.empty": "No owner data yet.",
   "dashboard.lead.owners.assist": "Assist",
+  "dashboard.lead.owners.viewHistory": "Activity history",
+  "dashboard.lead.owners.viewHistorySub": "Completed follow-ups & backup trail",
   "dashboard.lead.owners.line": "{overdue} overdue · {rate}% on-time",
 
   "dashboard.lead.ops.title": "Review raised issues",
