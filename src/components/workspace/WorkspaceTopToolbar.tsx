@@ -179,7 +179,10 @@ export default function WorkspaceTopToolbar() {
 
   /** Lead actions menu is always a dark floating panel — keep light menu copy regardless of canvas theme. */
   const leadMenuItem =
-    "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
+    "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[13px] font-medium text-white/90 transition hover:bg-white/[0.06]";
+
+  const leadMenuIcon = (wrap: string, iconClass: string) =>
+    `flex h-7 w-7 shrink-0 items-center justify-center rounded-md ring-1 ring-inset ${wrap} ${iconClass}`;
 
   return (
     <>
@@ -376,7 +379,14 @@ export default function WorkspaceTopToolbar() {
                               setLeadOpen(false);
                             }}
                           >
-                            <PlusCircle className="h-4 w-4 text-cyan-300/85" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-sky-500/18 ring-sky-400/25",
+                                "[&>svg]:text-sky-200"
+                              )}
+                            >
+                              <PlusCircle className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.newTask")}
                           </button>
                           <button
@@ -388,7 +398,14 @@ export default function WorkspaceTopToolbar() {
                               setLeadOpen(false);
                             }}
                           >
-                            <Sparkles className="h-4 w-4 text-emerald-300/85" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-emerald-500/18 ring-emerald-400/20",
+                                "[&>svg]:text-emerald-200"
+                              )}
+                            >
+                              <Sparkles className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.runAgent")}
                           </button>
                           <button
@@ -400,11 +417,25 @@ export default function WorkspaceTopToolbar() {
                               setLeadOpen(false);
                             }}
                           >
-                            <Mail className="h-4 w-4 text-teal-200/80" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-amber-500/16 ring-amber-400/25",
+                                "[&>svg]:text-amber-200"
+                              )}
+                            >
+                              <Mail className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.sendUpdate")}
                           </button>
                           <button type="button" role="menuitem" className={leadMenuItem} onClick={() => goEmployeePreview()}>
-                            <Eye className="h-4 w-4 text-white/70" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-violet-500/18 ring-violet-400/25",
+                                "[&>svg]:text-violet-200"
+                              )}
+                            >
+                              <Eye className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.employeePreview")}
                           </button>
                           <Link
@@ -413,7 +444,14 @@ export default function WorkspaceTopToolbar() {
                             className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
-                            <Users className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-indigo-500/20 ring-indigo-400/22",
+                                "[&>svg]:text-indigo-200"
+                              )}
+                            >
+                              <Users className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.organization")}
                           </Link>
                           <Link
@@ -422,7 +460,14 @@ export default function WorkspaceTopToolbar() {
                             className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
-                            <Building2 className="h-4 w-4 text-sky-300/90" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-orange-500/16 ring-orange-400/25",
+                                "[&>svg]:text-orange-200"
+                              )}
+                            >
+                              <Building2 className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.companies")}
                           </Link>
                           <Link
@@ -431,7 +476,14 @@ export default function WorkspaceTopToolbar() {
                             className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
-                            <LayoutGrid className="h-4 w-4 text-emerald-200/90" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-fuchsia-500/16 ring-fuchsia-400/25",
+                                "[&>svg]:text-fuchsia-200"
+                              )}
+                            >
+                              <LayoutGrid className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.marketingSite")}
                           </Link>
                           {desktopDownloadExternal ? (
@@ -442,7 +494,14 @@ export default function WorkspaceTopToolbar() {
                               onClick={() => setLeadOpen(false)}
                               rel="noopener noreferrer"
                             >
-                              <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                              <span
+                                className={leadMenuIcon(
+                                  "bg-cyan-500/18 ring-cyan-400/25",
+                                  "[&>svg]:text-cyan-200"
+                                )}
+                              >
+                                <Download className="h-4 w-4" strokeWidth={2} />
+                              </span>
                               {t("workspace.chrome.lead.downloadDesktop")}
                             </a>
                           ) : (
@@ -452,7 +511,14 @@ export default function WorkspaceTopToolbar() {
                               className={leadMenuItem}
                               onClick={() => setLeadOpen(false)}
                             >
-                              <Download className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                              <span
+                                className={leadMenuIcon(
+                                  "bg-cyan-500/18 ring-cyan-400/25",
+                                  "[&>svg]:text-cyan-200"
+                                )}
+                              >
+                                <Download className="h-4 w-4" strokeWidth={2} />
+                              </span>
                               {t("workspace.chrome.lead.downloadDesktop")}
                             </Link>
                           )}
@@ -462,7 +528,14 @@ export default function WorkspaceTopToolbar() {
                             className={leadMenuItem}
                             onClick={() => setLeadOpen(false)}
                           >
-                            <Settings className="h-4 w-4 text-cyan-200/85" strokeWidth={2} />
+                            <span
+                              className={leadMenuIcon(
+                                "bg-zinc-600/45 ring-zinc-500/35",
+                                "[&>svg]:text-zinc-200"
+                              )}
+                            >
+                              <Settings className="h-4 w-4" strokeWidth={2} />
+                            </span>
                             {t("workspace.chrome.lead.settings")}
                           </Link>
                         </div>
