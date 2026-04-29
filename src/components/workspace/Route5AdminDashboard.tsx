@@ -32,6 +32,7 @@ import { useWorkspaceExperience } from "@/components/workspace/WorkspaceExperien
 import { useAlignedMinuteTick } from "@/hooks/use-aligned-minute-tick";
 import { resolveWorkspaceSurfaceMode } from "@/lib/workspace-dashboard-mode";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useI18n } from "@/components/i18n/I18nProvider";
 
 type Scope = "org" | "self";
 
@@ -55,6 +56,49 @@ type TrendPoint = {
   overdue_count: number;
 };
 
+const HEALTH_CHART_DAYS = 14;
+
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function buildHealthChartSeries(
+  trend: TrendPoint[],
+  fallbackHealth: number,
+  dayCount: number,
+  intlLocale: string
+): { label: string; health: number }[] {
+  const byDate = new Map<string, number>();
+  for (const p of trend) {
+    const key = p.snapshot_date?.slice(0, 10);
+    if (!key) continue;
+    if (typeof p.health_score === "number" && !Number.isNaN(p.health_score)) {
+      byDate.set(key, Math.max(0, Math.min(100, Math.round(p.health_score))));
+    }
+  }
+
+  const out: { label: string; health: number }[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let lastHealth = Math.max(0, Math.min(100, Math.round(fallbackHealth)));
+
+  for (let i = dayCount - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const dateKey = localDateKey(d);
+    const v = byDate.get(dateKey);
+    if (v !== undefined) lastHealth = v;
+    out.push({
+      label: d.toLocaleDateString(intlLocale, { month: "short", day: "numeric" }),
+      health: lastHealth,
+    });
+  }
+  return out;
+}
+
 type EscalationRow = {
   id: string;
   severity: string;
@@ -77,12 +121,12 @@ function initials(name: string) {
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 }
 
-const PINNED_ACTIONS: Record<string, { href: string; label: string; icon: LucideIcon }> = {
-  queue: { href: "/workspace/agent", label: "Agent", icon: Bot },
-  escalations: { href: "/workspace/escalations", label: "Issues", icon: Flame },
-  activity: { href: "/workspace/activity", label: "History", icon: ClipboardCheck },
-  commitments: { href: "/workspace/commitments", label: "Commitments", icon: ClipboardCheck },
-  customize: { href: "/workspace/customize", label: "Customize", icon: LayoutGrid },
+const PINNED_ACTION_DEFS: Record<string, { href: string; labelKey: string; icon: LucideIcon }> = {
+  queue: { href: "/workspace/agent", labelKey: "dashboard.lead.pinned.agent", icon: Bot },
+  escalations: { href: "/workspace/escalations", labelKey: "dashboard.lead.pinned.issues", icon: Flame },
+  activity: { href: "/workspace/activity", labelKey: "dashboard.lead.pinned.history", icon: ClipboardCheck },
+  commitments: { href: "/workspace/commitments", labelKey: "dashboard.lead.pinned.commitments", icon: ClipboardCheck },
+  customize: { href: "/workspace/customize", labelKey: "dashboard.lead.pinned.customize", icon: LayoutGrid },
 };
 
 const CANONICAL_SECTIONS = ["attention", "insights", "operations", "movement"] as const;
@@ -109,6 +153,7 @@ function normalizeDashboardSectionOrder(raw?: string[]): string[] {
 }
 
 export default function Route5AdminDashboard() {
+  const { t, intlLocale } = useI18n();
   const { user } = useUser();
   const { orgRole, organizationId } = useWorkspaceData();
   const { prefs, setPrefs } = useWorkspaceExperience();
@@ -138,16 +183,17 @@ export default function Route5AdminDashboard() {
   const now = useMemo(() => new Date(), [minuteTick]);
 
   const firstName =
-    user?.firstName ?? user?.username ?? user?.primaryEmailAddress?.emailAddress?.split("@")[0] ?? "there";
+    user?.firstName ??
+    user?.username ??
+    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ??
+    t("dashboard.lead.welcome.there");
 
-  const roleLabel =
-    orgRole === "admin"
-      ? "Administrator"
-      : orgRole === "manager"
-        ? "Team lead"
-        : orgRole === "member"
-          ? "Team member"
-          : "Workspace";
+  const roleLabel = useMemo(() => {
+    if (orgRole === "admin") return t("dashboard.lead.role.admin");
+    if (orgRole === "manager") return t("dashboard.lead.role.manager");
+    if (orgRole === "member") return t("dashboard.lead.role.member");
+    return t("dashboard.lead.role.workspace");
+  }, [orgRole, t]);
 
   const load = useCallback(async (quiet?: boolean) => {
     if (!quiet) setLoading(true);
@@ -247,22 +293,24 @@ export default function Route5AdminDashboard() {
   }, [metrics?.teamBreakdown]);
 
   const chartPoints = useMemo(
-    () =>
-      trend.slice(-14).map((p) => ({
-        label: new Date(p.snapshot_date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
-        health: typeof p.health_score === "number" ? p.health_score : healthScore,
-      })),
-    [trend, healthScore]
+    () => buildHealthChartSeries(trend, healthScore, HEALTH_CHART_DAYS, intlLocale),
+    [trend, healthScore, intlLocale]
   );
 
   const attentionTotal = overdue + atRisk + queuePreview.length;
 
   const summaryLine = useMemo(() => {
     if (attentionTotal === 0) {
-      return `Team health score is ${healthScore}. Nothing urgent right now — check the Agent if you want to get ahead of deadlines.`;
+      return t("dashboard.lead.hero.summaryClear", { health: healthScore });
     }
-    return `${attentionTotal} items need attention (${overdue} late, ${atRisk} due soon, ${queuePreview.length} in the Agent inbox). Team health ${healthScore}.`;
-  }, [attentionTotal, healthScore, overdue, atRisk, queuePreview.length]);
+    return t("dashboard.lead.hero.summaryBusy", {
+      total: attentionTotal,
+      overdue,
+      atRisk,
+      queue: queuePreview.length,
+      health: healthScore,
+    });
+  }, [attentionTotal, healthScore, overdue, atRisk, queuePreview.length, t]);
 
   const sectionOrder = useMemo(
     () => normalizeDashboardSectionOrder(prefs.dashboardSectionOrder),
@@ -275,8 +323,12 @@ export default function Route5AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center">
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-cyan-500/25 border-t-cyan-400" />
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3">
+        <div
+          className="h-9 w-9 animate-spin rounded-full border-2 border-cyan-500/25 border-t-cyan-400"
+          aria-label={t("dashboard.lead.loading")}
+        />
+        <span className="sr-only">{t("dashboard.lead.loading")}</span>
       </div>
     );
   }
@@ -290,7 +342,7 @@ export default function Route5AdminDashboard() {
           prefs={prefs}
           now={now}
           firstName={firstName}
-          roleLabel="My work"
+          roleLabel={t("dashboard.lead.welcome.myWork")}
           summaryLine=""
           omitOperationalChrome
           showAvatarStrip={false}
@@ -347,7 +399,6 @@ export default function Route5AdminDashboard() {
           overdue={overdue}
           atRisk={atRisk}
           queuePreviewLen={queuePreview.length}
-          healthScore={healthScore}
           completionPct={completionPct}
           chartPoints={chartPoints}
           ownersBehind={ownersBehind}
@@ -370,16 +421,17 @@ function DashboardActionQueuePreview({
   pendingSendsCount: number;
   onOpenRunAgent: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <section className="rounded-[22px] border border-cyan-500/18 bg-[linear-gradient(165deg,rgba(8,36,42,0.55),rgba(5,12,16,0.96))] px-4 py-4 backdrop-blur-md sm:px-5 sm:py-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200/55">Do this next</p>
-          <h2 className="mt-1 text-base font-semibold text-white">Triage the Agent inbox</h2>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-200/55">
+            {t("dashboard.lead.inbox.kicker")}
+          </p>
+          <h2 className="mt-1 text-base font-semibold text-white">{t("dashboard.lead.inbox.title")}</h2>
           <p className="mt-1 max-w-xl text-[13px] leading-snug text-white/48">
-            Pending sends:{" "}
-            <span className="font-semibold tabular-nums text-emerald-200/95">{pendingSendsCount}</span> · Review nudges and
-            approvals before they go out.
+            {t("dashboard.lead.inbox.pending", { count: pendingSendsCount })}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -388,13 +440,13 @@ function DashboardActionQueuePreview({
             onClick={onOpenRunAgent}
             className="route5-pressable inline-flex items-center gap-2 rounded-full border border-emerald-500/35 bg-emerald-950/45 px-4 py-2 text-[12px] font-semibold text-emerald-50 shadow-[0_12px_36px_-18px_rgba(16,185,129,0.35)]"
           >
-            Run Agent
+            {t("dashboard.lead.inbox.runAgent")}
           </button>
           <Link
             href={agentHref}
             className="route5-pressable inline-flex items-center gap-2 rounded-full border border-cyan-500/38 bg-cyan-950/45 px-4 py-2 text-[12px] font-semibold text-cyan-50 shadow-[0_12px_36px_-18px_rgba(8,145,178,0.38)]"
           >
-            Open full queue <ArrowRight className="h-4 w-4" />
+            {t("dashboard.lead.inbox.openQueue")} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </div>
@@ -402,7 +454,7 @@ function DashboardActionQueuePreview({
       <ul className="mt-4 grid gap-2 md:grid-cols-2">
         {queuePreview.length === 0 ? (
           <li className="rounded-xl border border-dashed border-white/[0.12] bg-black/25 px-4 py-8 text-center text-[13px] text-white/45 md:col-span-2">
-            Nothing queued — open the Agent and run a scan.
+            {t("dashboard.lead.inbox.empty")}
           </li>
         ) : (
           queuePreview.map((q) => (
@@ -413,7 +465,10 @@ function DashboardActionQueuePreview({
               <p className="text-[13px] font-semibold leading-snug text-white">{q.title}</p>
               <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-white/48">{q.message}</p>
               <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-cyan-400/78">
-                {q.kind === "owner_nudge" ? "Reminder" : "Escalate"} · {q.severity}
+                {q.kind === "owner_nudge"
+                  ? t("dashboard.lead.inbox.kindReminder")
+                  : t("dashboard.lead.inbox.kindEscalate")}{" "}
+                · {q.severity}
               </p>
             </li>
           ))
@@ -430,7 +485,6 @@ type SectionFragmentProps = {
   overdue: number;
   atRisk: number;
   queuePreviewLen: number;
-  healthScore: number;
   completionPct: number;
   chartPoints: { label: string; health: number }[];
   ownersBehind: TeamRow[];
@@ -445,29 +499,32 @@ function SectionFragment({
   overdue,
   atRisk,
   queuePreviewLen,
-  healthScore,
   completionPct,
   chartPoints,
   ownersBehind,
   escalations,
   activity,
 }: SectionFragmentProps) {
+  const { t } = useI18n();
+
   switch (sectionId) {
     case "attention":
       return (
         <section className="rounded-[24px] border border-white/[0.06] bg-black/22 px-5 py-4 backdrop-blur-md">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/42">Do this next</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/42">
+                {t("dashboard.lead.attention.kicker")}
+              </p>
               <p className="mt-1 text-sm font-medium leading-snug text-white">
                 {attentionTotal === 0
-                  ? "Nothing urgent on the radar — use Agent to stay ahead of deadlines."
-                  : `${attentionTotal} items need your attention.`}
+                  ? t("dashboard.lead.attention.radarClear")
+                  : t("dashboard.lead.attention.needCount", { count: attentionTotal })}
               </p>
               {pinnedKeys.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1.5">
                   {pinnedKeys.map((key) => {
-                    const def = PINNED_ACTIONS[key];
+                    const def = PINNED_ACTION_DEFS[key];
                     if (!def) return null;
                     const Icon = def.icon;
                     return (
@@ -477,7 +534,7 @@ function SectionFragment({
                         className="route5-pressable inline-flex items-center gap-1.5 text-[12px] font-medium text-cyan-100/50 transition hover:text-white"
                       >
                         <Icon className="h-3.5 w-3.5 opacity-85" strokeWidth={2} />
-                        {def.label}
+                        {t(def.labelKey)}
                       </Link>
                     );
                   })}
@@ -488,13 +545,28 @@ function SectionFragment({
               href="/workspace/agent"
               className="route5-pressable inline-flex shrink-0 items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-4 py-2 text-sm font-semibold text-cyan-50 hover:bg-cyan-900/38"
             >
-              Open Agent <ArrowRight className="h-4 w-4" />
+              {t("dashboard.lead.attention.openAgent")} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
-            <AttentionChip href="/workspace/agent" icon={AlertTriangle} label={`${overdue + atRisk} need attention`} tone="warn" />
-            <AttentionChip href="/workspace/agent" icon={Bot} label={`${queuePreviewLen} in Agent`} tone="accent" />
-            <AttentionChip href="/workspace/activity" icon={ClipboardCheck} label="History" tone="neutral" />
+            <AttentionChip
+              href="/workspace/agent"
+              icon={AlertTriangle}
+              label={t("dashboard.lead.chip.needCount", { count: overdue + atRisk })}
+              tone="warn"
+            />
+            <AttentionChip
+              href="/workspace/agent"
+              icon={Bot}
+              label={t("dashboard.lead.chip.inAgentCount", { count: queuePreviewLen })}
+              tone="accent"
+            />
+            <AttentionChip
+              href="/workspace/activity"
+              icon={ClipboardCheck}
+              label={t("dashboard.lead.chip.history")}
+              tone="neutral"
+            />
           </div>
         </section>
       );
@@ -504,22 +576,46 @@ function SectionFragment({
           <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,14,18,0.94))] p-5 shadow-inner shadow-black/25">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">Track how the team is doing</h2>
+                <h2 className="text-sm font-semibold text-white">{t("dashboard.lead.insights.title")}</h2>
                 <p className="mt-1 text-xs text-white/45">
-                  Health score over the last {chartPoints.length || "…"} days
+                  {t("dashboard.lead.insights.subtitle", { days: HEALTH_CHART_DAYS })}
                 </p>
               </div>
               <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-emerald-300/90">
-                {completionPct}% finished on time
+                {t("dashboard.lead.insights.badge", { pct: completionPct })}
               </span>
             </div>
             <div className="mt-4 h-[220px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartPoints.length ? chartPoints : [{ label: "—", health: healthScore }]}>
+                <LineChart data={chartPoints} margin={{ top: 6, right: 8, left: 0, bottom: 4 }}>
                   <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={10}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    width={36}
+                    tick={{ fill: "rgba(255,255,255,0.35)", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    label={{
+                      value: t("dashboard.lead.insights.healthAxis"),
+                      angle: -90,
+                      position: "insideLeft",
+                      fill: "rgba(255,255,255,0.35)",
+                      fontSize: 10,
+                    }}
+                  />
                   <RechartsTooltip
+                    formatter={(value) => [
+                      String(value ?? "—"),
+                      t("dashboard.lead.insights.healthAxis"),
+                    ]}
                     contentStyle={{
                       background: "rgba(12,18,14,0.96)",
                       border: "1px solid rgba(52,211,153,0.25)",
@@ -528,22 +624,31 @@ function SectionFragment({
                     }}
                     labelStyle={{ color: "rgba(255,255,255,0.65)" }}
                   />
-                  <Line type="monotone" dataKey="health" stroke="#2dd4bf" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: "#5eead4" }} />
+                  <Line
+                    type="monotone"
+                    dataKey="health"
+                    name={t("dashboard.lead.insights.healthAxis")}
+                    stroke="#2dd4bf"
+                    strokeWidth={2}
+                    dot={{ r: 2.5, strokeWidth: 1, fill: "#14b8a6" }}
+                    activeDot={{ r: 5, fill: "#5eead4" }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
+            <p className="mt-2 text-[10px] leading-snug text-white/35">{t("dashboard.lead.insights.footnote")}</p>
           </section>
 
           <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,14,18,0.94))] p-5">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-cyan-400/65" />
-              <h2 className="text-sm font-semibold text-white">See who needs backup</h2>
+              <h2 className="text-sm font-semibold text-white">{t("dashboard.lead.owners.title")}</h2>
             </div>
-            <p className="mt-1 text-xs text-white/45">People with the most late work or slipping deadlines</p>
+            <p className="mt-1 text-xs text-white/45">{t("dashboard.lead.owners.subtitle")}</p>
             <ul className="mt-4 space-y-2">
               {ownersBehind.length === 0 ? (
                 <li className="rounded-xl border border-white/10 bg-white/5 px-3 py-4 text-center text-sm text-white/45">
-                  No owner data yet.
+                  {t("dashboard.lead.owners.empty")}
                 </li>
               ) : (
                 ownersBehind.map((row: TeamRow) => (
@@ -558,12 +663,15 @@ function SectionFragment({
                       <div>
                         <p className="text-sm font-medium text-white">{row.displayName}</p>
                         <p className="text-[11px] text-white/45">
-                          {row.overdueCount} overdue · {row.completionRate}% on-time
+                          {t("dashboard.lead.owners.line", {
+                            overdue: row.overdueCount,
+                            rate: row.completionRate,
+                          })}
                         </p>
                       </div>
                     </div>
                     <Link href={`/workspace/agent`} className="text-[11px] font-medium text-cyan-400 hover:text-cyan-200">
-                      Assist
+                      {t("dashboard.lead.owners.assist")}
                     </Link>
                   </li>
                 ))
@@ -578,23 +686,27 @@ function SectionFragment({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <Flame className="h-4 w-4 text-amber-400/90" />
-              <h2 className="text-sm font-semibold text-white">Review raised issues</h2>
+              <h2 className="text-sm font-semibold text-white">{t("dashboard.lead.ops.title")}</h2>
             </div>
             <Link href="/workspace/escalations" className="text-[11px] font-semibold text-amber-300/90 hover:text-amber-200">
-              View all →
+              {t("dashboard.lead.ops.viewAll")}
             </Link>
           </div>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {escalations.length === 0 ? (
               <li className="rounded-xl border border-white/10 bg-black/30 px-3 py-6 text-center text-sm text-white/45 sm:col-span-2">
-                No open issues.
+                {t("dashboard.lead.ops.empty")}
               </li>
             ) : (
               escalations.slice(0, 8).map((e) => (
                 <li key={e.id} className="rounded-xl border border-white/10 bg-black/35 px-3 py-2.5">
                   <p className="text-sm font-medium text-white">{e.commitmentTitle}</p>
                   <p className="mt-1 text-[11px] text-white/45">
-                    {e.ownerDisplayName} · {e.severity} · open {e.ageHours}h
+                    {t("dashboard.lead.ops.rowMeta", {
+                      owner: e.ownerDisplayName,
+                      severity: e.severity,
+                      hours: e.ageHours,
+                    })}
                   </p>
                 </li>
               ))
@@ -606,18 +718,18 @@ function SectionFragment({
       return (
         <section className="rounded-[22px] border border-white/[0.06] bg-[linear-gradient(180deg,rgba(10,24,28,0.88),rgba(6,12,18,0.94))] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold text-white">Catch up on recent updates</h2>
+            <h2 className="text-sm font-semibold text-white">{t("dashboard.lead.movement.title")}</h2>
             <Link href="/workspace/commitments" className="text-xs font-semibold text-white/55 hover:text-white">
-              All commitments →
+              {t("dashboard.lead.movement.link")}
             </Link>
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
                 <tr className="border-b border-white/10 text-[11px] uppercase tracking-wide text-white/40">
-                  <th className="pb-2 font-medium">Work item</th>
-                  <th className="pb-2 font-medium">Owner</th>
-                  <th className="pb-2 font-medium">Status</th>
+                  <th className="pb-2 font-medium">{t("dashboard.lead.movement.th.item")}</th>
+                  <th className="pb-2 font-medium">{t("dashboard.lead.movement.th.owner")}</th>
+                  <th className="pb-2 font-medium">{t("dashboard.lead.movement.th.status")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -631,7 +743,7 @@ function SectionFragment({
               </tbody>
             </table>
             {activity.length === 0 ? (
-              <p className="py-8 text-center text-sm text-white/45">No recent activity.</p>
+              <p className="py-8 text-center text-sm text-white/45">{t("dashboard.lead.movement.empty")}</p>
             ) : null}
           </div>
         </section>

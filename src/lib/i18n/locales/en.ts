@@ -4,7 +4,7 @@ export const en: Record<string, string> = {
   "lang.selectLabel": "Interface language",
   "lang.description":
     "Interface language for Route5. Dates and numbers follow this locale where supported.",
-  "lang.autoBrowser": "System default (browser)",
+  "lang.autoBrowser": "System default (follows device / browser language)",
   "prefs.defaultsIntro":
     "By default, language follows your browser/system until you pick one here. Timezone starts from your device clock — pick a city/region below and tap Apply to save.",
   "sidebar.getStarted": "Get started",
@@ -80,6 +80,71 @@ export const en: Record<string, string> = {
   "workspace.chrome.settings": "Route5 settings",
   "workspace.chrome.search.aria": "Search workspace — Command K",
   "workspace.chrome.search.placeholder": "Search…",
+
+  "settings.backDashboard": "← Dashboard",
+  "settings.section.account.title": "Account",
+  "settings.section.account.desc": "Manage your profile and sign-in details.",
+  "settings.section.preferences.title": "Preferences",
+  "settings.section.preferences.desc": "Location, timezone, language, and workspace surface settings.",
+  "settings.section.desktop.title": "Desktop app",
+  "settings.section.desktop.desc":
+    "When Route5 provides an installer for your organization, it uses the same workspace as the web app in a dedicated window.",
+  "settings.section.desktop.body":
+    "On Mac, open the disk image and drag Route5 into Applications. On Windows, run the installer your team ships from IT.",
+  "settings.section.desktop.downloadOptions": "Desktop & install options",
+  "settings.section.desktop.downloadMac": "Download Mac installer",
+  "settings.section.desktop.getMacBuild": "Get the Mac build (download page)",
+  "settings.section.desktop.dmgHint":
+    "A direct {dmg} link appears here when your team sets {envVar} — until then, use the download page (no broken file link).",
+  "settings.section.notifications.title": "Notifications",
+  "settings.section.notifications.desc": "Choose delivery channels for updates, follow-ups, and digests.",
+  "settings.section.notifications.open": "Open notification preferences",
+  "settings.section.ai.title": "AI Settings",
+  "settings.section.ai.desc": "Control model behavior and capture sensitivity.",
+  "settings.section.integrations.title": "Integrations",
+  "settings.section.integrations.desc":
+    "Webhook and email forwarding are live. Connect Slack, Gmail, and Notion from Integrations.",
+  "settings.integrations.open": "Open integration",
+  "settings.integrations.slack": "Slack",
+  "settings.integrations.gmail": "Gmail",
+  "settings.integrations.notion": "Notion",
+
+  "settings.danger.account.title": "Danger zone",
+  "settings.danger.account.lead":
+    "Destructive actions for your Route5 workspace and your Clerk sign-in. Nothing here deletes anything until you open the steps and confirm.",
+  "settings.danger.account.toggleExpand": "Delete account (hidden — expand to continue)",
+  "settings.danger.account.toggleCollapse": "Delete account",
+  "settings.danger.account.cannotUndo": "This cannot be undone",
+  "settings.danger.account.b1": "Your Clerk account is removed — you will be signed out everywhere.",
+  "settings.danger.account.b2": "Your Route5 projects and captured decisions for this account are deleted from our workspace.",
+  "settings.danger.account.b3": "Billing and plan links go through Clerk; if you use a paid tier, resolve billing before deleting.",
+  "settings.danger.account.reasonLabel": "Why do you want to delete your account?",
+  "settings.danger.account.reasonHint":
+    "A short honest answer helps you confirm this is what you want — not a judgment.",
+  "settings.danger.account.reasonPlaceholder":
+    "e.g. I’m moving to another tool; I’m testing sign-up; I don’t need this workspace…",
+  "settings.danger.account.reasonCount": "{n}/4000 · minimum 20 characters",
+  "settings.danger.account.ack":
+    "I understand this is permanent and I will lose access to this workspace and account data.",
+  "settings.danger.account.typeDelete": "Type delete to confirm",
+  "settings.danger.account.password": "Account password",
+  "settings.danger.account.noPassword":
+    "You signed in without a password (for example OAuth or magic link). Typing delete is enough to confirm — no password required.",
+  "settings.danger.account.stillSure":
+    "Still sure? When you’re ready, use the button below. If you’re unsure, close this section and keep your account.",
+  "settings.danger.account.cancel": "Cancel",
+  "settings.danger.account.delete": "Delete my account permanently",
+  "settings.danger.account.deleting": "Deleting…",
+  "settings.danger.account.errDelete": "Could not delete account.",
+  "settings.danger.account.errNetwork": "Something went wrong. Try again.",
+
+  "settings.danger.org.title": "Delete organization",
+  "settings.danger.org.fallbackName": "your workspace",
+  "settings.danger.org.lead":
+    "Removing {orgName} would delete shared projects and commitments for every member. Route5 does not run this action in-app yet — use the Organization page to remove teammates first, export anything you need, then contact support if you must fully retire the company workspace.",
+  "settings.danger.org.button": "Delete organization (unavailable)",
+  "settings.danger.org.hint":
+    "Clerk-linked teams may also manage organizations from the Clerk dashboard when applicable.",
 
   "prefs.timePlace": "Time & place",
   "prefs.timeIntro":
@@ -794,4 +859,146 @@ export const en: Record<string, string> = {
     "Spin up a workspace, or email us for walkthroughs, security packets, and a rollout plan that matches how your company buys software—including what is live now versus what we are building next.",
   "landing.cta.email": "Email the team",
   "landing.cta.signup": "Create your workspace",
+
+  "workspace.help.title": "Help",
+  "workspace.help.subtitle":
+    "Jump to any surface, use the keyboard, or get support—without losing context.",
+  "workspace.help.closeAria": "Close help",
+  "workspace.help.backdropAria": "Close",
+  "workspace.help.openPalette": "Open command palette",
+  "workspace.help.openCapture": "Open Capture",
+  "workspace.help.role.lead":
+    "As an admin or manager: use Actions in the header for org tools (new task, assistant, updates). Desk is the day-to-day queue; Home aggregates status.",
+  "workspace.help.role.member":
+    "Use Desk for your queue and Capture to turn text into owned commitments. Home shows your snapshot; Team lists owners.",
+  "workspace.help.section.goto": "Go to",
+  "workspace.help.section.keyboard": "Keyboard",
+  "workspace.help.link.home.label": "Home",
+  "workspace.help.link.home.hint": "Command center & tour",
+  "workspace.help.link.desk.label": "Desk",
+  "workspace.help.link.desk.hint": "Commitments & action queue",
+  "workspace.help.link.agent.label": "Agent",
+  "workspace.help.link.agent.hint": "Assistant & follow-ups",
+  "workspace.help.link.commitments.label": "Commitments",
+  "workspace.help.link.commitments.hint": "Org-wide tracker",
+  "workspace.help.link.companies.label": "Companies",
+  "workspace.help.link.companies.hint": "Accounts & workstreams",
+  "workspace.help.link.team.label": "Team",
+  "workspace.help.link.team.hint": "People & org switcher",
+  "workspace.help.link.overview.label": "Overview",
+  "workspace.help.link.overview.hint": "Execution health & load",
+  "workspace.help.link.intStatus.label": "Integration status",
+  "workspace.help.link.intStatus.hint": "Org connector health",
+  "workspace.help.link.intHub.label": "Integrations hub",
+  "workspace.help.link.intHub.hint": "Browse connectors",
+  "workspace.help.link.notifications.label": "Notifications",
+  "workspace.help.link.notifications.hint": "Digest & delivery",
+  "workspace.help.link.settings.label": "Settings",
+  "workspace.help.link.settings.hint": "Account & profile",
+  "workspace.help.link.customize.label": "Customize",
+  "workspace.help.link.customize.hint": "Theme & layout",
+  "workspace.help.helpCenter.title": "Help center",
+  "workspace.help.helpCenter.hint": "Tutorials & deeper links",
+  "workspace.help.kbd.palette": "Command palette",
+  "workspace.help.kbd.capture": "Capture",
+  "workspace.help.kbd.updates": "Updates & digest",
+  "workspace.help.kbd.deskSearch": "Desk: focus search",
+  "workspace.help.kbd.fullList": "Full shortcut list",
+  "workspace.help.fullKeyboardRef": "Open full keyboard reference",
+  "workspace.help.trouble.title": "If something’s off",
+  "workspace.help.trouble.b1a": "Check org connectors under",
+  "workspace.help.trouble.b1link": "Integration status",
+  "workspace.help.trouble.b1b": ".",
+  "workspace.help.trouble.b2a": "Confirm notification delivery in",
+  "workspace.help.trouble.b2link": "notification preferences",
+  "workspace.help.trouble.b2b": ".",
+  "workspace.help.trouble.b3a": "Read how Route5 is meant to work:",
+  "workspace.help.trouble.b3link": "product overview",
+  "workspace.help.trouble.b3b": ".",
+  "workspace.help.tour": "Replay workspace tour",
+  "workspace.help.contact": "Contact support",
+  "workspace.help.report": "Report an issue",
+  "workspace.help.mail.supportSubject": "Route5 — support request",
+  "workspace.help.mail.issueSubject": "Route5 — issue report",
+  "workspace.help.mail.issueBody": "What happened:\n\nSteps to reproduce:\n\n",
+  "workspace.help.filterPlaceholder": "Filter links…",
+  "workspace.help.section.start": "Get started",
+  "workspace.help.section.workspace": "In this workspace",
+  "workspace.help.section.documentation": "Documentation",
+  "workspace.help.section.contact": "Contact",
+  "workspace.help.doc.product": "How Route5 works",
+  "workspace.help.doc.roadmap": "Roadmap & direction",
+  "workspace.help.doc.trust": "Security & trust",
+  "workspace.help.doc.support": "Support & help center",
+  "workspace.help.contactBlurb": "All support and issue reports go to the same place — we read every message.",
+  "workspace.help.copyEmail": "Copy support email",
+  "workspace.help.copied": "Address copied",
+  "workspace.help.subtitle.github":
+    "Filter links below like GitHub Docs — command palette still wins for jumping anywhere (⌘K).",
+
+  "dashboard.lead.loading": "Loading dashboard…",
+
+  "dashboard.lead.welcome.there": "there",
+  "dashboard.lead.welcome.myWork": "My work",
+
+  "dashboard.lead.role.admin": "Administrator",
+  "dashboard.lead.role.manager": "Team lead",
+  "dashboard.lead.role.member": "Team member",
+  "dashboard.lead.role.workspace": "Workspace",
+
+  "dashboard.lead.hero.summaryClear":
+    "Team health score is {health}. Nothing urgent right now — check the Agent if you want to get ahead of deadlines.",
+  "dashboard.lead.hero.summaryBusy":
+    "{total} items need attention ({overdue} late, {atRisk} due soon, {queue} in the Agent inbox). Team health {health}.",
+
+  "dashboard.lead.pinned.agent": "Agent",
+  "dashboard.lead.pinned.issues": "Issues",
+  "dashboard.lead.pinned.history": "History",
+  "dashboard.lead.pinned.commitments": "Commitments",
+  "dashboard.lead.pinned.customize": "Customize",
+
+  "dashboard.lead.inbox.kicker": "Do this next",
+  "dashboard.lead.inbox.title": "Triage the Agent inbox",
+  "dashboard.lead.inbox.pending":
+    "Pending sends: {count} · Review nudges and approvals before they go out.",
+  "dashboard.lead.inbox.runAgent": "Run Agent",
+  "dashboard.lead.inbox.openQueue": "Open full queue",
+  "dashboard.lead.inbox.empty": "Nothing queued — open the Agent and run a scan.",
+  "dashboard.lead.inbox.kindReminder": "Reminder",
+  "dashboard.lead.inbox.kindEscalate": "Escalate",
+
+  "dashboard.lead.attention.kicker": "Do this next",
+  "dashboard.lead.attention.radarClear": "Nothing urgent on the radar — use Agent to stay ahead of deadlines.",
+  "dashboard.lead.attention.needCount": "{count} items need your attention.",
+  "dashboard.lead.attention.openAgent": "Open Agent",
+
+  "dashboard.lead.chip.needCount": "{count} need attention",
+  "dashboard.lead.chip.inAgentCount": "{count} in Agent",
+  "dashboard.lead.chip.history": "History",
+
+  "dashboard.lead.insights.title": "Track how the team is doing",
+  "dashboard.lead.insights.subtitle":
+    "Health score over the last {days} days (0–100 = velocity + quality + risk).",
+  "dashboard.lead.insights.badge": "{pct}% finished on time",
+  "dashboard.lead.insights.healthAxis": "Health",
+  "dashboard.lead.insights.footnote":
+    "Carries forward the last known score on days without a snapshot.",
+
+  "dashboard.lead.owners.title": "See who needs backup",
+  "dashboard.lead.owners.subtitle": "People with the most late work or slipping deadlines",
+  "dashboard.lead.owners.empty": "No owner data yet.",
+  "dashboard.lead.owners.assist": "Assist",
+  "dashboard.lead.owners.line": "{overdue} overdue · {rate}% on-time",
+
+  "dashboard.lead.ops.title": "Review raised issues",
+  "dashboard.lead.ops.viewAll": "View all →",
+  "dashboard.lead.ops.empty": "No open issues.",
+  "dashboard.lead.ops.rowMeta": "{owner} · {severity} · open {hours}h",
+
+  "dashboard.lead.movement.title": "Catch up on recent updates",
+  "dashboard.lead.movement.link": "All commitments →",
+  "dashboard.lead.movement.th.item": "Work item",
+  "dashboard.lead.movement.th.owner": "Owner",
+  "dashboard.lead.movement.th.status": "Status",
+  "dashboard.lead.movement.empty": "No recent activity.",
 };
