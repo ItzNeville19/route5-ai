@@ -227,10 +227,8 @@ export default function WorkspaceTopToolbar() {
           ) : null}
 
           <div className="route5-workspace-toolbar-inner relative z-[1] flex min-h-[40px] w-full min-w-0 max-w-full flex-nowrap items-center gap-1.5 overflow-x-auto sm:min-h-[42px] sm:gap-2 md:gap-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {/* Brand + search (single row with center nav) */}
-            <div className="flex min-h-0 min-w-0 max-w-[min(100%,22rem)] flex-1 flex-shrink flex-row items-center gap-2 sm:max-w-none sm:gap-2.5 md:min-w-[10rem] md:max-w-[40%]">
-              <motion.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }}>
-                <Link
+            <motion.div whileHover={reduceMotion ? undefined : { scale: 1.02 }} whileTap={reduceMotion ? undefined : { scale: 0.98 }} className="shrink-0">
+              <Link
                 href={`/workspace/dashboard${suffix}`}
                 className={classNames(
                   "group flex shrink-0 items-baseline gap-1.5 rounded-md px-0.5 py-0 outline-none transition focus-visible:ring-2",
@@ -260,10 +258,10 @@ export default function WorkspaceTopToolbar() {
                   {t("workspace.chrome.workspaceLabel")}
                 </span>
               </Link>
-              </motion.div>
-              <div className="flex min-w-0 flex-1 justify-end sm:justify-start">
-                <WorkspaceHeaderSearch />
-              </div>
+            </motion.div>
+
+            <div className="flex min-h-0 min-w-0 flex-1 basis-0 justify-start px-0.5 sm:px-1">
+              <WorkspaceHeaderSearch fill />
             </div>
 
             <nav
