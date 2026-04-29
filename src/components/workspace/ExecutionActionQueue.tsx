@@ -249,7 +249,7 @@ export default function ExecutionActionQueue({
   useEffect(() => {
     if (!canRun) return;
     void refreshQueue();
-  }, [canRun, refreshQueue, activeProjectId]);
+  }, [canRun, refreshQueue]);
 
   const approvedCount = useMemo(
     () => preview.filter((action) => selected.includes(keyFor(action))).length,
